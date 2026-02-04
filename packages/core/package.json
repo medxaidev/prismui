@@ -1,0 +1,55 @@
+{
+  "name": "@prismui/core",
+  "version": "0.0.1",
+  "description": "Prismui core components with polymorphic support",
+  "homepage": "https://prismui.dev/",
+  "license": "MIT",
+  "author": "Fangjun <fangjun20208@gmail.com>",
+  "keywords": [
+    "react",
+    "ui",
+    "components",
+    "polymorphic",
+    "prismui"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/medxai/prismui.git",
+    "directory": "packages/core"
+  },
+  "sideEffects": [
+    "*.css"
+  ],
+  "main": "./dist/cjs/index.cjs",
+  "module": "./dist/esm/index.mjs",
+  "types": "./dist/lib/index.d.ts",
+  "exports": {
+    ".": {
+      "import": {
+        "types": "./dist/lib/index.d.ts",
+        "default": "./dist/esm/index.mjs"
+      },
+      "require": {
+        "types": "./dist/lib/index.d.ts",
+        "default": "./dist/cjs/index.cjs"
+      }
+    },
+    "./styles.css": "./dist/esm/index.css"
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "",
+    "dev": "",
+    "typecheck": ""
+  },
+  "peerDependencies": {
+    "react": ">=18.0.0",
+    "react-dom": ">=18.0.0"
+  },
+  "devDependencies": {
+    "react": "19.2.4",
+    "react-dom": "19.2.4"
+  }
+}

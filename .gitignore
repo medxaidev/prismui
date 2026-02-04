@@ -5,3 +5,16 @@ node_modules/
 lib/
 cjs/
 esm/
+dist/
+
+# test coverage
+coverage/
+.vitest/
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
