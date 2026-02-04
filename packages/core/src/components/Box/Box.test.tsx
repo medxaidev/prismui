@@ -10,6 +10,18 @@ describe('@prismui/core/Box polymorphic', () => {
     expect(container.firstChild?.nodeName).toBe('DIV');
   });
 
+  it('applies className', () => {
+    const { container } = render(<Box className="test-class">content</Box>);
+    const el = container.firstChild as HTMLElement;
+    expect(el.className).toContain('test-class');
+  });
+
+  it('applies style', () => {
+    const { container } = render(<Box style={{ color: 'red' }}>content</Box>);
+    const el = container.firstChild as HTMLElement;
+    expect(el.style.color).toBe('red');
+  });
+
   it('renders the element specified by component', () => {
     const { container } = render(<Box component="button">click</Box>);
     expect(container.firstChild?.nodeName).toBe('BUTTON');
@@ -42,6 +54,18 @@ describe('@prismui/core/Box polymorphic', () => {
     expect(anchor.nodeName).toBe('A');
     expect(anchor.href).toBe('https://example.com/');
     expect(anchor.target).toBe('_blank');
+  });
+
+  it('passes through native HTML attributes', () => {
+    const { container } = render(
+      <Box id="box-id" data-testid="box-test">
+        content
+      </Box>
+    );
+
+    const el = container.firstChild as HTMLElement;
+    expect(el.id).toBe('box-id');
+    expect(el.getAttribute('data-testid')).toBe('box-test');
   });
 });
 

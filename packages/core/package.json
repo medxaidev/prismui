@@ -22,27 +22,27 @@
   ],
   "main": "./dist/cjs/index.cjs",
   "module": "./dist/esm/index.mjs",
-  "types": "./dist/lib/index.d.ts",
+  "types": "./dist/index.d.ts",
   "exports": {
     ".": {
       "import": {
-        "types": "./dist/lib/index.d.ts",
+        "types": "./dist/esm/index.d.ts",
         "default": "./dist/esm/index.mjs"
       },
       "require": {
-        "types": "./dist/lib/index.d.ts",
+        "types": "./dist/cjs/index.d.ts",
         "default": "./dist/cjs/index.cjs"
       }
-    },
-    "./styles.css": "./dist/esm/index.css"
+    }
   },
   "files": [
     "dist"
   ],
   "scripts": {
-    "build": "",
+    "clean": "rimraf dist",
+    "build": "npm run clean && tsc  && node ./scripts/esbuild.mjs",
     "dev": "",
-    "typecheck": ""
+    "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "peerDependencies": {
     "react": ">=18.0.0",
