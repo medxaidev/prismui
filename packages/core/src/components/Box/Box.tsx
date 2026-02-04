@@ -3,8 +3,8 @@ import type {
   ElementType,
   StyleProp,
   CSSVars
-} from '../../types';
-import { createPolymorphicComponent } from '../../types';
+} from '../../core/types';
+import { createPolymorphicComponent } from '../../core/types';
 
 
 export interface BoxProps {

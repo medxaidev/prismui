@@ -1,10 +1,10 @@
 import { forwardRef } from 'react';
-import type { ElementType } from '../../types';
-import { createPolymorphicComponent } from '../../types';
+import type { ElementType } from '../../core/types';
+import { createPolymorphicComponent } from '../../core/types';
 import type { BoxProps } from '../Box';
 import { Box } from '../Box';
 
-export interface TextProps extends BoxProps {}
+export interface TextProps extends BoxProps { }
 
 interface _TextProps extends TextProps {
   component?: ElementType;
