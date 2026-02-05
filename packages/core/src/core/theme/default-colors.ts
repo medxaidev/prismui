@@ -1,0 +1,217 @@
+import type { PrismuiColorScale } from './types';
+
+const shadeSteps = [50, 100, 200, 300, 400, 500, 600, 700, 800, 900] as const;
+
+function scaleFromArray(values: readonly [
+  string,
+  string,
+  string,
+  string,
+  string,
+  string,
+  string,
+  string,
+  string,
+  string,
+  ...string[],
+]): PrismuiColorScale {
+  return {
+    50: values[0],
+    100: values[1],
+    200: values[2],
+    300: values[3],
+    400: values[4],
+    500: values[5],
+    600: values[6],
+    700: values[7],
+    800: values[8],
+    900: values[9],
+  };
+}
+
+export const defaultColorFamilies = {
+  blue: scaleFromArray([
+    '#E1F5FE',
+    '#CDE9FD',
+    '#9CD0FC',
+    '#6BB1F8',
+    '#4594F1',
+    '#0C68E9',
+    '#0850C8',
+    '#063BA7',
+    '#032987',
+    '#021D6F',
+  ]),
+
+  cyan: scaleFromArray([
+    '#DFFEF3',
+    '#CAFDF5',
+    '#96FBF3',
+    '#61F3F3',
+    '#3ADBE8',
+    '#00B8D9',
+    '#008FBA',
+    '#006C9C',
+    '#004D7D',
+    '#003768',
+  ]),
+
+  green: scaleFromArray([
+    '#EAFEE4',
+    '#D3FCD2',
+    '#A6F9AC',
+    '#77ED8B',
+    '#53DC78',
+    '#22C55E',
+    '#18A95C',
+    '#118D57',
+    '#0A724F',
+    '#065E49',
+  ]),
+
+  yellow: scaleFromArray([
+    '#FFFAE0',
+    '#FFF5CC',
+    '#FFE799',
+    '#FFD666',
+    '#FFC63F',
+    '#FFAB00',
+    '#DB8B00',
+    '#B76E00',
+    '#935400',
+    '#7A4100',
+  ]),
+
+  violet: scaleFromArray([
+    '#F8E6FF',
+    '#EFD6FF',
+    '#DCADFF',
+    '#C684FF',
+    '#B166FF',
+    '#8E33FF',
+    '#6E25DB',
+    '#5119B7',
+    '#391093',
+    '#27097A',
+  ]),
+
+  gray: scaleFromArray([
+    '#FCFDFD',
+    '#F9FAFB',
+    '#F4F6F8',
+    '#DFE3E8',
+    '#C4CDD5',
+    '#919EAB',
+    '#637381',
+    '#454F5B',
+    '#1C252E',
+    '#141A21',
+  ]),
+
+  neutral: {
+    50: '#FBFCFE',
+    100: '#F0F4F8',
+    200: '#DDE7EE',
+    300: '#CDD7E1',
+    400: '#9FA6AD',
+    500: '#636B74',
+    600: '#555E68',
+    700: '#32383E',
+    800: '#171A1C',
+    900: '#0B0D0E',
+  },
+
+  red: scaleFromArray([
+    '#FFF4E6',
+    '#FFE9D5',
+    '#FFCEAC',
+    '#FFAC82',
+    '#FF8B63',
+    '#FF5630',
+    '#DB3723',
+    '#B71D18',
+    '#930F14',
+    '#7A0916',
+  ]),
+
+  // Bootstrap/MUI-aligned defaults (can be adjusted later)
+  indigo: {
+    50: '#eef2ff',
+    100: '#e0e7ff',
+    200: '#c7d2fe',
+    300: '#a5b4fc',
+    400: '#818cf8',
+    500: '#6366f1',
+    600: '#4f46e5',
+    700: '#4338ca',
+    800: '#3730a3',
+    900: '#312e81',
+  },
+
+  purple: {
+    50: '#faf5ff',
+    100: '#f3e8ff',
+    200: '#e9d5ff',
+    300: '#d8b4fe',
+    400: '#c084fc',
+    500: '#a855f7',
+    600: '#9333ea',
+    700: '#7e22ce',
+    800: '#6b21a8',
+    900: '#581c87',
+  },
+
+  pink: {
+    50: '#fdf2f8',
+    100: '#fce7f3',
+    200: '#fbcfe8',
+    300: '#f9a8d4',
+    400: '#f472b6',
+    500: '#ec4899',
+    600: '#db2777',
+    700: '#be185d',
+    800: '#9d174d',
+    900: '#831843',
+  },
+
+  orange: {
+    50: '#fff7ed',
+    100: '#ffedd5',
+    200: '#fed7aa',
+    300: '#fdba74',
+    400: '#fb923c',
+    500: '#f97316',
+    600: '#ea580c',
+    700: '#c2410c',
+    800: '#9a3412',
+    900: '#7c2d12',
+  },
+
+  teal: {
+    50: '#f0fdfa',
+    100: '#ccfbf1',
+    200: '#99f6e4',
+    300: '#5eead4',
+    400: '#2dd4bf',
+    500: '#14b8a6',
+    600: '#0d9488',
+    700: '#0f766e',
+    800: '#115e59',
+    900: '#134e4a',
+  },
+
+  dark: {
+    50: '#c1c2c5',
+    100: '#a6a7ab',
+    200: '#909296',
+    300: '#5c5f66',
+    400: '#373a40',
+    500: '#2c2e33',
+    600: '#25262b',
+    700: '#1a1b1e',
+    800: '#141517',
+    900: '#101113',
+  },
+} as const satisfies Record<string, PrismuiColorScale>;
+
+export { shadeSteps };
