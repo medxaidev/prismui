@@ -1,20 +1,28 @@
-import type { PrismuiColorFamilies, PrismuiColorFamily, PrismuiColorSchemes } from './colors';
+import type {
+  PrismuiColorFamilies,
+  PrismuiColorFamily,
+} from './colors';
+import type { PrismuiColorSchemes } from './palette';
 import type { PrismuiSpacingValues } from './spacing';
+import type { PrismuiPrimaryShade } from './primary-shade';
 
-export type PrismuiShadeIndex = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9;
-
-export interface PrismuiPrimaryShade {
-  light: PrismuiShadeIndex;
-  dark: PrismuiShadeIndex;
-}
 
 export interface PrismuiTheme {
   colorFamilies: PrismuiColorFamilies;
+  primaryShade: PrismuiPrimaryShade;
   colorSchemes: PrismuiColorSchemes;
+
+
 
   primaryColor: PrismuiColorFamily;
   secondaryColor: PrismuiColorFamily;
-  primaryShade: PrismuiPrimaryShade;
+  infoColor: PrismuiColorFamily;
+  successColor: PrismuiColorFamily;
+  warningColor: PrismuiColorFamily;
+  errorColor: PrismuiColorFamily;
+  neutralColor: PrismuiColorFamily;
+
+
 
   spacing: PrismuiSpacingValues;
 

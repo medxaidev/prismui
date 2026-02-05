@@ -13,14 +13,20 @@ export type {
 
 export type { PrismuiColorScheme, PrismuiResolvedColorScheme } from './color-scheme';
 
+export type { PrismuiPrimaryShade, PrismuiShadeIndex } from './primary-shade';
+
+export { PRISMUI_SHADE_STEPS } from './colors';
 export type {
   PrismuiColorShade,
-  PRISMUI_SHADE_STEPS,
   PrismuiColorScale,
   PrismuiColorFamilyName,
   PrismuiThemeColorFamiliesOverride,
   PrismuiColorFamily,
   PrismuiColorFamilies,
+} from './colors';
+
+
+export type {
   PrismuiPaletteCommon,
   PrismuiPaletteColor,
   PrismuiPaletteText,
@@ -28,7 +34,9 @@ export type {
   PrismuiPaletteAction,
   PrismuiPalette,
   PrismuiColorSchemes,
-} from './colors';
+} from './palette';
+
+
 
 export type {
   PrismuiVariant,
@@ -39,4 +47,3 @@ export type {
 
 export type { PrismuiTheme } from './theme';
 
-export type { PrismuiShadeIndex } from './theme';
