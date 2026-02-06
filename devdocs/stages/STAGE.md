@@ -6,6 +6,7 @@ Each stage builds upon the previous one and introduces new components and capabi
 | Stage | Name               | Status      | Date    | Key Focus                                   |
 | ----- | ------------------ | ----------- | ------- | ------------------------------------------- |
 | 1     | Core System        | In Progress | 2026-02 | Theming, polymorphic components, foundation |
+| 1.3   | └─ Theme System    | In Progress | 2026-02 | Color system, palette resolver, providers   |
 | 2     | Input Components   | Planned     | TBD     | Forms, validation, user input               |
 | 3     | Feedback & Overlay | Planned     | TBD     | Modals, notifications, alerts               |
 | 4     | Complex Components | Planned     | TBD     | DataTable, Calendar, advanced UI            |

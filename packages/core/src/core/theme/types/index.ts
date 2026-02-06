@@ -32,7 +32,9 @@ export type {
   PrismuiPaletteText,
   PrismuiPaletteBackground,
   PrismuiPaletteAction,
+  PrismuiPaletteInput,
   PrismuiPalette,
+  PrismuiColorSchemesInput,
   PrismuiColorSchemes,
 } from './palette';
 
@@ -45,5 +47,5 @@ export type {
   PrismuiVariantKey,
 } from './variant';
 
-export type { PrismuiTheme } from './theme';
+export type { PrismuiThemeInput, PrismuiTheme } from './theme';
 

@@ -1,211 +1,141 @@
-import type {
-  PrismuiPalette,
-  PrismuiColorFamily,
-  PrismuiResolvedColorScheme,
-  PrismuiShadeIndex,
-  PrismuiTheme,
-} from './types';
+import type { PrismuiPaletteInput, PrismuiThemeInput } from './types';
 import { defaultColorFamilies } from './default-colors';
 
-const shadeSteps = [
-  50,
-  100,
-  200,
-  300,
-  400,
-  500,
-  600,
-  700,
-  800,
-  900,
-] as const;
+const lightPalette: PrismuiPaletteInput<'light'> = {
+  scheme: 'light',
 
-const DEFAULT_PRIMARY_COLOR: PrismuiColorFamily = 'blue';
-const DEFAULT_SECONDARY_COLOR: PrismuiColorFamily = 'violet';
-const DEFAULT_PRIMARY_SHADE = {
-  light: 5,
-  dark: 6,
-} as const satisfies { light: PrismuiShadeIndex; dark: PrismuiShadeIndex };
-
-function clampShadeIndex(index: number): PrismuiShadeIndex {
-  return Math.min(9, Math.max(0, index)) as PrismuiShadeIndex;
-}
-
-function indexToShade(index: PrismuiShadeIndex) {
-  return shadeSteps[index];
-}
-
-function paletteColorFromFamily(
-  family: keyof typeof defaultColorFamilies,
-  scheme: PrismuiResolvedColorScheme,
-  options?: {
-    contrastText?: string;
-    mainIndex?: PrismuiShadeIndex;
-  }
-) {
-  const scale = defaultColorFamilies[family];
-  const mainIndex = options?.mainIndex ?? (scheme === 'dark' ? 6 : 5);
-
-  const lighterIndex = clampShadeIndex(mainIndex - 2);
-  const lightIndex = clampShadeIndex(mainIndex - 1);
-  const darkIndex = clampShadeIndex(mainIndex + 1);
-  const darkerIndex = clampShadeIndex(mainIndex + 2);
-
-  const lighterShade = indexToShade(lighterIndex);
-  const lightShade = indexToShade(lightIndex);
-  const mainShade = indexToShade(mainIndex);
-  const darkShade = indexToShade(darkIndex);
-  const darkerShade = indexToShade(darkerIndex);
-
-  const contrastText =
-    options?.contrastText ?? (scheme === 'dark' ? '#0B0D0E' : '#FFFFFF');
-
-  return {
-    lighter: scale[lighterShade],
-    light: scale[lightShade],
-    main: scale[mainShade],
-    dark: scale[darkShade],
-    darker: scale[darkerShade],
-    contrastText,
-  };
-}
-
-function createPalette<S extends PrismuiResolvedColorScheme>(
-  scheme: S
-): PrismuiPalette<S> {
-  const isDark = scheme === 'dark';
-
-  const mainIndex = isDark ? DEFAULT_PRIMARY_SHADE.dark : DEFAULT_PRIMARY_SHADE.light;
-
-  return {
-    scheme,
-
-    common: {
-      black: '#000000',
-      white: '#FFFFFF',
-    },
-
-    primary: paletteColorFromFamily(DEFAULT_PRIMARY_COLOR, scheme, {
-      mainIndex,
-    }),
-    secondary: paletteColorFromFamily(DEFAULT_SECONDARY_COLOR, scheme, {
-      mainIndex,
-    }),
-
-    info: paletteColorFromFamily('cyan', scheme, {
-      mainIndex,
-    }),
-    success: paletteColorFromFamily('green', scheme, {
-      mainIndex,
-    }),
-    warning: paletteColorFromFamily('yellow', scheme, {
-      contrastText: '#0B0D0E',
-      mainIndex,
-    }),
-    error: paletteColorFromFamily('red', scheme, {
-      mainIndex,
-    }),
-
-    neutral: paletteColorFromFamily('neutral', scheme, {
-      mainIndex: isDark ? 5 : 7,
-      contrastText: '#FFFFFF',
-    }),
-
-    text: isDark
-      ? {
-        primary: '#FFFFFF',
-        secondary: '#919EAB',
-        disabled: '#637381',
-        icon: 'rgba(255, 255, 255, 0.5)',
-
-        primaryChannel: '255 255 255',
-        secondaryChannel: '145 158 171',
-        disabledChannel: '99 115 129',
-      }
-      : {
-        primary: '#1C252E',
-        secondary: '#637381',
-        disabled: '#919EAB',
-
-        primaryChannel: '28 37 46',
-        secondaryChannel: '99 115 129',
-        disabledChannel: '145 158 171',
-      },
-
-    background: isDark
-      ? {
-        paper: '#1C252E',
-        default: '#141A21',
-        neutral: '#28323D',
-
-        paperChannel: '28 37 46',
-        defaultChannel: '20 26 33',
-        neutralChannel: '40 50 61',
-      }
-      : {
-        paper: '#FFFFFF',
-        default: '#FFFFFF',
-        neutral: '#F4F6F8',
-
-        paperChannel: '255 255 255',
-        defaultChannel: '255 255 255',
-        neutralChannel: '244 246 248',
-      },
-
-    divider: isDark ? 'rgba(145 158 171 / 20%)' : 'rgba(0, 0, 0, 0.12)',
-
-    action: isDark
-      ? {
-        active: '#919EAB',
-        hover: 'rgba(145 158 171 / 8%)',
-        selected: 'rgba(145 158 171 / 16%)',
-        focus: 'rgba(145 158 171 / 24%)',
-        disabled: 'rgba(145 158 171 / 80%)',
-        disabledBackground: 'rgba(145 158 171 / 24%)',
-
-        hoverOpacity: 0.08,
-        selectedOpacity: 0.08,
-        focusOpacity: 0.12,
-        activatedOpacity: 0.12,
-        disabledOpacity: 0.48,
-
-        activeChannel: '145 158 171',
-        selectedChannel: '145 158 171',
-      }
-      : {
-        active: '#637381',
-        hover: 'rgba(145 158 171 / 8%)',
-        selected: 'rgba(145 158 171 / 16%)',
-        focus: 'rgba(145 158 171 / 24%)',
-        disabled: 'rgba(145 158 171 / 80%)',
-        disabledBackground: 'rgba(145 158 171 / 24%)',
-
-        hoverOpacity: 0.08,
-        selectedOpacity: 0.08,
-        focusOpacity: 0.12,
-        activatedOpacity: 0.12,
-        disabledOpacity: 0.48,
-
-        activeChannel: '99 115 129',
-        selectedChannel: '145 158 171',
-      },
-
-    contrastThreshold: 3,
-    tonalOffset: 0.2,
-  };
-}
-
-export const defaultTheme: PrismuiTheme = {
-  colorFamilies: defaultColorFamilies,
-
-  colorSchemes: {
-    light: { palette: createPalette('light') },
-    dark: { palette: createPalette('dark') },
+  common: {
+    black: '#000000',
+    white: '#FFFFFF',
   },
 
-  primaryColor: DEFAULT_PRIMARY_COLOR,
-  secondaryColor: DEFAULT_SECONDARY_COLOR,
-  primaryShade: DEFAULT_PRIMARY_SHADE,
+
+  neutral: {
+    lighter: defaultColorFamilies.neutral[500],
+    light: defaultColorFamilies.neutral[600],
+    main: defaultColorFamilies.neutral[700],
+    dark: defaultColorFamilies.neutral[800],
+    darker: defaultColorFamilies.neutral[900],
+    contrastText: '#FFFFFF',
+  },
+
+  text: {
+    primary: defaultColorFamilies.gray[800],
+    secondary: defaultColorFamilies.gray[600],
+    disabled: defaultColorFamilies.gray[500],
+
+    primaryChannel: '28 37 46',
+    secondaryChannel: '99 115 129',
+    disabledChannel: '145 158 171',
+  },
+
+  background: {
+    paper: defaultColorFamilies.gray[50],
+    default: defaultColorFamilies.gray[100],
+    neutral: defaultColorFamilies.gray[200],
+
+    paperChannel: '252 253 253',
+    defaultChannel: '249 250 251',
+    neutralChannel: '244 246 248',
+  },
+
+  divider: 'rgba(145 158 171 / 20%)',
+
+  action: {
+    active: defaultColorFamilies.gray[600],
+    hover: 'rgba(145 158 171 / 8%)',
+    selected: 'rgba(145 158 171 / 16%)',
+    focus: 'rgba(145 158 171 / 24%)',
+    disabled: 'rgba(145 158 171 / 80%)',
+    disabledBackground: 'rgba(145 158 171 / 24%)',
+
+    hoverOpacity: 0.08,
+    selectedOpacity: 0.08,
+    focusOpacity: 0.12,
+    activatedOpacity: 0.12,
+    disabledOpacity: 0.48,
+
+    activeChannel: '99 115 129',
+    selectedChannel: '145 158 171',
+  },
+};
+
+const darkPalette: PrismuiPaletteInput<'dark'> = {
+  scheme: 'dark',
+
+  common: {
+    black: '#000000',
+    white: '#FFFFFF',
+  },
+
+
+  neutral: {
+    lighter: defaultColorFamilies.neutral[300],
+    light: defaultColorFamilies.neutral[400],
+    main: defaultColorFamilies.neutral[500],
+    dark: defaultColorFamilies.neutral[600],
+    darker: defaultColorFamilies.neutral[700],
+    contrastText: '#FFFFFF',
+  },
+
+  text: {
+    primary: defaultColorFamilies.gray[50],
+    secondary: defaultColorFamilies.gray[500],
+    disabled: defaultColorFamilies.gray[600],
+    icon: 'rgba(255, 255, 255, 0.5)',
+
+    primaryChannel: '252 253 253',
+    secondaryChannel: '145 158 171',
+    disabledChannel: '99 115 129',
+  },
+
+  background: {
+    paper: defaultColorFamilies.gray[800],
+    default: defaultColorFamilies.gray[900],
+    neutral: defaultColorFamilies.gray[700],
+
+    paperChannel: '28 37 46',
+    defaultChannel: '20 26 33',
+    neutralChannel: '69 79 91',
+  },
+
+  divider: 'rgba(145 158 171 / 20%)',
+
+  action: {
+    active: defaultColorFamilies.gray[500],
+    hover: 'rgba(145 158 171 / 8%)',
+    selected: 'rgba(145 158 171 / 16%)',
+    focus: 'rgba(145 158 171 / 24%)',
+    disabled: 'rgba(145 158 171 / 80%)',
+    disabledBackground: 'rgba(145 158 171 / 24%)',
+
+    hoverOpacity: 0.08,
+    selectedOpacity: 0.08,
+    focusOpacity: 0.12,
+    activatedOpacity: 0.12,
+    disabledOpacity: 0.48,
+
+    activeChannel: '145 158 171',
+    selectedChannel: '145 158 171',
+  },
+};
+
+export const defaultTheme: PrismuiThemeInput = {
+  colorFamilies: defaultColorFamilies,
+
+  primaryShade: { light: 5, dark: 6 },
+  colorSchemes: {
+    light: { palette: lightPalette },
+    dark: { palette: darkPalette },
+  },
+
+  primaryColor: 'blue',
+  secondaryColor: 'violet',
+  infoColor: 'cyan',
+  successColor: 'green',
+  warningColor: 'yellow',
+  errorColor: 'red',
+  neutralColor: 'neutral',
 
   spacing: {
     xs: '0.5rem',

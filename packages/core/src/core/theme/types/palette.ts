@@ -8,9 +8,9 @@ export interface PrismuiPaletteCommon {
 export interface PrismuiPaletteColor {
   main: string;
   light: string;
-  lighter?: string;
+  lighter: string;
   dark: string;
-  darker?: string;
+  darker: string;
   contrastText: string;
 }
 
@@ -51,17 +51,21 @@ export interface PrismuiPaletteAction {
   selectedChannel?: string;
 }
 
-export interface PrismuiPalette<S extends PrismuiResolvedColorScheme = PrismuiResolvedColorScheme> {
+/**
+ * Palette input — semantic colors (primary..error) are optional.
+ * Used by default-theme and user config; resolver fills in the missing ones.
+ */
+export interface PrismuiPaletteInput<S extends PrismuiResolvedColorScheme = PrismuiResolvedColorScheme> {
   scheme: S;
 
   common: PrismuiPaletteCommon;
 
-  primary: PrismuiPaletteColor;
-  secondary: PrismuiPaletteColor;
-  info: PrismuiPaletteColor;
-  success: PrismuiPaletteColor;
-  warning: PrismuiPaletteColor;
-  error: PrismuiPaletteColor;
+  primary?: PrismuiPaletteColor;
+  secondary?: PrismuiPaletteColor;
+  info?: PrismuiPaletteColor;
+  success?: PrismuiPaletteColor;
+  warning?: PrismuiPaletteColor;
+  error?: PrismuiPaletteColor;
 
   neutral: PrismuiPaletteColor;
 
@@ -69,11 +73,31 @@ export interface PrismuiPalette<S extends PrismuiResolvedColorScheme = PrismuiRe
   background: PrismuiPaletteBackground;
   divider: string;
   action: PrismuiPaletteAction;
+}
 
-  contrastThreshold: number;
-  tonalOffset: number;
+/**
+ * Fully resolved palette — all semantic colors are guaranteed present.
+ * This is the output of the theme resolver and what components consume.
+ */
+export interface PrismuiPalette<S extends PrismuiResolvedColorScheme = PrismuiResolvedColorScheme>
+  extends Required<Pick<PrismuiPaletteInput<S>,
+    'primary' | 'secondary' | 'info' | 'success' | 'warning' | 'error'
+  >> {
+  scheme: S;
 
-  getContrastText?: (background: string) => string;
+  common: PrismuiPaletteCommon;
+
+  neutral: PrismuiPaletteColor;
+
+  text: PrismuiPaletteText;
+  background: PrismuiPaletteBackground;
+  divider: string;
+  action: PrismuiPaletteAction;
+}
+
+export interface PrismuiColorSchemesInput {
+  light: { palette: PrismuiPaletteInput<'light'> };
+  dark: { palette: PrismuiPaletteInput<'dark'> };
 }
 
 export interface PrismuiColorSchemes {

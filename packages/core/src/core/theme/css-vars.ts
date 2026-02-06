@@ -174,9 +174,6 @@ export function getPrismuiCssVariables(
       palette.action.selectedChannel;
   }
 
-  vars['--prismui-palette-contrastThreshold'] = String(palette.contrastThreshold);
-  vars['--prismui-palette-tonalOffset'] = String(palette.tonalOffset);
-
   for (const [key, value] of Object.entries(theme.spacing)) {
     vars[`--prismui-spacing-${key}`] = value;
   }
