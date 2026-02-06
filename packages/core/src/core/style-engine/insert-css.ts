@@ -84,6 +84,14 @@ export function hashString(input: string): string {
 
 const inserted = new Map<string, string>();
 
+/**
+ * Clears the internal deduplication cache.
+ * **Test-only** — do not call in production code.
+ */
+export function __resetInsertedCacheForTesting(): void {
+  inserted.clear();
+}
+
 // ---------------------------------------------------------------------------
 // Public API
 // ---------------------------------------------------------------------------
@@ -133,6 +141,13 @@ export function insertCssOnce(
 
   if (sheet) {
     try {
+      // NOTE: split('\n') assumes each line is a complete CSS rule.
+      // This works for atomic classes (e.g., `.prismui-p-md { padding: ... }`)
+      // but will fail for multi-line rules like @media queries or nested selectors.
+      // If such rules are needed in the future, consider:
+      // - Regex split by '}' boundary: cssText.match(/[^}]+}/g)
+      // - Or skip insertRule entirely and use textNode append
+      // For now, insertRule failures safely fall through to the textNode fallback.
       const rules = cssText
         .split('\n')
         .map((r) => r.trim())

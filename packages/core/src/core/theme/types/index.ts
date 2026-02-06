@@ -32,10 +32,10 @@ export type {
   PrismuiPaletteText,
   PrismuiPaletteBackground,
   PrismuiPaletteAction,
-  PrismuiPaletteInput,
   PrismuiPalette,
-  PrismuiColorSchemesInput,
   PrismuiColorSchemes,
+  /** @deprecated */ PrismuiPaletteInput,
+  /** @deprecated */ PrismuiColorSchemesInput,
 } from './palette';
 
 

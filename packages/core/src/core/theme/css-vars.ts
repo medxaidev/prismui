@@ -1,8 +1,13 @@
 import type {
   PrismuiColorShade,
+  PrismuiColorScale,
+  PrismuiColorFamily,
+  PrismuiPaletteColor,
   PrismuiResolvedColorScheme,
+  PrismuiShadeIndex,
   PrismuiTheme,
 } from './types';
+import { PRISMUI_SHADE_STEPS } from './types';
 
 const SHADE_STEPS: readonly PrismuiColorShade[] = [
   50,
@@ -44,6 +49,61 @@ function getColorChannels(color: string): string | null {
   return hexToRgbChannels(color);
 }
 
+// ---------------------------------------------------------------------------
+// Shade resolver (resolves semantic palette colors from colorFamilies)
+// ---------------------------------------------------------------------------
+
+function clampIndex(index: number): PrismuiShadeIndex {
+  return Math.max(0, Math.min(9, index)) as PrismuiShadeIndex;
+}
+
+function indexToShade(index: PrismuiShadeIndex): PrismuiColorShade {
+  return PRISMUI_SHADE_STEPS[index];
+}
+
+function resolvePaletteColor(
+  scale: PrismuiColorScale,
+  center: PrismuiShadeIndex,
+  contrastText: string,
+): PrismuiPaletteColor {
+  return {
+    lighter: scale[indexToShade(clampIndex(center - 4))],
+    light: scale[indexToShade(clampIndex(center - 2))],
+    main: scale[indexToShade(center)],
+    dark: scale[indexToShade(clampIndex(center + 2))],
+    darker: scale[indexToShade(clampIndex(center + 4))],
+    contrastText,
+  };
+}
+
+function defaultContrastText(scheme: 'light' | 'dark'): string {
+  return scheme === 'light' ? '#FFFFFF' : '#0B0D0E';
+}
+
+const SEMANTIC_COLOR_KEYS = [
+  'primary',
+  'secondary',
+  'info',
+  'success',
+  'warning',
+  'error',
+] as const;
+
+type SemanticColorKey = (typeof SEMANTIC_COLOR_KEYS)[number];
+
+const SEMANTIC_TO_CONFIG: Record<SemanticColorKey, keyof PrismuiTheme> = {
+  primary: 'primaryColor',
+  secondary: 'secondaryColor',
+  info: 'infoColor',
+  success: 'successColor',
+  warning: 'warningColor',
+  error: 'errorColor',
+};
+
+// ---------------------------------------------------------------------------
+// CSS variable generation
+// ---------------------------------------------------------------------------
+
 export function getPrismuiCssVariables(
   theme: PrismuiTheme,
   scheme: PrismuiResolvedColorScheme
@@ -63,15 +123,31 @@ export function getPrismuiCssVariables(
   vars['--prismui-palette-common-black'] = palette.common.black;
   vars['--prismui-palette-common-white'] = palette.common.white;
 
+  // Resolve semantic palette colors from colorFamilies + primaryShade
+  // if they are not explicitly provided in the palette.
+  const center = theme.primaryShade[scheme];
+  const resolvedSemantic: Record<string, PrismuiPaletteColor> = {};
+
+  for (const key of SEMANTIC_COLOR_KEYS) {
+    if (palette[key]) {
+      resolvedSemantic[key] = palette[key];
+    } else {
+      const familyName = theme[SEMANTIC_TO_CONFIG[key]] as PrismuiColorFamily;
+      const scale = theme.colorFamilies[familyName];
+      if (scale) {
+        resolvedSemantic[key] = resolvePaletteColor(
+          scale,
+          center,
+          defaultContrastText(scheme),
+        );
+      }
+    }
+  }
+
   const paletteColors = {
-    primary: palette.primary,
-    secondary: palette.secondary,
-    info: palette.info,
-    success: palette.success,
-    warning: palette.warning,
-    error: palette.error,
+    ...resolvedSemantic,
     neutral: palette.neutral,
-  } as const;
+  };
 
   for (const [name, value] of Object.entries(paletteColors)) {
     vars[`--prismui-palette-${name}-main`] = value.main;

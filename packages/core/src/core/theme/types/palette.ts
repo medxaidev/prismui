@@ -52,10 +52,10 @@ export interface PrismuiPaletteAction {
 }
 
 /**
- * Palette input — semantic colors (primary..error) are optional.
- * Used by default-theme and user config; resolver fills in the missing ones.
+ * Palette — semantic colors (primary..error) are optional.
+ * They are resolved from colorFamilies + primaryShade at CSS variable generation time.
  */
-export interface PrismuiPaletteInput<S extends PrismuiResolvedColorScheme = PrismuiResolvedColorScheme> {
+export interface PrismuiPalette<S extends PrismuiResolvedColorScheme = PrismuiResolvedColorScheme> {
   scheme: S;
 
   common: PrismuiPaletteCommon;
@@ -75,32 +75,13 @@ export interface PrismuiPaletteInput<S extends PrismuiResolvedColorScheme = Pris
   action: PrismuiPaletteAction;
 }
 
-/**
- * Fully resolved palette — all semantic colors are guaranteed present.
- * This is the output of the theme resolver and what components consume.
- */
-export interface PrismuiPalette<S extends PrismuiResolvedColorScheme = PrismuiResolvedColorScheme>
-  extends Required<Pick<PrismuiPaletteInput<S>,
-    'primary' | 'secondary' | 'info' | 'success' | 'warning' | 'error'
-  >> {
-  scheme: S;
-
-  common: PrismuiPaletteCommon;
-
-  neutral: PrismuiPaletteColor;
-
-  text: PrismuiPaletteText;
-  background: PrismuiPaletteBackground;
-  divider: string;
-  action: PrismuiPaletteAction;
-}
-
-export interface PrismuiColorSchemesInput {
-  light: { palette: PrismuiPaletteInput<'light'> };
-  dark: { palette: PrismuiPaletteInput<'dark'> };
-}
+/** @deprecated Use PrismuiPalette instead. */
+export type PrismuiPaletteInput<S extends PrismuiResolvedColorScheme = PrismuiResolvedColorScheme> = PrismuiPalette<S>;
 
 export interface PrismuiColorSchemes {
   light: { palette: PrismuiPalette<'light'> };
   dark: { palette: PrismuiPalette<'dark'> };
 }
+
+/** @deprecated Use PrismuiColorSchemes instead. */
+export type PrismuiColorSchemesInput = PrismuiColorSchemes;
