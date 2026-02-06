@@ -123,6 +123,7 @@ Implemented the palette resolver in `create-theme.ts`:
 - **`createTheme()`** — deep-merges user config with `defaultTheme`, then resolves both light and dark palettes; returns fully typed `PrismuiTheme`
 
 **Resolver priority:**
+
 1. User-provided semantic colors in palette → respected as-is
 2. Otherwise → auto-generated from `colorFamilies` + `primaryShade`
 3. Static tokens (`common`, `neutral`, `text`, `background`, `divider`, `action`) → always from merged config
@@ -149,30 +150,76 @@ Recorded the color system design decisions in `ADR-002-Color-System-Architecture
 
 ---
 
+### 3.8 ADR-003: CSS Injection & Style Engine Architecture ✅
+
+**Date:** 2026-02-06
+
+Recorded the CSS injection strategy in `ADR-003-CSS-Injection-Style-Engine.md`:
+
+- **Layer 1:** Theme CSS variables → static `style.css` (build-time, imported by consumer)
+- **Layer 2:** System props + component styles → `insertCssOnce()` runtime CSSOM atomic classes
+- Compared against MUI (Emotion runtime) and Mantine (inline styles) — PrismUI approach is zero-dependency, no inline styles, class-based (overridable)
+- SSR via `PrismuiStyleRegistry` + `useServerInsertedHTML`
+
+**Files:** `devdocs/decisions/ADR-003-CSS-Injection-Style-Engine.md`
+
+---
+
+### 3.9 Style Engine Implementation ✅
+
+**Date:** 2026-02-06
+
+Implemented the style engine module in `core/style-engine/`:
+
+- **`style-registry.ts`** — `PrismuiStyleRegistry` interface + `createStyleRegistry()` factory. Collects CSS snippets in memory during SSR; deduplicates by id; `flush()` returns accumulated CSS and resets.
+- **`insert-css.ts`** — `insertCssOnce(id, cssText, registry?)` core injection function:
+  - Browser: two separate `<style>` elements — `data-prismui-theme-vars` (theme variables, full `textContent` replace on theme switch) and `data-prismui-style-engine` (component/atomic rules, CSSOM `insertRule` append)
+  - SSR: delegates to `registry.insert()` when `canUseDOM()` is false
+  - Deduplication via DJB2 hash comparison per id
+  - Fallback: `textNode.append` if `insertRule` throws
+- **`StyleRegistryProvider.tsx`** — React Context provider + `useStyleRegistry()` hook for passing registry through the component tree (SSR only; returns `null` in SPA)
+- **`index.ts`** — barrel exports
+
+**Tests:** 22 tests, all passing:
+
+- `style-registry.test.ts` — 7 tests (insert, dedup, order, has, flush, reuse, newline handling)
+- `insert-css.test.ts` — 11 tests (hashString, browser injection, dedup, theme vars separation, theme vars replacement, SSR delegation, SSR no-registry safety)
+- `StyleRegistryProvider.test.tsx` — 4 tests (context provision, instance identity, null without provider)
+
+**Files:**
+
+- `packages/core/src/core/style-engine/style-registry.ts`
+- `packages/core/src/core/style-engine/insert-css.ts`
+- `packages/core/src/core/style-engine/StyleRegistryProvider.tsx`
+- `packages/core/src/core/style-engine/index.ts`
+
+---
+
 ## Remaining Work
 
-### 3.8 CSS Variables Generation 🔄
+### 3.10 CSS Variables for style.css 🔄
 
-Update `css-vars.ts` to generate CSS variables from the resolved `PrismuiTheme`, including:
+Update `css-vars.ts` to generate complete CSS text for static `style.css` output:
 
 - Color family shades (`--prismui-color-blue-50` .. `--prismui-color-blue-900`)
 - Semantic palette colors (`--prismui-palette-primary-main`, etc.)
 - Text/background/action tokens
 - Channel tokens for `rgba()` composition
+- Light/dark scheme selectors
 
-### 3.9 Provider Architecture 🔄
+### 3.11 Provider Architecture 🔄
 
 - `PrismuiThemeProvider` — theme context only
-- `PrismuiProvider` — theme + CSS variables + baseline styles
+- `PrismuiProvider` — theme + CSS variables injection + baseline styles
 - `useTheme()` hook
 - Runtime theme switching (light/dark)
 
-### 3.10 Next.js App Router SSR Support 🔄
+### 3.12 Next.js App Router SSR Support 🔄
 
 - `PrismuiAppProvider` — uses `useServerInsertedHTML` for SSR style injection
 - No FOUC on initial load
 
-### 3.11 Typecheck & Testing 🔄
+### 3.13 Typecheck & Testing 🔄
 
 - Run full typecheck across the package
 - Unit tests for `createTheme()` resolver
@@ -183,36 +230,51 @@ Update `css-vars.ts` to generate CSS variables from the resolved `PrismuiTheme`,
 
 ## Key Design Decisions
 
-| Decision | Approach | Reference |
-|----------|----------|-----------|
-| Color scale model | Dual-index (0–9 internal + 50–900 external) | ADR-002 |
-| Semantic color config | `primaryColor: 'blue'` (Mantine-style) | ADR-002 |
-| Shade derivation | ±2/±4 discrete offsets, clamped to 0–9 | ADR-002 |
-| neutral handling | Static, does not follow primaryShade | ADR-002 |
-| text/background/action | Derived from gray family, static per scheme | ADR-002 |
-| Type system | Input (optional semantics) → Resolved (required) | ADR-002 |
-| Provider naming | PrismuiProvider / PrismuiThemeProvider / PrismuiAppProvider | ADR-001 |
+| Decision               | Approach                                                    | Reference |
+| ---------------------- | ----------------------------------------------------------- | --------- |
+| Color scale model      | Dual-index (0–9 internal + 50–900 external)                 | ADR-002   |
+| Semantic color config  | `primaryColor: 'blue'` (Mantine-style)                      | ADR-002   |
+| Shade derivation       | ±2/±4 discrete offsets, clamped to 0–9                      | ADR-002   |
+| neutral handling       | Static, does not follow primaryShade                        | ADR-002   |
+| text/background/action | Derived from gray family, static per scheme                 | ADR-002   |
+| Type system            | Input (optional semantics) → Resolved (required)            | ADR-002   |
+| CSS injection          | Static `style.css` + runtime `insertCssOnce` CSSOM          | ADR-003   |
+| Style deduplication    | DJB2 hash per id, atomic classes                            | ADR-003   |
+| Theme vars isolation   | Dedicated `<style data-prismui-theme-vars>` (replaceable)   | ADR-003   |
+| SSR CSS collection     | `PrismuiStyleRegistry` + `useServerInsertedHTML`            | ADR-003   |
+| Provider naming        | PrismuiProvider / PrismuiThemeProvider / PrismuiAppProvider | ADR-001   |
 
 ---
 
 ## File Structure
 
 ```
-packages/core/src/core/theme/
-├── types/
-│   ├── colors.ts           # Color shades, scales, families
-│   ├── primary-shade.ts    # PrismuiShadeIndex, PrismuiPrimaryShade
-│   ├── palette.ts          # PaletteInput, Palette, ColorSchemes
-│   ├── theme.ts            # ThemeInput, Theme
-│   ├── color-scheme.ts     # PrismuiResolvedColorScheme
-│   ├── spacing.ts          # PrismuiSpacingValues
-│   ├── variant.ts          # Component variant types
-│   └── index.ts            # Barrel exports
-├── default-colors.ts       # Raw color ramps (14 families × 10 shades)
-├── default-theme.ts        # Data-first default theme (PrismuiThemeInput)
-├── create-theme.ts         # createTheme() with palette resolver
-├── css-vars.ts             # CSS variable generation
-└── index.ts                # Theme module barrel exports
+packages/core/src/core/
+├── style-engine/
+│   ├── insert-css.ts              # insertCssOnce + hashString + canUseDOM
+│   ├── insert-css.test.ts         # 11 tests
+│   ├── style-registry.ts          # PrismuiStyleRegistry + createStyleRegistry
+│   ├── style-registry.test.ts     # 7 tests
+│   ├── StyleRegistryProvider.tsx   # React Context + Provider + hook
+│   ├── StyleRegistryProvider.test.tsx  # 4 tests
+│   └── index.ts                   # Barrel exports
+├── theme/
+│   ├── types/
+│   │   ├── colors.ts              # Color shades, scales, families
+│   │   ├── primary-shade.ts       # PrismuiShadeIndex, PrismuiPrimaryShade
+│   │   ├── palette.ts             # PaletteInput, Palette, ColorSchemes
+│   │   ├── theme.ts               # ThemeInput, Theme
+│   │   ├── color-scheme.ts        # PrismuiResolvedColorScheme
+│   │   ├── spacing.ts             # PrismuiSpacingValues
+│   │   ├── variant.ts             # Component variant types
+│   │   └── index.ts               # Barrel exports
+│   ├── default-colors.ts          # Raw color ramps (14 families × 10 shades)
+│   ├── default-theme.ts           # Data-first default theme (PrismuiThemeInput)
+│   ├── create-theme.ts            # createTheme() with palette resolver
+│   ├── css-vars.ts                # CSS variable generation
+│   └── index.ts                   # Theme module barrel exports
+├── PrismuiProvider/               # (planned)
+└── PrismuiThemeProvider/          # (planned)
 ```
 
 ---
@@ -221,6 +283,7 @@ packages/core/src/core/theme/
 
 - ADR-001: Mantine-MUI Hybrid Architecture
 - ADR-002: Color System Architecture
+- ADR-003: CSS Injection & Style Engine
 - STAGE-001-002-COMPLETION.md
 - [Mantine Theming](https://mantine.dev/theming/theme-object/)
 - [MUI Palette](https://mui.com/material-ui/customization/palette/)
