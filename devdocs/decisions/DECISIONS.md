@@ -8,15 +8,15 @@
 | ------------------------------------------------------- | ------------------------------- | -------- | ---------- | --------------------------------------------------------------- |
 | [ADR-001](./ADR-001-Mantine-MUI-Hybrid-Architecture.md) | Mantine-MUI Hybrid Architecture | Accepted | 2026-02-04 | High - Defines core architectural approach                      |
 | [ADR-002](./ADR-002-Color-System-Architecture.md)       | Color System Architecture       | Accepted | 2026-02-06 | High - Defines color families, semantic palette, shade resolver |
+| [ADR-003](./ADR-003-CSS-Injection-Style-Engine.md)      | CSS Injection & Style Engine    | Accepted | 2026-02-06 | High - Static style.css + insertCssOnce atomic classes          |
 
 ## Planned ADRs
 
-| ID      | Title                               | Status | Date |
-| ------- | ----------------------------------- | ------ | ---- |
-| ADR-003 | CSS-in-JS vs CSS Variables Decision | Draft  | TBD  |
-| ADR-004 | Component Testing Strategy          | Draft  | TBD  |
-| ADR-005 | Bundle Size Optimization Approach   | Draft  | TBD  |
-| ADR-006 | Animation System Design             | Draft  | TBD  |
+| ID      | Title                             | Status | Date |
+| ------- | --------------------------------- | ------ | ---- |
+| ADR-004 | Component Testing Strategy        | Draft  | TBD  |
+| ADR-005 | Bundle Size Optimization Approach | Draft  | TBD  |
+| ADR-006 | Animation System Design           | Draft  | TBD  |
 
 ## ADR Template
 
