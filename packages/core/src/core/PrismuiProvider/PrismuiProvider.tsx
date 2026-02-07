@@ -6,7 +6,7 @@ import type { PrismuiStyleRegistry } from '../style-engine';
 import { StyleRegistryProvider } from '../style-engine';
 import { PrismuiThemeProvider } from './PrismuiThemeProvider';
 import type { PrismuiColorSchemeManager } from './color-scheme-manager';
-import { ThemeVars } from './ThemeVars';
+import { ThemeVars } from '../css-vars';
 import { CssBaseline } from '../css-baseline';
 
 // ---------------------------------------------------------------------------

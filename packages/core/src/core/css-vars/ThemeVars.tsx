@@ -1,9 +1,9 @@
 'use client';
 
 import { useLayoutEffect } from 'react';
-import { getPrismuiThemeCssText } from '../theme';
+import { getPrismuiThemeCssText } from './css-vars';
 import { insertCssOnce } from '../style-engine';
-import { usePrismuiTheme } from './prismui-theme-context';
+import { usePrismuiTheme } from '../PrismuiProvider/prismui-theme-context';
 import { useStyleRegistry } from '../style-engine';
 
 /**

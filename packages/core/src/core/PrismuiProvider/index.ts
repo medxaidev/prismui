@@ -4,7 +4,7 @@ export type { PrismuiProviderProps } from './PrismuiProvider';
 export { PrismuiThemeProvider } from './PrismuiThemeProvider';
 export type { PrismuiThemeProviderProps } from './PrismuiThemeProvider';
 
-export { ThemeVars } from './ThemeVars';
+export { ThemeVars } from '../css-vars';
 export { CssBaseline } from '../css-baseline';
 
 export {

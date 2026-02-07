@@ -216,7 +216,7 @@ Refactored `css-vars.ts` to integrate palette resolution logic (moved from `crea
 
 **CSS Variable Naming (Updated 2026-02-07):** All `--prismui-palette-*` variables renamed to `--prismui-*` for brevity.
 
-**Files:** `packages/core/src/core/theme/css-vars.ts`
+**Files:** `packages/core/src/core/css-vars/css-vars.ts`
 
 ---
 
@@ -232,8 +232,8 @@ Implemented the full provider architecture:
   - `usePrismuiTheme()` — full context (theme, colorScheme, setColorScheme, clearColorScheme)
   - `useTheme()` — theme object only
   - `useColorScheme()` — `[resolvedScheme, setColorScheme]` tuple
-- **`ThemeVars`** — calls `getPrismuiThemeCssText()` and injects via `insertCssOnce`
-- **`CssBaseline`** — global reset/base styles (moved to `core/css-baseline/` in 3.16)
+- **`ThemeVars`** — moved to `core/css-vars/` in 3.18
+- **`CssBaseline`** — moved to `core/css-baseline/` in 3.16
 - Runtime theme switching (light/dark/auto)
 
 **Files:**
@@ -241,7 +241,6 @@ Implemented the full provider architecture:
 - `packages/core/src/core/PrismuiProvider/PrismuiProvider.tsx`
 - `packages/core/src/core/PrismuiProvider/PrismuiThemeProvider.tsx`
 - `packages/core/src/core/PrismuiProvider/prismui-theme-context.ts`
-- `packages/core/src/core/PrismuiProvider/ThemeVars.tsx`
 - `packages/core/src/core/PrismuiProvider/index.ts`
 
 ---
@@ -399,13 +398,97 @@ Renamed all `--prismui-palette-*` CSS variables to `--prismui-*` for brevity:
 
 Unchanged: `--prismui-color-*` (color families), `--prismui-spacing-*`, `--prismui-scheme`, `--prismui-font-family`, `--prismui-font-family-monospace`.
 
-**Files:** `packages/core/src/core/theme/css-vars.ts` + all consumers updated
+**Files:** `packages/core/src/core/css-vars/css-vars.ts` + all consumers updated
+
+---
+
+### 3.18 CSS Vars Module Extraction ✅
+
+**Date:** 2026-02-07
+
+Extracted CSS variable generation and injection into a dedicated `core/css-vars/` module:
+
+- **`css-vars.ts`** — moved from `theme/css-vars.ts`; contains `getPrismuiCssVariables()`, `cssVariablesToCssText()`, `getPrismuiThemeCssText()`, and all shade resolution logic
+- **`ThemeVars.tsx`** — moved from `PrismuiProvider/ThemeVars.tsx`; React component that injects theme CSS variables via `insertCssOnce`
+- **`index.ts`** — barrel exports
+
+**Rationale:** CSS variable generation is an independent concern — it reads from `theme` types but does not belong inside the `theme/` module (which holds data and types) nor inside `PrismuiProvider/` (which is the React integration layer). The `core/css-vars/` module sits between them.
+
+**No resolver pattern:** Unlike Mantine's `defaultCssVariablesResolver` + custom generator approach, PrismUI uses a single `getPrismuiCssVariables()` function. Custom variables can be added via `theme.other` in the future. A pluggable resolver is unnecessary — 99% of users never replace it.
+
+**Files:**
+
+- `packages/core/src/core/css-vars/css-vars.ts`
+- `packages/core/src/core/css-vars/ThemeVars.tsx`
+- `packages/core/src/core/css-vars/index.ts`
+
+---
+
+### 3.19 Color Functions Module & Palette Vars Refactor ✅
+
+**Date:** 2026-02-07
+
+#### Color Functions (`core/color-functions/`)
+
+Standalone utility module extracted from Mantine's `color-functions`, adapted for PrismUI. All functions are pure (no theme dependency) and support hex, rgb(), rgba(), hsl(), hsla() inputs.
+
+| Function                          | Description                                                    |
+| --------------------------------- | -------------------------------------------------------------- |
+| `toRgba(color)`                   | Parse any CSS color string to `{ r, g, b, a }`                 |
+| `luminance(color)`                | WCAG 2.0 relative luminance (0–1)                              |
+| `isLightColor(color, threshold?)` | `luminance > threshold` (default 0.179)                        |
+| `rgba(color, alpha)` / `alpha()`  | Apply alpha; uses `color-mix()` for CSS variables              |
+| `darken(color, amount)`           | Darken by 0–1; uses `color-mix()` for CSS variables            |
+| `lighten(color, amount)`          | Lighten by 0–1; uses `color-mix()` for CSS variables           |
+| `getColorChannels(color)`         | Convert to RGB triplet string (`"12 104 233"`)                 |
+| `getContrastText(bg)`             | Auto black (`#0B0D0E`) or white (`#FFFFFF`) based on luminance |
+
+#### Palette Vars Extraction (`css-vars/palette-vars.ts`)
+
+Palette CSS variable generation extracted from monolithic `css-vars.ts` into `palette-vars.ts`:
+
+- **`getPaletteVars(theme, scheme)`** — generates all palette-related CSS variables (semantic colors, neutral, text, background, divider, action)
+- **`css-vars.ts`** — now delegates palette generation via `Object.assign(vars, getPaletteVars(...))`, keeping only color-family shades, scheme, font, and spacing
+
+#### Auto `contrastText`
+
+`contrastText` is auto-computed via `getContrastText()` (WCAG luminance) when:
+
+1. Semantic colors are auto-resolved from `colorFamilies` + `primaryShade`
+2. User-provided palette has no `contrastText` value
+
+Luminance threshold: **0.45** (not strict WCAG 0.179). This matches MUI's visual behavior — only very bright colors (e.g. yellow/amber, luminance > 0.45) get dark contrast text `#1C252E` (gray-800); all others get white `#FFFFFF`. Result: primary/secondary/info/success/error → white text, warning → dark text.
+
+#### Channel Variants
+
+All 6 `PrismuiPaletteColor` fields now emit `*Channel` CSS variables:
+
+```
+--prismui-primary-lighterChannel: 219 234 254;
+--prismui-primary-lightChannel: 66 133 244;
+--prismui-primary-mainChannel: 33 150 243;
+--prismui-primary-darkChannel: 25 118 210;
+--prismui-primary-darkerChannel: 13 71 161;
+--prismui-primary-contrastTextChannel: 255 255 255;
+```
+
+Priority: user-provided `*Channel` values > auto-computed via `getColorChannels()`. Text and background channels also auto-computed if not user-defined.
+
+**Type update:** `PrismuiPaletteColor` now includes optional `lighterChannel`, `lightChannel`, `mainChannel`, `darkChannel`, `darkerChannel`, `contrastTextChannel`.
+
+**Files:**
+
+- `packages/core/src/core/color-functions/` (7 files + index)
+- `packages/core/src/core/css-vars/palette-vars.ts`
+- `packages/core/src/core/css-vars/css-vars.ts` (simplified)
+- `packages/core/src/core/theme/types/palette.ts` (channel fields added)
+- `packages/core/src/core/PrismuiProvider/PrismuiProvider.stories.tsx` (CSS output stories)
 
 ---
 
 ## Remaining Work
 
-### 3.18 Next.js App Router SSR Support 🔄
+### 3.20 Next.js App Router SSR Support 🔄
 
 - `PrismuiAppProvider` — uses `useServerInsertedHTML` for SSR style injection
 - `InitColorSchemeScript` — inline script to prevent FOUC (reads localStorage before React hydrates)
@@ -415,24 +498,32 @@ Unchanged: `--prismui-color-*` (color families), `--prismui-spacing-*`, `--prism
 
 ## Key Design Decisions
 
-| Decision               | Approach                                                        | Reference |
-| ---------------------- | --------------------------------------------------------------- | --------- |
-| Color scale model      | Dual-index (0–9 internal + 50–900 external)                     | ADR-002   |
-| Semantic color config  | `primaryColor: 'blue'` (Mantine-style)                          | ADR-002   |
-| Shade derivation       | ±2/±4 discrete offsets, clamped to 0–9                          | ADR-002   |
-| neutral handling       | Static, does not follow primaryShade                            | ADR-002   |
-| text/background/action | Derived from gray family, static per scheme                     | ADR-002   |
-| Type system            | Unified (optional semantics, resolved at CSS var time)          | ADR-002   |
-| CSS injection          | Static `style.css` + runtime `insertCssOnce` CSSOM              | ADR-003   |
-| Style deduplication    | DJB2 hash per id, atomic classes                                | ADR-003   |
-| Theme vars isolation   | Dedicated `<style data-prismui-theme-vars>` (replaceable)       | ADR-003   |
-| SSR CSS collection     | `PrismuiStyleRegistry` + `useServerInsertedHTML`                | ADR-003   |
-| Provider naming        | PrismuiProvider / PrismuiThemeProvider / PrismuiAppProvider     | ADR-001   |
-| Color scheme manager   | Strategy pattern, subscribe returns unsubscribe                 | ADR-004   |
-| Palette resolution     | Deferred to CSS variable generation (not createTheme)           | ADR-002   |
-| CSS var naming         | `--prismui-*` (no `palette-` prefix)                            | —         |
-| CssBaseline            | Mantine+MUI hybrid, all values via CSS vars, independent module | —         |
-| Font tokens            | `--prismui-font-family` + `--prismui-font-family-monospace`     | —         |
+| Decision                | Approach                                                                                                                                                                                                                                                                                              | Reference |
+| ----------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------- |
+| Color scale model       | Dual-index (0–9 internal + 50–900 external)                                                                                                                                                                                                                                                           | ADR-002   |
+| Semantic color config   | `primaryColor: 'blue'` (Mantine-style)                                                                                                                                                                                                                                                                | ADR-002   |
+| Shade derivation        | ±2/±4 discrete offsets, clamped to 0–9                                                                                                                                                                                                                                                                | ADR-002   |
+| neutral handling        | Static, does not follow primaryShade                                                                                                                                                                                                                                                                  | ADR-002   |
+| text/background/action  | Derived from gray family, static per scheme                                                                                                                                                                                                                                                           | ADR-002   |
+| Type system             | Unified (optional semantics, resolved at CSS var time)                                                                                                                                                                                                                                                | ADR-002   |
+| CSS injection           | Static `style.css` + runtime `insertCssOnce` CSSOM                                                                                                                                                                                                                                                    | ADR-003   |
+| Style deduplication     | DJB2 hash per id, atomic classes                                                                                                                                                                                                                                                                      | ADR-003   |
+| Theme vars isolation    | Dedicated `<style data-prismui-theme-vars>` (replaceable)                                                                                                                                                                                                                                             | ADR-003   |
+| SSR CSS collection      | `PrismuiStyleRegistry` + `useServerInsertedHTML`                                                                                                                                                                                                                                                      | ADR-003   |
+| Provider naming         | PrismuiProvider / PrismuiThemeProvider / PrismuiAppProvider                                                                                                                                                                                                                                           | ADR-001   |
+| Color scheme manager    | Strategy pattern, subscribe returns unsubscribe                                                                                                                                                                                                                                                       | ADR-004   |
+| Palette resolution      | Deferred to CSS variable generation (not createTheme)                                                                                                                                                                                                                                                 | ADR-002   |
+| CSS var naming          | `--prismui-*` (no `palette-` prefix)                                                                                                                                                                                                                                                                  | —         |
+| CssBaseline             | Mantine+MUI hybrid, all values via CSS vars, independent module                                                                                                                                                                                                                                       | —         |
+| Font tokens             | `--prismui-font-family` + `--prismui-font-family-monospace`                                                                                                                                                                                                                                           | —         |
+| Reduce Motion           | Deferred. Mantine uses JS + `data-respect-reduced-motion` attribute; prefer CSS-native `@media (prefers-reduced-motion: reduce)` in baseline when animation components are introduced (zero JS cost)                                                                                                  | —         |
+| Breakpoint Classes      | Deferred. Mantine's `MantineClasses` generates `.visible-from-{bp}` / `.hidden-from-{bp}` utility classes from `theme.breakpoints` via `@media` + `display:none !important`. When breakpoint system is introduced, add optional `<BreakpointClasses />` alongside ThemeVars/CssBaseline in Provider   | —         |
+| getRootElement          | Deferred. Mantine exposes `getRootElement = () => document.documentElement` on Provider for Shadow DOM / iframe scenarios. Not needed currently — PrismUI targets standard DOM. Revisit if Shadow DOM or micro-frontend support is required                                                           | —         |
+| CSS vars resolver       | No pluggable resolver pattern (unlike Mantine's `defaultCssVariablesResolver` + custom generator). Single `getPrismuiCssVariables()` function; extend via `theme.other` if needed                                                                                                                     | —         |
+| Color functions module  | Standalone `core/color-functions/` with `toRgba`, `luminance`, `isLightColor`, `rgba`, `darken`, `lighten`, `getColorChannels`, `getContrastText`. Extracted from Mantine's color-functions, adapted for PrismUI (no theme dependency). Pure utility functions                                        | —         |
+| Auto contrastText       | `contrastText` is auto-computed via luminance (`isLightColor`, threshold 0.45). Light backgrounds (luminance > 0.45) get `#1C252E` (gray-800), dark backgrounds get `#FFFFFF`. Matches MUI visual behavior                                                                                            | —         |
+| Channel variants        | All 6 palette color fields (lighter/light/main/dark/darker/contrastText) emit `*Channel` CSS variables (RGB triplet e.g. `12 104 233`). User-provided channel values take priority; otherwise auto-computed via `getColorChannels()`. Text/background channels also auto-computed if not user-defined | —         |
+| Palette vars extraction | Palette CSS variable generation extracted to `palette-vars.ts` (from monolithic `css-vars.ts`). `css-vars.ts` delegates palette generation via `getPaletteVars()`, keeping only color-family shades, scheme, font, and spacing                                                                        | —         |
 
 ---
 
@@ -454,6 +545,20 @@ packages/core/src/core/
 │   ├── StyleRegistryProvider.tsx   # React Context + Provider + hook
 │   ├── StyleRegistryProvider.test.tsx  # 3 tests
 │   └── index.ts                   # Barrel exports
+├── color-functions/
+│   ├── to-rgba.ts                # toRgba() — parse hex/rgb/hsl to RGBA object
+│   ├── luminance.ts              # luminance() + isLightColor() — WCAG 2.0
+│   ├── rgba.ts                   # rgba() / alpha() — apply alpha transparency
+│   ├── darken.ts                 # darken() — darken color by amount
+│   ├── lighten.ts                # lighten() — lighten color by amount
+│   ├── get-color-channels.ts     # getColorChannels() — color to RGB triplet string
+│   ├── get-contrast-text.ts      # getContrastText() — auto black/white for contrast
+│   └── index.ts                  # Barrel exports
+├── css-vars/
+│   ├── css-vars.ts               # Top-level CSS variable orchestrator
+│   ├── palette-vars.ts           # Palette CSS variable generation (semantic + text/bg/action)
+│   ├── ThemeVars.tsx             # React component — injects theme CSS vars
+│   └── index.ts                  # Barrel exports
 ├── theme/
 │   ├── types/
 │   │   ├── colors.ts              # Color shades, scales, families
@@ -467,7 +572,6 @@ packages/core/src/core/
 │   ├── default-colors.ts          # Raw color ramps (14 families × 10 shades)
 │   ├── default-theme.ts           # Data-first default theme (with fontFamily)
 │   ├── create-theme.ts            # createTheme() — pure deepMerge only
-│   ├── css-vars.ts                # CSS variable generation + palette resolution
 │   └── index.ts                   # Theme module barrel exports
 ├── PrismuiProvider/
 │   ├── color-scheme-manager/
@@ -482,7 +586,6 @@ packages/core/src/core/
 │   ├── PrismuiProvider.tsx        # All-in-one provider
 │   ├── PrismuiThemeProvider.tsx   # Theme-only provider
 │   ├── prismui-theme-context.ts   # Context + hooks (usePrismuiTheme, useTheme, useColorScheme)
-│   ├── ThemeVars.tsx              # CSS variable injection component
 │   ├── PrismuiProvider.test.tsx   # 17 tests
 │   ├── PrismuiProvider.stories.tsx  # 8 Storybook stories
 │   └── index.ts                   # Barrel exports

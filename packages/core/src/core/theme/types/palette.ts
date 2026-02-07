@@ -12,6 +12,13 @@ export interface PrismuiPaletteColor {
   dark: string;
   darker: string;
   contrastText: string;
+
+  lighterChannel?: string;
+  lightChannel?: string;
+  mainChannel?: string;
+  darkChannel?: string;
+  darkerChannel?: string;
+  contrastTextChannel?: string;
 }
 
 export interface PrismuiPaletteText {

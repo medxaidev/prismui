@@ -6,6 +6,7 @@ import { PrismuiThemeProvider } from './PrismuiThemeProvider';
 import { usePrismuiTheme, useTheme, useColorScheme } from './prismui-theme-context';
 import { localStorageColorSchemeManager } from './color-scheme-manager';
 import type { PrismuiColorScheme } from '../theme';
+import { getPrismuiThemeCssText } from '../css-vars';
 
 // ---------------------------------------------------------------------------
 // Helpers — reusable display components for stories
@@ -83,6 +84,53 @@ export const Default: Story = {
       <h3>Default Provider</h3>
       <ThemeInfo />
       <ColorSwatches />
+    </PrismuiProvider>
+  ),
+};
+
+// ---- CSS Variables Output ---------------------------------------------------
+
+function CssVarsDisplay() {
+  const { theme, colorScheme } = usePrismuiTheme();
+  const cssText = getPrismuiThemeCssText(theme, colorScheme);
+
+  return (
+    <div>
+      <h3>CSS Variables Output ({colorScheme})</h3>
+      <pre
+        style={{
+          background: '#1e1e2e',
+          color: '#cdd6f4',
+          padding: 16,
+          borderRadius: 8,
+          fontSize: 12,
+          lineHeight: 1.6,
+          maxHeight: '80vh',
+          overflow: 'auto',
+          whiteSpace: 'pre-wrap',
+          wordBreak: 'break-all',
+        }}
+      >
+        {cssText}
+      </pre>
+    </div>
+  );
+}
+
+export const CssVariablesOutput: Story = {
+  name: 'CSS Variables Output (Light)',
+  render: () => (
+    <PrismuiProvider>
+      <CssVarsDisplay />
+    </PrismuiProvider>
+  ),
+};
+
+export const CssVariablesOutputDark: Story = {
+  name: 'CSS Variables Output (Dark)',
+  render: () => (
+    <PrismuiProvider forceColorScheme="dark">
+      <CssVarsDisplay />
     </PrismuiProvider>
   ),
 };
