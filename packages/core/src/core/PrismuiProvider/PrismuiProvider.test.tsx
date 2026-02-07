@@ -249,7 +249,7 @@ describe('PrismuiProvider', () => {
 
     const themeVarsEl = document.head.querySelector('style[data-prismui-theme-vars]');
     expect(themeVarsEl).not.toBeNull();
-    expect(themeVarsEl?.textContent).toContain('--prismui-palette-primary-main');
+    expect(themeVarsEl?.textContent).toContain('--prismui-primary-main');
   });
 
   it('does not inject CSS variables when withCssVars is false', () => {

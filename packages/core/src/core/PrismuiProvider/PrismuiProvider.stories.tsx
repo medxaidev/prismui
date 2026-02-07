@@ -28,14 +28,14 @@ function ThemeInfo() {
 
 function ColorSwatches() {
   const swatches = [
-    { label: 'primary-main', var: '--prismui-palette-primary-main' },
-    { label: 'primary-light', var: '--prismui-palette-primary-light' },
-    { label: 'primary-dark', var: '--prismui-palette-primary-dark' },
-    { label: 'secondary-main', var: '--prismui-palette-secondary-main' },
-    { label: 'info-main', var: '--prismui-palette-info-main' },
-    { label: 'success-main', var: '--prismui-palette-success-main' },
-    { label: 'warning-main', var: '--prismui-palette-warning-main' },
-    { label: 'error-main', var: '--prismui-palette-error-main' },
+    { label: 'primary-main', var: '--prismui-primary-main' },
+    { label: 'primary-light', var: '--prismui-primary-light' },
+    { label: 'primary-dark', var: '--prismui-primary-dark' },
+    { label: 'secondary-main', var: '--prismui-secondary-main' },
+    { label: 'info-main', var: '--prismui-info-main' },
+    { label: 'success-main', var: '--prismui-success-main' },
+    { label: 'warning-main', var: '--prismui-warning-main' },
+    { label: 'error-main', var: '--prismui-error-main' },
   ];
 
   return (

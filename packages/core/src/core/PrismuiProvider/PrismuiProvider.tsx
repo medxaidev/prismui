@@ -7,7 +7,7 @@ import { StyleRegistryProvider } from '../style-engine';
 import { PrismuiThemeProvider } from './PrismuiThemeProvider';
 import type { PrismuiColorSchemeManager } from './color-scheme-manager';
 import { ThemeVars } from './ThemeVars';
-import { CssBaseline } from './CssBaseline';
+import { CssBaseline } from '../css-baseline';
 
 // ---------------------------------------------------------------------------
 // Props

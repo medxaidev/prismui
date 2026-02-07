@@ -120,8 +120,8 @@ export function getPrismuiCssVariables(
 
   vars['--prismui-scheme'] = palette.scheme;
 
-  vars['--prismui-palette-common-black'] = palette.common.black;
-  vars['--prismui-palette-common-white'] = palette.common.white;
+  vars['--prismui-common-black'] = palette.common.black;
+  vars['--prismui-common-white'] = palette.common.white;
 
   // Resolve semantic palette colors from colorFamilies + primaryShade
   // if they are not explicitly provided in the palette.
@@ -150,105 +150,108 @@ export function getPrismuiCssVariables(
   };
 
   for (const [name, value] of Object.entries(paletteColors)) {
-    vars[`--prismui-palette-${name}-main`] = value.main;
-    vars[`--prismui-palette-${name}-light`] = value.light;
-    vars[`--prismui-palette-${name}-dark`] = value.dark;
-    vars[`--prismui-palette-${name}-contrastText`] = value.contrastText;
+    vars[`--prismui-${name}-main`] = value.main;
+    vars[`--prismui-${name}-light`] = value.light;
+    vars[`--prismui-${name}-dark`] = value.dark;
+    vars[`--prismui-${name}-contrastText`] = value.contrastText;
 
-    if (value.lighter) vars[`--prismui-palette-${name}-lighter`] = value.lighter;
-    if (value.darker) vars[`--prismui-palette-${name}-darker`] = value.darker;
+    if (value.lighter) vars[`--prismui-${name}-lighter`] = value.lighter;
+    if (value.darker) vars[`--prismui-${name}-darker`] = value.darker;
 
     const mainChannel = getColorChannels(value.main);
-    if (mainChannel) vars[`--prismui-palette-${name}-mainChannel`] = mainChannel;
+    if (mainChannel) vars[`--prismui-${name}-mainChannel`] = mainChannel;
 
     const lightChannel = getColorChannels(value.light);
-    if (lightChannel) vars[`--prismui-palette-${name}-lightChannel`] = lightChannel;
+    if (lightChannel) vars[`--prismui-${name}-lightChannel`] = lightChannel;
 
     const darkChannel = getColorChannels(value.dark);
-    if (darkChannel) vars[`--prismui-palette-${name}-darkChannel`] = darkChannel;
+    if (darkChannel) vars[`--prismui-${name}-darkChannel`] = darkChannel;
   }
 
-  vars['--prismui-palette-text-primary'] = palette.text.primary;
-  vars['--prismui-palette-text-secondary'] = palette.text.secondary;
-  vars['--prismui-palette-text-disabled'] = palette.text.disabled;
+  vars['--prismui-text-primary'] = palette.text.primary;
+  vars['--prismui-text-secondary'] = palette.text.secondary;
+  vars['--prismui-text-disabled'] = palette.text.disabled;
 
   if (palette.text.icon) {
-    vars['--prismui-palette-text-icon'] = palette.text.icon;
+    vars['--prismui-text-icon'] = palette.text.icon;
   }
 
   if (palette.text.primaryChannel) {
-    vars['--prismui-palette-text-primaryChannel'] = palette.text.primaryChannel;
+    vars['--prismui-text-primaryChannel'] = palette.text.primaryChannel;
   }
   if (palette.text.secondaryChannel) {
-    vars['--prismui-palette-text-secondaryChannel'] =
+    vars['--prismui-text-secondaryChannel'] =
       palette.text.secondaryChannel;
   }
   if (palette.text.disabledChannel) {
-    vars['--prismui-palette-text-disabledChannel'] = palette.text.disabledChannel;
+    vars['--prismui-text-disabledChannel'] = palette.text.disabledChannel;
   }
 
-  vars['--prismui-palette-background-paper'] = palette.background.paper;
-  vars['--prismui-palette-background-default'] = palette.background.default;
-  vars['--prismui-palette-background-neutral'] = palette.background.neutral;
+  vars['--prismui-background-paper'] = palette.background.paper;
+  vars['--prismui-background-default'] = palette.background.default;
+  vars['--prismui-background-neutral'] = palette.background.neutral;
 
   if (palette.background.paperChannel) {
-    vars['--prismui-palette-background-paperChannel'] =
+    vars['--prismui-background-paperChannel'] =
       palette.background.paperChannel;
   }
   if (palette.background.defaultChannel) {
-    vars['--prismui-palette-background-defaultChannel'] =
+    vars['--prismui-background-defaultChannel'] =
       palette.background.defaultChannel;
   }
   if (palette.background.neutralChannel) {
-    vars['--prismui-palette-background-neutralChannel'] =
+    vars['--prismui-background-neutralChannel'] =
       palette.background.neutralChannel;
   }
 
-  vars['--prismui-palette-divider'] = palette.divider;
+  vars['--prismui-divider'] = palette.divider;
 
-  vars['--prismui-palette-action-hover'] = palette.action.hover;
-  vars['--prismui-palette-action-selected'] = palette.action.selected;
-  vars['--prismui-palette-action-active'] = palette.action.active;
-  vars['--prismui-palette-action-focus'] = palette.action.focus;
-  vars['--prismui-palette-action-disabled'] = palette.action.disabled;
-  vars['--prismui-palette-action-disabledBackground'] =
+  vars['--prismui-action-hover'] = palette.action.hover;
+  vars['--prismui-action-selected'] = palette.action.selected;
+  vars['--prismui-action-active'] = palette.action.active;
+  vars['--prismui-action-focus'] = palette.action.focus;
+  vars['--prismui-action-disabled'] = palette.action.disabled;
+  vars['--prismui-action-disabledBackground'] =
     palette.action.disabledBackground;
 
   if (palette.action.hoverOpacity != null) {
-    vars['--prismui-palette-action-hoverOpacity'] = String(
+    vars['--prismui-action-hoverOpacity'] = String(
       palette.action.hoverOpacity
     );
   }
 
   if (palette.action.selectedOpacity != null) {
-    vars['--prismui-palette-action-selectedOpacity'] = String(
+    vars['--prismui-action-selectedOpacity'] = String(
       palette.action.selectedOpacity
     );
   }
 
   if (palette.action.focusOpacity != null) {
-    vars['--prismui-palette-action-focusOpacity'] = String(
+    vars['--prismui-action-focusOpacity'] = String(
       palette.action.focusOpacity
     );
   }
 
   if (palette.action.activatedOpacity != null) {
-    vars['--prismui-palette-action-activatedOpacity'] = String(
+    vars['--prismui-action-activatedOpacity'] = String(
       palette.action.activatedOpacity
     );
-    vars['--prismui-palette-action-activeOpacity'] = String(
+    vars['--prismui-action-activeOpacity'] = String(
       palette.action.activatedOpacity
     );
   }
 
   if (palette.action.activeChannel) {
-    vars['--prismui-palette-action-activeChannel'] = palette.action.activeChannel;
+    vars['--prismui-action-activeChannel'] = palette.action.activeChannel;
   }
 
   if (palette.action.selectedChannel) {
-    vars['--prismui-palette-action-selectedChannel'] =
+    vars['--prismui-action-selectedChannel'] =
       palette.action.selectedChannel;
   }
+
+  vars['--prismui-font-family'] = theme.fontFamily;
+  vars['--prismui-font-family-monospace'] = theme.fontFamilyMonospace;
 
   for (const [key, value] of Object.entries(theme.spacing)) {
     vars[`--prismui-spacing-${key}`] = value;

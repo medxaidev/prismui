@@ -137,6 +137,11 @@ export const defaultTheme: PrismuiThemeInput = {
   errorColor: 'red',
   neutralColor: 'neutral',
 
+  fontFamily:
+    '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol"',
+  fontFamilyMonospace:
+    'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace',
+
   spacing: {
     xs: '0.5rem',
     sm: '0.75rem',

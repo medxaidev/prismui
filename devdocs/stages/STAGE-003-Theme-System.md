@@ -209,9 +209,12 @@ Refactored `css-vars.ts` to integrate palette resolution logic (moved from `crea
   - If `palette[key]` is explicitly provided → use as-is
   - Otherwise → auto-generate from `colorFamilies[xxxColor]` + `primaryShade`
 - Color family shades (`--prismui-color-blue-50` .. `--prismui-color-blue-900`)
-- Semantic palette colors (`--prismui-palette-primary-main`, etc.)
-- Text/background/action tokens
+- Semantic colors (`--prismui-primary-main`, etc.) — **no `palette-` prefix**
+- Text/background/action tokens (`--prismui-text-primary`, `--prismui-background-default`, etc.)
 - Channel tokens for `rgba()` composition
+- Font tokens (`--prismui-font-family`, `--prismui-font-family-monospace`)
+
+**CSS Variable Naming (Updated 2026-02-07):** All `--prismui-palette-*` variables renamed to `--prismui-*` for brevity.
 
 **Files:** `packages/core/src/core/theme/css-vars.ts`
 
@@ -230,7 +233,7 @@ Implemented the full provider architecture:
   - `useTheme()` — theme object only
   - `useColorScheme()` — `[resolvedScheme, setColorScheme]` tuple
 - **`ThemeVars`** — calls `getPrismuiThemeCssText()` and injects via `insertCssOnce`
-- **`CssBaseline`** — global reset/base styles
+- **`CssBaseline`** — global reset/base styles (moved to `core/css-baseline/` in 3.16)
 - Runtime theme switching (light/dark/auto)
 
 **Files:**
@@ -239,7 +242,6 @@ Implemented the full provider architecture:
 - `packages/core/src/core/PrismuiProvider/PrismuiThemeProvider.tsx`
 - `packages/core/src/core/PrismuiProvider/prismui-theme-context.ts`
 - `packages/core/src/core/PrismuiProvider/ThemeVars.tsx`
-- `packages/core/src/core/PrismuiProvider/CssBaseline.tsx`
 - `packages/core/src/core/PrismuiProvider/index.ts`
 
 ---
@@ -314,13 +316,14 @@ Created interactive Storybook stories for the Provider and color scheme system:
 
 ---
 
-### 3.15 Testing ✅
+### 3.15 Testing ✅ (Updated 2026-02-07)
 
 **Date:** 2026-02-07
 
-67 tests across 7 test files, all passing:
+84 tests across 8 test files, all passing:
 
 - `PrismuiProvider.test.tsx` — 17 tests (provider, theme provider, hooks, CSS vars, baseline)
+- `css-baseline.test.tsx` — 17 tests (BASELINE_CSS content validation + component injection/dedup)
 - `local-storage-color-scheme-manager.test.ts` — 12 tests (get/set/subscribe)
 - `insert-css.test.ts` — 11 tests (hash, browser injection, SSR)
 - `Box.test.tsx` — 10 tests (polymorphic component)
@@ -330,9 +333,79 @@ Created interactive Storybook stories for the Provider and color scheme system:
 
 ---
 
+### 3.16 CssBaseline Refactor ✅
+
+**Date:** 2026-02-07
+
+Moved `CssBaseline` from `PrismuiProvider/` to its own `core/css-baseline/` module and rewrote the baseline CSS:
+
+**Baseline CSS rules (combining Mantine + MUI best practices):**
+
+1. `:root { color-scheme }` — browser native UI follows theme
+2. `*, *::before, *::after { box-sizing: border-box }` — box model reset
+3. `html` — text-size-adjust, tab-size, line-height
+4. `body` — margin: 0, font-family via `var(--prismui-font-family)`, background/color via CSS vars, font-smoothing
+5. `h1-h6, p { margin: 0 }` — typography reset
+6. `a { color: inherit; text-decoration: inherit }` — link reset
+7. `img, svg, video, ...` — block display, max-width: 100%
+8. `button, input, ...` — font: inherit, color: inherit
+9. `input[type="number"]` — spinner removal
+10. `textarea { resize: vertical }`
+11. `hr` — normalize
+12. `b, strong { font-weight: bolder }`
+13. `:focus { outline: none }` + `:focus-visible` — accessible focus with `var(--prismui-primary-main)`
+
+**Excluded (compared to Mantine/MUI):**
+
+- No `:host` (no Shadow DOM support needed)
+- No `html, body, #root { display: flex }` (too opinionated)
+- No `ul, ol { list-style: none }` (too aggressive)
+- No `scroll-behavior: smooth` (may interfere with JS scroll)
+- No hardcoded colors (all via CSS variables)
+
+**Theme additions:**
+
+- `fontFamily` field added to `PrismuiTheme` → `--prismui-font-family`
+- `fontFamilyMonospace` field added → `--prismui-font-family-monospace` (for `<code>`, data display, FHIR JSON viewer)
+
+**Tests:** 17 tests (13 for BASELINE_CSS content + 4 for component behavior)
+
+**Stories:** 3 stories (With Baseline, Without Baseline, Dark Scheme)
+
+**Files:**
+
+- `packages/core/src/core/css-baseline/baseline-css.ts`
+- `packages/core/src/core/css-baseline/CssBaseline.tsx`
+- `packages/core/src/core/css-baseline/index.ts`
+- `packages/core/src/core/css-baseline/css-baseline.test.tsx`
+- `packages/core/src/core/css-baseline/CssBaseline.stories.tsx`
+
+---
+
+### 3.17 CSS Variable Naming Simplification ✅
+
+**Date:** 2026-02-07
+
+Renamed all `--prismui-palette-*` CSS variables to `--prismui-*` for brevity:
+
+```
+--prismui-palette-primary-main  →  --prismui-primary-main
+--prismui-palette-text-primary  →  --prismui-text-primary
+--prismui-palette-background-default  →  --prismui-background-default
+--prismui-palette-action-hover  →  --prismui-action-hover
+--prismui-palette-common-black  →  --prismui-common-black
+--prismui-palette-divider  →  --prismui-divider
+```
+
+Unchanged: `--prismui-color-*` (color families), `--prismui-spacing-*`, `--prismui-scheme`, `--prismui-font-family`, `--prismui-font-family-monospace`.
+
+**Files:** `packages/core/src/core/theme/css-vars.ts` + all consumers updated
+
+---
+
 ## Remaining Work
 
-### 3.16 Next.js App Router SSR Support 🔄
+### 3.18 Next.js App Router SSR Support 🔄
 
 - `PrismuiAppProvider` — uses `useServerInsertedHTML` for SSR style injection
 - `InitColorSchemeScript` — inline script to prevent FOUC (reads localStorage before React hydrates)
@@ -342,21 +415,24 @@ Created interactive Storybook stories for the Provider and color scheme system:
 
 ## Key Design Decisions
 
-| Decision               | Approach                                                    | Reference |
-| ---------------------- | ----------------------------------------------------------- | --------- |
-| Color scale model      | Dual-index (0–9 internal + 50–900 external)                 | ADR-002   |
-| Semantic color config  | `primaryColor: 'blue'` (Mantine-style)                      | ADR-002   |
-| Shade derivation       | ±2/±4 discrete offsets, clamped to 0–9                      | ADR-002   |
-| neutral handling       | Static, does not follow primaryShade                        | ADR-002   |
-| text/background/action | Derived from gray family, static per scheme                 | ADR-002   |
-| Type system            | Unified (optional semantics, resolved at CSS var time)      | ADR-002   |
-| CSS injection          | Static `style.css` + runtime `insertCssOnce` CSSOM          | ADR-003   |
-| Style deduplication    | DJB2 hash per id, atomic classes                            | ADR-003   |
-| Theme vars isolation   | Dedicated `<style data-prismui-theme-vars>` (replaceable)   | ADR-003   |
-| SSR CSS collection     | `PrismuiStyleRegistry` + `useServerInsertedHTML`            | ADR-003   |
-| Provider naming        | PrismuiProvider / PrismuiThemeProvider / PrismuiAppProvider | ADR-001   |
-| Color scheme manager   | Strategy pattern, subscribe returns unsubscribe             | ADR-004   |
-| Palette resolution     | Deferred to CSS variable generation (not createTheme)       | ADR-002   |
+| Decision               | Approach                                                        | Reference |
+| ---------------------- | --------------------------------------------------------------- | --------- |
+| Color scale model      | Dual-index (0–9 internal + 50–900 external)                     | ADR-002   |
+| Semantic color config  | `primaryColor: 'blue'` (Mantine-style)                          | ADR-002   |
+| Shade derivation       | ±2/±4 discrete offsets, clamped to 0–9                          | ADR-002   |
+| neutral handling       | Static, does not follow primaryShade                            | ADR-002   |
+| text/background/action | Derived from gray family, static per scheme                     | ADR-002   |
+| Type system            | Unified (optional semantics, resolved at CSS var time)          | ADR-002   |
+| CSS injection          | Static `style.css` + runtime `insertCssOnce` CSSOM              | ADR-003   |
+| Style deduplication    | DJB2 hash per id, atomic classes                                | ADR-003   |
+| Theme vars isolation   | Dedicated `<style data-prismui-theme-vars>` (replaceable)       | ADR-003   |
+| SSR CSS collection     | `PrismuiStyleRegistry` + `useServerInsertedHTML`                | ADR-003   |
+| Provider naming        | PrismuiProvider / PrismuiThemeProvider / PrismuiAppProvider     | ADR-001   |
+| Color scheme manager   | Strategy pattern, subscribe returns unsubscribe                 | ADR-004   |
+| Palette resolution     | Deferred to CSS variable generation (not createTheme)           | ADR-002   |
+| CSS var naming         | `--prismui-*` (no `palette-` prefix)                            | —         |
+| CssBaseline            | Mantine+MUI hybrid, all values via CSS vars, independent module | —         |
+| Font tokens            | `--prismui-font-family` + `--prismui-font-family-monospace`     | —         |
 
 ---
 
@@ -364,6 +440,12 @@ Created interactive Storybook stories for the Provider and color scheme system:
 
 ```
 packages/core/src/core/
+├── css-baseline/
+│   ├── baseline-css.ts            # BASELINE_CSS constant (comprehensive reset)
+│   ├── CssBaseline.tsx            # React component (injects via insertCssOnce)
+│   ├── css-baseline.test.tsx      # 17 tests
+│   ├── CssBaseline.stories.tsx    # 3 Storybook stories
+│   └── index.ts                   # Barrel exports
 ├── style-engine/
 │   ├── insert-css.ts              # insertCssOnce + hashString + canUseDOM
 │   ├── insert-css.test.ts         # 11 tests
@@ -377,13 +459,13 @@ packages/core/src/core/
 │   │   ├── colors.ts              # Color shades, scales, families
 │   │   ├── primary-shade.ts       # PrismuiShadeIndex, PrismuiPrimaryShade
 │   │   ├── palette.ts             # PrismuiPalette, PrismuiColorSchemes (unified)
-│   │   ├── theme.ts               # PrismuiTheme (unified)
+│   │   ├── theme.ts               # PrismuiTheme (unified, includes fontFamily)
 │   │   ├── color-scheme.ts        # PrismuiColorScheme, PrismuiResolvedColorScheme
 │   │   ├── spacing.ts             # PrismuiSpacingValues
 │   │   ├── variant.ts             # Component variant types
 │   │   └── index.ts               # Barrel exports
 │   ├── default-colors.ts          # Raw color ramps (14 families × 10 shades)
-│   ├── default-theme.ts           # Data-first default theme
+│   ├── default-theme.ts           # Data-first default theme (with fontFamily)
 │   ├── create-theme.ts            # createTheme() — pure deepMerge only
 │   ├── css-vars.ts                # CSS variable generation + palette resolution
 │   └── index.ts                   # Theme module barrel exports
@@ -401,7 +483,6 @@ packages/core/src/core/
 │   ├── PrismuiThemeProvider.tsx   # Theme-only provider
 │   ├── prismui-theme-context.ts   # Context + hooks (usePrismuiTheme, useTheme, useColorScheme)
 │   ├── ThemeVars.tsx              # CSS variable injection component
-│   ├── CssBaseline.tsx            # Global reset/base styles
 │   ├── PrismuiProvider.test.tsx   # 17 tests
 │   ├── PrismuiProvider.stories.tsx  # 8 Storybook stories
 │   └── index.ts                   # Barrel exports

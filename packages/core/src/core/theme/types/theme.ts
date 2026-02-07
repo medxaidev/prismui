@@ -27,6 +27,9 @@ export interface PrismuiTheme {
 
   colorSchemes: PrismuiColorSchemes;
 
+  fontFamily: string;
+  fontFamilyMonospace: string;
+
   spacing: PrismuiSpacingValues;
 
   other: Record<string, unknown>;
