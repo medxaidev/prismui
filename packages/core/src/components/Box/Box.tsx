@@ -1,16 +1,13 @@
 import { forwardRef } from 'react';
-import type {
-  ElementType,
-  StyleProp,
-  CSSVars
-} from '../../core/types';
+import type { ElementType } from '../../core/types';
+import type { PrismuiStyleProp, PrismuiCSSVars } from '../../core/theme/types';
 import { createPolymorphicComponent } from '../../core/types';
 
 
 export interface BoxProps {
   className?: string;
-  style?: StyleProp;
-  __vars?: CSSVars;
+  style?: PrismuiStyleProp;
+  __vars?: PrismuiCSSVars;
 }
 
 interface _BoxProps extends BoxProps {

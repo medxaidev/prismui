@@ -47,5 +47,31 @@ export type {
   PrismuiVariantKey,
 } from './variant';
 
+export type {
+  PrismuiBreakpointKey,
+  PrismuiBreakpoint,
+  PrismuiBreakpointsValues,
+} from './breakpoint';
+
+export type {
+  PrismuiFontSizeKey,
+  PrismuiFontSize,
+  PrismuiFontSizesValues,
+} from './font-size';
+
+export type {
+  PrismuiLineHeightKey,
+  PrismuiLineHeight,
+  PrismuiLineHeightsValues,
+} from './line-height';
+
+export type {
+  PrismuiRadiusKey,
+  PrismuiRadius,
+  PrismuiRadiusValues,
+} from './radius';
+
 export type { PrismuiThemeInput, PrismuiTheme } from './theme';
 
+export type { PrismuiStyle, PrismuiStyleProp } from './prismui-style';
+export type { PrismuiCSSVars } from './prismui-css-vars';

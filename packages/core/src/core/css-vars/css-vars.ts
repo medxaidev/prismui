@@ -32,13 +32,40 @@ export function getPrismuiCssVariables(
   // --- Palette (semantic colors, text, background, divider, action) ---
   Object.assign(vars, getPaletteVars(theme, scheme));
 
+  // --- Scale ---
+  vars['--prismui-scale'] = String(theme.scale);
+
   // --- Font ---
+  vars['--prismui-font-size'] = `${theme.fontSize / 16}rem`;
+  for (const [key, value] of Object.entries(theme.fontSizes)) {
+    vars[`--prismui-font-size-${key}`] = value;
+  }
   vars['--prismui-font-family'] = theme.fontFamily;
   vars['--prismui-font-family-monospace'] = theme.fontFamilyMonospace;
 
+  // --- Line Heights ---
+  for (const [key, value] of Object.entries(theme.lineHeights)) {
+    vars[`--prismui-line-height-${key}`] = value;
+  }
+
+  // --- Radius ---
+  for (const [key, value] of Object.entries(theme.radius)) {
+    vars[`--prismui-radius-${key}`] = value;
+  }
+
   // --- Spacing ---
-  for (const [key, value] of Object.entries(theme.spacing)) {
-    vars[`--prismui-spacing-${key}`] = value;
+  vars['--prismui-spacing-unit'] = `${theme.spacingUnit / 16}rem`;
+  if (theme.spacing) {
+    for (const [key, value] of Object.entries(theme.spacing)) {
+      if (value != null) {
+        vars[`--prismui-spacing-${key}`] = value;
+      }
+    }
+  }
+
+  // --- Breakpoints ---
+  for (const [key, value] of Object.entries(theme.breakpoints)) {
+    vars[`--prismui-breakpoint-${key}`] = value;
   }
 
   return vars;

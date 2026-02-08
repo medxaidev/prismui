@@ -26,7 +26,7 @@ html {
 body {
   margin: 0;
   font-family: var(--prismui-font-family);
-  font-size: 1rem;
+  font-size: var(--prismui-font-size);
   line-height: 1.5;
   background-color: var(--prismui-background-default);
   color: var(--prismui-text-primary);

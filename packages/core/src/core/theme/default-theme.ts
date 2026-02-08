@@ -114,10 +114,38 @@ export const defaultTheme: PrismuiThemeInput = {
   errorColor: 'red',
   neutralColor: 'neutral',
 
+  fontSize: 14,
+  fontSizes: {
+    xs: '0.75rem',
+    sm: '0.875rem',
+    md: '1rem',
+    lg: '1.125rem',
+    xl: '1.25rem',
+  },
+
   fontFamily:
     '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol"',
   fontFamilyMonospace:
     'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace',
+
+  scale: 1,
+  spacingUnit: 4,
+
+  lineHeights: {
+    xs: '1.4',
+    sm: '1.45',
+    md: '1.5',
+    lg: '1.55',
+    xl: '1.6',
+  },
+
+  radius: {
+    xs: '0.125rem',
+    sm: '0.25rem',
+    md: '0.5rem',
+    lg: '0.75rem',
+    xl: '1rem',
+  },
 
   spacing: {
     xs: '0.5rem',
@@ -125,6 +153,14 @@ export const defaultTheme: PrismuiThemeInput = {
     md: '1rem',
     lg: '1.5rem',
     xl: '2rem',
+  },
+
+  breakpoints: {
+    xs: '36rem',
+    sm: '48rem',
+    md: '62rem',
+    lg: '75rem',
+    xl: '88rem',
   },
 
   other: {},

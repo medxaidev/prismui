@@ -3,7 +3,7 @@ import type { CSSProperties } from './css-properties';
 /**
  * Base style type: static object or theme function
  */
-type Style<Theme = unknown> =
+export type Style<Theme = unknown> =
   | CSSProperties
   | ((theme: Theme) => CSSProperties);
 

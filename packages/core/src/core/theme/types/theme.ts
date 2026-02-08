@@ -5,6 +5,10 @@ import type {
 import type { PrismuiColorSchemes } from './palette';
 import type { PrismuiSpacingValues } from './spacing';
 import type { PrismuiPrimaryShade } from './primary-shade';
+import type { PrismuiBreakpointsValues } from './breakpoint';
+import type { PrismuiFontSizesValues } from './font-size';
+import type { PrismuiLineHeightsValues } from './line-height';
+import type { PrismuiRadiusValues } from './radius';
 
 /**
  * PrismUI theme object.
@@ -27,10 +31,19 @@ export interface PrismuiTheme {
 
   colorSchemes: PrismuiColorSchemes;
 
+  fontSize: number;
+  fontSizes: PrismuiFontSizesValues;
   fontFamily: string;
   fontFamilyMonospace: string;
 
-  spacing: PrismuiSpacingValues;
+  scale: number;
+  spacingUnit: number;
+
+  lineHeights: PrismuiLineHeightsValues;
+  radius: PrismuiRadiusValues;
+
+  spacing?: Partial<PrismuiSpacingValues>;
+  breakpoints: PrismuiBreakpointsValues;
 
   other: Record<string, unknown>;
 }

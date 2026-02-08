@@ -5,6 +5,6 @@ export { Text } from './components/Text';
 export type { TextProps } from './components/Text';
 
 export * from './core/types';
-
+export * from './core/theme/types';
 
 export * from './utils';
