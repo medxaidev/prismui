@@ -73,5 +73,10 @@ export type {
 
 export type { PrismuiThemeInput, PrismuiTheme } from './theme';
 
+export type {
+  ResponsiveValue,
+  PrismuiResponsiveValue,
+} from './responsive-value';
+
 export type { PrismuiStyle, PrismuiStyleProp } from './prismui-style';
 export type { PrismuiCSSVars } from './prismui-css-vars';
