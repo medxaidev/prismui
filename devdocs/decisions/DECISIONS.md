@@ -10,14 +10,16 @@
 | [ADR-002](./ADR-002-Color-System-Architecture.md)       | Color System Architecture       | Accepted | 2026-02-06 | High - Defines color families, semantic palette, shade resolver |
 | [ADR-003](./ADR-003-CSS-Injection-Style-Engine.md)      | CSS Injection & Style Engine    | Accepted | 2026-02-06 | High - Static style.css + insertCssOnce atomic classes          |
 | [ADR-004](./ADR-004-Color-Scheme-Manager.md)            | Color Scheme Manager            | Accepted | 2026-02-07 | High - Pluggable persistence, cross-tab sync, system preference |
+| [ADR-005](./ADR-005-System-Props.md)                    | System Props                    | Accepted | 2026-02-08 | High - Mobile-first responsive layout language                  |
+| [ADR-006](./ADR-006-Box-Component-Architecture.md)      | Box Component Architecture      | Accepted | 2026-02-09 | High - renderRoot, mod, variant/size, usePrismuiContext         |
 
 ## Planned ADRs
 
 | ID      | Title                             | Status | Date |
 | ------- | --------------------------------- | ------ | ---- |
-| ADR-005 | Component Testing Strategy        | Draft  | TBD  |
-| ADR-006 | Bundle Size Optimization Approach | Draft  | TBD  |
-| ADR-007 | Animation System Design           | Draft  | TBD  |
+| ADR-007 | Component Testing Strategy        | Draft  | TBD  |
+| ADR-008 | Bundle Size Optimization Approach | Draft  | TBD  |
+| ADR-009 | Animation System Design           | Draft  | TBD  |
 
 ## ADR Template
 

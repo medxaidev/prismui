@@ -24,8 +24,18 @@ export const PrismuiThemeContext =
   createContext<PrismuiThemeContextValue | null>(null);
 
 // ---------------------------------------------------------------------------
-// Hook
+// Hooks
 // ---------------------------------------------------------------------------
+
+/**
+ * Returns the raw PrismUI theme context value, or `null` if no provider is present.
+ *
+ * Use this in components that should work **with or without** a provider
+ * (e.g. Box). For components that **require** a provider, use `usePrismuiTheme()`.
+ */
+export function usePrismuiContext(): PrismuiThemeContextValue | null {
+  return useContext(PrismuiThemeContext);
+}
 
 /**
  * Returns the current PrismUI theme context.
@@ -34,7 +44,7 @@ export const PrismuiThemeContext =
  * Throws if no provider is found.
  */
 export function usePrismuiTheme(): PrismuiThemeContextValue {
-  const ctx = useContext(PrismuiThemeContext);
+  const ctx = usePrismuiContext();
   if (!ctx) {
     throw new Error(
       'usePrismuiTheme must be used within a <PrismuiProvider> or <PrismuiThemeProvider>.',

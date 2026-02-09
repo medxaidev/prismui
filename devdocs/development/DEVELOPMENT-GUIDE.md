@@ -271,12 +271,21 @@ This checklist is used to detect scope creep. If an item exceeds Stage-1 respons
 - **D. Box**
   - **Pass**
     - Box is visually neutral (no default styling) and acts as the system foundation.
-    - Box can render without Provider (falls back to `defaultTheme`) and can still resolve non-responsive system props.
+    - Box can render without Provider (falls back to `defaultTheme` via `usePrismuiContext()`) and can still resolve non-responsive system props.
     - Evidence:
       - `packages/core/src/components/Box/Box.tsx`
       - `packages/core/src/components/Box/get-box-style/get-box-style.ts`
+      - `packages/core/src/components/Box/get-box-mod/get-box-mod.ts`
+  - **Box capabilities (aligned with Mantine's Box):**
+    - `forwardRef<HTMLDivElement>` — correct default ref type matching default element
+    - `renderRoot` — render-prop alternative to `component` for full root element control
+    - `variant` / `size` — sets `data-variant` / `data-size` attributes (via `BoxComponentProps`)
+    - `mod` — declarative `data-*` attribute modifier system (`getBoxMod`)
+    - `usePrismuiContext()` — non-throwing context hook (Box works with or without Provider)
   - **Potential Stage-1 violations / risks**
-    - If Box starts to accumulate component-like behavior (variants, states, semantic defaults), it should be moved to Stage-2+.
+    - `variant` and `size` are infrastructure for component styling (data-attribute selectors), not visual behavior. They remain appropriate at Stage-1 as they are pass-through attributes with no default styling.
+    - `renderRoot` is an escape hatch for polymorphism; it does not add visual behavior.
+    - `mod` is a data-attribute utility; it does not add visual behavior.
 
 ### Stage-1 Violations Identified
 

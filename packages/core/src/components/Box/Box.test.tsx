@@ -1,8 +1,10 @@
 
+import React from 'react';
 import { describe, expect, it } from 'vitest';
 import { render } from '@testing-library/react';
 import { createRef } from 'react';
 import { Box } from './Box';
+import { PrismuiProvider } from '../../core/PrismuiProvider';
 
 describe('@prismui/core/Box polymorphic', () => {
   it('renders a div by default', () => {
@@ -97,3 +99,153 @@ describe('@prismui/core/Box type inference', () => {
   });
 });
 
+describe('@prismui/core/Box renderRoot', () => {
+  it('uses renderRoot when provided', () => {
+    const { container } = render(
+      <Box renderRoot={(props) => <a {...props} href="/test" />}>
+        link content
+      </Box>
+    );
+    const el = container.firstChild as HTMLAnchorElement;
+    expect(el.nodeName).toBe('A');
+    expect(el.href).toContain('/test');
+  });
+
+  it('renderRoot receives computed styles and className', () => {
+    const { container } = render(
+      <Box
+        className="custom"
+        style={{ color: 'red' }}
+        renderRoot={(props) => <span {...props} />}
+      >
+        content
+      </Box>
+    );
+    const el = container.firstChild as HTMLElement;
+    expect(el.nodeName).toBe('SPAN');
+    expect(el.className).toContain('custom');
+    expect(el.style.color).toBe('red');
+  });
+
+  it('renderRoot receives ref', () => {
+    const ref = createRef<HTMLDivElement>();
+    render(
+      <Box
+        ref={ref}
+        renderRoot={(props) => <div {...props} />}
+      >
+        content
+      </Box>
+    );
+    expect(ref.current).toBeInstanceOf(HTMLDivElement);
+  });
+
+  it('renderRoot takes precedence over component', () => {
+    const { container } = render(
+      <Box
+        component="button"
+        renderRoot={(props) => <section {...props} />}
+      >
+        content
+      </Box>
+    );
+    expect(container.firstChild?.nodeName).toBe('SECTION');
+  });
+});
+
+describe('@prismui/core/Box mod', () => {
+  it('applies string mod as data attribute', () => {
+    const { container } = render(<Box mod="loading">content</Box>);
+    const el = container.firstChild as HTMLElement;
+    expect(el.getAttribute('data-loading')).toBe('true');
+  });
+
+  it('applies object mod as data attributes', () => {
+    const { container } = render(
+      <Box mod={{ loading: true, size: 'lg' }}>content</Box>
+    );
+    const el = container.firstChild as HTMLElement;
+    expect(el.getAttribute('data-loading')).toBe('true');
+    expect(el.getAttribute('data-size')).toBe('lg');
+  });
+
+  it('filters falsy mod values', () => {
+    const { container } = render(
+      <Box mod={{ loading: true, disabled: false, hidden: undefined }}>
+        content
+      </Box>
+    );
+    const el = container.firstChild as HTMLElement;
+    expect(el.getAttribute('data-loading')).toBe('true');
+    expect(el.hasAttribute('data-disabled')).toBe(false);
+    expect(el.hasAttribute('data-hidden')).toBe(false);
+  });
+
+  it('applies array of mods', () => {
+    const { container } = render(
+      <Box mod={[{ loading: true }, 'active']}>content</Box>
+    );
+    const el = container.firstChild as HTMLElement;
+    expect(el.getAttribute('data-loading')).toBe('true');
+    expect(el.getAttribute('data-active')).toBe('true');
+  });
+
+  it('does not add attributes when mod is undefined', () => {
+    const { container } = render(<Box>content</Box>);
+    const el = container.firstChild as HTMLElement;
+    const dataAttrs = Array.from(el.attributes).filter(
+      (a) => a.name.startsWith('data-')
+    );
+    expect(dataAttrs).toHaveLength(0);
+  });
+});
+
+describe('@prismui/core/Box variant and size', () => {
+  it('sets data-variant attribute', () => {
+    const { container } = render(
+      <Box variant="filled">content</Box>
+    );
+    const el = container.firstChild as HTMLElement;
+    expect(el.getAttribute('data-variant')).toBe('filled');
+  });
+
+  it('sets data-size for string size', () => {
+    const { container } = render(
+      <Box size="lg">content</Box>
+    );
+    const el = container.firstChild as HTMLElement;
+    expect(el.getAttribute('data-size')).toBe('lg');
+  });
+
+  it('does not set data-size for number size', () => {
+    const { container } = render(
+      <Box size={24}>content</Box>
+    );
+    const el = container.firstChild as HTMLElement;
+    expect(el.hasAttribute('data-size')).toBe(false);
+  });
+
+  it('does not set data-variant when not provided', () => {
+    const { container } = render(<Box>content</Box>);
+    const el = container.firstChild as HTMLElement;
+    expect(el.hasAttribute('data-variant')).toBe(false);
+  });
+});
+
+describe('@prismui/core/Box usePrismuiContext', () => {
+  it('works without a provider (uses defaultTheme)', () => {
+    const { container } = render(<Box m={2}>content</Box>);
+    const el = container.firstChild as HTMLElement;
+    expect(el.style.margin).toBeTruthy();
+  });
+
+  it('works with a provider', () => {
+    const { container } = render(
+      <PrismuiProvider>
+        <Box m={2}>content</Box>
+      </PrismuiProvider>
+    );
+    const el = container.querySelector('div div') as HTMLElement;
+    expect(el.style.margin).toBeTruthy();
+  });
+});

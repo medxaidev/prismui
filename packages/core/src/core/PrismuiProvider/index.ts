@@ -8,6 +8,7 @@ export { ThemeVars } from '../css-vars';
 export { CssBaseline } from '../css-baseline';
 
 export {
+  usePrismuiContext,
   usePrismuiTheme,
   useTheme,
   useColorScheme,

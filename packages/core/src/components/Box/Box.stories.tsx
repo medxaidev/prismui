@@ -407,3 +407,145 @@ export const MuiInspiredProps: Story = {
     </div>
   ),
 };
+
+// ---------------------------------------------------------------------------
+// renderRoot
+// ---------------------------------------------------------------------------
+
+export const RenderRoot: Story = {
+  render: () => (
+    <div style={{ display: 'grid', gap: 12 }}>
+      <Box
+        renderRoot={(props) => <a {...props} href="https://example.com" target="_blank" rel="noreferrer" />}
+        style={{ ...demoCardStyle, background: '#eff6ff', color: '#2563eb', textDecoration: 'underline' }}
+      >
+        renderRoot → renders as &lt;a&gt; link
+      </Box>
+
+      <Box
+        renderRoot={(props) => <button {...props} type="button" />}
+        style={{ ...demoCardStyle, background: '#fef3c7', cursor: 'pointer' }}
+      >
+        renderRoot → renders as &lt;button&gt;
+      </Box>
+
+      <Box
+        m={2}
+        className="render-root-demo"
+        renderRoot={(props) => <section {...props} />}
+        style={{ ...demoCardStyle, background: '#f0fdf4' }}
+      >
+        renderRoot receives computed className + style + system props
+      </Box>
+    </div>
+  ),
+};
+
+// ---------------------------------------------------------------------------
+// mod (data-attribute modifiers)
+// ---------------------------------------------------------------------------
+
+export const Mod: Story = {
+  render: () => {
+    function ModProbe() {
+      const [loading, setLoading] = useState(false);
+
+      return (
+        <div style={{ display: 'grid', gap: 12 }}>
+          <style>{`
+            [data-loading="true"] { opacity: 0.5; pointer-events: none; }
+            [data-variant="filled"] { background: #3b82f6 !important; color: white; }
+            [data-variant="outlined"] { border: 2px solid #3b82f6 !important; }
+            [data-size="lg"] { font-size: 18px !important; padding: 16px !important; }
+          `}</style>
+
+          <Box
+            mod={{ loading, variant: 'filled' }}
+            style={{ ...demoCardStyle, transition: 'opacity 0.2s' }}
+          >
+            mod=&#123;&#123; loading: {String(loading)}, variant: &quot;filled&quot; &#125;&#125;
+            <br />
+            <button
+              type="button"
+              onClick={() => setLoading(!loading)}
+              style={{ marginTop: 8, cursor: 'pointer' }}
+            >
+              Toggle loading
+            </button>
+          </Box>
+
+          <Box mod="active" style={{ ...demoCardStyle, background: '#fef3c7' }}>
+            mod=&quot;active&quot; → sets data-active=&quot;true&quot;
+          </Box>
+
+          <Box
+            mod={[{ variant: 'outlined' }, 'highlighted']}
+            style={demoCardStyle}
+          >
+            mod=[&#123; variant: &quot;outlined&quot; &#125;, &quot;highlighted&quot;]
+          </Box>
+
+          <Box
+            mod={{ size: 'lg', variant: 'filled' }}
+            style={demoCardStyle}
+          >
+            mod=&#123;&#123; size: &quot;lg&quot;, variant: &quot;filled&quot; &#125;&#125;
+          </Box>
+        </div>
+      );
+    }
+
+    return <ModProbe />;
+  },
+};
+
+// ---------------------------------------------------------------------------
+// variant and size (data-variant, data-size)
+// ---------------------------------------------------------------------------
+
+export const VariantAndSize: Story = {
+  render: () => (
+    <div style={{ display: 'grid', gap: 12 }}>
+      <style>{`
+        [data-variant="filled"] { background: #3b82f6 !important; color: white; }
+        [data-variant="outlined"] { border: 2px solid #3b82f6 !important; background: transparent !important; }
+        [data-variant="ghost"] { background: transparent !important; color: #3b82f6; }
+        [data-size="sm"] { padding: 4px 8px !important; font-size: 12px !important; }
+        [data-size="md"] { padding: 8px 16px !important; font-size: 14px !important; }
+        [data-size="lg"] { padding: 12px 24px !important; font-size: 18px !important; }
+      `}</style>
+
+      <Box variant="filled" style={demoCardStyle}>
+        variant=&quot;filled&quot; → data-variant=&quot;filled&quot;
+      </Box>
+
+      <Box variant="outlined" style={demoCardStyle}>
+        variant=&quot;outlined&quot; → data-variant=&quot;outlined&quot;
+      </Box>
+
+      <Box variant="ghost" style={demoCardStyle}>
+        variant=&quot;ghost&quot; → data-variant=&quot;ghost&quot;
+      </Box>
+
+      <Box size="sm" style={demoCardStyle}>
+        size=&quot;sm&quot; → data-size=&quot;sm&quot;
+      </Box>
+
+      <Box size="md" style={demoCardStyle}>
+        size=&quot;md&quot; → data-size=&quot;md&quot;
+      </Box>
+
+      <Box size="lg" style={demoCardStyle}>
+        size=&quot;lg&quot; → data-size=&quot;lg&quot;
+      </Box>
+
+      <Box size={24} style={demoCardStyle}>
+        size=&#123;24&#125; (number) → no data-size attribute (numeric sizes are not set)
+      </Box>
+
+      <Box variant="filled" size="lg" style={demoCardStyle}>
+        variant=&quot;filled&quot; + size=&quot;lg&quot; combined
+      </Box>
+    </div>
+  ),
+};

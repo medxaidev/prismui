@@ -1,5 +1,5 @@
-export { Box } from './components/Box';
-export type { BoxProps } from './components/Box';
+export { Box, getBoxMod, getMod } from './components/Box';
+export type { BoxProps, BoxComponentProps, Mod, BoxMod } from './components/Box';
 
 export * from './core/types';
 export * from './core/theme/types';
