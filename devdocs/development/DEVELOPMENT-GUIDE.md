@@ -206,6 +206,84 @@ Stages are recorded in `devdocs/stages`.
 
 ---
 
+## 5.1 Current Stage: Stage-1 (System Boundary Review)
+
+We are currently in **PrismUI Stage-1**.
+
+Stage-1 scope is limited to:
+
+- Provider
+- Theme (semantic tokens only)
+- SystemProps (layout language)
+- Box (layout foundation)
+
+The purpose of Stage-1 is to establish a stable **system boundary**:
+
+- Components must be safe by default
+- Theming must be possible without changing component code
+- SystemProps must behave like a consistent layout language
+- Box must remain visually neutral and purely foundational
+
+### Stage-1 Implementation Review Checklist (A-D)
+
+This checklist is used to detect scope creep. If an item exceeds Stage-1 responsibilities, mark it as a potential Stage-2 concern.
+
+- **A. Provider**
+  - **Pass**
+    - Provider composes a small set of system responsibilities (theme, CSS vars, baseline, optional SSR registry).
+    - Color scheme persistence is isolated behind a strategy interface (`PrismuiColorSchemeManager`).
+    - Evidence:
+      - `packages/core/src/core/PrismuiProvider/PrismuiProvider.tsx`
+      - `packages/core/src/core/PrismuiProvider/PrismuiThemeProvider.tsx`
+      - `packages/core/src/core/PrismuiProvider/use-provider-color-scheme/use-provider-color-scheme.ts`
+      - `packages/core/src/core/css-vars/ThemeVars.tsx`
+      - `packages/core/src/core/css-baseline/CssBaseline.tsx`
+  - **Potential Stage-1 violations / risks**
+    - Provider exports multiple hooks and managers; ensure it stays a boundary and does not become a general-purpose context bag.
+    - If more runtime services are added (i18n, router, telemetry), they must be deferred to Stage-2+.
+
+- **B. Theme**
+  - **Pass**
+    - Design tokens (`colorFamilies`) and semantic tokens (`palette`) are separated by responsibility: semantic colors resolve at CSS variable generation time.
+    - System-level theming is supported via CSS variables (`ThemeVars`, `getPrismuiThemeCssText`).
+    - Evidence:
+      - `packages/core/src/core/theme/types/theme.ts`
+      - `packages/core/src/core/theme/create-theme.ts`
+      - `packages/core/src/core/css-vars/css-vars.ts`
+      - `packages/core/src/core/css-vars/palette-vars.ts`
+  - **Potential Stage-1 violations / risks**
+    - Avoid adding component-specific styling into theme at Stage-1 (component tokens belong to later stages).
+
+- **C. SystemProps**
+  - **Pass**
+    - SystemProps are config-driven (`SYSTEM_CONFIG`) and component-agnostic (`splitSystemProps` + `resolveSystemProps`).
+    - Responsive behavior is consistent and mobile-first (`base` + `min-width` overrides).
+    - Evidence:
+      - `packages/core/src/core/system/system-props.types.ts`
+      - `packages/core/src/core/system/system-config.ts`
+      - `packages/core/src/core/system/split-system-props/split-system-props.ts`
+      - `packages/core/src/core/system/resolve-system-props/normalize-responsive-value.ts`
+      - `packages/core/src/core/system/resolve-system-props/resolve-system-props.ts`
+  - **Potential Stage-1 violations / risks**
+    - SystemProps currently include visual tokens (`bg`, `c`, `bd`, `bdrs`). If Stage-1 intent is “layout only”, these should be treated as Stage-2 (or explicitly allowed as system-level primitives).
+    - Responsive spec requires explicit `base`. The runtime currently falls back to the smallest breakpoint when `base` is omitted (not recommended). Consider enforcing this in dev-mode or via lint/type tooling in later stages.
+
+- **D. Box**
+  - **Pass**
+    - Box is visually neutral (no default styling) and acts as the system foundation.
+    - Box can render without Provider (falls back to `defaultTheme`) and can still resolve non-responsive system props.
+    - Evidence:
+      - `packages/core/src/components/Box/Box.tsx`
+      - `packages/core/src/components/Box/get-box-style/get-box-style.ts`
+  - **Potential Stage-1 violations / risks**
+    - If Box starts to accumulate component-like behavior (variants, states, semantic defaults), it should be moved to Stage-2+.
+
+### Stage-1 Violations Identified
+
+- **Resolved:** `packages/core/src/index.ts` previously exported `Text` (out of Stage-1 scope and missing in the current codebase). The export has been removed to align the public API with Stage-1 intent.
+
+---
+
 ## 6. Decisions and Trade-offs / 决策和权衡
 
 Some choices have long-term consequences.

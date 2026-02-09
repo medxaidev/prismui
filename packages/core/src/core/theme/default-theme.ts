@@ -47,6 +47,10 @@ const lightPalette: PrismuiPaletteInput<'light'> = {
     activatedOpacity: 0.12,
     disabledOpacity: 0.48,
   },
+
+  shadow: {
+    color: defaultColorFamilies.gray[500],
+  },
 };
 
 const darkPalette: PrismuiPaletteInput<'dark'> = {
@@ -94,6 +98,11 @@ const darkPalette: PrismuiPaletteInput<'dark'> = {
     focusOpacity: 0.12,
     activatedOpacity: 0.12,
     disabledOpacity: 0.48,
+  },
+
+  shadow: {
+    color: defaultColorFamilies.gray[500],
+    dialogColor: '#000000',
   },
 };
 

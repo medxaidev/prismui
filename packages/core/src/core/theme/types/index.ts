@@ -74,6 +74,14 @@ export type {
 export type { PrismuiThemeInput, PrismuiTheme } from './theme';
 
 export type {
+  PrismuiShadowKey,
+  PrismuiShadowSizeKey,
+  PrismuiShadowComponentKey,
+  PrismuiShadowSemanticKey,
+  PrismuiPaletteShadow,
+} from './shadow';
+
+export type {
   ResponsiveValue,
   PrismuiResponsiveValue,
 } from './responsive-value';

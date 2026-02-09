@@ -1,4 +1,5 @@
 import type { PrismuiResolvedColorScheme } from './color-scheme';
+import type { PrismuiPaletteShadow } from './shadow';
 
 export interface PrismuiPaletteCommon {
   black: string;
@@ -80,6 +81,7 @@ export interface PrismuiPalette<S extends PrismuiResolvedColorScheme = PrismuiRe
   background: PrismuiPaletteBackground;
   divider: string;
   action: PrismuiPaletteAction;
+  shadow: PrismuiPaletteShadow;
 }
 
 /** @deprecated Use PrismuiPalette instead. */

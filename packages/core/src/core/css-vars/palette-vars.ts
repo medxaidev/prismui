@@ -6,6 +6,7 @@ import type {
   PrismuiResolvedColorScheme,
   PrismuiShadeIndex,
   PrismuiTheme,
+  PrismuiPalette,
 } from '../theme/types';
 import { PRISMUI_SHADE_STEPS } from '../theme/types';
 import { getColorChannels } from '../color-functions';
@@ -115,6 +116,110 @@ function emitPaletteColorVars(
     const channel = userChannel || getColorChannels(colorValue);
     if (channel) {
       vars[`--prismui-${name}-${channelKey(field)}`] = channel;
+    }
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Shadow CSS variable generation
+// ---------------------------------------------------------------------------
+
+/**
+ * Shadow geometry templates.
+ *
+ * Each template defines the offsets/spread for a shadow key.
+ * The actual color is computed at generation time from:
+ * - `palette.shadow.color` channel → size & component shadows
+ * - `palette.shadow.dialogColor` or `palette.common.black` → dialog shadow
+ * - resolved semantic `mainChannel` → semantic color shadows
+ *
+ * Format: `rgba(R, G, B, opacity) offsets`
+ */
+
+interface ShadowLayer {
+  opacity: number;
+  offsets: string;
+}
+
+interface ShadowTemplate {
+  layers: ShadowLayer[];
+}
+
+const SIZE_SHADOW_TEMPLATES: Record<string, ShadowTemplate> = {
+  xxs: { layers: [{ opacity: 0.16, offsets: '0px 1px 2px 0px' }] },
+  xs: { layers: [{ opacity: 0.16, offsets: '0px 4px 8px 0px' }] },
+  sm: { layers: [{ opacity: 0.16, offsets: '0px 8px 16px 0px' }] },
+  md: { layers: [{ opacity: 0.16, offsets: '0px 12px 24px -4px' }] },
+  lg: { layers: [{ opacity: 0.16, offsets: '0px 16px 32px -4px' }] },
+  xl: { layers: [{ opacity: 0.16, offsets: '0px 20px 40px -4px' }] },
+  xxl: { layers: [{ opacity: 0.16, offsets: '0px 24px 48px 0px' }] },
+};
+
+const COMPONENT_SHADOW_TEMPLATES: Record<string, { layers: Array<ShadowLayer & { useDialogColor?: boolean }> }> = {
+  dialog: { layers: [{ opacity: 0.24, offsets: '-40px 40px 80px -8px', useDialogColor: true }] },
+  card: { layers: [{ opacity: 0.2, offsets: '0px 0px 2px 0px' }, { opacity: 0.12, offsets: '0px 12px 24px -4px' }] },
+  dropdown: { layers: [{ opacity: 0.24, offsets: '0px 0px 2px 0px' }, { opacity: 0.24, offsets: '-20px 20px 40px -4px' }] },
+};
+
+const SEMANTIC_SHADOW_OFFSETS = '0 8px 16px 0';
+const SEMANTIC_SHADOW_OPACITY = 0.24;
+
+function buildShadowValue(channel: string, layers: ShadowLayer[]): string {
+  return layers
+    .map((l) => `rgba(${channel}, ${l.opacity}) ${l.offsets}`)
+    .join(', ');
+}
+
+function channelToComma(ch: string): string {
+  return ch.replace(/ /g, ', ');
+}
+
+/**
+ * Emits `--prismui-shadow-*` CSS variables.
+ *
+ * Size & component shadows use `palette.shadow.color` channel.
+ * Dialog shadow uses `palette.shadow.dialogColor` (fallback: `palette.common.black`).
+ * Semantic shadows use the resolved semantic color's `mainChannel`.
+ */
+function emitShadowVars(
+  vars: Record<string, string>,
+  palette: PrismuiPalette,
+  resolvedSemantic: Record<string, PrismuiPaletteColor>,
+): void {
+  const baseChannel = getColorChannels(palette.shadow.color) ?? '145, 158, 171';
+  const baseComma = channelToComma(baseChannel);
+
+  const dialogColorSource = palette.shadow.dialogColor ?? palette.common.black;
+  const dialogChannel = getColorChannels(dialogColorSource) ?? '0, 0, 0';
+  const dialogComma = channelToComma(dialogChannel);
+
+  // Size shadows
+  for (const [key, tmpl] of Object.entries(SIZE_SHADOW_TEMPLATES)) {
+    vars[`--prismui-shadow-${key}`] = buildShadowValue(baseComma, tmpl.layers);
+  }
+
+  // Component shadows
+  for (const [key, tmpl] of Object.entries(COMPONENT_SHADOW_TEMPLATES)) {
+    const value = tmpl.layers
+      .map((l) => {
+        const ch = l.useDialogColor ? dialogComma : baseComma;
+        return `rgba(${ch}, ${l.opacity}) ${l.offsets}`;
+      })
+      .join(', ');
+    vars[`--prismui-shadow-${key}`] = value;
+  }
+
+  // Semantic color shadows (primary, secondary, info, success, warning, error)
+  for (const key of SEMANTIC_COLOR_KEYS) {
+    const color = resolvedSemantic[key];
+    if (color) {
+      const userChannel = color.mainChannel;
+      const ch = userChannel || getColorChannels(color.main);
+      if (ch) {
+        const commaChannel = channelToComma(ch);
+        vars[`--prismui-shadow-${key}`] =
+          `rgba(${commaChannel}, ${SEMANTIC_SHADOW_OPACITY}) ${SEMANTIC_SHADOW_OFFSETS}`;
+      }
     }
   }
 }
@@ -260,6 +365,9 @@ export function getPaletteVars(
   if (selectedChannel) {
     vars['--prismui-action-selectedChannel'] = selectedChannel;
   }
+
+  // --- Shadows (generated from palette.shadow.color + semantic mainChannel) ---
+  emitShadowVars(vars, palette, resolvedSemantic);
 
   return vars;
 }
