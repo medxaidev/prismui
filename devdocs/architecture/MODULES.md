@@ -1,156 +1,198 @@
 # MODULES (Enforceable)
 
 **Status:** Active  
-**Version:** v1.0  
-**Scope:** Defines all packages and components in Prismui
+**Version:** v2.0  
+**Last Updated:** 2026-02-10  
+**Scope:** Defines all modules and components in PrismUI
 
 ---
 
 ## 1. Package Structure
 
+PrismUI is a **monorepo with a single core package**. All core infrastructure, components, and utilities live in `@prismui/core`. Separate packages are created only when a clear boundary exists (e.g., Next.js integration).
+
 ```
-@prismui/
-├── core/           # Core components
-├── hooks/          # React hooks
-├── theme/          # Theming system
-├── styles/         # Style utilities
-├── types/          # TypeScript types
-└── nextjs/         # Next.js integration
+packages/
+├── core/                   # @prismui/core — all core infrastructure and components
+│   └── src/
+│       ├── core/           # Infrastructure (non-component)
+│       │   ├── PrismuiProvider/    # Provider, theme context, hooks
+│       │   ├── theme/              # Theme types, defaultTheme, createTheme
+│       │   ├── css-vars/           # CSS variable generation (ThemeVars, palette-vars)
+│       │   ├── css-baseline/       # CSS reset/baseline
+│       │   ├── style-engine/       # insertCssOnce, StyleRegistry, SSR support
+│       │   ├── system/             # SystemProps (config, resolvers, split)
+│       │   ├── factory/            # [Stage-2] Component factory system
+│       │   ├── styles-api/         # [Stage-2] useStyles, getClassName, getStyle
+│       │   ├── types/              # Polymorphic types, style prop types
+│       │   ├── color-functions/    # Color parsing utilities
+│       │   └── index.ts            # Core barrel export
+│       ├── components/     # All components
+│       │   ├── Box/                # [Stage-1] Base polymorphic component
+│       │   ├── Stack/              # [Stage-2] Vertical layout
+│       │   ├── ButtonBase/         # [Stage-2] Unstyled accessible button
+│       │   ├── Paper/              # [Stage-2] Elevated container
+│       │   └── Button/             # [Stage-2] Styled button
+│       └── index.ts        # Public API barrel export
+└── nextjs/                 # @prismui/nextjs — Next.js App Router integration (future)
 ```
 
 ---
 
-## 2. Core Package (@prismui/core)
+## 2. Core Infrastructure Modules (`core/`)
 
-### 2.1 Foundation Components
+### 2.1 Stage-1 Modules (Complete)
 
-**Box** - Polymorphic container component
+| Module               | Responsibility                     | Key Exports                                                                                         |
+| -------------------- | ---------------------------------- | --------------------------------------------------------------------------------------------------- |
+| `PrismuiProvider/`   | Theme context, color scheme, hooks | `PrismuiProvider`, `PrismuiThemeProvider`, `usePrismuiTheme`, `usePrismuiContext`, `useColorScheme` |
+| `theme/`             | Theme types, defaults, factory     | `PrismuiTheme`, `defaultTheme`, `createTheme`                                                       |
+| `css-vars/`          | CSS variable generation            | `ThemeVars`, `getPrismuiCssVariables`, `getPaletteVars`                                             |
+| `css-baseline/`      | CSS reset                          | `CssBaseline`, `BASELINE_CSS`                                                                       |
+| `style-engine/`      | Runtime CSS injection              | `insertCssOnce`, `createStyleRegistry`, `StyleRegistryProvider`                                     |
+| `system/`            | SystemProps resolution             | `SystemProps`, `splitSystemProps`, `resolveSystemProps`, `SYSTEM_CONFIG`                            |
+| `types/polymorphic/` | Polymorphic component types        | `PolymorphicComponentProps`, `PolymorphicRef`, `createPolymorphicComponent`                         |
+| `color-functions/`   | Color parsing                      | `getColorChannels`                                                                                  |
 
-- Base for all components
-- Style props support
-- Polymorphic rendering
+### 2.2 Stage-2 Modules (Planned)
 
-**Text** - Typography component
+| Module        | Responsibility                   | Key Exports                                                                         |
+| ------------- | -------------------------------- | ----------------------------------------------------------------------------------- |
+| `factory/`    | Component creation pipeline      | `factory`, `polymorphicFactory`, `useProps`, `FactoryPayload`, `PolymorphicFactory` |
+| `styles-api/` | Multi-source style orchestration | `useStyles`, `createVarsResolver`, `StylesApiProps`, `ClassNames`, `Styles`         |
 
-- Text rendering with theme
-- Size, weight, color variants
-
-**Button** - Interactive button component
-
-- Multiple variants (filled, outline, subtle)
-- Size variants
-- Loading and disabled states
-- Icon support
-
-### 2.2 Layout Components
-
-**Stack** - Vertical/horizontal layout
-**Group** - Horizontal group with spacing
-**Grid** - CSS Grid layout
-**Container** - Max-width container
-**Flex** - Flexbox layout
-
-### 2.3 Input Components
-
-**Input** - Base input component
-**TextInput** - Text input field
-**Textarea** - Multi-line input
-**Select** - Dropdown select
-**Checkbox** - Checkbox input
-**Radio** - Radio button
-
-### 2.4 Feedback Components
-
-**Modal** - Dialog/modal overlay
-**Alert** - Alert messages
-**Notification** - Toast notifications
-**Loader** - Loading indicators
+**Note:** Stage-2 `factory/` will **replace** `types/polymorphic/createPolymorphicComponent`. The polymorphic type definitions (`PolymorphicComponentProps`, `PolymorphicRef`) remain but are consumed by the factory system.
 
 ---
 
-## 3. Hooks Package (@prismui/hooks)
+## 3. Components
 
-**useTheme** - Access theme context
-**useStyles** - Create component styles
-**useMediaQuery** - Responsive breakpoints
-**useClickOutside** - Detect outside clicks
-**useFocusTrap** - Trap focus in component
-**useId** - Generate unique IDs (SSR-safe)
+### 3.1 Stage-1 Components (Complete)
 
----
+| Component | Type       | Description                                                                                                                              |
+| --------- | ---------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| **Box**   | Foundation | Polymorphic base component. All components render through Box. Supports `component`, `renderRoot`, `mod`, `variant`/`size`, SystemProps. |
 
-## 4. Theme Package (@prismui/theme)
+### 3.2 Stage-2 Components (Planned)
 
-**PrismuiProvider** - Root provider
-**PrismuiThemeProvider** - Theme-only provider
-**createTheme** - Theme factory
-**defaultTheme** - Default theme object
-**cssVariablesResolver** - CSS var generation
+| Component      | Type        | Base       | Description                                               |
+| -------------- | ----------- | ---------- | --------------------------------------------------------- |
+| **Stack**      | Layout      | Box        | Vertical flex layout with gap, align, justify             |
+| **ButtonBase** | Base        | Box        | Unstyled accessible button (keyboard, ARIA, polymorphic)  |
+| **Paper**      | Container   | Box        | Elevated container with shadow via CSS variables          |
+| **Button**     | Interactive | ButtonBase | Full-featured button (variants, sizes, loading, sections) |
 
----
+### 3.3 Stage-3+ Components (Planned)
 
-## 5. Styles Package (@prismui/styles)
-
-**createStyles** - Style factory function
-**rem** - Convert px to rem
-**em** - Convert px to em
-**rgba** - Color with opacity
-**darken/lighten** - Color manipulation
-
----
-
-## 6. Types Package (@prismui/types)
-
-**ThemeConfig** - Theme configuration
-**ComponentProps** - Component prop types
-**PolymorphicComponent** - Polymorphic types
-**StylesAPI** - Styles API types
+| Component    | Stage | Base      |
+| ------------ | ----- | --------- |
+| Text         | 3     | Box       |
+| Group        | 3     | Box       |
+| Grid         | 3     | Box       |
+| Container    | 3     | Box       |
+| InputBase    | 4     | Box       |
+| TextInput    | 4     | InputBase |
+| Select       | 4     | InputBase |
+| Checkbox     | 4     | Box       |
+| Radio        | 4     | Box       |
+| ModalBase    | 5     | Box       |
+| Modal        | 5     | ModalBase |
+| Alert        | 5     | Box       |
+| Notification | 5     | Box       |
 
 ---
 
-## 7. Next.js Package (@prismui/nextjs)
+## 4. Component Creation Pattern (Stage-2+)
 
-**PrismuiAppProvider** - App Router provider
-**useServerInsertedHTML** - SSR style injection
+Every component follows the same creation pipeline:
+
+```tsx
+// 1. Define Factory type
+export type ButtonFactory = PolymorphicFactory<{
+  props: ButtonProps;
+  defaultRef: HTMLButtonElement;
+  defaultComponent: "button";
+  stylesNames: ButtonStylesNames;
+  vars: ButtonCssVariables;
+  variant: ButtonVariant;
+  staticComponents: { Group: typeof ButtonGroup };
+}>;
+
+// 2. Create with polymorphicFactory
+export const Button = polymorphicFactory<ButtonFactory>((_props, ref) => {
+  // 3. Merge props (default < theme < user)
+  const props = useProps("Button", defaultProps, _props);
+
+  // 4. Resolve styles (CSS Modules + theme + user overrides)
+  const getStyles = useStyles<ButtonFactory>({
+    name: "Button",
+    props,
+    classes, // from Button.module.css
+    className,
+    style,
+    classNames,
+    styles,
+    unstyled,
+    vars,
+    varsResolver,
+  });
+
+  // 5. Render through Box (or ButtonBase)
+  return (
+    <ButtonBase
+      ref={ref}
+      {...getStyles("root")}
+      variant={variant}
+      mod={[{ loading, disabled }]}
+      {...others}
+    >
+      <span {...getStyles("inner")}>
+        <span {...getStyles("label")}>{children}</span>
+      </span>
+    </ButtonBase>
+  );
+});
+
+// 6. Attach static properties
+Button.classes = classes;
+Button.displayName = "@prismui/core/Button";
+```
 
 ---
 
-## 8. Dependency Rules (ENFORCED)
+## 5. Dependency Rules (ENFORCED)
 
-- `@prismui/core` depends on: `theme`, `hooks`, `styles`, `types`
-- `@prismui/hooks` depends on: `types`
-- `@prismui/theme` depends on: `types`
-- `@prismui/styles` depends on: `types`
-- `@prismui/types` has NO dependencies
-- `@prismui/nextjs` depends on: `core`, `theme`
+### Internal dependency direction (strict one-way)
 
-Circular dependencies are **FORBIDDEN**.
+```
+components/ → core/factory/ → core/styles-api/ → core/PrismuiProvider/ → core/theme/
+                                                → core/style-engine/
+                                                → core/system/
+```
 
----
+- Components **depend on** factory and styles-api
+- Factory **depends on** PrismuiProvider (for useProps → theme.components)
+- Styles-api **depends on** PrismuiProvider (for usePrismuiTheme)
+- Style-engine is **independent** (no React dependencies in core logic)
+- Theme types are **independent** (pure TypeScript, no React)
 
-## 9. Stage-1 Module Allowlist
+### Cross-package rules
 
-**Allowed in Stage-1:**
-
-- @prismui/types (all)
-- @prismui/theme (core system)
-- @prismui/hooks (useTheme, useId)
-- @prismui/styles (createStyles, utilities)
-- @prismui/core (Box, Text, Button only)
-
-**Forbidden in Stage-1:**
-
-- Complex components (Modal, DataTable, etc.)
-- Advanced hooks
-- Animation utilities
+- `@prismui/core` has NO external package dependencies beyond React and `clsx`
+- `@prismui/nextjs` depends on `@prismui/core` only
+- Circular dependencies are **FORBIDDEN**
 
 ---
 
-## 10. Component Development Priority
+## 6. Module Allowlist by Stage
 
-**Priority 1 (Stage-1):** Box, Text, Button, Stack, Group
-**Priority 2 (Stage-2):** Input, TextInput, Select, Checkbox, Radio
-**Priority 3 (Stage-3):** Modal, Alert, Notification, Loader
-**Priority 4 (Stage-4):** DataTable, Calendar, DatePicker, etc.
+| Stage        | Allowed Infrastructure                                                            | Allowed Components                                                      |
+| ------------ | --------------------------------------------------------------------------------- | ----------------------------------------------------------------------- |
+| 1 (Complete) | Provider, Theme, CSS Vars, Baseline, Style Engine, SystemProps, Polymorphic Types | Box                                                                     |
+| 2 (Next)     | Factory, Styles API, CSS Modules                                                  | Stack, ButtonBase, Paper, Button                                        |
+| 3            | —                                                                                 | Text, Group, Grid, Container, Flex                                      |
+| 4            | —                                                                                 | InputBase, TextInput, Textarea, Select, Checkbox, Radio, Switch         |
+| 5            | —                                                                                 | ModalBase, Modal, Drawer, Alert, Notification, Loader, Tooltip, Popover |
+| 6            | —                                                                                 | DataTable, Calendar, DatePicker (on-demand)                             |
 
-Components are built based on **MedXAI project needs**.
+**Modules not in the current stage's allowlist MUST NOT be created.**

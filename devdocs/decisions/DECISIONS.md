@@ -12,14 +12,15 @@
 | [ADR-004](./ADR-004-Color-Scheme-Manager.md)            | Color Scheme Manager            | Accepted | 2026-02-07 | High - Pluggable persistence, cross-tab sync, system preference |
 | [ADR-005](./ADR-005-System-Props.md)                    | System Props                    | Accepted | 2026-02-08 | High - Mobile-first responsive layout language                  |
 | [ADR-006](./ADR-006-Box-Component-Architecture.md)      | Box Component Architecture      | Accepted | 2026-02-09 | High - renderRoot, mod, variant/size, usePrismuiContext         |
+| [ADR-007](./ADR-007-Component-Factory-Styles-API.md)    | Component Factory & Styles API  | Accepted | 2026-02-10 | High - factory, useProps, useStyles, CSS Modules, varsResolver  |
 
 ## Planned ADRs
 
 | ID      | Title                             | Status | Date |
 | ------- | --------------------------------- | ------ | ---- |
-| ADR-007 | Component Testing Strategy        | Draft  | TBD  |
-| ADR-008 | Bundle Size Optimization Approach | Draft  | TBD  |
-| ADR-009 | Animation System Design           | Draft  | TBD  |
+| ADR-008 | Component Testing Strategy        | Draft  | TBD  |
+| ADR-009 | Bundle Size Optimization Approach | Draft  | TBD  |
+| ADR-010 | Animation System Design           | Draft  | TBD  |
 
 ## ADR Template
 

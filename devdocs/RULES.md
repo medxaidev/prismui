@@ -62,3 +62,23 @@
     Components are built incrementally based on actual usage requirements.
     组件开发优先考虑 MedXAI 项目需求。
     组件根据实际使用需求增量构建。
+
+12. Stage completeness is mandatory. / 阶段完整性是强制的
+    Each development stage must be completed in full before the next begins.
+    Core infrastructure within a stage must NOT be deferred, simplified, or split
+    into progressive phases. Partial infrastructure leads to rework.
+    Stabilization reviews of previous stages may run in parallel,
+    but the current stage's deliverables must be complete, tested, and documented.
+    每个开发阶段必须在下一个阶段开始之前完整完成。
+    阶段内的核心基础设施不得推迟、简化或拆分为渐进阶段。
+    不完整的基础设施会导致返工。
+    前一阶段的稳定化审查可以并行进行，
+    但当前阶段的交付物必须完整、经过测试并有文档记录。
+
+13. Infrastructure before components. / 基础设施先于组件
+    Within any stage that introduces new infrastructure (factory, styles API, etc.),
+    the infrastructure must be fully built and tested before components are implemented.
+    Components serve as validation of the infrastructure, not the other way around.
+    在任何引入新基础设施（工厂、样式 API 等）的阶段中，
+    基础设施必须在组件实现之前完全构建和测试。
+    组件是基础设施的验证，而不是反过来。

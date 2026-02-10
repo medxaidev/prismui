@@ -184,6 +184,10 @@ A stage is considered complete only when:
 - Its objectives are met
 - Its impact on architecture is documented
 - Open questions are resolved or explicitly deferred
+- **All core infrastructure is fully built** — no partial implementations, no "Phase 1 of 3"
+- **All tests pass** — including all previous stage tests (no regressions)
+
+**Stages must not leave tails.** Incomplete infrastructure within a stage will compound into rework in later stages. If a stage introduces infrastructure (factory, styles API, etc.), that infrastructure must be fully operational before any components are built on top of it. Components validate infrastructure; they do not define it.
 
 Stages are recorded in `devdocs/stages`.
 
@@ -201,14 +205,18 @@ Stages are recorded in `devdocs/stages`.
 - 其目标已实现
 - 其对架构的影响已记录
 - 开放问题已解决或明确推迟
+- **所有核心基础设施已完全构建** — 不允许部分实现，不允许"三阶段中的第一阶段"
+- **所有测试通过** — 包括所有前一阶段的测试（无回归）
+
+**阶段不得留有尾巴。** 阶段内不完整的基础设施会在后续阶段中累积为返工。如果一个阶段引入基础设施（工厂、样式 API 等），该基础设施必须在任何组件构建之前完全可用。组件验证基础设施，而不是反过来。
 
 阶段记录在 `devdocs/stages` 中。
 
 ---
 
-## 5.1 Current Stage: Stage-1 (System Boundary Review)
+## 5.1 Stage-1: System Boundary (Complete)
 
-We are currently in **PrismUI Stage-1**.
+**PrismUI Stage-1 is complete.** Stabilization reviews ongoing (see §5.3).
 
 Stage-1 scope is limited to:
 
@@ -290,6 +298,91 @@ This checklist is used to detect scope creep. If an item exceeds Stage-1 respons
 ### Stage-1 Violations Identified
 
 - **Resolved:** `packages/core/src/index.ts` previously exported `Text` (out of Stage-1 scope and missing in the current codebase). The export has been removed to align the public API with Stage-1 intent.
+
+---
+
+## 5.2 Stage-2: Component Factory & Styles API
+
+We are entering **PrismUI Stage-2**.
+
+Stage-2 scope:
+
+- **Factory system** (`factory()`, `polymorphicFactory()`, `FactoryPayload` types)
+- **useProps** (theme-level default props merging, `PrismuiTheme.components`)
+- **Styles API** (`useStyles()`, `getClassName()`, `getStyle()`, `createVarsResolver()`)
+- **CSS Modules** (static base styles per component, `.module.css`)
+- **Box refactoring** (migrate to new factory system)
+- **Validation components** (Stack → ButtonBase → Paper → Button)
+
+The purpose of Stage-2 is to establish the **component assembly line**:
+
+- Every component follows the same creation pattern (factory → useProps → useStyles → CSS Modules → Box)
+- Theme-level customization works for all components (`theme.components[name]`)
+- Multi-source style merging is consistent and predictable
+- CSS Modules provide zero-runtime base styles
+- `unstyled` prop allows full style override
+
+### Stage-2 Implementation Order
+
+```
+Phase A: Factory System (types + functions)
+    ↓
+Phase B: useProps (theme.components integration)
+    ↓
+Phase C: Styles API (useStyles, getClassName, getStyle, createVarsResolver)
+    ↓
+Phase D: CSS Modules (build config, conventions)
+    ↓
+Phase E: Box Refactoring (migrate to factory, zero regressions)
+    ↓
+Phase F: Validation Components (Stack → ButtonBase → Paper → Button)
+```
+
+Each phase must be **complete with tests** before the next begins. Infrastructure (A-E) must be fully built before components (F).
+
+**Detail:** `devdocs/stages/STAGE-002-Component-Factory.md`  
+**Decision:** `devdocs/decisions/ADR-007-Component-Factory-Styles-API.md`
+
+---
+
+## 5.3 Stage-1 Stabilization Gates (Review Reminders)
+
+**Status:** Stage-1 core implementation is complete. Periodic stabilization reviews run in parallel with Stage-2 development.
+
+### Review Cadence
+
+**Every 2 days** (or before major component work), conduct a focused review of one Stage-1 module.
+
+### Review Rotation (5 rounds, ~10 days total)
+
+| Round  | Module      | Focus Areas                                                              | Est. Time |
+| ------ | ----------- | ------------------------------------------------------------------------ | --------- |
+| **R1** | Theme       | `defaultTheme`, `createTheme`, merge strategy, type consistency          | 60-90 min |
+| **R2** | CSS Vars    | `palette-vars`, `shadow-vars`, naming conventions, generation pipeline   | 60-90 min |
+| **R3** | Provider    | Color scheme manager, SSR registry, DOM attributes, hook exports         | 60-90 min |
+| **R4** | Box         | Polymorphic types, `renderRoot`, `mod`, `variant`/`size`, ref forwarding | 60-90 min |
+| **R5** | SystemProps | Normalize rules, responsive CSS generation, dedupe, edge cases           | 60-90 min |
+
+### Review Output (each round)
+
+For each review, document:
+
+1. **Findings** — Issues discovered (API inconsistencies, type gaps, edge cases, naming, etc.)
+2. **Impact** — Severity (breaking / non-breaking / internal-only)
+3. **Decision** — Fix now / defer to backlog / won't fix (with rationale)
+4. **Backlog items** — Actionable tasks created (if deferred)
+
+Store findings in: `devdocs/stages/STAGE-001-STABILIZATION-LOG.md` (create if needed).
+
+### Gate Before Stage-2 Component Release
+
+Before releasing the first real component (Button/Text/etc.), run a **final Stage-1 audit** (half-day):
+
+- Verify all "fix now" items are resolved
+- Confirm no breaking changes are needed in Stage-1 APIs
+- Update ADRs if any architectural decisions changed
+
+**Next review due:** Check `STAGE-001-STABILIZATION-LOG.md` for last review date + 2 days.
 
 ---
 
