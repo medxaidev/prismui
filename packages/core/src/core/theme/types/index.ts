@@ -71,7 +71,12 @@ export type {
   PrismuiRadiusValues,
 } from './radius';
 
-export type { PrismuiThemeInput, PrismuiTheme } from './theme';
+export type {
+  PrismuiThemeComponent,
+  PrismuiThemeComponents,
+  PrismuiThemeInput,
+  PrismuiTheme,
+} from './theme';
 
 export type {
   PrismuiShadowKey,

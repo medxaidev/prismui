@@ -10,6 +10,29 @@ import type { PrismuiFontSizesValues } from './font-size';
 import type { PrismuiLineHeightsValues } from './line-height';
 import type { PrismuiRadiusValues } from './radius';
 
+// ---------------------------------------------------------------------------
+// Theme-level component customization
+// ---------------------------------------------------------------------------
+
+/**
+ * Per-component theme customization entry.
+ *
+ * - `defaultProps` — merged by `useProps()` (Phase B). Can be object or `(theme) => object`.
+ * - `classNames` / `styles` / `vars` — merged by `useStyles()` (Phase C, typed as `any` for now).
+ */
+export interface PrismuiThemeComponent {
+  classNames?: any;
+  styles?: any;
+  vars?: any;
+  defaultProps?: Record<string, any> | ((theme: PrismuiTheme) => Record<string, any>);
+}
+
+export type PrismuiThemeComponents = Record<string, PrismuiThemeComponent>;
+
+// ---------------------------------------------------------------------------
+// PrismuiTheme
+// ---------------------------------------------------------------------------
+
 /**
  * PrismUI theme object.
  *
@@ -44,6 +67,9 @@ export interface PrismuiTheme {
 
   spacing?: Partial<PrismuiSpacingValues>;
   breakpoints: PrismuiBreakpointsValues;
+
+  /** Allows adding `classNames`, `styles` and `defaultProps` to any component */
+  components: PrismuiThemeComponents;
 
   other: Record<string, unknown>;
 }

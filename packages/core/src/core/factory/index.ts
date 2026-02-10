@@ -24,5 +24,8 @@ export type {
 } from './polymorphic-factory';
 export { polymorphicFactory } from './polymorphic-factory';
 
+// useProps hook
+export { useProps } from './use-props';
+
 // Type aliases for component declarations
 export type { Factory, PolymorphicFactory } from './create-factory';

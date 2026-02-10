@@ -555,7 +555,25 @@ PrismuiProvider theme={theme}
 
 ### Implementation Notes
 
-> _完成后回填_
+**已完成** (Phase B)
+
+| 文件                              | 说明                                                                                                   |
+| --------------------------------- | ------------------------------------------------------------------------------------------------------ |
+| `core/theme/types/theme.ts`       | 新增 `PrismuiThemeComponent` interface + `PrismuiThemeComponents` type；`PrismuiTheme.components` 字段 |
+| `core/theme/default-theme.ts`     | `components: {}` 已存在于默认主题                                                                      |
+| `core/theme/types/index.ts`       | 导出 `PrismuiThemeComponent`, `PrismuiThemeComponents`                                                 |
+| `core/factory/use-props.ts`       | `useProps()` hook — 3 层合并，复用 `omitUndefinedProps`，支持 `defaultProps` 为函数                    |
+| `core/factory/index.ts`           | 新增 `export { useProps }`                                                                             |
+| `core/factory/use-props.test.tsx` | 11 tests                                                                                               |
+
+**设计要点**:
+
+- 复用已有 `omitUndefinedProps`（而非 Mantine 的 `filterProps`），功能等价
+- `useSafeTheme()` 内部 try/catch：无 Provider 时跳过 theme 层，不报错
+- `defaultProps` 支持 `(theme) => object` 函数形式，与 Mantine 一致
+- `null` 可作为 `defaultProps` 传入（组件无内置默认值时）
+
+**验证**: `tsc --noEmit` ✅ | 全量 162 tests ✅ | 零回归
 
 ---
 

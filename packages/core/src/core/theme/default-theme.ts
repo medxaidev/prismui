@@ -172,5 +172,7 @@ export const defaultTheme: PrismuiThemeInput = {
     xl: '88rem',
   },
 
+  components: {},
+
   other: {},
 };
