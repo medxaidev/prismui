@@ -173,4 +173,79 @@ describe('useProps', () => {
     );
     expect(result.current.size).toBe('xl');
   });
+
+  // ---- multi-key merging ----
+
+  it('merges different keys from all three layers', () => {
+    const wrapper = createWrapper({
+      TestComponent: { defaultProps: { color: 'blue', radius: 'lg' } },
+    });
+    const { result } = renderHook(
+      () =>
+        useProps<{ size?: string; color?: string; radius?: string; variant?: string }>(
+          'TestComponent',
+          { size: 'md', variant: 'filled' },
+          { variant: 'outlined' },
+        ),
+      { wrapper },
+    );
+    // component default
+    expect(result.current.size).toBe('md');
+    // theme default
+    expect(result.current.color).toBe('blue');
+    expect(result.current.radius).toBe('lg');
+    // user override
+    expect(result.current.variant).toBe('outlined');
+  });
+
+  // ---- empty string preserved ----
+
+  it('preserves empty string user props', () => {
+    const { result } = renderHook(() =>
+      useProps<{ label?: string }>(
+        'TestComponent',
+        { label: 'default' },
+        { label: '' },
+      ),
+    );
+    expect(result.current.label).toBe('');
+  });
+
+  // ---- function defaultProps + user override ----
+
+  it('user props override function-based theme defaultProps', () => {
+    const wrapper = createWrapper({
+      TestComponent: {
+        defaultProps: () => ({ size: 'xl', color: 'red' }),
+      },
+    });
+    const { result } = renderHook(
+      () =>
+        useProps<{ size?: string; color?: string }>(
+          'TestComponent',
+          {},
+          { size: 'xs' },
+        ),
+      { wrapper },
+    );
+    expect(result.current.size).toBe('xs');
+    expect(result.current.color).toBe('red');
+  });
+
+  // ---- children pass-through ----
+
+  it('passes children prop through without interference', () => {
+    const wrapper = createWrapper({});
+    const { result } = renderHook(
+      () =>
+        useProps<{ children?: any; size?: string }>(
+          'TestComponent',
+          { size: 'md' },
+          { children: 'hello' },
+        ),
+      { wrapper },
+    );
+    expect(result.current.children).toBe('hello');
+    expect(result.current.size).toBe('md');
+  });
 });
