@@ -20,6 +20,10 @@ PrismUI learns from:
 
 PrismUI is under active development. The core infrastructure is being built first, followed by the first batch of components.
 
+## Docs
+
+- `devdocs/architecture/DESIGN-PRINCIPLES.md` — the guiding principles for combining Mantine-like engineering ergonomics with MUI/Joy-like visual details.
+
 ## Development
 
 ### Prerequisites

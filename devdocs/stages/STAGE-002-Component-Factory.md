@@ -40,6 +40,13 @@ This is unacceptable. **The factory system is the component assembly line.**
 
 以下概念是 Stage-2 的核心知识前提。实现前必须理解每个概念的职责边界。
 
+### 3.0 Design Principles (Must Follow)
+
+组件实现不仅是工程问题，也是视觉与交互质量问题。
+
+- **Guiding doc:** `devdocs/architecture/DESIGN-PRINCIPLES.md`
+- **Key constraints:** defaults must be beautiful; constrain sizes/variants; theme customization is for micro-adjustments.
+
 ### 3.1 FactoryPayload — 组件元数据类型
 
 每个组件通过 `FactoryPayload` 在**类型层面**声明自己的能力：
