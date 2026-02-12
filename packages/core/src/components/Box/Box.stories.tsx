@@ -51,6 +51,23 @@ export const Basic: Story = {
   ),
 };
 
+export const Basic2: Story = {
+  render: () => (
+    <div>
+      <Box bg="orange.400" ms="xl" fz="15" lh="3" bdrs={100}>
+        Visible from sm
+      </Box>
+      <Box bg="blue.400" p="xl">
+        Virtual bg
+      </Box>
+      <Box bg="color-mix(in srgb, var(--prismui-color-pink-500), white 20%)" h={100} w={150}>
+        Pink.6 color-mix
+      </Box>
+    </div>
+  ),
+};
+
+
 export const Polymorphic: Story = {
   render: () => (
     <div style={{ display: 'grid', gap: 12 }}>

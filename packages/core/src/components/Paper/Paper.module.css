@@ -1,0 +1,13 @@
+.root {
+  --paper-radius: var(--prismui-radius-md);
+
+  outline: 0;
+  display: block;
+  border-radius: var(--paper-radius);
+  box-shadow: var(--paper-shadow);
+  background-color: var(--prismui-background-paper);
+
+  &:where([data-with-border]) {
+    border: 1px solid var(--prismui-divider);
+  }
+}

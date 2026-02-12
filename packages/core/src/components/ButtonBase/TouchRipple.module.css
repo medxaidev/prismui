@@ -1,0 +1,105 @@
+/* ---------------------------------------------------------------------------
+ * TouchRipple — internal ripple effect component
+ *
+ * Architecture:
+ * - .rippleRoot: absolute overlay, inherits border-radius, captures no events
+ * - .ripple: individual ripple circle, positioned absolutely, CSS animated
+ * - .rippleVisible: triggers enter animation (scale 0→1, opacity 0.1→0.3)
+ * - .rippleExiting: triggers exit animation (opacity→0)
+ * - .ripplePulsate: shorter enter duration for focus pulsate
+ * - .child: inner circle, fills parent, border-radius 50%, currentColor bg
+ * - .childLeaving: exit animation on inner circle
+ * - .childPulsate: infinite pulsate animation for focus state
+ * --------------------------------------------------------------------------- */
+
+.rippleRoot {
+  overflow: hidden;
+  pointer-events: none;
+  position: absolute;
+  z-index: 0;
+  inset: 0;
+  border-radius: inherit;
+}
+
+/* Individual ripple circle */
+.ripple {
+  opacity: 0;
+  position: absolute;
+  /* transform applied via animation */
+}
+
+.rippleVisible {
+  opacity: 0.3;
+  transform: scale(1);
+  animation: prismui-ripple-enter 550ms ease-in-out;
+}
+
+.ripplePulsate {
+  animation-duration: 200ms;
+}
+
+.rippleExiting {
+  opacity: 0;
+}
+
+/* Inner circle — fills the ripple, provides the color */
+.child {
+  opacity: 1;
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background-color: currentColor;
+}
+
+.childLeaving {
+  opacity: 0;
+  animation: prismui-ripple-exit 550ms ease-in-out;
+}
+
+.childPulsate {
+  position: absolute;
+  left: 0;
+  top: 0;
+  animation: prismui-ripple-pulsate 2500ms ease-in-out 200ms infinite;
+}
+
+/* ---------------------------------------------------------------------------
+ * Keyframes
+ * --------------------------------------------------------------------------- */
+
+@keyframes prismui-ripple-enter {
+  0% {
+    transform: scale(0);
+    opacity: 0.1;
+  }
+
+  100% {
+    transform: scale(1);
+    opacity: 0.3;
+  }
+}
+
+@keyframes prismui-ripple-exit {
+  0% {
+    opacity: 1;
+  }
+
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes prismui-ripple-pulsate {
+  0% {
+    transform: scale(1);
+  }
+
+  50% {
+    transform: scale(0.92);
+  }
+
+  100% {
+    transform: scale(1);
+  }
+}

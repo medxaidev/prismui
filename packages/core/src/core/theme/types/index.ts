@@ -83,6 +83,7 @@ export type {
   PrismuiShadowSizeKey,
   PrismuiShadowComponentKey,
   PrismuiShadowSemanticKey,
+  PrismuiShadow,
   PrismuiPaletteShadow,
 } from './shadow';
 

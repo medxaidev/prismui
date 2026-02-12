@@ -25,6 +25,9 @@ export type PrismuiShadowKey =
   | PrismuiShadowComponentKey
   | PrismuiShadowSemanticKey;
 
+/** Accepts a shadow key, direct CSS string, or `none` to remove shadow. */
+export type PrismuiShadow = PrismuiShadowKey | (string & {});
+
 /**
  * Palette-level shadow configuration.
  *

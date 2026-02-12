@@ -1189,17 +1189,90 @@ export interface ButtonBaseProps
 
 **验收标准:**
 
-- [ ] `<ButtonBase>` 渲染 `<button type="button">`
-- [ ] `<ButtonBase component="a" href="/link">` 渲染 `<a>` 且不设 `type`
-- [ ] 键盘 Enter/Space 触发 onClick
-- [ ] `disabled` 属性正确应用
-- [ ] `<ButtonBase unstyled>` 跳过 CSS Module 类
-- [ ] Theme 级 `defaultProps` 正确合并
-- [ ] 测试覆盖: 渲染、多态、键盘、disabled、unstyled、useProps
+- [x] `<ButtonBase>` 渲染 `<button type="button">`
+- [x] `<ButtonBase component="a" href="/link">` 渲染 `<a>` 且不设 `type`
+- [x] 键盘 Enter/Space 触发 onClick
+- [x] `disabled` 属性正确应用
+- [x] `<ButtonBase unstyled>` 跳过 CSS Module 类
+- [x] Theme 级 `defaultProps` 正确合并
+- [x] 测试覆盖: 渲染、多态、键盘、disabled、unstyled、useProps
 
 **Implementation Notes:**
 
-> _完成后回填_
+**完成日期**: 2025-02-13
+
+**实现概要**:
+
+ButtonBase 是第一个使用 `polymorphicFactory()` 的验证组件，验证了多态组件 + `useProps()` + `useStyles()` + `<button>` 语义 + 键盘可访问性的端到端流程。参考 Mantine 的 `UnstyledButton` 设计，同时融合 MUI 的 ⭐ **TouchRipple 触摸反馈系统**。
+
+**关键实现细节**:
+
+1. **使用 `polymorphicFactory`**（非 `factory`）：支持 `component` prop 实现多态渲染
+2. **默认渲染 `<button type="button">`**：仅当 `component === 'button'` 时设置 `type="button"`，避免在 `<a>`、`<div>` 等元素上设置无效的 `type` 属性
+3. **`__staticSelector` prop**：允许父组件（如未来的 Button）覆盖 theme classNames/styles 查找名称，默认值为 `'ButtonBase'`
+4. **CSS Module reset 样式**：`position: relative; overflow: hidden`（ripple 容器）+ 透明背景、无边框、无 padding、cursor pointer、touch-action manipulation
+5. **无 `vars`/`varsResolver`**：ButtonBase 是无样式基础组件，不需要 CSS 变量
+6. **Box 作为根元素**：通过 `<Box component={component} ref={ref} type={...} {...getStyles('root')} {...others} />` 渲染
+
+**⭐ TouchRipple 触摸反馈系统（PrismUI 亮点设计）**:
+
+参考 MUI ButtonBase 的 ripple 设计，在 PrismUI 中作为基础能力全面支持。Ripple 效果在触摸屏设备上提供直观的交互反馈，是 Material Design 的核心交互模式。
+
+**设计决策**:
+
+- **纯 CSS 动画实现**：不依赖 `react-transition-group`（MUI v5 使用），使用 `@keyframes` + CSS Module，零外部依赖
+- **内部组件 `TouchRipple`**：绝对定位 overlay，`border-radius: inherit`，`pointer-events: none`
+- **`RippleCircle` 子组件**：每个 ripple 是独立的 `<span>`，通过 CSS 动画控制 enter/exit/pulsate
+- **`useImperativeHandle` 暴露 API**：`start()` / `stop()` / `pulsate()` 三个方法
+- **触摸设备优化**：80ms 延迟区分 tap 和 scroll，`ignoringMouseDown` 防止触摸后的鼠标事件重复触发
+
+**Ripple Props（对齐 MUI ButtonBase）**:
+
+| Prop                 | 类型                        | 默认值  | 说明                                    |
+| -------------------- | --------------------------- | ------- | --------------------------------------- |
+| `disableRipple`      | `boolean`                   | `false` | 完全禁用 ripple 效果                    |
+| `disableTouchRipple` | `boolean`                   | `false` | 仅禁用触摸 ripple（鼠标 ripple 仍生效） |
+| `centerRipple`       | `boolean`                   | `false` | ripple 从中心开始（适用于图标按钮）     |
+| `focusRipple`        | `boolean`                   | `false` | 键盘 focus 时显示脉动 ripple            |
+| `TouchRippleProps`   | `Partial<TouchRippleProps>` | —       | 传递给内部 TouchRipple 的 props         |
+| `touchRippleRef`     | `Ref<TouchRippleActions>`   | —       | 访问 ripple 的 start/stop/pulsate API   |
+
+**Ripple 动画参数**:
+
+- **enter**: `scale(0) → scale(1)`, `opacity 0.1 → 0.3`, 550ms ease-in-out
+- **exit**: `opacity 1 → 0`, 550ms ease-in-out
+- **pulsate**: `scale(1) → scale(0.92) → scale(1)`, 2500ms infinite（focus 状态）
+- **touch delay**: 80ms（区分 tap 和 scroll）
+
+**受影响的组件（未来）**:
+
+按照 MUI v6 迁移说明，以下组件将继承 ButtonBase 的 ripple 能力：
+
+- All buttons（Button、IconButton）
+- Checkbox、Radio Group
+- Chip、Switch、Tabs
+
+**与 MUI TouchRipple 的对齐**:
+
+- 相同：ripple 定位算法、center/pulsate 模式、touch delay、mouse/touch 事件过滤
+- 优化：纯 CSS 动画（无 `react-transition-group` 依赖）、CSS Module 作用域（无样式泄漏）
+- 简化：不需要 MUI 的 `withStyles` HOC 和 `TransitionGroup`
+
+**新增文件**:
+
+- `components/ButtonBase/ButtonBase.tsx` — 组件实现（含 ripple 集成）
+- `components/ButtonBase/ButtonBase.module.css` — reset 样式（含 `position: relative; overflow: hidden`）
+- `components/ButtonBase/TouchRipple.tsx` — 内部 TouchRipple 组件
+- `components/ButtonBase/TouchRipple.module.css` — ripple 动画样式（@keyframes enter/exit/pulsate）
+- `components/ButtonBase/ButtonBase.test.tsx` — 51 tests (18 groups)
+- `components/ButtonBase/ButtonBase.stories.tsx` — 15 stories
+- `components/ButtonBase/index.ts` — barrel export
+
+**测试**: 51 tests (18 groups) — 基础渲染（6）、多态（4）、键盘可访问性（3）、disabled（2）、unstyled（2）、\_\_staticSelector（2）、className/style（3）、classNames/styles（2）、theme 定制（3）、Provider 要求（1）、静态属性（4）、ripple 渲染（4）、ripple 鼠标交互（4）、centerRipple（1）、focusRipple/pulsate（3）、disableTouchRipple（2）、touchRippleRef（2）、事件处理器透传（3）
+
+**Storybook**: 15 stories — Basic、AsLink、AsDiv、Disabled、Unstyled、StaticSelector、ThemeCustomization、PerInstanceOverride、ThemeClassNames、PropsInStyles、RippleDefault、RippleCenter、RippleDisabled、RippleFocusPulsate、RipplePolymorphic
+
+**验证**: `tsc --noEmit` 无新增错误 ✅ | 全量 350 tests ✅ (51 ButtonBase) | 零回归
 
 ### F3: Paper (~0.5 day)
 
@@ -1229,16 +1302,57 @@ export type PaperCssVariables = {
 
 **验收标准:**
 
-- [ ] `<Paper shadow="md">` 通过 CSS 变量应用阴影
-- [ ] `<Paper radius="lg">` 通过 CSS 变量应用圆角
-- [ ] `<Paper withBorder>` 通过 `data-with-border` 属性应用边框
-- [ ] varsResolver 正确将 props 转换为 CSS 变量
-- [ ] 用户可通过 `vars` prop 覆盖 CSS 变量
-- [ ] 测试覆盖: 渲染、shadow、radius、withBorder、varsResolver、vars 覆盖
+- [x] `<Paper shadow="md">` 通过 CSS 变量应用阴影
+- [x] `<Paper radius="lg">` 通过 CSS 变量应用圆角
+- [x] `<Paper withBorder>` 通过 `data-with-border` 属性应用边框
+- [x] varsResolver 正确将 props 转换为 CSS 变量
+- [x] 用户可通过 `vars` prop 覆盖 CSS 变量
+- [x] 测试覆盖: 渲染、shadow、radius、withBorder、varsResolver、vars 覆盖
 
 **Implementation Notes:**
 
-> _完成后回填_
+**完成日期**: 2025-02-13
+
+**实现概要**:
+
+Paper 是第一个使用 `varsResolver` + CSS 变量的验证组件，验证了 `createVarsResolver` → `useStyles` → inline CSS variable 的端到端流程。同时引入了 `getRadius()` 和 `getShadow()` 两个通用 helper 函数和 `PrismuiShadow` 类型。
+
+**关键实现细节**:
+
+1. **使用 `factory`**（非 `polymorphicFactory`）：Paper 默认渲染 `<div>`，不需要多态
+2. **`varsResolver`**：将 `radius` → `--paper-radius`，`shadow` → `--paper-shadow`，通过 `getRadius()` / `getShadow()` 解析
+3. **CSS 变量默认值**：`.root { --paper-radius: var(--prismui-radius-md); }` — radius 未指定时使用 theme 默认值
+4. **`withBorder` 通过 `data-with-border` 属性**：`mod={[{ 'data-with-border': withBorder }]}` + CSS `:where([data-with-border])` 选择器
+5. **背景色**：`background-color: var(--prismui-background-paper)` — 跟随 theme palette
+6. **边框色**：`border: 1px solid var(--prismui-divider)` — 跟随 theme divider token
+
+**新增通用基础设施**:
+
+- `core/theme/get-radius.ts` — `getRadius(radius)`: named key → `var(--prismui-radius-{key})`，number/string → `rem()`
+- `core/theme/get-shadow.ts` — `getShadow(shadow)`: named key → `var(--prismui-shadow-{key})`，`'none'` → `'none'`，CSS string → passthrough
+- `core/theme/types/shadow.ts` — 新增 `PrismuiShadow` 类型（`PrismuiShadowKey | (string & {})`）
+
+**与 Mantine Paper 的对齐**:
+
+- 相同：`varsResolver` + `--paper-radius` / `--paper-shadow` + `data-with-border` + `Box` 根元素
+- 简化：不使用 `@mixin light/dark`（PrismUI 通过 CSS 变量 `--prismui-divider` 自动适配 scheme）
+- 差异：PrismUI 使用 `factory`（Mantine Paper 使用 `polymorphicFactory`）
+
+**新增文件**:
+
+- `components/Paper/Paper.tsx` — 组件实现
+- `components/Paper/Paper.module.css` — 样式（background + radius + shadow + border）
+- `components/Paper/Paper.test.tsx` — 32 tests (11 groups)
+- `components/Paper/Paper.stories.tsx` — 8 stories
+- `components/Paper/index.ts` — barrel export
+- `core/theme/get-radius.ts` — getRadius helper
+- `core/theme/get-shadow.ts` — getShadow helper
+
+**测试**: 32 tests (11 groups) — 基础渲染（5）、shadow（6）、radius（4）、withBorder（3）、varsResolver（1）、vars 覆盖（1）、unstyled（2）、className/style（3）、theme 定制（3）、Provider 要求（1）、静态属性（3）
+
+**Storybook**: 8 stories — Basic、Shadows、RadiusLevels、WithBorder、ComponentShadows、VarsOverride、ThemeCustomization、Unstyled
+
+**验证**: `tsc --noEmit` 无新增错误 ✅ | 全量 382 tests ✅ (32 Paper) | 零回归
 
 ### F4: Button (~1-2 days)
 
