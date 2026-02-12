@@ -1,9 +1,10 @@
 import type { ReactElement } from 'react';
 import { forwardRef } from 'react';
+import type * as React from 'react';
 import cx from 'clsx';
-import type { ElementType } from '../../core/types';
 import type { PrismuiStyleProp, PrismuiCSSVars } from '../../core/theme/types';
 import { createPolymorphicComponent } from '../../core/types';
+import type { ElementType } from '../../core/types';
 import type { SystemProps } from '../../core/system';
 import { splitSystemProps, resolveSystemProps } from '../../core/system';
 import { usePrismuiContext } from '../../core/PrismuiProvider/prismui-theme-context';
@@ -12,6 +13,11 @@ import { defaultTheme } from '../../core/theme/default-theme';
 import { getBoxStyle } from './get-box-style/get-box-style';
 import type { BoxMod } from './get-box-mod/get-box-mod';
 import { getBoxMod } from './get-box-mod/get-box-mod';
+
+export type ElementProps<
+  ElementType extends React.ElementType,
+  PropsToOmit extends string = never,
+> = Omit<React.ComponentPropsWithoutRef<ElementType>, 'style' | PropsToOmit>;
 
 export interface BoxProps extends SystemProps {
   className?: string;
@@ -87,8 +93,9 @@ const _Box = forwardRef<HTMLDivElement, _BoxProps>(
     }
 
     return <Element {...props} />;
-  });
+  }
+);
 
+_Box.displayName = '@prismui/core/Box';
 
 export const Box = createPolymorphicComponent<'div', BoxComponentProps>(_Box);
-Box.displayName = '@prismui/core/Box';

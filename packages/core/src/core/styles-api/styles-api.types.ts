@@ -1,4 +1,4 @@
-import type { CSSProperties } from 'react';
+import type { CSSProperties } from '../types';
 import type { FactoryPayload } from '../factory';
 import type { PrismuiTheme } from '../theme';
 import type { PartialVarsResolver } from './create-vars-resolver';
@@ -20,17 +20,17 @@ export type StylesApiRecord<
   DataType,
 > = Payload['compound'] extends true
   ? Payload['stylesNames'] extends string
-    ? StylesRecord<Payload['stylesNames'], DataType>
-    : never
+  ? StylesRecord<Payload['stylesNames'], DataType>
+  : never
   : Payload['stylesNames'] extends string
-    ?
-        | StylesRecord<Payload['stylesNames'], DataType>
-        | ((
-            theme: PrismuiTheme,
-            props: Payload['props'],
-            ctx: Payload['ctx']
-          ) => StylesRecord<Payload['stylesNames'], DataType>)
-    : never;
+  ?
+  | StylesRecord<Payload['stylesNames'], DataType>
+  | ((
+    theme: PrismuiTheme,
+    props: Payload['props'],
+    ctx: Payload['ctx']
+  ) => StylesRecord<Payload['stylesNames'], DataType>)
+  : never;
 
 // ---------------------------------------------------------------------------
 // ClassNames / Styles — public prop types
@@ -71,4 +71,4 @@ export interface StylesApiProps<Payload extends FactoryPayload> {
 // ---------------------------------------------------------------------------
 
 export interface CompoundStylesApiProps<Payload extends FactoryPayload>
-  extends Omit<StylesApiProps<Payload>, 'unstyled'> {}
+  extends Omit<StylesApiProps<Payload>, 'unstyled'> { }

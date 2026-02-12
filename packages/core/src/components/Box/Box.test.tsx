@@ -249,3 +249,9 @@ describe('@prismui/core/Box usePrismuiContext', () => {
     expect(el.style.margin).toBeTruthy();
   });
 });
+
+describe('@prismui/core/Box displayName', () => {
+  it('has displayName', () => {
+    expect(Box.displayName).toBe('@prismui/core/Box');
+  });
+});

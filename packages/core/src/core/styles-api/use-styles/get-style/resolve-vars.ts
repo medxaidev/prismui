@@ -1,4 +1,4 @@
-import type { CSSProperties } from 'react';
+import type { CSSProperties } from '../../../types';
 import type { PrismuiTheme } from '../../../theme';
 import type { CssVariable } from '../../create-vars-resolver';
 

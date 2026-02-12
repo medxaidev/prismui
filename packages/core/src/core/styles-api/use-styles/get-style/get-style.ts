@@ -1,4 +1,4 @@
-import type { CSSProperties } from 'react';
+import type { CSSProperties } from '../../../types';
 import type { PrismuiTheme } from '../../../theme';
 import type { GetStylesApiOptions } from '../../styles-api.types';
 import { getThemeStyles } from './get-theme-styles';

@@ -1,11 +1,7 @@
-import type { CSSProperties } from 'react';
-import type { PrismuiTheme } from '../../../theme';
+import type { CSSProperties } from '../../../types';
+import type { PrismuiTheme, PrismuiStyleProp } from '../../../theme';
 
-export type PrismuiStyleProp =
-  | CSSProperties
-  | ((theme: PrismuiTheme) => CSSProperties)
-  | (CSSProperties | ((theme: PrismuiTheme) => CSSProperties))[]
-  | undefined;
+export type { PrismuiStyleProp };
 
 export function resolveStyle(
   style: PrismuiStyleProp,

@@ -1,4 +1,4 @@
-import type { CSSProperties } from 'react';
+import type { CSSProperties } from '../../types';
 import type { FactoryPayload } from '../../factory';
 import { useTheme } from '../../PrismuiProvider/prismui-theme-context';
 import type { PartialVarsResolver, VarsResolver } from '../create-vars-resolver';

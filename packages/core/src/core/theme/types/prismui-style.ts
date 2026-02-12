@@ -7,6 +7,6 @@ import type { PrismuiTheme } from './theme';
 export type PrismuiStyle = Style<PrismuiTheme>;
 
 /**
- * Theme-aware style prop that supports arrays and nested arrays.
+ * Theme-aware style prop that supports arrays.
  */
 export type PrismuiStyleProp = StyleProp<PrismuiTheme>;

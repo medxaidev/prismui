@@ -1,14 +1,14 @@
-import type { CSSProperties } from 'react';
+import type { CSSProperties } from '../../../types';
 import type { PrismuiTheme } from '../../../theme';
 
 export type _Styles =
   | undefined
   | Partial<Record<string, CSSProperties>>
   | ((
-      theme: PrismuiTheme,
-      props: Record<string, any>,
-      ctx: Record<string, any> | undefined
-    ) => Partial<Record<string, CSSProperties>>);
+    theme: PrismuiTheme,
+    props: Record<string, any>,
+    ctx: Record<string, any> | undefined
+  ) => Partial<Record<string, CSSProperties>>);
 
 export function resolveStyles(
   theme: PrismuiTheme,
