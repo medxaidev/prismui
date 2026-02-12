@@ -29,3 +29,30 @@ export { useProps } from './use-props';
 
 // Type aliases for component declarations
 export type { Factory, PolymorphicFactory } from './create-factory';
+
+// Styles API (re-export from styles-api module)
+export {
+  createVarsResolver,
+  useStyles,
+  useResolvedStylesApi,
+  resolveClassNames,
+  resolveStyles,
+  cx,
+} from '../styles-api';
+
+export type {
+  StylesApiProps,
+  CompoundStylesApiProps,
+  ClassNames,
+  Styles,
+  GetStylesApiOptions,
+  StylesRecord,
+  VarsResolver,
+  PartialVarsResolver,
+  TransformVars,
+  PartialTransformVars,
+  CssVariable,
+  UseStylesInput,
+  GetStylesApi,
+  UseResolvedStylesApiInput,
+} from '../styles-api';

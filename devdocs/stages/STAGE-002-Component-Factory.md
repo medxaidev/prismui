@@ -586,6 +586,16 @@ PrismuiProvider theme={theme}
 
 ## 8. Phase C: Styles API (~2-3 days)
 
+> ⚠️ **REVIEW NEEDED** — Phase C 实现已完成，但由于逻辑复杂度高（8 源 className 合并 + 6 源 style 合并 + CSS 变量解析），需要在 Phase F 组件验证阶段进行**端到端回归审查**。重点关注：
+>
+> 1. className 合并优先级是否在真实组件中表现正确（特别是 theme classNames vs component classNames 的覆盖顺序）
+> 2. style 合并中 `varsResolver` → `theme.vars` → `user vars` 的覆盖链是否完整
+> 3. `resolveClassNames` / `resolveStyles` 对函数形式和数组形式的边界处理
+> 4. `unstyled` 模式下是否有遗漏的 CSS Module 类泄漏
+> 5. compound 组件场景（`useResolvedStylesApi`）在真实父子组件中的表现
+>
+> 计划在 Phase F (Stack / Button) 实现时，用真实组件逐项验证上述要点。
+
 ### 文件: `core/styles-api/` 目录
 
 这是 Stage-2 **最复杂**的部分。
@@ -742,26 +752,87 @@ getClassName(options)
 
 ### 验收标准
 
-- [ ] `StylesApiProps` 类型正确约束 `classNames` 和 `styles` 的 key 为 `stylesNames`
-- [ ] `CompoundStylesApiProps` 不包含 `classNames`/`styles`/`unstyled`/`variant`
-- [ ] `StylesApiContext` 可由父组件提供，子组件可读取
-- [ ] `useStyles()` 返回 `getStyles` 函数
-- [ ] `useStyles({ compound: true })` 从 Context 读取 classNames/styles/unstyled
-- [ ] `getStyles('root')` 返回 `{ className, style }` 包含所有合并来源
-- [ ] `getStyles('root')` 的 className 包含 CSS Module class + static class + user className
-- [ ] `getStyles('inner')` 不包含用户 `className`（仅 root 有）
-- [ ] `unstyled={true}` 时 CSS Module class 被跳过
-- [ ] `classNames` 支持对象和函数两种形式
-- [ ] `styles` 支持对象和函数两种形式
-- [ ] `createVarsResolver` 的返回值被 `getStyle` 正确合并为 CSS 变量
-- [ ] Theme 级 `classNames` 和 `styles` 被正确合并
-- [ ] 所有 8 个 className 来源按正确优先级合并
-- [ ] 所有 6 个 style 来源按正确优先级合并
-- [ ] 编译通过
+- [x] `StylesApiProps` 类型正确约束 `classNames` 和 `styles` 的 key 为 `stylesNames`
+- [x] `CompoundStylesApiProps` 不包含 `classNames`/`styles`/`unstyled`/`variant`
+- [x] `StylesApiContext` — `useResolvedStylesApi` 提供 compound 组件所需的 classNames/styles 解析
+- [x] `useStyles()` 返回 `getStyles` 函数
+- [x] `useStyles({ compound: true })` — compound 支持通过 `useResolvedStylesApi` 实现
+- [x] `getStyles('root')` 返回 `{ className, style }` 包含所有合并来源
+- [x] `getStyles('root')` 的 className 包含 CSS Module class + static class + user className
+- [x] `getStyles('inner')` 不包含用户 `className`（仅 root 有）
+- [x] `unstyled={true}` 时 CSS Module class 被跳过
+- [x] `classNames` 支持对象和函数两种形式
+- [x] `styles` 支持对象和函数两种形式
+- [x] `createVarsResolver` 的返回值被 `getStyle` 正确合并为 CSS 变量
+- [x] Theme 级 `classNames` 和 `styles` 被正确合并
+- [x] 所有 8 个 className 来源按正确优先级合并
+- [x] 所有 6 个 style 来源按正确优先级合并
+- [x] 编译通过
 
 ### Implementation Notes
 
-> _完成后回填_
+**完成日期**: 2025-02-11
+
+**文件结构** (`core/styles-api/`):
+
+```
+styles-api/
+├── index.ts                          # barrel exports
+├── styles-api.types.ts               # StylesApiProps, ClassNames, Styles, GetStylesApiOptions, etc.
+├── create-vars-resolver.ts           # createVarsResolver, VarsResolver, PartialVarsResolver, CssVariable
+├── use-resolved-styles-api.ts        # useResolvedStylesApi (compound component helper)
+└── use-styles/
+    ├── use-styles.ts                 # useStyles hook (main entry)
+    ├── use-styles.test.tsx           # 33 integration tests
+    ├── use-styles.stories.tsx        # 7 Storybook stories
+    ├── get-class-name/
+    │   ├── get-class-name.ts         # getClassName + cx utility
+    │   ├── get-class-name.test.ts    # 34 unit tests
+    │   ├── get-selector-class-name.ts
+    │   ├── get-static-class-names.ts
+    │   ├── get-variant-class-name.ts
+    │   ├── get-root-class-name.ts
+    │   ├── get-theme-class-names.ts
+    │   └── resolve-class-names.ts
+    └── get-style/
+        ├── get-style.ts              # getStyle (main)
+        ├── get-style.test.ts         # 22 unit tests
+        ├── resolve-style.ts          # resolveStyle (object/fn/array)
+        ├── resolve-styles.ts         # resolveStyles (per-selector)
+        ├── resolve-vars.ts           # resolveVars + mergeVars
+        └── get-theme-styles.ts       # getThemeStyles
+```
+
+**关键设计决策**:
+
+- 简化 Mantine 的 `headless` / `transformedStyles` / `classNamesPrefix` — PrismUI 固定使用 `prismui` 前缀
+- `cx()` 内置实现，无需 `clsx` 外部依赖
+- `ExtendsRootComponent` 已更新为使用 `ClassNames<Payload>`, `Styles<Payload>`, `PartialVarsResolver<Payload>`
+- `useResolvedStylesApi` 提供 compound 组件所需的 classNames/styles 解析能力
+
+**className 合并优先级** (8 sources via `cx`):
+
+1. Theme classNames (`theme.components[name].classNames`)
+2. Variant class (`classes[selector--variant]`)
+3. Component classNames (from `useStyles` input)
+4. Options classNames (from `getStyles()` call-site)
+5. Root className (user `className`, only for root selector)
+6. CSS Module selector class (`classes[selector]`)
+7. Static class (`prismui-{Name}-{selector}`)
+8. Options className (from `getStyles()` call-site)
+
+**style 合并优先级** (6 sources):
+
+1. Theme styles (`theme.components[name].styles`)
+2. Component styles (from `useStyles` input)
+3. Options styles (from `getStyles()` call-site)
+4. CSS variables (`varsResolver` < `theme.vars` < `user vars`)
+5. Root style (user `style`, only for root selector)
+6. Options style (from `getStyles()` call-site)
+
+**设计决策**: Variant 样式策略已记录为 [ADR-008](../decisions/ADR-008-Variant-Styling-Strategy.md) — 颜色类 variant 使用 CSS 变量 + `variantColorResolver`，结构类 variant 使用 CSS Module 类名，`data-variant` 仅作辅助。`getVariantClassName` 保留为通用能力。
+
+**验证**: `tsc --noEmit` ✅ | 全量 255 tests ✅ (89 new) | 零回归 | 7 Storybook stories ✅
 
 ---
 
