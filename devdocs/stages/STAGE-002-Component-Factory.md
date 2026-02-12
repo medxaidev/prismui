@@ -847,14 +847,51 @@ styles-api/
 
 ### 验收标准
 
-- [ ] `import classes from './Stack.module.css'` 返回 `{ root: 'Stack_root_xxxxx' }`
-- [ ] CSS Module 类名在构建产物中正确生成
-- [ ] Storybook 中 CSS Module 样式正确应用
-- [ ] 命名约定文档化
+- [x] `import classes from './Stack.module.css'` 返回 `{ root: 'Stack_root_xxxxx' }`
+- [x] CSS Module 类名在构建产物中正确生成
+- [x] Storybook 中 CSS Module 样式正确应用
+- [x] 命名约定文档化
 
 ### Implementation Notes
 
-> _完成后回填_
+**完成日期**: 2025-02-12
+
+**新增文件**:
+
+| 文件                                   | 说明                                                                                       |
+| -------------------------------------- | ------------------------------------------------------------------------------------------ |
+| `packages/core/types/css-modules.d.ts` | TypeScript 类型声明，使 `import classes from '*.module.css'` 返回 `Record<string, string>` |
+| `packages/core/postcss.config.mjs`     | PostCSS 配置：`postcss-preset-env` stage 3 + `nesting-rules`                               |
+| `components/Stack/Stack.module.css`    | Stack 组件 CSS Module — `display: flex; flex-direction: column` + CSS 变量                 |
+| `components/Stack/Stack.tsx`           | Stack 组件 — 使用 `factory()` + `useProps()` + `useStyles()` + `createVarsResolver()`      |
+| `components/Stack/Stack.test.tsx`      | 24 个测试 (7 组)                                                                           |
+| `components/Stack/Stack.stories.tsx`   | 7 个 Storybook stories                                                                     |
+| `components/Stack/index.ts`            | barrel export                                                                              |
+
+**关键验证点**:
+
+- Vite/Vitest 原生支持 CSS Modules，无需额外配置
+- `import classes from './Stack.module.css'` 在 Vitest 中返回 `{ root: '_root_xxxxx' }` 格式的类名映射
+- `useStyles` 正确将 CSS Module 类注入 `getStyles('root').className`
+- `unstyled=true` 时 CSS Module 类被跳过，但 `prismui-Stack-root` 静态类保留
+- `varsResolver` 正确注入 `--stack-gap`、`--stack-align`、`--stack-justify` CSS 变量
+- Theme 级 `defaultProps`、`classNames`、`styles` 均正确合并
+- `StackProps` 扩展 `React.HTMLAttributes<HTMLDivElement>`，支持 `id`、`data-*`、`aria-*` 等原生属性
+
+**PostCSS 配置决策**:
+
+- 使用 `postcss-preset-env` stage 3 + `nesting-rules`（W3C CSS Nesting 规范）
+- **不使用** `postcss-mixins` — `@mixin hover`、`@mixin dark` 等直接用原生 CSS 写法替代
+- **不使用** 独立 `autoprefixer` — `postcss-preset-env` 已内置
+- 依赖：`postcss@8.5.6` + `postcss-preset-env@11.1.3`
+
+**CSS Module 命名约定**:
+
+- selector 名使用 camelCase：`.root`, `.inner`, `.label`, `.section`, `.loader`
+- 文件名：`{ComponentName}.module.css`
+- CSS 变量前缀：`--{component-name}-` (e.g., `--stack-gap`)
+
+**验证**: `tsc --noEmit` ✅ (无新增错误) | 全量 279 tests ✅ (24 new) | 零回归 | 7 Storybook stories ✅
 
 ---
 
