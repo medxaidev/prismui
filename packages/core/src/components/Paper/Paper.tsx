@@ -23,8 +23,8 @@ export type PaperCssVariables = {
 
 export interface PaperProps
   extends BoxProps,
-    StylesApiProps<PaperFactory>,
-    ElementProps<'div'> {
+  StylesApiProps<PaperFactory>,
+  ElementProps<'div'> {
   /** Key of `theme.shadows` or any valid CSS value to set `box-shadow` */
   shadow?: PrismuiShadow;
 

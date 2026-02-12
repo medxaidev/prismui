@@ -19,11 +19,11 @@ const meta: Meta<typeof Paper> = {
 export default meta;
 type Story = StoryObj<typeof Paper>;
 
-const childStyle: React.CSSProperties = {
+const childStyle = {
   padding: '16px 24px',
   fontFamily: 'sans-serif',
   fontSize: 14,
-};
+} as any;
 
 // ---------------------------------------------------------------------------
 // 1. Basic

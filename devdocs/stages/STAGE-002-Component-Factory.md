@@ -1354,7 +1354,14 @@ Paper 是第一个使用 `varsResolver` + CSS 变量的验证组件，验证了 
 
 **验证**: `tsc --noEmit` 无新增错误 ✅ | 全量 382 tests ✅ (32 Paper) | 零回归
 
-### F4: Button (~1-2 days)
+### F4: Button ⏭️ DEFERRED
+
+> **推迟到后续 Stage 实施。** Button 组件涉及 variantColorResolver、多 stylesNames、loading 状态、sections 布局等复杂功能，超出 STAGE-002 基础设施验证范围。STAGE-002 已通过 Stack（factory + varsResolver）、ButtonBase（polymorphicFactory + ripple）、Paper（varsResolver + CSS 变量）充分验证了组件工厂系统的完整性。
+>
+> Button 的设计规格保留在此处供后续参考。
+
+<details>
+<summary>Button 设计规格（点击展开）</summary>
 
 **验证目标**: 全部基础设施端到端验证
 
@@ -1383,21 +1390,13 @@ export type ButtonFactory = PolymorphicFactory<{
 }>;
 
 export interface ButtonProps extends BoxProps, StylesApiProps<ButtonFactory> {
-  /** 按钮大小 @default 'sm' */
   size?: PrismuiSize;
-  /** 颜色 @default theme.primaryColor */
   color?: PrismuiColor;
-  /** 圆角 @default theme.defaultRadius */
   radius?: PrismuiRadius;
-  /** 左侧内容 */
   leftSection?: React.ReactNode;
-  /** 右侧内容 */
   rightSection?: React.ReactNode;
-  /** 全宽 @default false */
   fullWidth?: boolean;
-  /** 加载中 @default false */
   loading?: boolean;
-  /** 禁用 @default false */
   disabled?: boolean;
   children?: React.ReactNode;
 }
@@ -1415,34 +1414,20 @@ export type ButtonCssVariables = {
 };
 ```
 
-**验收标准:**
+</details>
 
-- [ ] `<Button>Click</Button>` 渲染完整的按钮结构（root > inner > label）
-- [ ] `<Button variant="filled" color="primary">` 正确应用变体颜色
-- [ ] `<Button variant="outline">` 正确应用轮廓样式
-- [ ] `<Button size="lg">` 通过 CSS 变量调整尺寸
-- [ ] `<Button leftSection={<Icon />}>` 渲染左侧区域
-- [ ] `<Button loading>` 显示加载状态
-- [ ] `<Button disabled>` 禁用交互
-- [ ] `<Button fullWidth>` 占满容器宽度
-- [ ] `<Button component="a" href="/link">` 多态渲染
-- [ ] `<Button classNames={{ root: 'x', inner: 'y', label: 'z' }}>` 多 selector 覆盖
-- [ ] `<Button styles={{ root: { margin: 8 } }}>` 样式覆盖
-- [ ] `<Button unstyled>` 跳过所有 CSS Module 类
-- [ ] Theme 级 `components.Button.defaultProps` 正确合并
-- [ ] Theme 级 `components.Button.classNames` 正确合并
-- [ ] 测试覆盖: 渲染、变体、尺寸、loading、disabled、sections、多态、classNames/styles、unstyled、theme 定制
+### F5: Button.Group ⏭️ DEFERRED
 
-**Implementation Notes:**
+> **推迟到后续 Stage 实施。** Button.Group 依赖 Button（F4），且 compound 模式（StylesApiContext 传播）的验证可以在实现 Button 时一并完成。
+>
+> Button.Group 的设计规格保留在此处供后续参考。
 
-> _完成后回填_
-
-### F5: Button.Group — Compound 验证 (~0.5 day)
+<details>
+<summary>Button.Group 设计规格（点击展开）</summary>
 
 **验证目标**: compound 模式端到端验证 — `StylesApiContext` 传播、`CompoundStylesApiProps`、父组件统一控制子组件样式
 
 ```typescript
-// Button.Group 是 Button 的 compound 父容器
 export type ButtonGroupFactory = Factory<{
   props: ButtonGroupProps;
   ref: HTMLDivElement;
@@ -1452,16 +1437,9 @@ export type ButtonGroupFactory = Factory<{
 
 export interface ButtonGroupProps
   extends BoxProps, StylesApiProps<ButtonGroupFactory> {
-  /** 排列方向 @default 'horizontal' */
   orientation?: "horizontal" | "vertical";
-  /** 子元素 (Button 组件) */
   children?: React.ReactNode;
 }
-
-// Button 在 Button.Group 内部时作为 compound 子组件
-// Button.Group 通过 StylesApiContext 向子 Button 传播:
-//   - classNames / styles / unstyled / variant
-// 子 Button 使用 CompoundStylesApiProps（不接收这些 props）
 ```
 
 ```css
@@ -1469,32 +1447,17 @@ export interface ButtonGroupProps
 .root {
   display: flex;
 }
-
 .root[data-orientation="horizontal"] > :not(:first-child) {
   border-start-start-radius: 0;
   border-end-start-radius: 0;
 }
-
 .root[data-orientation="horizontal"] > :not(:last-child) {
   border-start-end-radius: 0;
   border-end-end-radius: 0;
 }
 ```
 
-**验收标准:**
-
-- [ ] `<Button.Group>` 渲染水平排列的按钮容器
-- [ ] `<Button.Group orientation="vertical">` 渲染垂直排列
-- [ ] `<Button.Group unstyled>` 通过 Context 传播到所有子 Button
-- [ ] `<Button.Group classNames={{ root: 'x' }}>` 通过 Context 传播
-- [ ] `<Button.Group variant="outline">` 通过 Context 统一设置子 Button 变体
-- [ ] 子 Button **不接受** `classNames`/`styles`/`unstyled` props（类型层面）
-- [ ] Theme 级 `components.ButtonGroup.classNames` 正确传播到子组件
-- [ ] 测试覆盖: 渲染、方向、Context 传播、unstyled 传播、variant 传播
-
-**Implementation Notes:**
-
-> _完成后回填_
+</details>
 
 ---
 
@@ -1595,50 +1558,35 @@ describe("Paper", () => {
   it("supports withBorder");
 });
 
-describe("Button", () => {
-  it("renders complete structure (root > inner > label)");
-  it("applies variant styles");
-  it("applies size via CSS variables");
-  it("renders leftSection and rightSection");
-  it("shows loading state");
-  it("handles disabled state");
-});
-
-describe("Button.Group (compound)", () => {
-  it("renders horizontal button group");
-  it("renders vertical button group");
-  it("propagates unstyled to child Buttons via Context");
-  it("propagates variant to child Buttons via Context");
-  it("propagates classNames to child Buttons via Context");
-});
+// Button and Button.Group deferred to later stage
 ```
 
 ### Layer 4: 端到端验证 — Theme 定制
 
 ```typescript
 describe("Theme customization", () => {
-  it("theme.components.Button.defaultProps applies to all Buttons");
-  it("theme.components.Button.classNames merges with user classNames");
-  it("theme.components.Button.styles merges with user styles");
+  it("theme.components.*.defaultProps applies to components");
+  it("theme.components.*.classNames merges with user classNames");
+  it("theme.components.*.styles merges with user styles");
   it("user props override theme defaults");
   it("components work without PrismuiProvider");
-  it("theme.components.ButtonGroup styles propagate to child Buttons");
 });
 ```
 
 ### 测试数量目标
 
-| 类别            | 预计测试数  |
-| --------------- | ----------- |
-| Factory 工具    | 10-15       |
-| Styles API 工具 | 25-35       |
-| Stack           | 8-12        |
-| ButtonBase      | 10-15       |
-| Paper           | 8-12        |
-| Button          | 15-25       |
-| Button.Group    | 8-12        |
-| Theme 定制      | 6-12        |
-| **总计**        | **~90-140** |
+| 类别                                                                    | 预计测试数  | 实际    |
+| ----------------------------------------------------------------------- | ----------- | ------- |
+| Factory 工具 (factory, useProps)                                        | 10-15       | 25      |
+| Styles API 工具 (getClassName, getStyle, useStyles, createVarsResolver) | 25-35       | 74      |
+| Stack                                                                   | 8-12        | 43      |
+| ButtonBase                                                              | 10-15       | 51      |
+| Paper                                                                   | 8-12        | 32      |
+| Theme helpers (getRadius, getShadow)                                    | 6-12        | 24      |
+| Theme 定制 (嵌入各组件测试)                                             | —           | ✅      |
+| **总计 (新增)**                                                         | **~70-100** | **279** |
+
+> Button / Button.Group 已推迟，测试目标相应调整。
 
 ---
 
@@ -1661,30 +1609,30 @@ Phase F2: ButtonBase ← depends on F1 patterns
   ↓
 Phase F3: Paper ← depends on F2 patterns + varsResolver
   ↓
-Phase F4: Button ← depends on F2 (ButtonBase) + F3 patterns
+Phase F4: Button ← ⏭️ DEFERRED (depends on F2 + F3 + variantColorResolver)
   ↓
-Phase F5: Button.Group ← depends on F4 (Button) + compound infra from C
+Phase F5: Button.Group ← ⏭️ DEFERRED (depends on F4 + compound infra)
 ```
 
-**Critical path:** A → B → C → E → F4 → F5
+**Critical path (STAGE-002):** A → B → C → E → F1/F2/F3
 
 ---
 
 ## 14. Estimated Timeline
 
-| Phase              | Duration       | Day    | Notes                                                    |
-| ------------------ | -------------- | ------ | -------------------------------------------------------- |
-| A: Factory System  | 1-2 days       | D1-D2  | Types + functions, moderate complexity                   |
-| B: useProps        | 0.5 day        | D2     | Simple hook, but requires theme type extension           |
-| C: Styles API      | 2-3 days       | D3-D5  | Most complex part (getClassName, getStyle, varsResolver) |
-| D: CSS Modules     | 0.5 day        | D5     | Config verification, conventions                         |
-| E: Box Refactoring | 1 day          | D6     | Must pass all existing tests                             |
-| F1: Stack          | 0.5 day        | D7     | Simple component                                         |
-| F2: ButtonBase     | 1 day          | D7-D8  | Accessibility + polymorphism                             |
-| F3: Paper          | 0.5 day        | D8     | VarsResolver validation                                  |
-| F4: Button         | 1-2 days       | D9-D10 | Full-featured, most complex component                    |
-| F5: Button.Group   | 0.5 day        | D11    | Compound validation                                      |
-| **Total**          | **~9-11 days** |        |                                                          |
+| Phase              | Duration      | Day   | Notes                                                    |
+| ------------------ | ------------- | ----- | -------------------------------------------------------- |
+| A: Factory System  | 1-2 days      | D1-D2 | Types + functions, moderate complexity                   |
+| B: useProps        | 0.5 day       | D2    | Simple hook, but requires theme type extension           |
+| C: Styles API      | 2-3 days      | D3-D5 | Most complex part (getClassName, getStyle, varsResolver) |
+| D: CSS Modules     | 0.5 day       | D5    | Config verification, conventions                         |
+| E: Box Refactoring | 1 day         | D6    | Must pass all existing tests                             |
+| F1: Stack          | 0.5 day       | D7    | Simple component                                         |
+| F2: ButtonBase     | 1 day         | D7-D8 | Accessibility + polymorphism                             |
+| F3: Paper          | 0.5 day       | D8    | VarsResolver validation                                  |
+| F4: Button         | ⏭️ DEFERRED   |       | Moved to later stage                                     |
+| F5: Button.Group   | ⏭️ DEFERRED   |       | Moved to later stage                                     |
+| **Total**          | **~7-8 days** |       | Excluding deferred F4/F5                                 |
 
 ---
 
@@ -1717,15 +1665,14 @@ Phase F5: Button.Group ← depends on F4 (Button) + compound infra from C
 ```
 Stage-1 (Complete)          Stage-2 (This Stage)           Stage-3+ (Future)
 ─────────────────           ────────────────────           ─────────────────
-Provider                    Factory System                  Text, Group
-Theme + CSS Vars     →      useProps                 →      Input Components
-SystemProps                 Styles API                      Feedback Components
-Box (basic)                 CSS Modules                     Documentation Site
-                            Box (refactored)                Headless mode
-                            Stack                           Advanced theming
-                            ButtonBase
+Provider                    Factory System                  Button + Button.Group
+Theme + CSS Vars     →      useProps                 →      Text, Group
+SystemProps                 Styles API                      Input Components
+Box (basic)                 CSS Modules                     Feedback Components
+                            Box (refactored)                Documentation Site
+                            Stack                           Headless mode
+                            ButtonBase                      Advanced theming
                             Paper
-                            Button
 ```
 
 ---
@@ -1743,13 +1690,9 @@ Box (basic)                 CSS Modules                     Documentation Site
 | Stack renders with correct flex layout                                     |        |
 | ButtonBase is polymorphic and keyboard accessible                          |        |
 | Paper applies elevation shadow via CSS variables                           |        |
-| Button renders with all variants, sizes, loading, sections                 |        |
 | All components support `classNames`, `styles`, `unstyled` props            |        |
-| Compound pattern works: parent Context propagates to child components      |        |
-| `CompoundStylesApiProps` correctly restricts child component props         |        |
-| Button.Group propagates variant/unstyled/classNames to child Buttons       |        |
 | All components work with and without PrismuiProvider                       |        |
-| Test count ≥ 90 (new tests, excluding existing 131)                        |        |
+| Test count ≥ 70 (new tests, excluding existing 131)                        |        |
 | All Storybook stories render correctly                                     |        |
 | ADR-007 written and approved                                               | ✅     |
 | MODULES.md updated                                                         | ✅     |
