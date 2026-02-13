@@ -1651,28 +1651,30 @@ Phase F5: Button.Group ← ⏭️ DEFERRED (depends on F4 + compound infra)
 
 ## 16. Non-Goals (Explicitly Deferred)
 
-- **Headless mode** — `useMantineIsHeadless()` equivalent deferred to Stage-3+
-- **CSS-in-JS transform** — No Emotion/styled-components integration
-- **Theme-level style transforms** — `useStylesTransform` deferred
-- **Documentation website** — Deferred to later stage
-- **Text component** — Not in Stage-2 (Button validates the system sufficiently)
-- **Group component** — Not in Stage-2 (Stack is sufficient for layout validation)
+- **Headless mode** — `useMantineIsHeadless()` equivalent → Stage-3
+- **CSS-in-JS transform** — No Emotion/styled-components integration (no plan)
+- **Theme-level style transforms** — `useStylesTransform` → Stage-3 (Advanced theming)
+- **Documentation website** — → Stage-4
+- **Text component** — → Stage-4
+- **Group component** — → Stage-3
+- **Button / Button.Group** — Deferred from Stage-2 due to complexity → Stage-3
+- **variantColorResolver** — → Stage-3 (Advanced theming, prerequisite for Button variants)
 
 ---
 
 ## 17. Relationship to Other Stages
 
 ```
-Stage-1 (Complete)          Stage-2 (This Stage)           Stage-3+ (Future)
-─────────────────           ────────────────────           ─────────────────
-Provider                    Factory System                  Button + Button.Group
-Theme + CSS Vars     →      useProps                 →      Text, Group
-SystemProps                 Styles API                      Input Components
-Box (basic)                 CSS Modules                     Feedback Components
-                            Box (refactored)                Documentation Site
-                            Stack                           Headless mode
-                            ButtonBase                      Advanced theming
-                            Paper
+Stage-1 (Complete)     Stage-2 (This Stage)     Stage-3 (Next)              Stage-4 (Future)
+─────────────────      ────────────────────     ──────────────              ────────────────
+Provider               Factory System           Advanced Theming            Text
+Theme + CSS Vars  →    useProps            →    Headless Mode          →    Feedback Components
+SystemProps            Styles API               Container, Divider          Input Components
+Box (basic)            CSS Modules              Group, Grid                 Documentation Site
+                       Box (refactored)         Portal
+                       Stack                    Button + Button.Group
+                       ButtonBase
+                       Paper
 ```
 
 ---
@@ -1681,42 +1683,40 @@ Box (basic)                 CSS Modules                     Feedback Components
 
 | Criteria                                                                   | Status |
 | -------------------------------------------------------------------------- | ------ |
-| `factory()` and `polymorphicFactory()` produce correctly typed components  |        |
-| `useProps()` correctly merges default → theme → user props                 |        |
-| `useStyles()` returns `getStyles(selector)` with correct className + style |        |
-| `createVarsResolver()` produces type-safe CSS variable resolvers           |        |
-| CSS Modules work with Vite build                                           |        |
-| Box refactored with zero regressions (131 existing tests pass)             |        |
-| Stack renders with correct flex layout                                     |        |
-| ButtonBase is polymorphic and keyboard accessible                          |        |
-| Paper applies elevation shadow via CSS variables                           |        |
-| All components support `classNames`, `styles`, `unstyled` props            |        |
-| All components work with and without PrismuiProvider                       |        |
-| Test count ≥ 70 (new tests, excluding existing 131)                        |        |
-| All Storybook stories render correctly                                     |        |
+| `factory()` and `polymorphicFactory()` produce correctly typed components  | ✅     |
+| `useProps()` correctly merges default → theme → user props                 | ✅     |
+| `useStyles()` returns `getStyles(selector)` with correct className + style | ✅     |
+| `createVarsResolver()` produces type-safe CSS variable resolvers           | ✅     |
+| CSS Modules work with Vite build                                           | ✅     |
+| Box refactored with zero regressions (131 existing tests pass)             | ✅     |
+| Stack renders with correct flex layout                                     | ✅     |
+| ButtonBase is polymorphic and keyboard accessible                          | ✅     |
+| Paper applies elevation shadow via CSS variables                           | ✅     |
+| All components support `classNames`, `styles`, `unstyled` props            | ✅     |
+| All components work with and without PrismuiProvider                       | ✅     |
+| Test count ≥ 70 (new tests, excluding existing 131)                        | ✅ 279 |
+| All Storybook stories render correctly                                     | ✅     |
 | ADR-007 written and approved                                               | ✅     |
 | MODULES.md updated                                                         | ✅     |
 | STAGE.md updated                                                           | ✅     |
-| Zero TypeScript compilation errors                                         |        |
-| Zero known regressions in Stage-1                                          |        |
+| Zero TypeScript compilation errors (excluding pre-existing TS6133)         | ✅     |
+| Zero known regressions in Stage-1                                          | ✅     |
 
 ---
 
-## 19. Stage-2 Final Statistics (Template)
+## 19. Stage-2 Final Statistics
 
-> _Stage-2 完成后填写_
-
-| Metric                          | Value |
-| ------------------------------- | ----- |
-| Infrastructure files            |       |
-| Component files                 |       |
-| CSS Module files                |       |
-| Test files                      |       |
-| Total new tests                 |       |
-| Total tests (including Stage-1) |       |
-| Storybook stories               |       |
-| Public API functions            |       |
-| Public API types                |       |
+| Metric                          | Value                                                                                                                                                                                               |
+| ------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Infrastructure files (new)      | 25                                                                                                                                                                                                  |
+| Component files (new)           | 7                                                                                                                                                                                                   |
+| CSS Module files                | 4                                                                                                                                                                                                   |
+| Test files (new)                | 11                                                                                                                                                                                                  |
+| Total new tests                 | 279                                                                                                                                                                                                 |
+| Total tests (including Stage-1) | 410                                                                                                                                                                                                 |
+| Storybook stories (new)         | ~50                                                                                                                                                                                                 |
+| Public API functions            | factory, polymorphicFactory, useProps, useStyles, createVarsResolver, cx, getRadius, getShadow                                                                                                      |
+| Public API types                | Factory, PolymorphicFactory, FactoryPayload, StylesApiProps, ClassNames, Styles, VarsResolver, PrismuiComponent, PrismuiPolymorphicComponent, PaperProps, PaperFactory, StackProps, ButtonBaseProps |
 
 ---
 
