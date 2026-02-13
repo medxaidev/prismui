@@ -15,14 +15,14 @@ Deliver content display components (Text, typography system), feedback/overlay c
 
 ## 2. Prerequisites
 
-| Dependency | Source | Status |
-|---|---|---|
-| All Stage-2 infrastructure | Stage-2 | ✅ |
-| `variantColorResolver` | Stage-3 Phase A | Pending |
-| Headless mode | Stage-3 Phase A4 | Pending |
-| Portal | Stage-3 Phase B1 | Pending |
-| Button | Stage-3 Phase D1 | Pending |
-| Container, Group, Grid | Stage-3 Phase C | Pending |
+| Dependency                 | Source           | Status  |
+| -------------------------- | ---------------- | ------- |
+| All Stage-2 infrastructure | Stage-2          | ✅      |
+| `variantColorResolver`     | Stage-3 Phase A  | Pending |
+| Headless mode              | Stage-3 Phase A4 | Pending |
+| Portal                     | Stage-3 Phase B1 | Pending |
+| Button                     | Stage-3 Phase D1 | Pending |
+| Container, Group, Grid     | Stage-3 Phase C  | Pending |
 
 ---
 
@@ -60,38 +60,38 @@ Phase D: Documentation Site
 
 ### Phase A: Typography
 
-| Component | Type | Description |
-|---|---|---|
-| **Text** | polymorphicFactory | Styled text with `size`, `color`, `weight`, `align`, `truncate`, `lineClamp` |
-| **Title** | factory | Semantic headings (h1-h6) with consistent sizing from theme |
-| **Anchor** | polymorphicFactory | Styled `<a>` extending Text, with `underline` prop |
+| Component  | Type               | Description                                                                  |
+| ---------- | ------------------ | ---------------------------------------------------------------------------- |
+| **Text**   | polymorphicFactory | Styled text with `size`, `color`, `weight`, `align`, `truncate`, `lineClamp` |
+| **Title**  | factory            | Semantic headings (h1-h6) with consistent sizing from theme                  |
+| **Anchor** | polymorphicFactory | Styled `<a>` extending Text, with `underline` prop                           |
 
 ### Phase B: Feedback
 
-| Component | Type | Description |
-|---|---|---|
-| **Loader** | factory | Spinning/pulsing loading indicator (oval, dots, bars variants) |
-| **Transition** | utility | CSS transition wrapper with mount/unmount animation |
-| **Alert** | factory | Banner with icon, title, message, close button. Uses `variantColorResolver` |
-| **Toast** | system | Notification toasts with auto-dismiss, stacking, positioning |
-| **Badge** | factory | Small label/tag with variant colors |
+| Component      | Type    | Description                                                                 |
+| -------------- | ------- | --------------------------------------------------------------------------- |
+| **Loader**     | factory | Spinning/pulsing loading indicator (oval, dots, bars variants)              |
+| **Transition** | utility | CSS transition wrapper with mount/unmount animation                         |
+| **Alert**      | factory | Banner with icon, title, message, close button. Uses `variantColorResolver` |
+| **Toast**      | system  | Notification toasts with auto-dismiss, stacking, positioning                |
+| **Badge**      | factory | Small label/tag with variant colors                                         |
 
 ### Phase C: Overlay
 
-| Component | Type | Description |
-|---|---|---|
-| **Overlay** | factory | Semi-transparent backdrop |
-| **Modal** | factory | Dialog window (Portal + Overlay + Transition + focus trap) |
+| Component   | Type    | Description                                                 |
+| ----------- | ------- | ----------------------------------------------------------- |
+| **Overlay** | factory | Semi-transparent backdrop                                   |
+| **Modal**   | factory | Dialog window (Portal + Overlay + Transition + focus trap)  |
 | **Popover** | factory | Floating content anchored to trigger (Portal + positioning) |
-| **Tooltip** | factory | Simple text popover on hover/focus |
+| **Tooltip** | factory | Simple text popover on hover/focus                          |
 
 ### Phase D: Documentation Site
 
-| Item | Description |
-|---|---|
-| **Framework** | Next.js App Router + MDX or Nextra |
-| **API docs** | Auto-generated from TypeScript types (props tables) |
-| **Examples** | Live interactive demos with code snippets |
+| Item            | Description                                                    |
+| --------------- | -------------------------------------------------------------- |
+| **Framework**   | Next.js App Router + MDX or Nextra                             |
+| **API docs**    | Auto-generated from TypeScript types (props tables)            |
+| **Examples**    | Live interactive demos with code snippets                      |
 | **Theme guide** | Customization tutorial, color system docs, variant system docs |
 
 ---
@@ -118,24 +118,24 @@ Documentation Site ← all components
 
 ## 6. Estimated Scope
 
-| Category | Estimated Components | Estimated Tests |
-|---|---|---|
-| Typography (A) | 3 | ~40 |
-| Feedback (B) | 5 | ~80 |
-| Overlay (C) | 4 | ~60 |
-| Documentation (D) | — | — |
-| **Total** | **12** | **~180** |
+| Category          | Estimated Components | Estimated Tests |
+| ----------------- | -------------------- | --------------- |
+| Typography (A)    | 3                    | ~40             |
+| Feedback (B)      | 5                    | ~80             |
+| Overlay (C)       | 4                    | ~60             |
+| Documentation (D) | —                    | —               |
+| **Total**         | **12**               | **~180**        |
 
 ---
 
 ## 7. Risks
 
-| Risk | Mitigation |
-|---|---|
-| Popover positioning complexity (floating-ui) | Evaluate `@floating-ui/react` vs custom solution |
-| Toast system state management | Consider Zustand-like store or React context |
-| Modal focus trap + scroll lock | Reference Mantine's FocusTrap, implement incrementally |
-| Documentation site build tooling | Start with Nextra (minimal config), migrate if needed |
+| Risk                                         | Mitigation                                             |
+| -------------------------------------------- | ------------------------------------------------------ |
+| Popover positioning complexity (floating-ui) | Evaluate `@floating-ui/react` vs custom solution       |
+| Toast system state management                | Consider Zustand-like store or React context           |
+| Modal focus trap + scroll lock               | Reference Mantine's FocusTrap, implement incrementally |
+| Documentation site build tooling             | Start with Nextra (minimal config), migrate if needed  |
 
 ---
 
@@ -147,6 +147,7 @@ Documentation Site ← all components
 - **App layout** — AppShell, Header, Sidebar, Footer
 - **Advanced animations** — Spring physics, gesture-based transitions
 - **i18n / RTL support**
+- **Theme Presets / 可视化 Theme Creator** — 需要绝大部分组件完成后才有意义，预计 Stage-5+。详见 STAGE-003 Section 12 "未来考虑：可视化主题配置器"
 
 ---
 

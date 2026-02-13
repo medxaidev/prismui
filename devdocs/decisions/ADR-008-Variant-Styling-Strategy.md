@@ -16,9 +16,17 @@ Phase C 实现了 `getVariantClassName`，它通过 CSS Module 类名（如 `roo
 
 ```css
 /* Button.module.css */
-.root { /* base */ }
-.root--filled { background: blue; color: white; }
-.root--outlined { background: transparent; border: 2px solid blue; }
+.root {
+  /* base */
+}
+.root--filled {
+  background: blue;
+  color: white;
+}
+.root--outlined {
+  background: transparent;
+  border: 2px solid blue;
+}
 ```
 
 - ✅ 简单直观，CSS Module 天然隔离
@@ -28,8 +36,12 @@ Phase C 实现了 `getVariantClassName`，它通过 CSS Module 类名（如 `roo
 #### 方案 B: `data-variant` attribute
 
 ```css
-.root[data-variant="filled"] { background: blue; }
-.root[data-variant="outlined"] { border: 2px solid blue; }
+.root[data-variant="filled"] {
+  background: blue;
+}
+.root[data-variant="outlined"] {
+  border: 2px solid blue;
+}
 ```
 
 - ✅ CSS 中可见 variant 语义，DevTools 可读性好
@@ -64,11 +76,11 @@ const varsResolver = createVarsResolver<ButtonFactory>(
 
 深入分析 Mantine Button 源码后发现：
 
-| 机制 | Mantine 是否提供 | Button 是否使用 | 用途 |
-|---|---|---|---|
-| `getVariantClassName` (`root--filled`) | ✅ 通用能力 | ❌ 未使用 | 留给需要结构性 variant 差异的组件 |
-| `data-variant` (Box 自动设置) | ✅ Box 内置 | ❌ CSS 中未引用 | 留给需要 CSS attribute 选择器的场景 |
-| `varsResolver` + CSS 变量 | ✅ 核心机制 | ✅ **唯一使用** | 通过 `variantColorResolver` 动态计算颜色 |
+| 机制                                   | Mantine 是否提供 | Button 是否使用 | 用途                                     |
+| -------------------------------------- | ---------------- | --------------- | ---------------------------------------- |
+| `getVariantClassName` (`root--filled`) | ✅ 通用能力      | ❌ 未使用       | 留给需要结构性 variant 差异的组件        |
+| `data-variant` (Box 自动设置)          | ✅ Box 内置      | ❌ CSS 中未引用 | 留给需要 CSS attribute 选择器的场景      |
+| `varsResolver` + CSS 变量              | ✅ 核心机制      | ✅ **唯一使用** | 通过 `variantColorResolver` 动态计算颜色 |
 
 **关键发现**：Mantine Button 的 CSS 中**没有任何 variant 相关的类或 attribute 选择器**。所有 variant 差异完全通过 `varsResolver` 注入 CSS 变量实现。
 
@@ -84,17 +96,19 @@ const varsResolver = createVarsResolver<ButtonFactory>(
 
 ```ts
 // 推荐写法
-const varsResolver = createVarsResolver<ButtonFactory>((theme, { variant, color }) => {
-  const colors = theme.variantColorResolver({ variant, color, theme });
-  return {
-    root: {
-      '--button-bg': colors.background,
-      '--button-color': colors.color,
-      '--button-bd': colors.border,
-      '--button-hover': colors.hover,
-    },
-  };
-});
+const varsResolver = createVarsResolver<ButtonFactory>(
+  (theme, { variant, color }) => {
+    const colors = theme.variantColorResolver({ variant, color, theme });
+    return {
+      root: {
+        "--button-bg": colors.background,
+        "--button-color": colors.color,
+        "--button-bd": colors.border,
+        "--button-hover": colors.hover,
+      },
+    };
+  },
+);
 ```
 
 ```css
@@ -114,14 +128,21 @@ const varsResolver = createVarsResolver<ButtonFactory>((theme, { variant, color 
 
 ```css
 /* Card.module.css */
-.root { /* base */ }
-.root--elevated { box-shadow: var(--card-shadow); }
-.root--flat { border: 1px solid var(--card-border-color); }
+.root {
+  /* base */
+}
+.root--elevated {
+  box-shadow: var(--card-shadow);
+}
+.root--flat {
+  border: 1px solid var(--card-border-color);
+}
 ```
 
 #### 规则 3: `data-variant` 作为辅助，不作为主要样式载体
 
 Box 会自动设置 `data-variant` attribute（Phase E Box 重构时实现）。这主要用于：
+
 - DevTools 调试可读性
 - 外部 CSS 选择器（用户自定义样式）
 - 测试断言
@@ -158,14 +179,14 @@ interface VariantColorResolverResult {
 
 ### 决策矩阵
 
-| 组件 | variant 类型 | 推荐机制 | 原因 |
-|---|---|---|---|
-| Button | 颜色 (filled/outlined/ghost/subtle) | CSS 变量 | 需要 `color` prop 动态化 |
-| Badge | 颜色 (filled/light/outline) | CSS 变量 | 同上 |
-| Alert | 颜色 (filled/light/outline) | CSS 变量 | 同上 |
-| Card | 结构 (elevated/outlined/flat) | CSS Module 类 | shadow vs border 是结构差异 |
-| Input | 混合 (filled/outlined) | CSS Module 类 + CSS 变量 | 结构(padding) + 颜色(border) |
-| Paper | 结构 (elevated/outlined) | CSS Module 类 | 同 Card |
+| 组件   | variant 类型                     | 推荐机制                 | 原因                         |
+| ------ | -------------------------------- | ------------------------ | ---------------------------- |
+| Button | 颜色 (solid/soft/outlined/plain) | CSS 变量                 | 需要 `color` prop 动态化     |
+| Badge  | 颜色 (solid/soft/outlined/plain) | CSS 变量                 | 同上                         |
+| Alert  | 颜色 (solid/soft/outlined/plain) | CSS 变量                 | 同上                         |
+| Card   | 结构 (elevated/outlined/flat)    | CSS Module 类            | shadow vs border 是结构差异  |
+| Input  | 混合 (filled/outlined)           | CSS Module 类 + CSS 变量 | 结构(padding) + 颜色(border) |
+| Paper  | 结构 (elevated/outlined)         | CSS Module 类            | 同 Card                      |
 
 ## Consequences
 
@@ -189,12 +210,12 @@ interface VariantColorResolverResult {
 
 ## Implementation Timeline
 
-| 阶段 | 工作项 | 状态 |
-|---|---|---|
-| Phase C | `getVariantClassName` 通用能力 | ✅ 已完成 |
-| Phase E | Box 设置 `data-variant` / `data-size` | 待实现 |
-| Phase F (前置) | `variantColorResolver` + `defaultVariantColorsResolver` | 待实现 |
-| Phase F | Button 等组件使用 CSS 变量方式 | 待实现 |
+| 阶段           | 工作项                                                  | 状态      |
+| -------------- | ------------------------------------------------------- | --------- |
+| Phase C        | `getVariantClassName` 通用能力                          | ✅ 已完成 |
+| Phase E        | Box 设置 `data-variant` / `data-size`                   | 待实现    |
+| Phase F (前置) | `variantColorResolver` + `defaultVariantColorsResolver` | 待实现    |
+| Phase F        | Button 等组件使用 CSS 变量方式                          | 待实现    |
 
 ## References
 

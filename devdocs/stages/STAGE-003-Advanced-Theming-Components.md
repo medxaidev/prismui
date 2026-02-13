@@ -25,17 +25,17 @@ Stage-2 established the component factory system (`factory`, `polymorphicFactory
 
 ## 2. Prerequisites
 
-| Dependency | Source | Status |
-|---|---|---|
-| `factory()` / `polymorphicFactory()` | Stage-2 Phase A | ✅ |
-| `useProps()` | Stage-2 Phase B | ✅ |
-| `useStyles()` / `createVarsResolver()` | Stage-2 Phase C | ✅ |
-| CSS Modules + PostCSS | Stage-2 Phase D | ✅ |
-| Box (refactored) | Stage-2 Phase E | ✅ |
-| Stack, ButtonBase, Paper | Stage-2 Phase F | ✅ |
-| `getRadius()` / `getShadow()` | Stage-2 Phase F3 | ✅ |
-| Theme CSS variables (`--prismui-*`) | Stage-1 | ✅ |
-| ADR-008: Variant Styling Strategy | Stage-2 | ✅ |
+| Dependency                             | Source           | Status |
+| -------------------------------------- | ---------------- | ------ |
+| `factory()` / `polymorphicFactory()`   | Stage-2 Phase A  | ✅     |
+| `useProps()`                           | Stage-2 Phase B  | ✅     |
+| `useStyles()` / `createVarsResolver()` | Stage-2 Phase C  | ✅     |
+| CSS Modules + PostCSS                  | Stage-2 Phase D  | ✅     |
+| Box (refactored)                       | Stage-2 Phase E  | ✅     |
+| Stack, ButtonBase, Paper               | Stage-2 Phase F  | ✅     |
+| `getRadius()` / `getShadow()`          | Stage-2 Phase F3 | ✅     |
+| Theme CSS variables (`--prismui-*`)    | Stage-1          | ✅     |
+| ADR-008: Variant Styling Strategy      | Stage-2          | ✅     |
 
 ---
 
@@ -74,9 +74,9 @@ Phase D: Button System
 
 ```typescript
 export interface VariantColorResolverInput {
-  color: string;           // theme color key or CSS color
+  color: string; // theme color key or CSS color
   theme: PrismuiTheme;
-  variant: string;         // 'filled' | 'light' | 'outline' | 'subtle' | 'transparent' | 'default' | 'white'
+  variant: PrismuiVariantKey; // 'solid' | 'soft' | 'outlined' | 'plain'
   gradient?: PrismuiGradient;
   autoContrast?: boolean;
 }
@@ -89,20 +89,26 @@ export interface VariantColorsResult {
   border: string;
 }
 
-export type VariantColorResolver = (input: VariantColorResolverInput) => VariantColorsResult;
+export type VariantColorResolver = (
+  input: VariantColorResolverInput,
+) => VariantColorsResult;
 ```
 
-**`defaultVariantColorsResolver`** — built-in implementation:
+**`defaultVariantColorsResolver`** — built-in implementation (4 variants, aligned with MUI Joy naming):
 
-| Variant | Background | Color | Border | Hover |
-|---|---|---|---|---|
-| `filled` | `--{color}-main` | contrastText | transparent | `--{color}-dark` |
-| `light` | `--{color}-lighter` (0.1 alpha) | `--{color}-dark` | transparent | `--{color}-lighter` (0.15 alpha) |
-| `outline` | transparent | `--{color}-main` | `--{color}-main` | `--{color}-lighter` (0.05 alpha) |
-| `subtle` | transparent | `--{color}-main` | transparent | `--{color}-lighter` (0.1 alpha) |
-| `transparent` | transparent | `--{color}-main` | transparent | transparent |
-| `default` | `--background-default` | `--text-primary` | `--divider` | `--action-hover` |
-| `white` | white | `--{color}-dark` | transparent | darken(white, 0.01) |
+| Variant    | Background                      | Color            | Border           | Hover                            | Mantine 等价 |
+| ---------- | ------------------------------- | ---------------- | ---------------- | -------------------------------- | ------------ |
+| `solid`    | `--{color}-main`                | contrastText     | transparent      | `--{color}-dark`                 | `filled`     |
+| `soft`     | `--{color}-lighter` (0.1 alpha) | `--{color}-dark` | transparent      | `--{color}-lighter` (0.15 alpha) | `light`      |
+| `outlined` | transparent                     | `--{color}-main` | `--{color}-main` | `--{color}-lighter` (0.05 alpha) | `outline`    |
+| `plain`    | transparent                     | `--{color}-main` | transparent      | `--{color}-lighter` (0.1 alpha)  | `subtle`     |
+
+**Mantine 额外 variant 的覆盖方式：**
+
+- `default` → `variant="outlined" color="neutral"` (中性色边框按钮)
+- `white` → `variant="solid" color="white"` (白色实色填充)
+- `transparent` → `variant="plain"` + 自定义 hover 样式 (极少使用)
+- `gradient` → 未来通过 `variant="solid" gradient={...}` prop 覆盖背景实现
 
 **Theme integration:**
 
@@ -115,11 +121,12 @@ export interface PrismuiTheme {
 ```
 
 **Files:**
+
 - `core/theme/variant-color-resolver/variant-color-resolver.ts`
 - `core/theme/variant-color-resolver/default-variant-colors-resolver.ts`
 - `core/theme/variant-color-resolver/index.ts`
 
-**Tests:** ~20 tests (each variant × light/dark, custom color, gradient, autoContrast)
+**Tests:** ~16 tests (each variant × light/dark, custom color, autoContrast, neutral color)
 
 ### A2: getThemeColor
 
@@ -178,6 +185,7 @@ export function useIsHeadless(): boolean {
 **Integration with `useStyles`:** When `useIsHeadless()` returns `true`, `useStyles` behaves as if `unstyled=true` for all components (skip CSS Module classes, keep static classes for testing).
 
 **Files:**
+
 - `core/PrismuiProvider/headless-context.ts`
 - Modify `core/styles-api/use-styles/use-styles.ts`
 - Modify `core/PrismuiProvider/PrismuiProvider.tsx`
@@ -186,7 +194,7 @@ export function useIsHeadless(): boolean {
 
 ### A Phase Acceptance Criteria
 
-- [ ] `defaultVariantColorsResolver` returns correct colors for all 7 variants
+- [ ] `defaultVariantColorsResolver` returns correct colors for all 4 variants (solid/soft/outlined/plain)
 - [ ] `variantColorResolver` is configurable via `createTheme({ variantColorResolver })`
 - [ ] `getThemeColor` resolves theme keys and passes through CSS values
 - [ ] `getSize` / `getFontSize` resolve tokens to CSS variables
@@ -202,6 +210,7 @@ export function useIsHeadless(): boolean {
 **Goal:** Render children into a DOM node outside the parent component tree. Essential for modals, popovers, tooltips, dropdowns.
 
 **Props:**
+
 ```typescript
 export interface PortalProps {
   children: React.ReactNode;
@@ -213,6 +222,7 @@ export interface PortalProps {
 ```
 
 **Key behaviors:**
+
 - SSR-safe: renders `null` until mounted (client-side only)
 - Uses `createPortal` from `react-dom`
 - Shared node: `[data-prismui-portal-node]` attribute
@@ -220,6 +230,7 @@ export interface PortalProps {
 - Uses `factory` (not polymorphicFactory) — no styles, just logic
 
 **Files:**
+
 - `components/Portal/Portal.tsx`
 - `components/Portal/Portal.test.tsx`
 - `components/Portal/index.ts`
@@ -231,13 +242,15 @@ export interface PortalProps {
 **Goal:** Visual separator line with optional label. Supports horizontal/vertical orientation.
 
 **Props:**
+
 ```typescript
-export interface DividerProps extends BoxProps, StylesApiProps<DividerFactory>, ElementProps<'div'> {
-  color?: string;                                    // theme color or CSS
-  size?: PrismuiSize | number | (string & {});       // border width
-  label?: React.ReactNode;                           // center label
-  labelPosition?: 'left' | 'center' | 'right';      // label alignment
-  orientation?: 'horizontal' | 'vertical';           // direction
+export interface DividerProps
+  extends BoxProps, StylesApiProps<DividerFactory>, ElementProps<"div"> {
+  color?: string; // theme color or CSS
+  size?: PrismuiSize | number | (string & {}); // border width
+  label?: React.ReactNode; // center label
+  labelPosition?: "left" | "center" | "right"; // label alignment
+  orientation?: "horizontal" | "vertical"; // direction
 }
 ```
 
@@ -246,6 +259,7 @@ export interface DividerProps extends BoxProps, StylesApiProps<DividerFactory>, 
 **Variants:** `solid` (default), `dashed`, `dotted`
 
 **Files:**
+
 - `components/Divider/Divider.tsx`, `Divider.module.css`, `Divider.test.tsx`, `Divider.stories.tsx`, `index.ts`
 
 **Tests:** ~15 tests
@@ -267,10 +281,12 @@ export interface DividerProps extends BoxProps, StylesApiProps<DividerFactory>, 
 **Goal:** Max-width centered container. Simple wrapper with responsive `size` prop.
 
 **Props:**
+
 ```typescript
-export interface ContainerProps extends BoxProps, StylesApiProps<ContainerFactory>, ElementProps<'div'> {
-  size?: PrismuiSize | (string & {}) | number;  // max-width
-  fluid?: boolean;                                // 100% width, ignore size
+export interface ContainerProps
+  extends BoxProps, StylesApiProps<ContainerFactory>, ElementProps<"div"> {
+  size?: PrismuiSize | (string & {}) | number; // max-width
+  fluid?: boolean; // 100% width, ignore size
 }
 ```
 
@@ -278,6 +294,7 @@ export interface ContainerProps extends BoxProps, StylesApiProps<ContainerFactor
 **Default sizes:** xs=540px, sm=720px, md=960px, lg=1140px, xl=1320px
 
 **Files:**
+
 - `components/Container/Container.tsx`, `Container.module.css`, `Container.test.tsx`, `Container.stories.tsx`, `index.ts`
 
 **Tests:** ~12 tests
@@ -287,14 +304,16 @@ export interface ContainerProps extends BoxProps, StylesApiProps<ContainerFactor
 **Goal:** Horizontal flex layout (complement to Stack's vertical layout). Supports `gap`, `align`, `justify`, `wrap`, `grow`.
 
 **Props:**
+
 ```typescript
-export interface GroupProps extends BoxProps, StylesApiProps<GroupFactory>, ElementProps<'div'> {
-  justify?: React.CSSProperties['justifyContent'];  // @default 'flex-start'
-  align?: React.CSSProperties['alignItems'];         // @default 'center'
-  wrap?: React.CSSProperties['flexWrap'];             // @default 'wrap'
-  gap?: PrismuiSpacing;                               // @default 'md'
-  grow?: boolean;                                      // children flex-grow
-  preventGrowOverflow?: boolean;                       // max-width per child @default true
+export interface GroupProps
+  extends BoxProps, StylesApiProps<GroupFactory>, ElementProps<"div"> {
+  justify?: React.CSSProperties["justifyContent"]; // @default 'flex-start'
+  align?: React.CSSProperties["alignItems"]; // @default 'center'
+  wrap?: React.CSSProperties["flexWrap"]; // @default 'wrap'
+  gap?: PrismuiSpacing; // @default 'md'
+  grow?: boolean; // children flex-grow
+  preventGrowOverflow?: boolean; // max-width per child @default true
 }
 ```
 
@@ -302,6 +321,7 @@ export interface GroupProps extends BoxProps, StylesApiProps<GroupFactory>, Elem
 **Context:** `GroupStylesCtx` with computed `childWidth` for `preventGrowOverflow`
 
 **Files:**
+
 - `components/Group/Group.tsx`, `Group.module.css`, `Group.test.tsx`, `Group.stories.tsx`, `index.ts`
 - `components/Group/filter-falsy-children.ts`
 
@@ -312,23 +332,27 @@ export interface GroupProps extends BoxProps, StylesApiProps<GroupFactory>, Elem
 **Goal:** 12-column CSS grid layout with responsive column spans.
 
 **Grid Props:**
+
 ```typescript
-export interface GridProps extends BoxProps, StylesApiProps<GridFactory>, ElementProps<'div'> {
-  gutter?: PrismuiResponsiveValue<PrismuiSpacing>;  // @default 'md'
-  grow?: boolean;                                      // last row fills space
-  columns?: number;                                    // @default 12
-  justify?: React.CSSProperties['justifyContent'];
-  align?: React.CSSProperties['alignItems'];
-  overflow?: React.CSSProperties['overflow'];
+export interface GridProps
+  extends BoxProps, StylesApiProps<GridFactory>, ElementProps<"div"> {
+  gutter?: PrismuiResponsiveValue<PrismuiSpacing>; // @default 'md'
+  grow?: boolean; // last row fills space
+  columns?: number; // @default 12
+  justify?: React.CSSProperties["justifyContent"];
+  align?: React.CSSProperties["alignItems"];
+  overflow?: React.CSSProperties["overflow"];
 }
 ```
 
 **Grid.Col Props:**
+
 ```typescript
-export interface GridColProps extends BoxProps, StylesApiProps<GridColFactory>, ElementProps<'div'> {
-  span?: PrismuiResponsiveValue<number | 'auto' | 'content'>;  // column span
-  offset?: PrismuiResponsiveValue<number>;                       // column offset
-  order?: PrismuiResponsiveValue<number>;                        // flex order
+export interface GridColProps
+  extends BoxProps, StylesApiProps<GridColFactory>, ElementProps<"div"> {
+  span?: PrismuiResponsiveValue<number | "auto" | "content">; // column span
+  offset?: PrismuiResponsiveValue<number>; // column offset
+  order?: PrismuiResponsiveValue<number>; // flex order
 }
 ```
 
@@ -337,11 +361,13 @@ export interface GridColProps extends BoxProps, StylesApiProps<GridColFactory>, 
 **Static Components:** `Grid.Col`
 
 **Implementation notes:**
+
 - Grid provides context to Grid.Col via `GridProvider`
 - Responsive column spans use `resolveResponsiveVars` (from Stage-2 Stack)
 - `GridVariables` component generates responsive CSS for gutter/span/offset
 
 **Files:**
+
 - `components/Grid/Grid.tsx`, `Grid.module.css`, `Grid.context.ts`, `GridVariables.tsx`
 - `components/Grid/GridCol/GridCol.tsx`, `GridCol.module.css`, `GridColVariables.tsx`
 - `components/Grid/Grid.test.tsx`, `Grid.stories.tsx`, `index.ts`
@@ -368,29 +394,31 @@ export interface GridColProps extends BoxProps, StylesApiProps<GridColFactory>, 
 **Goal:** The primary interactive component. Polymorphic, variant-driven, with loading state and icon sections.
 
 **Props:**
+
 ```typescript
 export interface ButtonProps extends BoxProps, StylesApiProps<ButtonFactory> {
   size?: PrismuiSize | `compact-${PrismuiSize}` | (string & {});
-  color?: string;                                    // theme color or CSS
-  variant?: ButtonVariant;                           // @default 'filled'
-  justify?: React.CSSProperties['justifyContent'];  // inner content alignment
+  color?: string; // theme color or CSS
+  variant?: ButtonVariant; // @default 'solid'
+  justify?: React.CSSProperties["justifyContent"]; // inner content alignment
   leftSection?: React.ReactNode;
   rightSection?: React.ReactNode;
   fullWidth?: boolean;
   radius?: PrismuiRadius;
   disabled?: boolean;
   loading?: boolean;
-  loaderProps?: LoaderProps;                          // future: Loader component
+  loaderProps?: LoaderProps; // future: Loader component
   autoContrast?: boolean;
   children?: React.ReactNode;
 }
 
-export type ButtonVariant =
-  | 'filled' | 'light' | 'outline' | 'subtle'
-  | 'transparent' | 'white' | 'default';
+export type ButtonVariant = PrismuiVariantKey;
+// Built-in: 'solid' | 'soft' | 'outlined' | 'plain'
+// Extensible via PrismuiThemeVariantsOverride
 ```
 
 **CSS Variables:**
+
 ```
 --button-justify, --button-height, --button-padding-x, --button-fz,
 --button-radius, --button-bg, --button-hover, --button-hover-color,
@@ -400,6 +428,7 @@ export type ButtonVariant =
 **Styles Names:** `root`, `inner`, `section`, `label`, `loader`
 
 **Key behaviors:**
+
 - Extends `ButtonBase` (inherits ripple, polymorphic, keyboard accessibility)
 - Uses `variantColorResolver` to compute color CSS variables
 - `loading` state: disables interaction, shows loader overlay (simplified — no Transition component initially, use CSS opacity)
@@ -409,6 +438,7 @@ export type ButtonVariant =
 **Factory:** `PolymorphicFactory` (renders as `<button>` by default, can be `<a>`, etc.)
 
 **Files:**
+
 - `components/Button/Button.tsx`, `Button.module.css`, `Button.test.tsx`, `Button.stories.tsx`
 
 **Tests:** ~30 tests
@@ -418,9 +448,11 @@ export type ButtonVariant =
 **Goal:** Group buttons together with shared border radius (first/last child rounding).
 
 **Props:**
+
 ```typescript
-export interface ButtonGroupProps extends BoxProps, StylesApiProps<ButtonGroupFactory>, ElementProps<'div'> {
-  orientation?: 'horizontal' | 'vertical';  // @default 'horizontal'
+export interface ButtonGroupProps
+  extends BoxProps, StylesApiProps<ButtonGroupFactory>, ElementProps<"div"> {
+  orientation?: "horizontal" | "vertical"; // @default 'horizontal'
 }
 ```
 
@@ -428,12 +460,14 @@ export interface ButtonGroupProps extends BoxProps, StylesApiProps<ButtonGroupFa
 **Styles Names:** `group`
 
 **Key behaviors:**
+
 - Uses CSS `> :not(:first-child):not(:last-child) { border-radius: 0 }` pattern
 - Provides context to child Buttons for border handling
 - Horizontal: removes right border of non-last children
 - Vertical: removes bottom border of non-last children
 
 **Files:**
+
 - `components/Button/ButtonGroup/ButtonGroup.tsx`, `ButtonGroup.module.css`, `ButtonGroup.test.tsx`
 
 **Tests:** ~12 tests
@@ -441,7 +475,7 @@ export interface ButtonGroupProps extends BoxProps, StylesApiProps<ButtonGroupFa
 ### D Phase Acceptance Criteria
 
 - [ ] Button renders with correct variant colors via `variantColorResolver`
-- [ ] Button supports all 7 variants with correct visual output
+- [ ] Button supports all 4 variants (solid/soft/outlined/plain) with correct visual output
 - [ ] Button `loading` state disables interaction and shows loader
 - [ ] Button `leftSection` / `rightSection` render correctly
 - [ ] Button inherits ripple from ButtonBase
@@ -477,6 +511,7 @@ Phase D: Button System (depends on A1: variantColorResolver + A3: getSize/getFon
 **Critical path:** A1 → A2 → D1 → D2
 
 **Parallelizable:**
+
 - A4 (Headless) can be done anytime
 - B1 (Portal) is fully independent
 - C1/C2/C3 can proceed in parallel with A1 (they don't need variantColorResolver)
@@ -488,86 +523,84 @@ Phase D: Button System (depends on A1: variantColorResolver + A3: getSize/getFon
 ### Layer 1: Theme Infrastructure (~50 tests)
 
 ```typescript
-describe('variantColorResolver', () => {
-  it('filled variant returns correct bg/color/hover');
-  it('light variant returns semi-transparent background');
-  it('outline variant returns transparent bg with colored border');
-  it('subtle variant returns transparent bg');
-  it('transparent variant returns all transparent');
-  it('default variant uses theme defaults');
-  it('white variant returns white bg');
-  it('custom color key resolves via getThemeColor');
-  it('raw CSS color passes through');
-  it('autoContrast overrides text color');
+describe("variantColorResolver", () => {
+  it("solid variant returns correct bg/color/hover");
+  it("soft variant returns semi-transparent background");
+  it("outlined variant returns transparent bg with colored border");
+  it("plain variant returns transparent bg with hover feedback");
+  it("neutral color produces default-style button");
+  it("custom color key resolves via getThemeColor");
+  it("raw CSS color passes through");
+  it("autoContrast overrides text color");
   // ... per variant × light/dark scheme
 });
 
-describe('getThemeColor', () => {
-  it('resolves semantic key to CSS variable');
-  it('resolves color family key to CSS variable');
-  it('resolves color.shade notation');
-  it('passes through hex colors');
-  it('passes through rgb/hsl colors');
+describe("getThemeColor", () => {
+  it("resolves semantic key to CSS variable");
+  it("resolves color family key to CSS variable");
+  it("resolves color.shade notation");
+  it("passes through hex colors");
+  it("passes through rgb/hsl colors");
 });
 
-describe('getSize / getFontSize', () => {
-  it('resolves named size to CSS variable');
-  it('converts number to rem');
-  it('returns undefined for undefined');
+describe("getSize / getFontSize", () => {
+  it("resolves named size to CSS variable");
+  it("converts number to rem");
+  it("returns undefined for undefined");
 });
 
-describe('headless mode', () => {
-  it('useIsHeadless returns false by default');
-  it('useIsHeadless returns true inside headless provider');
-  it('useStyles skips CSS module classes in headless mode');
-  it('static class names preserved in headless mode');
+describe("headless mode", () => {
+  it("useIsHeadless returns false by default");
+  it("useIsHeadless returns true inside headless provider");
+  it("useStyles skips CSS module classes in headless mode");
+  it("static class names preserved in headless mode");
 });
 ```
 
 ### Layer 2: Component Tests (~100 tests)
 
-| Component | Estimated Tests |
-|---|---|
-| Portal | ~10 |
-| Divider | ~15 |
-| Container | ~12 |
-| Group | ~18 |
-| Grid + Grid.Col | ~25 |
-| Button | ~30 |
-| Button.Group | ~12 |
+| Component       | Estimated Tests |
+| --------------- | --------------- |
+| Portal          | ~10             |
+| Divider         | ~15             |
+| Container       | ~12             |
+| Group           | ~18             |
+| Grid + Grid.Col | ~25             |
+| Button          | ~30             |
+| Button.Group    | ~12             |
 
 ### Test Count Target
 
-| Category | Estimated | Actual |
-|---|---|---|
-| Theme infrastructure (A1-A4) | 40-50 | |
-| Portal | 8-12 | |
-| Divider | 12-18 | |
-| Container | 10-15 | |
-| Group | 15-20 | |
-| Grid + Grid.Col | 20-30 | |
-| Button | 25-35 | |
-| Button.Group | 10-15 | |
-| **Total (new)** | **~140-195** | |
+| Category                     | Estimated    | Actual |
+| ---------------------------- | ------------ | ------ |
+| Theme infrastructure (A1-A4) | 40-50        |        |
+| Portal                       | 8-12         |        |
+| Divider                      | 12-18        |        |
+| Container                    | 10-15        |        |
+| Group                        | 15-20        |        |
+| Grid + Grid.Col              | 20-30        |        |
+| Button                       | 25-35        |        |
+| Button.Group                 | 10-15        |        |
+| **Total (new)**              | **~140-195** |        |
 
 ---
 
 ## 10. Estimated Timeline
 
-| Phase | Duration | Cumulative |
-|---|---|---|
-| A1: variantColorResolver | 2-3 sessions | 2-3 sessions |
-| A2: getThemeColor | 1 session | 3-4 sessions |
-| A3: getSize / getFontSize | 1 session | 4-5 sessions |
-| A4: Headless mode | 1 session | 5-6 sessions |
-| B1: Portal | 1 session | 6-7 sessions |
-| B2: Divider | 1 session | 7-8 sessions |
-| C1: Container | 1 session | 8-9 sessions |
-| C2: Group | 1-2 sessions | 9-11 sessions |
-| C3: Grid + Grid.Col | 2-3 sessions | 11-14 sessions |
-| D1: Button | 2-3 sessions | 13-17 sessions |
-| D2: Button.Group | 1 session | 14-18 sessions |
-| Documentation + verification | 1 session | 15-19 sessions |
+| Phase                        | Duration     | Cumulative     |
+| ---------------------------- | ------------ | -------------- |
+| A1: variantColorResolver     | 2-3 sessions | 2-3 sessions   |
+| A2: getThemeColor            | 1 session    | 3-4 sessions   |
+| A3: getSize / getFontSize    | 1 session    | 4-5 sessions   |
+| A4: Headless mode            | 1 session    | 5-6 sessions   |
+| B1: Portal                   | 1 session    | 6-7 sessions   |
+| B2: Divider                  | 1 session    | 7-8 sessions   |
+| C1: Container                | 1 session    | 8-9 sessions   |
+| C2: Group                    | 1-2 sessions | 9-11 sessions  |
+| C3: Grid + Grid.Col          | 2-3 sessions | 11-14 sessions |
+| D1: Button                   | 2-3 sessions | 13-17 sessions |
+| D2: Button.Group             | 1 session    | 14-18 sessions |
+| Documentation + verification | 1 session    | 15-19 sessions |
 
 **Estimated total: 15-19 sessions**
 
@@ -575,13 +608,13 @@ describe('headless mode', () => {
 
 ## 11. Risks
 
-| Risk | Likelihood | Impact | Mitigation |
-|---|---|---|---|
-| variantColorResolver complexity (dark mode, autoContrast) | Medium | High | Start with filled/outline/default, add others incrementally |
-| Grid responsive CSS generation complexity | Medium | Medium | Reuse `resolveResponsiveVars` from Stack |
-| Button loading state needs Transition component | Low | Medium | Use simple CSS opacity initially, add Transition later |
-| Type complexity with polymorphic Button + variants | Medium | Medium | Follow ButtonBase pattern, test types early |
-| Portal SSR hydration issues | Low | Medium | Render null on server, mount on client only |
+| Risk                                                      | Likelihood | Impact | Mitigation                                                             |
+| --------------------------------------------------------- | ---------- | ------ | ---------------------------------------------------------------------- |
+| variantColorResolver complexity (dark mode, autoContrast) | Medium     | High   | Only 4 variants (solid/soft/outlined/plain), start with solid/outlined |
+| Grid responsive CSS generation complexity                 | Medium     | Medium | Reuse `resolveResponsiveVars` from Stack                               |
+| Button loading state needs Transition component           | Low        | Medium | Use simple CSS opacity initially, add Transition later                 |
+| Type complexity with polymorphic Button + variants        | Medium     | Medium | Follow ButtonBase pattern, test types early                            |
+| Portal SSR hydration issues                               | Low        | Medium | Render null on server, mount on client only                            |
 
 ---
 
@@ -595,6 +628,25 @@ describe('headless mode', () => {
 - **Feedback components** — Alert, Toast, Notification
 - **Documentation site** — Public-facing docs
 - **CSS-in-JS integration** — No Emotion/styled-components
+- **Theme Presets / Theme Creator UI** — 见下方"未来考虑"
+
+### 未来考虑：可视化主题配置器 (Theme Creator)
+
+> 参考：shadcn/ui `/create` 页面 — 用户可选择 style 预设、base color、theme color、font、radius 等，实时预览所有组件效果，导出 CSS 变量配置。
+>
+> **PrismUI 的目标**：提供类似能力，但更符合 MUI 的结构化 palette 体系 + PrismUI 的 CSS 变量架构。具体包括：
+>
+> 1. **Theme Presets（预设主题包）** — 一键切换整套视觉风格（颜色、圆角、字体、间距）
+> 2. **可视化 Theme Creator** — 交互式配置页面，实时预览，导出 `createTheme()` 配置
+> 3. **组件级深度定制** — 类似 MUI `theme.components.MuiButton.styleOverrides`（Stage-2 已有 `theme.components.Button.classNames/styles/vars` 基础）
+>
+> **阶段归属**：需要绝大部分核心组件完成后才有意义（实时预览需要 Button、Input、Card、Alert 等全部就绪）。暂不确定具体阶段，待 Stage-4 组件完成后再评估。预计 Stage-5 或更后。
+>
+> **与现有架构的关系**：
+>
+> - Stage-1 的 `createTheme()` + CSS 变量生成 → 提供数据基础
+> - Stage-3 的 `variantColorResolver` → 提供 variant 颜色定制能力
+> - Stage-4 的 Documentation Site → 提供承载 Theme Creator UI 的平台
 
 ---
 
@@ -617,26 +669,26 @@ Box (basic)            CSS Modules              Container, Divider          Docu
 
 ## 14. Stage-3 Overall Acceptance Criteria
 
-| Criteria | Status |
-|---|---|
-| `variantColorResolver` resolves all 7 built-in variants correctly | |
-| `variantColorResolver` is customizable via `createTheme()` | |
-| `getThemeColor` resolves theme keys and CSS passthrough | |
-| `getSize` / `getFontSize` resolve tokens to CSS variables | |
-| Headless mode disables CSS Module classes via provider | |
-| Portal renders children outside parent DOM tree, SSR-safe | |
-| Divider renders horizontal/vertical with label support | |
-| Container centers content with responsive max-width | |
-| Group renders horizontal flex layout with gap/grow | |
-| Grid + Grid.Col renders 12-column responsive layout | |
-| Button renders with variant colors, loading, sections | |
-| Button inherits ripple from ButtonBase | |
-| Button.Group groups buttons with shared border radius | |
-| All components support `classNames`, `styles`, `unstyled` | |
-| Test count ≥ 140 (new tests) | |
-| All Storybook stories render correctly | |
-| Zero TypeScript compilation errors (excluding pre-existing TS6133) | |
-| Zero known regressions in Stage-1/Stage-2 | |
+| Criteria                                                                                      | Status |
+| --------------------------------------------------------------------------------------------- | ------ |
+| `variantColorResolver` resolves all 4 built-in variants (solid/soft/outlined/plain) correctly |        |
+| `variantColorResolver` is customizable via `createTheme()`                                    |        |
+| `getThemeColor` resolves theme keys and CSS passthrough                                       |        |
+| `getSize` / `getFontSize` resolve tokens to CSS variables                                     |        |
+| Headless mode disables CSS Module classes via provider                                        |        |
+| Portal renders children outside parent DOM tree, SSR-safe                                     |        |
+| Divider renders horizontal/vertical with label support                                        |        |
+| Container centers content with responsive max-width                                           |        |
+| Group renders horizontal flex layout with gap/grow                                            |        |
+| Grid + Grid.Col renders 12-column responsive layout                                           |        |
+| Button renders with variant colors, loading, sections                                         |        |
+| Button inherits ripple from ButtonBase                                                        |        |
+| Button.Group groups buttons with shared border radius                                         |        |
+| All components support `classNames`, `styles`, `unstyled`                                     |        |
+| Test count ≥ 140 (new tests)                                                                  |        |
+| All Storybook stories render correctly                                                        |        |
+| Zero TypeScript compilation errors (excluding pre-existing TS6133)                            |        |
+| Zero known regressions in Stage-1/Stage-2                                                     |        |
 
 ---
 
@@ -644,17 +696,17 @@ Box (basic)            CSS Modules              Container, Divider          Docu
 
 > _Stage-3 完成后填写_
 
-| Metric | Value |
-|---|---|
-| Infrastructure files (new) | |
-| Component files (new) | |
-| CSS Module files (new) | |
-| Test files (new) | |
-| Total new tests | |
-| Total tests (cumulative) | |
-| Storybook stories (new) | |
-| Public API functions (new) | |
-| Public API types (new) | |
+| Metric                     | Value |
+| -------------------------- | ----- |
+| Infrastructure files (new) |       |
+| Component files (new)      |       |
+| CSS Module files (new)     |       |
+| Test files (new)           |       |
+| Total new tests            |       |
+| Total tests (cumulative)   |       |
+| Storybook stories (new)    |       |
+| Public API functions (new) |       |
+| Public API types (new)     |       |
 
 ---
 
