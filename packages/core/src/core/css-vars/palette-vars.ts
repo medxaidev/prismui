@@ -248,6 +248,27 @@ export function getPaletteVars(
   vars['--prismui-common-black'] = palette.common.black;
   vars['--prismui-common-white'] = palette.common.white;
 
+  // Common channels: user-provided or auto-computed
+  const blackChannel =
+    palette.common.blackChannel || getColorChannels(palette.common.black);
+  if (blackChannel) {
+    vars['--prismui-common-blackChannel'] = blackChannel;
+  }
+  const whiteChannel =
+    palette.common.whiteChannel || getColorChannels(palette.common.white);
+  if (whiteChannel) {
+    vars['--prismui-common-whiteChannel'] = whiteChannel;
+  }
+
+  // Gray-500 channel (used by variant system for inherit/neutral borders)
+  const gray500 = theme.colorFamilies.gray?.[500];
+  if (gray500) {
+    const gray500Channel = getColorChannels(gray500);
+    if (gray500Channel) {
+      vars['--prismui-color-gray-500Channel'] = gray500Channel;
+    }
+  }
+
   // --- Semantic palette colors ---
   const center = theme.primaryShade[scheme];
   const resolvedSemantic: Record<string, PrismuiPaletteColor> = {};
@@ -364,6 +385,32 @@ export function getPaletteVars(
     palette.action.selectedChannel || getColorChannels(palette.action.selected);
   if (selectedChannel) {
     vars['--prismui-action-selectedChannel'] = selectedChannel;
+  }
+
+  // --- Variant Opacity ---
+  if (palette.variantOpacity) {
+    const vo = palette.variantOpacity;
+    if (vo['solid-commonHoverBg'] != null) {
+      vars['--prismui-opacity-solid-commonHoverBg'] = String(vo['solid-commonHoverBg']);
+    }
+    if (vo['outlined-border'] != null) {
+      vars['--prismui-opacity-outlined-border'] = String(vo['outlined-border']);
+    }
+    if (vo['soft-bg'] != null) {
+      vars['--prismui-opacity-soft-bg'] = String(vo['soft-bg']);
+    }
+    if (vo['soft-hoverBg'] != null) {
+      vars['--prismui-opacity-soft-hoverBg'] = String(vo['soft-hoverBg']);
+    }
+    if (vo['soft-commonBg'] != null) {
+      vars['--prismui-opacity-soft-commonBg'] = String(vo['soft-commonBg']);
+    }
+    if (vo['soft-commonHoverBg'] != null) {
+      vars['--prismui-opacity-soft-commonHoverBg'] = String(vo['soft-commonHoverBg']);
+    }
+    if (vo['soft-border'] != null) {
+      vars['--prismui-opacity-soft-border'] = String(vo['soft-border']);
+    }
   }
 
   // --- Shadows (generated from palette.shadow.color + semantic mainChannel) ---

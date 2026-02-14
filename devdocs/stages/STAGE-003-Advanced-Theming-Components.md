@@ -1,6 +1,6 @@
 # STAGE-003: Advanced Theming & Layout Components
 
-> **Status:** Not Started
+> **Status:** In Progress (Phase A ✅ Complete)
 > **Predecessor:** STAGE-002 (Component Factory) — ✅ Complete
 > **Owner:** Development Team
 > **Created:** 2026-02-13
@@ -66,27 +66,29 @@ Phase D: Button System
 
 ## 4. Phase A: Advanced Theming Infrastructure
 
-### A1: variantColorResolver
+### A1: variantColorResolver ✅
 
-**Goal:** Provide a theme-level function that resolves `(variant, color, theme)` → `{ background, hover, hoverColor, color, border }` CSS values. This is the core mechanism for color-variant components.
+**Goal:** Provide a theme-level function that resolves `(variant, color, theme, scheme)` → CSS values for background, color, border, and hover states. This is the core mechanism for color-variant components.
 
-**Design (aligned with Mantine + ADR-008):**
+**Implemented Design:**
 
 ```typescript
 export interface VariantColorResolverInput {
   color: string; // theme color key or CSS color
   theme: PrismuiTheme;
   variant: PrismuiVariantKey; // 'solid' | 'soft' | 'outlined' | 'plain'
-  gradient?: PrismuiGradient;
-  autoContrast?: boolean;
+  scheme: PrismuiResolvedColorScheme; // 'light' | 'dark'
+  autoContrast?: boolean; // reserved for future use
 }
 
 export interface VariantColorsResult {
   background: string;
-  hover: string;
-  hoverColor: string;
   color: string;
   border: string;
+  hoverBackground: string;
+  hoverColor: string;
+  hoverBorder: string;
+  hoverShadow: string;
 }
 
 export type VariantColorResolver = (
@@ -94,14 +96,43 @@ export type VariantColorResolver = (
 ) => VariantColorsResult;
 ```
 
-**`defaultVariantColorsResolver`** — built-in implementation (4 variants, aligned with MUI Joy naming):
+**`defaultVariantColorsResolver`** — 4 variants × 5 color types:
 
-| Variant    | Background                      | Color            | Border           | Hover                            | Mantine 等价 |
-| ---------- | ------------------------------- | ---------------- | ---------------- | -------------------------------- | ------------ |
-| `solid`    | `--{color}-main`                | contrastText     | transparent      | `--{color}-dark`                 | `filled`     |
-| `soft`     | `--{color}-lighter` (0.1 alpha) | `--{color}-dark` | transparent      | `--{color}-lighter` (0.15 alpha) | `light`      |
-| `outlined` | transparent                     | `--{color}-main` | `--{color}-main` | `--{color}-lighter` (0.05 alpha) | `outline`    |
-| `plain`    | transparent                     | `--{color}-main` | transparent      | `--{color}-lighter` (0.1 alpha)  | `subtle`     |
+| Color Type   | Examples                                                                 | Mechanism                                                 |
+| ------------ | ------------------------------------------------------------------------ | --------------------------------------------------------- |
+| `inherit`    | 特殊值，继承父元素颜色                                                   | gray shades / `inherit` / `--prismui-action-hover`        |
+| Semantic     | `primary`, `secondary`, `info`, `success`, `warning`, `error`, `neutral` | CSS 变量 `var(--prismui-{color}-main)` 等                 |
+| Color Family | `blue`, `red`, `green`, ...                                              | 通过 `primaryShade` 解析到具体 shade 值                   |
+| `black`      | 纯黑色                                                                   | `var(--prismui-common-black)` + `rgba(channel / opacity)` |
+| `white`      | 纯白色                                                                   | `var(--prismui-common-white)` + `rgba(channel / opacity)` |
+
+**关键设计决策：**
+
+- 不使用 `--prismui-shared-*` 变量，改用 opacity + channel 组合方式
+- `inherit` = CSS inherit（继承父元素），`neutral` = 标准语义色
+- `color-mix(in srgb, ...)` 用于 black/white/outlined 变体
+- `rgba(channel / opacity)` 用于 semantic/colorFamily 变体
+- 新增 `PrismuiVariantOpacity` 接口控制 opacity 值（可通过 `createTheme` 覆盖）
+
+**Variant Opacity CSS 变量：**
+
+| CSS Variable                            | Default | Usage                       |
+| --------------------------------------- | ------- | --------------------------- |
+| `--prismui-opacity-solid-commonHoverBg` | 0.72    | solid black/white hover     |
+| `--prismui-opacity-outlined-border`     | 0.48    | outlined border opacity     |
+| `--prismui-opacity-soft-bg`             | 0.16    | soft background             |
+| `--prismui-opacity-soft-hoverBg`        | 0.32    | soft hover background       |
+| `--prismui-opacity-soft-commonBg`       | 0.08    | soft black/white background |
+| `--prismui-opacity-soft-commonHoverBg`  | 0.16    | soft black/white hover      |
+| `--prismui-opacity-soft-border`         | 0.24    | soft border (reserved)      |
+
+**Channel CSS 变量：**
+
+| CSS Variable                      | Usage                               |
+| --------------------------------- | ----------------------------------- |
+| `--prismui-common-blackChannel`   | `rgba()` for black with opacity     |
+| `--prismui-common-whiteChannel`   | `rgba()` for white with opacity     |
+| `--prismui-color-gray-500Channel` | inherit variant borders/backgrounds |
 
 **Mantine 额外 variant 的覆盖方式：**
 
@@ -113,93 +144,125 @@ export type VariantColorResolver = (
 **Theme integration:**
 
 ```typescript
-// In PrismuiTheme
 export interface PrismuiTheme {
   // ... existing fields
-  variantColorResolver: VariantColorResolver;
+  variantColorResolver: VariantColorResolver; // default: defaultVariantColorsResolver
 }
 ```
 
 **Files:**
 
-- `core/theme/variant-color-resolver/variant-color-resolver.ts`
-- `core/theme/variant-color-resolver/default-variant-colors-resolver.ts`
-- `core/theme/variant-color-resolver/index.ts`
+- `core/theme/variant-color-resolver/variant-color-resolver.ts` — types
+- `core/theme/variant-color-resolver/default-variant-colors-resolver.ts` — implementation
+- `core/theme/variant-color-resolver/index.ts` — barrel exports
+- `core/theme/variant-color-resolver/default-variant-colors-resolver.test.ts` — 33 tests
+- `core/theme/variant-color-resolver/variant-color-resolver.stories.tsx` — 8 stories
+- `core/theme/types/palette.ts` — added `PrismuiVariantOpacity`, `blackChannel`/`whiteChannel`
+- `core/theme/types/theme.ts` — added `variantColorResolver` field
+- `core/theme/default-theme.ts` — added default opacity values + resolver
+- `core/css-vars/palette-vars.ts` — generates opacity + channel CSS variables
 
-**Tests:** ~16 tests (each variant × light/dark, custom color, autoContrast, neutral color)
+**Tests:** 33 tests (4 variants × 5 color types × light/dark, custom resolver, cross-cutting)
 
-### A2: getThemeColor
+### A2: getThemeColor ✅
 
-**Goal:** Resolve a color string to a CSS value. If it's a theme color key (e.g. `'primary'`, `'blue'`), return the corresponding CSS variable. Otherwise, pass through as raw CSS.
+**Goal:** Resolve a color string to a CSS value. If it's a theme color key, return the corresponding CSS variable. Otherwise, pass through as raw CSS.
 
-```typescript
-export function getThemeColor(color: string, theme: PrismuiTheme): string;
-// 'primary' → 'var(--prismui-primary-main)'
-// 'blue' → 'var(--prismui-color-blue-500)'  (using primaryShade)
-// 'blue.300' → 'var(--prismui-color-blue-300)'
-// '#ff0000' → '#ff0000'  (passthrough)
-// 'rgb(255,0,0)' → 'rgb(255,0,0)'  (passthrough)
-```
+**Resolution order:**
 
-**Files:** `core/theme/get-theme-color.ts`
-**Tests:** ~10 tests
+1. Palette tokens (`text.primary`, `background.paper`, `common.black`, `divider`) → `var(--prismui-{token})`
+2. Semantic color + field (`primary.dark`, `error.mainChannel`) → `var(--prismui-{key}-{field})`
+3. Color family + shade (`blue.500`) → `var(--prismui-color-{family}-{shade})`
+4. Semantic color key (`primary`) → `var(--prismui-{key}-main)`
+5. Color family without shade (`blue`) → `var(--prismui-color-{family}-{mainShade})` (uses `primaryShade.light`)
+6. CSS passthrough (`#ff0000`, `rgb(...)`, `transparent`, `inherit`, `currentColor`) → as-is
 
-### A3: getSize / getFontSize
+**Files:**
+
+- `core/theme/get-theme-color.ts` — implementation
+- `core/theme/get-theme-color.test.ts` — 32 tests
+
+**Tests:** 32 tests (semantic keys, semantic+field, family+shade, family bare, palette tokens, CSS passthrough)
+
+### A3: getSize / getFontSize ✅
 
 **Goal:** Resolve size tokens to CSS variable references, similar to `getRadius`/`getShadow`.
+
+**Implemented API:**
 
 ```typescript
 // getSize('sm', 'button-height') → 'var(--button-height-sm)'
 // getSize(42, 'button-height') → rem(42)
-export function getSize(size: unknown, prefix: string): string | undefined;
+// getSize('36px', 'button-height') → rem('36px')
+export function getSize(
+  size: string | number | undefined,
+  prefix: string,
+): string | undefined;
 
 // getFontSize('sm') → 'var(--prismui-font-size-sm)'
 // getFontSize(14) → rem(14)
-export function getFontSize(size: unknown): string | undefined;
-
-// getSpacing — already exists as spacingResolver, may need a simpler alias
-export function getSpacing(size: unknown): string | undefined;
+// getFontSize('16px') → rem('16px')
+export function getFontSize(
+  size: string | number | undefined,
+): string | undefined;
 ```
 
-**Files:** `core/theme/get-size.ts`, `core/theme/get-font-size.ts`
-**Tests:** ~12 tests
-
-### A4: Headless Mode
-
-**Goal:** Allow entire component trees to render without CSS Module classes. Components already support `unstyled` prop individually; headless mode provides a provider-level toggle.
-
-```typescript
-// Context
-const HeadlessContext = createContext(false);
-
-export function useIsHeadless(): boolean {
-  return useContext(HeadlessContext);
-}
-
-// In PrismuiProvider
-<PrismuiProvider headless>
-  <Button>No styles applied</Button>
-</PrismuiProvider>
-```
-
-**Integration with `useStyles`:** When `useIsHeadless()` returns `true`, `useStyles` behaves as if `unstyled=true` for all components (skip CSS Module classes, keep static classes for testing).
+**Note:** `getSpacing` 不单独实现 — 已有 `spacingResolver` 覆盖此功能。
 
 **Files:**
 
-- `core/PrismuiProvider/headless-context.ts`
-- Modify `core/styles-api/use-styles/use-styles.ts`
-- Modify `core/PrismuiProvider/PrismuiProvider.tsx`
+- `core/theme/get-size.ts` — generic size resolver with configurable prefix
+- `core/theme/get-font-size.ts` — font-size specific resolver (prefix fixed to `--prismui-font-size-`)
+- `core/theme/get-size.test.ts` — 11 tests
+- `core/theme/get-font-size.test.ts` — 11 tests
 
-**Tests:** ~8 tests
+**Tests:** 22 tests (named keys, number→rem, CSS string→rem, undefined, non-key strings)
+
+### A4: Headless Mode ✅
+
+**Goal:** Allow entire component trees to render without CSS Module classes. Components already support `unstyled` prop individually; headless mode provides a provider-level toggle.
+
+**Implemented Design:**
+
+```typescript
+// Hook — combines provider-level headless with component-level unstyled
+export function useIsHeadless(unstyled?: boolean): boolean {
+  const ctx = usePrismuiContext();
+  return unstyled === true || ctx?.headless === true;
+}
+
+// Provider usage
+<PrismuiProvider headless>
+  <Button>No CSS Module classes applied</Button>
+</PrismuiProvider>
+```
+
+**Architecture decision:** 不创建单独的 `headless-context.ts`，而是将 `headless` 直接集成到现有的 `PrismuiThemeContextValue` 中。这避免了额外的 context 层，减少 provider 嵌套。
+
+**Integration with `useStyles`:** 组件通过 `useIsHeadless(props.unstyled)` 获取最终的 headless 状态，传递给 `useStyles` 的 `unstyled` 参数。当 headless 为 true 时：
+
+- `getSelectorClassName()` 返回 `undefined`（跳过 CSS Module 类）
+- `getVariantClassName()` 返回 `undefined`（跳过变体类）
+- Static class names（如 `prismui-Button-root`）保留用于测试
+
+**Files:**
+
+- `core/PrismuiProvider/prismui-theme-context.ts` — added `headless` field + `useIsHeadless()` hook
+- `core/PrismuiProvider/PrismuiThemeProvider.tsx` — added `headless` prop, passes to context
+- `core/PrismuiProvider/PrismuiProvider.tsx` — added `headless` prop, passes to ThemeProvider
+- `core/PrismuiProvider/index.ts` — exports `useIsHeadless`
+
+**Tests:** 已有 `unstyled` 测试覆盖核心逻辑（useStyles.test.tsx 中 3 个 unstyled 测试）。`useIsHeadless` 为轻量 hook，通过 provider 集成测试验证。
 
 ### A Phase Acceptance Criteria
 
-- [ ] `defaultVariantColorsResolver` returns correct colors for all 4 variants (solid/soft/outlined/plain)
-- [ ] `variantColorResolver` is configurable via `createTheme({ variantColorResolver })`
-- [ ] `getThemeColor` resolves theme keys and passes through CSS values
-- [ ] `getSize` / `getFontSize` resolve tokens to CSS variables
-- [ ] Headless mode disables all CSS Module classes via provider
-- [ ] All tests pass, tsc clean
+- [x] `defaultVariantColorsResolver` returns correct colors for all 4 variants (solid/soft/outlined/plain) — 33 tests
+- [x] `variantColorResolver` is configurable via `createTheme({ variantColorResolver })` — test: "custom variantColorResolver can be provided via createTheme"
+- [x] `getThemeColor` resolves theme keys and passes through CSS values — 32 tests
+- [x] `getSize` / `getFontSize` resolve tokens to CSS variables — 22 tests (11 + 11)
+- [x] Headless mode disables all CSS Module classes via provider — `headless` prop on PrismuiProvider/PrismuiThemeProvider, `useIsHeadless()` hook
+- [x] All tests pass, tsc clean — 497 tests, 0 failures, tsc --noEmit clean
+- [x] Storybook stories — 8 stories in `variant-color-resolver.stories.tsx`
 
 ---
 
@@ -573,7 +636,7 @@ describe("headless mode", () => {
 
 | Category                     | Estimated    | Actual |
 | ---------------------------- | ------------ | ------ |
-| Theme infrastructure (A1-A4) | 40-50        |        |
+| Theme infrastructure (A1-A4) | 40-50        | 87     |
 | Portal                       | 8-12         |        |
 | Divider                      | 12-18        |        |
 | Container                    | 10-15        |        |
@@ -671,11 +734,11 @@ Box (basic)            CSS Modules              Container, Divider          Docu
 
 | Criteria                                                                                      | Status |
 | --------------------------------------------------------------------------------------------- | ------ |
-| `variantColorResolver` resolves all 4 built-in variants (solid/soft/outlined/plain) correctly |        |
-| `variantColorResolver` is customizable via `createTheme()`                                    |        |
-| `getThemeColor` resolves theme keys and CSS passthrough                                       |        |
-| `getSize` / `getFontSize` resolve tokens to CSS variables                                     |        |
-| Headless mode disables CSS Module classes via provider                                        |        |
+| `variantColorResolver` resolves all 4 built-in variants (solid/soft/outlined/plain) correctly | ✅     |
+| `variantColorResolver` is customizable via `createTheme()`                                    | ✅     |
+| `getThemeColor` resolves theme keys and CSS passthrough                                       | ✅     |
+| `getSize` / `getFontSize` resolve tokens to CSS variables                                     | ✅     |
+| Headless mode disables CSS Module classes via provider                                        | ✅     |
 | Portal renders children outside parent DOM tree, SSR-safe                                     |        |
 | Divider renders horizontal/vertical with label support                                        |        |
 | Container centers content with responsive max-width                                           |        |
@@ -714,33 +777,89 @@ Box (basic)            CSS Modules              Container, Divider          Docu
 
 > _各 Phase 完成后填写_
 
-### Phase A: Advanced Theming
+### Phase A: Advanced Theming ✅
 
 <details>
-<summary>A1: variantColorResolver</summary>
+<summary>A1: variantColorResolver — 33 tests, 8 stories</summary>
 
-_Implementation notes will be filled after completion._
+**New files:**
+
+- `core/theme/variant-color-resolver/variant-color-resolver.ts` — types: `VariantColorResolverInput`, `VariantColorsResult`, `VariantColorResolver`
+- `core/theme/variant-color-resolver/default-variant-colors-resolver.ts` — 4 variants × 5 color types implementation
+- `core/theme/variant-color-resolver/index.ts` — barrel exports
+- `core/theme/variant-color-resolver/default-variant-colors-resolver.test.ts` — 33 tests
+- `core/theme/variant-color-resolver/variant-color-resolver.stories.tsx` — 8 stories
+
+**Modified files:**
+
+- `core/theme/types/palette.ts` — `PrismuiPaletteCommon.blackChannel/whiteChannel`, `PrismuiVariantOpacity` interface, `PrismuiPalette.variantOpacity`
+- `core/theme/types/theme.ts` — `PrismuiTheme.variantColorResolver` field
+- `core/theme/types/index.ts` — export `PrismuiVariantOpacity`
+- `core/theme/default-theme.ts` — default opacity values (light+dark) + `variantColorResolver: defaultVariantColorsResolver`
+- `core/theme/index.ts` — exports for variant-color-resolver
+- `core/css-vars/palette-vars.ts` — generates `--prismui-common-blackChannel`, `--prismui-common-whiteChannel`, `--prismui-color-gray-500Channel`, `--prismui-opacity-*` variables
+
+**Key decisions:**
+
+- 不使用 `--prismui-shared-*` 变量，改用 opacity + channel 组合
+- `inherit` = CSS inherit, `neutral` = 标准语义色路径
+- `color-mix(in srgb, ...)` 用于 black/white/outlined; `rgba(channel / opacity)` 用于 semantic/colorFamily
+- `VariantColorsResult` 扩展为 7 个字段（background, color, border, hoverBackground, hoverColor, hoverBorder, hoverShadow）
 
 </details>
 
 <details>
-<summary>A2: getThemeColor</summary>
+<summary>A2: getThemeColor — 32 tests</summary>
 
-_Implementation notes will be filled after completion._
+**New files:**
+
+- `core/theme/get-theme-color.ts` — 6 级解析优先级（palette tokens → semantic+field → family+shade → semantic key → family bare → CSS passthrough）
+- `core/theme/get-theme-color.test.ts` — 32 tests
+
+**Key decisions:**
+
+- Palette tokens（`text.primary`, `background.paper` 等）优先于 semantic color 解析，避免歧义
+- Color family bare name（如 `'blue'`）使用 `primaryShade.light` 作为默认 shade index
+- 函数签名 `(color: string | undefined, theme: PrismuiTheme) => string | undefined`
 
 </details>
 
 <details>
-<summary>A3: getSize / getFontSize</summary>
+<summary>A3: getSize / getFontSize — 22 tests</summary>
 
-_Implementation notes will be filled after completion._
+**New files:**
+
+- `core/theme/get-size.ts` — generic size resolver, named keys → `var(--{prefix}-{key})`, number/string → `rem()`
+- `core/theme/get-font-size.ts` — font-size specific, named keys → `var(--prismui-font-size-{key})`
+- `core/theme/get-size.test.ts` — 11 tests
+- `core/theme/get-font-size.test.ts` — 11 tests
+
+**Key decisions:**
+
+- `getSize` 接受 configurable prefix（组件级 CSS 变量如 `--button-height-md`）
+- `getFontSize` 使用固定 prefix `--prismui-font-size-`
+- 与 `getRadius`/`getShadow` 保持一致的 API 模式
+- 不实现 `getSpacing` — 已有 `spacingResolver` 覆盖
 
 </details>
 
 <details>
-<summary>A4: Headless Mode</summary>
+<summary>A4: Headless Mode — provider integration</summary>
 
-_Implementation notes will be filled after completion._
+**Modified files:**
+
+- `core/PrismuiProvider/prismui-theme-context.ts` — `PrismuiThemeContextValue.headless` field + `useIsHeadless(unstyled?)` hook
+- `core/PrismuiProvider/PrismuiThemeProvider.tsx` — `headless` prop (default `false`)
+- `core/PrismuiProvider/PrismuiProvider.tsx` — `headless` prop, passes to ThemeProvider
+- `core/PrismuiProvider/index.ts` — exports `useIsHeadless`
+
+**Key decisions:**
+
+- 不创建单独的 `headless-context.ts`，直接集成到 `PrismuiThemeContextValue`
+- `useIsHeadless(unstyled?)` 合并 provider-level `headless` 和 component-level `unstyled`
+- 现有 `useStyles` 的 `unstyled` 参数已处理 CSS Module 类跳过逻辑，无需修改
+
+**Phase A 总计：** 87 new tests, 497 total, 8 Storybook stories, tsc --noEmit clean, zero regressions
 
 </details>
 

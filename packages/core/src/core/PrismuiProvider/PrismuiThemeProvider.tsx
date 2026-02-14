@@ -24,6 +24,8 @@ export interface PrismuiThemeProviderProps {
    * When `undefined` (default), no persistence is used.
    */
   colorSchemeManager?: PrismuiColorSchemeManager | null;
+  /** When true, all components skip CSS Module classes (global headless mode). @default false */
+  headless?: boolean;
   /** Provider children. */
   children?: ReactNode;
 }
@@ -52,6 +54,7 @@ export function PrismuiThemeProvider({
   defaultColorScheme = 'light',
   forceColorScheme,
   colorSchemeManager,
+  headless = false,
   children,
 }: PrismuiThemeProviderProps) {
   const resolvedTheme = useMemo(
@@ -71,8 +74,9 @@ export function PrismuiThemeProvider({
       colorScheme,
       setColorScheme,
       clearColorScheme,
+      headless,
     }),
-    [resolvedTheme, colorScheme, setColorScheme, clearColorScheme],
+    [resolvedTheme, colorScheme, setColorScheme, clearColorScheme, headless],
   );
 
   return (

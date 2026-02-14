@@ -12,6 +12,7 @@ export {
   usePrismuiTheme,
   useTheme,
   useColorScheme,
+  useIsHeadless,
 } from './prismui-theme-context';
 export type { PrismuiThemeContextValue } from './prismui-theme-context';
 

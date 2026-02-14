@@ -9,6 +9,7 @@ import type { PrismuiBreakpointsValues } from './breakpoint';
 import type { PrismuiFontSizesValues } from './font-size';
 import type { PrismuiLineHeightsValues } from './line-height';
 import type { PrismuiRadiusValues } from './radius';
+import type { VariantColorResolver } from '../variant-color-resolver/variant-color-resolver';
 
 // ---------------------------------------------------------------------------
 // Theme-level component customization
@@ -67,6 +68,9 @@ export interface PrismuiTheme {
 
   spacing?: Partial<PrismuiSpacingValues>;
   breakpoints: PrismuiBreakpointsValues;
+
+  /** Resolves variant + color to CSS values (background, color, border, hover) */
+  variantColorResolver: VariantColorResolver;
 
   /** Allows adding `classNames`, `styles` and `defaultProps` to any component */
   components: PrismuiThemeComponents;

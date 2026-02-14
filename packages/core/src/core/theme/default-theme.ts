@@ -1,6 +1,7 @@
 import type { PrismuiPaletteInput, PrismuiThemeInput } from './types';
 import { defaultColorFamilies } from './default-colors';
 import { rgba } from '../color-functions';
+import { defaultVariantColorsResolver } from './variant-color-resolver';
 
 const lightPalette: PrismuiPaletteInput<'light'> = {
   scheme: 'light',
@@ -50,6 +51,16 @@ const lightPalette: PrismuiPaletteInput<'light'> = {
 
   shadow: {
     color: defaultColorFamilies.gray[500],
+  },
+
+  variantOpacity: {
+    'solid-commonHoverBg': 0.72,
+    'outlined-border': 0.48,
+    'soft-bg': 0.16,
+    'soft-hoverBg': 0.32,
+    'soft-commonBg': 0.08,
+    'soft-commonHoverBg': 0.16,
+    'soft-border': 0.24,
   },
 };
 
@@ -103,6 +114,16 @@ const darkPalette: PrismuiPaletteInput<'dark'> = {
   shadow: {
     color: defaultColorFamilies.gray[500],
     dialogColor: '#000000',
+  },
+
+  variantOpacity: {
+    'solid-commonHoverBg': 0.72,
+    'outlined-border': 0.48,
+    'soft-bg': 0.16,
+    'soft-hoverBg': 0.32,
+    'soft-commonBg': 0.08,
+    'soft-commonHoverBg': 0.16,
+    'soft-border': 0.24,
   },
 };
 
@@ -171,6 +192,8 @@ export const defaultTheme: PrismuiThemeInput = {
     lg: '75rem',
     xl: '88rem',
   },
+
+  variantColorResolver: defaultVariantColorsResolver,
 
   components: {},
 

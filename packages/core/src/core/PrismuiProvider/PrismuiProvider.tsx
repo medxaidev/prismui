@@ -36,6 +36,9 @@ export interface PrismuiProviderProps {
   withCssVars?: boolean;
   /** Whether to inject global reset/base styles via CssBaseline. @default true */
   withCssBaseline?: boolean;
+
+  /** When true, all components skip CSS Module classes (global headless mode). @default false */
+  headless?: boolean;
 }
 
 // ---------------------------------------------------------------------------
@@ -79,6 +82,7 @@ export function PrismuiProvider({
   registry,
   withCssVars = true,
   withCssBaseline = true,
+  headless = false,
 }: PrismuiProviderProps) {
 
   const content = (
@@ -87,6 +91,7 @@ export function PrismuiProvider({
       defaultColorScheme={defaultColorScheme}
       forceColorScheme={forceColorScheme}
       colorSchemeManager={colorSchemeManager}
+      headless={headless}
     >
       {withCssVars ? <ThemeVars /> : null}
       {withCssBaseline ? <CssBaseline /> : null}

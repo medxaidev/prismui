@@ -4,6 +4,8 @@ import type { PrismuiPaletteShadow } from './shadow';
 export interface PrismuiPaletteCommon {
   black: string;
   white: string;
+  blackChannel?: string;
+  whiteChannel?: string;
 }
 
 export interface PrismuiPaletteColor {
@@ -39,6 +41,16 @@ export interface PrismuiPaletteBackground {
   paperChannel?: string;
   defaultChannel?: string;
   neutralChannel?: string;
+}
+
+export interface PrismuiVariantOpacity {
+  'solid-commonHoverBg'?: number;
+  'outlined-border'?: number;
+  'soft-bg'?: number;
+  'soft-hoverBg'?: number;
+  'soft-commonBg'?: number;
+  'soft-commonHoverBg'?: number;
+  'soft-border'?: number;
 }
 
 export interface PrismuiPaletteAction {
@@ -82,6 +94,7 @@ export interface PrismuiPalette<S extends PrismuiResolvedColorScheme = PrismuiRe
   divider: string;
   action: PrismuiPaletteAction;
   shadow: PrismuiPaletteShadow;
+  variantOpacity?: PrismuiVariantOpacity;
 }
 
 /** @deprecated Use PrismuiPalette instead. */

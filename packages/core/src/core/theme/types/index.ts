@@ -31,6 +31,7 @@ export type {
   PrismuiPaletteColor,
   PrismuiPaletteText,
   PrismuiPaletteBackground,
+  PrismuiVariantOpacity,
   PrismuiPaletteAction,
   PrismuiPalette,
   PrismuiColorSchemes,

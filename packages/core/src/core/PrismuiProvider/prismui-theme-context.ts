@@ -14,6 +14,8 @@ export interface PrismuiThemeContextValue {
   setColorScheme: (scheme: PrismuiColorScheme) => void;
   /** Reset to the default color scheme. */
   clearColorScheme: () => void;
+  /** When true, all components skip CSS Module classes (global headless mode). */
+  headless: boolean;
 }
 
 // ---------------------------------------------------------------------------
@@ -69,4 +71,19 @@ export function useColorScheme(): [
 ] {
   const { colorScheme, setColorScheme } = usePrismuiTheme();
   return [colorScheme, setColorScheme];
+}
+
+/**
+ * Returns whether the component should operate in headless mode.
+ *
+ * Headless mode is active when either:
+ * - The provider-level `headless` prop is `true`, OR
+ * - The component-level `unstyled` prop is `true`
+ *
+ * In headless mode, CSS Module classes are stripped — only user-provided
+ * `className`, `style`, and CSS variables remain.
+ */
+export function useIsHeadless(unstyled?: boolean): boolean {
+  const ctx = usePrismuiContext();
+  return unstyled === true || ctx?.headless === true;
 }
