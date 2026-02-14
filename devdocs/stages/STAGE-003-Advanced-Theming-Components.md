@@ -268,37 +268,56 @@ export function useIsHeadless(unstyled?: boolean): boolean {
 
 ## 5. Phase B: Utility Components
 
-### B1: Portal
+### B1: Portal ✅
 
 **Goal:** Render children into a DOM node outside the parent component tree. Essential for modals, popovers, tooltips, dropdowns.
 
-**Props:**
+**Implemented Props (MUI + Mantine combined):**
 
 ```typescript
 export interface PortalProps {
   children: React.ReactNode;
-  /** Target DOM element or CSS selector. Default: new div appended to document.body */
-  target?: HTMLElement | string;
-  /** Reuse a shared portal node across all Portal instances @default true */
+  /** HTMLElement | CSS selector | () => HTMLElement (MUI callback pattern) */
+  target?: HTMLElement | string | (() => HTMLElement);
+  /** Render in-place instead of portal (MUI disablePortal) @default false */
+  disablePortal?: boolean;
+  /** Reuse shared portal node (Mantine pattern) @default true */
   reuseTargetNode?: boolean;
+  /** className/style/id applied to created portal node (Mantine pattern) */
+  className?: string;
+  style?: React.CSSProperties;
+  id?: string;
+  /** Ref forwarded to resolved portal DOM node */
+  ref?: React.Ref<HTMLElement>;
+}
+
+export interface OptionalPortalProps extends PortalProps {
+  /** When false, renders in-place (no Portal) @default true */
+  withinPortal?: boolean;
 }
 ```
 
 **Key behaviors:**
 
-- SSR-safe: renders `null` until mounted (client-side only)
+- SSR-safe: renders `null` until `useIsomorphicLayoutEffect` runs
 - Uses `createPortal` from `react-dom`
-- Shared node: `[data-prismui-portal-node]` attribute
-- Cleanup: removes created node on unmount (unless reusing)
-- Uses `factory` (not polymorphicFactory) — no styles, just logic
+- Shared node: `[data-prismui-portal-node]` attribute (Mantine pattern)
+- `disablePortal`: renders children in-place (MUI pattern)
+- `target` supports callback `() => HTMLElement` (MUI pattern)
+- Created portal node gets `data-portal="true"` attribute
+- Cleanup: removes owned nodes on unmount; shared nodes persist
+- `OptionalPortal`: convenience wrapper with `withinPortal` toggle
+- `React.forwardRef` — not factory-based (no styles, pure logic)
 
 **Files:**
 
-- `components/Portal/Portal.tsx`
-- `components/Portal/Portal.test.tsx`
-- `components/Portal/index.ts`
+- `components/Portal/Portal.tsx` — Portal component
+- `components/Portal/OptionalPortal.tsx` — OptionalPortal component
+- `components/Portal/Portal.test.tsx` — 26 tests
+- `components/Portal/Portal.stories.tsx` — 9 stories
+- `components/Portal/index.ts` — barrel exports
 
-**Tests:** ~10 tests (mount, unmount, target, shared node, SSR safety)
+**Tests:** 26 tests (basic rendering, target HTMLElement/selector/callback, disablePortal, reuseTargetNode, node attributes className/style/id, ref forwarding, cleanup, OptionalPortal)
 
 ### B2: Divider
 
@@ -637,7 +656,7 @@ describe("headless mode", () => {
 | Category                     | Estimated    | Actual |
 | ---------------------------- | ------------ | ------ |
 | Theme infrastructure (A1-A4) | 40-50        | 87     |
-| Portal                       | 8-12         |        |
+| Portal                       | 8-12         | 26     |
 | Divider                      | 12-18        |        |
 | Container                    | 10-15        |        |
 | Group                        | 15-20        |        |
@@ -739,13 +758,13 @@ Box (basic)            CSS Modules              Container, Divider          Docu
 | `getThemeColor` resolves theme keys and CSS passthrough                                       | ✅     |
 | `getSize` / `getFontSize` resolve tokens to CSS variables                                     | ✅     |
 | Headless mode disables CSS Module classes via provider                                        | ✅     |
-| Portal renders children outside parent DOM tree, SSR-safe                                     |        |
+| Portal renders children outside parent DOM tree, SSR-safe                                     | ✅     |
 | Divider renders horizontal/vertical with label support                                        |        |
 | Container centers content with responsive max-width                                           |        |
 | Group renders horizontal flex layout with gap/grow                                            |        |
 | Grid + Grid.Col renders 12-column responsive layout                                           |        |
-| Button renders with variant colors, loading, sections                                         |        |
-| Button inherits ripple from ButtonBase                                                        |        |
+| Button renders with variant colors, loading, sections                                         | ✅     |
+| Button inherits ripple from ButtonBase                                                        | ✅     |
 | Button.Group groups buttons with shared border radius                                         |        |
 | All components support `classNames`, `styles`, `unstyled`                                     |        |
 | Test count ≥ 140 (new tests)                                                                  |        |
@@ -866,9 +885,25 @@ Box (basic)            CSS Modules              Container, Divider          Docu
 ### Phase B: Utility Components
 
 <details>
-<summary>B1: Portal</summary>
+<summary>B1: Portal — 26 tests, 9 stories</summary>
 
-_Implementation notes will be filled after completion._
+**New files:**
+
+- `components/Portal/Portal.tsx` — Portal component (forwardRef, useIsomorphicLayoutEffect)
+- `components/Portal/OptionalPortal.tsx` — OptionalPortal convenience wrapper
+- `components/Portal/Portal.test.tsx` — 26 tests
+- `components/Portal/Portal.stories.tsx` — 9 stories
+- `components/Portal/index.ts` — barrel exports (Portal, OptionalPortal, types)
+
+**Key decisions:**
+
+- 结合 MUI 和 Mantine 设计：`disablePortal` (MUI) + `reuseTargetNode` (Mantine) + `target` callback (MUI)
+- 使用 `React.forwardRef` 而非 factory — Portal 是纯逻辑组件，无样式
+- `useIsomorphicLayoutEffect` 确保 portal node 在同一渲染周期内同步解析（解决 jsdom 测试中的时序问题）
+- 创建的 portal node 带 `data-portal="true"` 属性（Mantine 模式）
+- 共享节点带 `data-prismui-portal-node` 属性，不在 unmount 时移除
+- 独立节点（`reuseTargetNode=false`）在 unmount 时自动清理
+- `className`/`style`/`id` 仅应用于 Portal 创建的节点，不影响显式 target
 
 </details>
 
