@@ -1,0 +1,104 @@
+/* ------------------------------------------------------------------ */
+/* Divider                                                            */
+/* ------------------------------------------------------------------ */
+
+.root {
+  /* Size tokens (border-width) */
+  --divider-size-xs: 1px;
+  --divider-size-sm: 2px;
+  --divider-size-md: 3px;
+  --divider-size-lg: 4px;
+  --divider-size-xl: 5px;
+
+  /* Defaults */
+  --divider-size: var(--divider-size-xs);
+  --divider-border-style: solid;
+  --divider-color: rgba(var(--prismui-color-gray-500Channel) / 0.2);
+
+  margin: 0;
+  flex-shrink: 0;
+
+  /* ---- horizontal (default) ---- */
+  &:where([data-orientation='horizontal']) {
+    width: 100%;
+    border-width: 0;
+    border-bottom: var(--divider-size) var(--divider-border-style) var(--divider-color);
+  }
+
+  /* ---- vertical ---- */
+  &:where([data-orientation='vertical']) {
+    height: auto;
+    align-self: stretch;
+    border-width: 0;
+    border-inline-start: var(--divider-size) var(--divider-border-style) var(--divider-color);
+  }
+
+  /* ---- flexItem (MUI) ---- */
+  &:where([data-flex-item]) {
+    align-self: stretch;
+    height: auto;
+  }
+
+  /* ---- variant: inset (MUI) ---- */
+  &:where([data-variant='inset'][data-orientation='horizontal']) {
+    margin-inline-start: 72px;
+  }
+
+  &:where([data-variant='inset'][data-orientation='vertical']) {
+    margin-block: 8px;
+  }
+
+  /* ---- variant: middle (MUI) ---- */
+  &:where([data-variant='middle'][data-orientation='horizontal']) {
+    margin-inline: 16px;
+  }
+
+  &:where([data-variant='middle'][data-orientation='vertical']) {
+    margin-block: 8px;
+  }
+
+  /* ---- with-label: remove border, use pseudo-elements ---- */
+  &:where([data-with-label]) {
+    border: 0;
+  }
+}
+
+/* ------------------------------------------------------------------ */
+/* Label                                                              */
+/* ------------------------------------------------------------------ */
+
+.label {
+  display: flex;
+  align-items: center;
+  font-size: var(--prismui-font-size-xs, 0.75rem);
+  color: var(--prismui-text-secondary, rgba(var(--prismui-color-gray-500Channel) / 0.8));
+  white-space: nowrap;
+
+  /* Left line */
+  &::before {
+    content: '';
+    flex: 1;
+    height: 0;
+    border-top: var(--divider-size) var(--divider-border-style) var(--divider-color);
+    margin-inline-end: var(--prismui-spacing-xs, 8px);
+  }
+
+  /* Right line */
+  &::after {
+    content: '';
+    flex: 1;
+    height: 0;
+    border-top: var(--divider-size) var(--divider-border-style) var(--divider-color);
+    margin-inline-start: var(--prismui-spacing-xs, 8px);
+  }
+
+  /* labelPosition = left → hide left line */
+  &:where([data-position='left'])::before {
+    display: none;
+  }
+
+  /* labelPosition = right → hide right line */
+  &:where([data-position='right'])::after {
+    display: none;
+  }
+}

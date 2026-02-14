@@ -319,40 +319,49 @@ export interface OptionalPortalProps extends PortalProps {
 
 **Tests:** 26 tests (basic rendering, target HTMLElement/selector/callback, disablePortal, reuseTargetNode, node attributes className/style/id, ref forwarding, cleanup, OptionalPortal)
 
-### B2: Divider
+### B2: Divider ✅
 
-**Goal:** Visual separator line with optional label. Supports horizontal/vertical orientation.
+**Goal:** Visual separator line with optional label. Supports horizontal/vertical orientation. Combines MUI (variant, flexItem, textAlign) and Mantine (factory, label, borderStyle, size tokens) patterns.
 
-**Props:**
+**Implemented Props (MUI + Mantine combined):**
 
 ```typescript
 export interface DividerProps
   extends BoxProps, StylesApiProps<DividerFactory>, ElementProps<"div"> {
   color?: string; // theme color or CSS
-  size?: PrismuiSize | number | (string & {}); // border width
-  label?: React.ReactNode; // center label
-  labelPosition?: "left" | "center" | "right"; // label alignment
+  size?: string | number; // border width (xs-xl or px)
+  label?: React.ReactNode; // label (horizontal only)
+  labelPosition?: "left" | "center" | "right"; // Mantine: label alignment
   orientation?: "horizontal" | "vertical"; // direction
+  borderStyle?: "solid" | "dashed" | "dotted"; // Mantine: line style
+  flexItem?: boolean; // MUI: correct height in flex
+  textAlign?: "left" | "center" | "right"; // MUI: alternative to labelPosition
+  variant?: "fullWidth" | "inset" | "middle"; // MUI: margin/inset variant
 }
 ```
 
+**Default color:** `rgba(var(--prismui-color-gray-500Channel) / 0.2)` — equivalent to `rgba(145 158 171 / 20%)`
+
 **CSS Variables:** `--divider-color`, `--divider-border-style`, `--divider-size`
 **Styles Names:** `root`, `label`
-**Variants:** `solid` (default), `dashed`, `dotted`
 
 **Files:**
 
-- `components/Divider/Divider.tsx`, `Divider.module.css`, `Divider.test.tsx`, `Divider.stories.tsx`, `index.ts`
+- `components/Divider/Divider.tsx` — factory-based component
+- `components/Divider/Divider.module.css` — CSS Module with size tokens, orientation, variant, label pseudo-elements
+- `components/Divider/Divider.test.tsx` — 36 tests
+- `components/Divider/Divider.stories.tsx` — 11 stories
+- `components/Divider/index.ts` — barrel exports
 
-**Tests:** ~15 tests
+**Tests:** 36 tests (basic rendering, orientation, label, labelPosition, borderStyle, size, color, variant, flexItem, Styles API, HTML attributes)
 
 ### B Phase Acceptance Criteria
 
-- [ ] Portal renders children outside parent DOM tree
-- [ ] Portal is SSR-safe (no hydration mismatch)
-- [ ] Divider renders horizontal/vertical with correct CSS variables
-- [ ] Divider label renders with correct positioning
-- [ ] All tests pass, tsc clean
+- [x] Portal renders children outside parent DOM tree — 26 tests
+- [x] Portal is SSR-safe (no hydration mismatch) — useIsomorphicLayoutEffect
+- [x] Divider renders horizontal/vertical with correct CSS variables — 36 tests
+- [x] Divider label renders with correct positioning
+- [x] All tests pass, tsc clean — 597 tests, 0 failures
 
 ---
 
@@ -657,7 +666,7 @@ describe("headless mode", () => {
 | ---------------------------- | ------------ | ------ |
 | Theme infrastructure (A1-A4) | 40-50        | 87     |
 | Portal                       | 8-12         | 26     |
-| Divider                      | 12-18        |        |
+| Divider                      | 12-18        | 36     |
 | Container                    | 10-15        |        |
 | Group                        | 15-20        |        |
 | Grid + Grid.Col              | 20-30        |        |
@@ -759,7 +768,7 @@ Box (basic)            CSS Modules              Container, Divider          Docu
 | `getSize` / `getFontSize` resolve tokens to CSS variables                                     | ✅     |
 | Headless mode disables CSS Module classes via provider                                        | ✅     |
 | Portal renders children outside parent DOM tree, SSR-safe                                     | ✅     |
-| Divider renders horizontal/vertical with label support                                        |        |
+| Divider renders horizontal/vertical with label support                                        | ✅     |
 | Container centers content with responsive max-width                                           |        |
 | Group renders horizontal flex layout with gap/grow                                            |        |
 | Grid + Grid.Col renders 12-column responsive layout                                           |        |
@@ -908,9 +917,25 @@ Box (basic)            CSS Modules              Container, Divider          Docu
 </details>
 
 <details>
-<summary>B2: Divider</summary>
+<summary>B2: Divider — 36 tests, 11 stories</summary>
 
-_Implementation notes will be filled after completion._
+**New files:**
+
+- `components/Divider/Divider.tsx` — factory-based component with varsResolver
+- `components/Divider/Divider.module.css` — CSS Module with size tokens, orientation, variant (inset/middle), label pseudo-elements
+- `components/Divider/Divider.test.tsx` — 36 tests
+- `components/Divider/Divider.stories.tsx` — 11 stories
+- `components/Divider/index.ts` — barrel exports
+
+**Key decisions:**
+
+- 默认颜色 `rgba(var(--prismui-color-gray-500Channel) / 0.2)` — 即 `rgba(145 158 171 / 20%)`，在 CSS Module 中定义
+- 结合 MUI 和 Mantine：`variant` (fullWidth/inset/middle) + `flexItem` + `textAlign` 来自 MUI；`label`/`labelPosition`/`borderStyle`/`size` tokens 来自 Mantine
+- `labelPosition` 优先于 `textAlign`（两者都设置时）
+- Label 仅在 `orientation="horizontal"` 时渲染
+- `borderStyle` 替代 Mantine 的 `variant` 用于线条样式（solid/dashed/dotted），因为 `variant` 已用于 MUI 的 inset/middle
+- 使用 `aria-orientation` 提升无障碍性
+- `data-with-label` 属性控制 border 移除（label 模式用 ::before/::after 伪元素绘制线条）
 
 </details>
 
