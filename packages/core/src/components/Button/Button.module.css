@@ -1,4 +1,9 @@
+/* ------------------------------------------------------------------ */
+/* Button                                                             */
+/* ------------------------------------------------------------------ */
+
 .root {
+  /* Height tokens (ADR-009: MUI-aligned) */
   --button-height-sm: 32px;
   --button-height-md: 36px;
   --button-height-lg: 42px;
@@ -9,18 +14,27 @@
   --button-height-compact-lg: 36px;
   --button-height-compact-xl: 42px;
 
-  --button-padding-x-sm: 16px;
-  --button-padding-x-md: 20px;
-  --button-padding-x-lg: 24px;
-  --button-padding-x-xl: 28px;
+  /* Padding-X tokens */
+  --button-padding-x-sm: 8px;
+  --button-padding-x-md: 12px;
+  --button-padding-x-lg: 16px;
+  --button-padding-x-xl: 20px;
 
-  --button-padding-x-compact-sm: 12px;
-  --button-padding-x-compact-md: 14px;
-  --button-padding-x-compact-lg: 16px;
-  --button-padding-x-compact-xl: 20px;
+  --button-padding-x-compact-sm: 6px;
+  --button-padding-x-compact-md: 8px;
+  --button-padding-x-compact-lg: 12px;
+  --button-padding-x-compact-xl: 16px;
 
+  /* Icon size tokens */
+  --button-icon-size-sm: 18px;
+  --button-icon-size-md: 20px;
+  --button-icon-size-lg: 24px;
+  --button-icon-size-xl: 28px;
+
+  /* Defaults */
   --button-height: var(--button-height-sm);
   --button-padding-x: var(--button-padding-x-sm);
+  --button-icon-size: var(--button-icon-size-sm);
 
   user-select: none;
   font-weight: 600;
@@ -42,30 +56,53 @@
   vertical-align: middle;
   box-shadow: var(--button-shadow, none);
   transition:
-    background-color 200ms ease,
-    box-shadow 200ms ease,
-    border-color 200ms ease,
-    color 200ms ease;
+    background-color 250ms cubic-bezier(0.4, 0, 0.2, 1),
+    box-shadow 250ms cubic-bezier(0.4, 0, 0.2, 1),
+    border-color 250ms cubic-bezier(0.4, 0, 0.2, 1),
+    color 250ms cubic-bezier(0.4, 0, 0.2, 1);
 
   &:where([data-block]) {
     display: block;
     width: 100%;
   }
 
-  &:where([data-with-left-section]) {
-    padding-inline-start: calc(var(--button-padding-x) / 1.5);
+  /* --- Disabled: solid / soft --- */
+  &:where([data-variant='solid'], [data-variant='soft']) {
+    &:where(:disabled:not([data-loading]), [data-disabled]:not([data-loading])) {
+      cursor: not-allowed;
+      transform: none;
+      pointer-events: none;
+      background-color: var(--prismui-action-disabledBackground);
+      color: var(--prismui-action-disabled);
+      border: 1px solid transparent;
+      box-shadow: none;
+    }
   }
 
-  &:where([data-with-right-section]) {
-    padding-inline-end: calc(var(--button-padding-x) / 1.5);
+  /* --- Disabled: outlined --- */
+  &:where([data-variant='outlined']) {
+    &:where(:disabled:not([data-loading]), [data-disabled]:not([data-loading])) {
+      cursor: not-allowed;
+      transform: none;
+      pointer-events: none;
+      background-color: transparent;
+      color: var(--prismui-action-disabled);
+      border: 1px solid var(--prismui-action-disabledBackground);
+      box-shadow: none;
+    }
   }
 
-  &:where(:disabled:not([data-loading]), [data-disabled]:not([data-loading])) {
-    cursor: not-allowed;
-    border: 1px solid transparent;
-    transform: none;
-    opacity: var(--prismui-action-disabledOpacity, 0.48);
-    pointer-events: none;
+  /* --- Disabled: plain --- */
+  &:where([data-variant='plain']) {
+    &:where(:disabled:not([data-loading]), [data-disabled]:not([data-loading])) {
+      cursor: not-allowed;
+      transform: none;
+      pointer-events: none;
+      background-color: transparent;
+      color: var(--prismui-action-disabled);
+      border: 1px solid transparent;
+      box-shadow: none;
+    }
   }
 
   &:where([data-loading]) {
@@ -93,6 +130,7 @@
   justify-content: var(--button-justify, center);
   height: 100%;
   overflow: visible;
+  gap: 8px;
 }
 
 .label {
@@ -101,19 +139,19 @@
   overflow: hidden;
   display: flex;
   align-items: center;
-  transition: opacity 150ms ease;
+  transition: opacity 250ms cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .section {
   display: flex;
   align-items: center;
+  width: var(--button-icon-size);
+  height: var(--button-icon-size);
+  min-width: var(--button-icon-size);
 
-  &:where([data-position='left']) {
-    margin-inline-end: var(--prismui-spacing-xs, 0.5rem);
-  }
-
-  &:where([data-position='right']) {
-    margin-inline-start: var(--prismui-spacing-xs, 0.5rem);
+  &>svg {
+    width: 100%;
+    height: 100%;
   }
 }
 

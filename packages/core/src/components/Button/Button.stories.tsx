@@ -287,7 +287,7 @@ export const LightVsDark: Story = {
                 <h4 style={variantTitle}>{variant}</h4>
                 <div style={row}>
                   {(['primary', 'error', 'blue', 'inherit', 'black', 'white'] as const).map((c) => (
-                    <Button key={c} variant={variant} color={c} size="xs">{c}</Button>
+                    <Button key={c} variant={variant} color={c} size="sm">{c}</Button>
                   ))}
                 </div>
               </div>
@@ -306,7 +306,7 @@ export const LightVsDark: Story = {
                 <h4 style={{ ...variantTitle, color: '#9ca3af' }}>{variant}</h4>
                 <div style={row}>
                   {(['primary', 'error', 'blue', 'inherit', 'black', 'white'] as const).map((c) => (
-                    <Button key={c} variant={variant} color={c} size="xs">{c}</Button>
+                    <Button key={c} variant={variant} color={c} size="sm">{c}</Button>
                   ))}
                 </div>
               </div>
@@ -355,10 +355,10 @@ export const FullMatrix: Story = {
                     <td key={variant} style={{ padding: '8px 12px', borderBottom: '1px solid #f3f4f6', textAlign: 'center' }}>
                       {color === 'white' ? (
                         <span style={{ background: '#1C252E', padding: '4px 8px', borderRadius: 4, display: 'inline-block' }}>
-                          <Button variant={variant} color={color} size="xs">{color}</Button>
+                          <Button variant={variant} color={color} size="sm">{color}</Button>
                         </span>
                       ) : (
-                        <Button variant={variant} color={color} size="xs">{color}</Button>
+                        <Button variant={variant} color={color} size="sm">{color}</Button>
                       )}
                     </td>
                   ))}
@@ -383,16 +383,16 @@ export const Sizes: Story = {
       <div style={card}>
         <h3 style={sectionTitle}>Button Sizes</h3>
 
-        <h4 style={variantTitle}>Standard Sizes</h4>
+        <h4 style={variantTitle}>Standard Sizes (ADR-009: 32/36/42/48)</h4>
         <div style={{ ...row, alignItems: 'flex-end' }}>
-          {(['xs', 'sm', 'md', 'lg', 'xl'] as const).map((size) => (
+          {(['sm', 'md', 'lg', 'xl'] as const).map((size) => (
             <Button key={size} size={size}>{size}</Button>
           ))}
         </div>
 
-        <h4 style={variantTitle}>Compact Sizes</h4>
+        <h4 style={variantTitle}>Compact Sizes (26/30/36/42)</h4>
         <div style={{ ...row, alignItems: 'flex-end' }}>
-          {(['compact-xs', 'compact-sm', 'compact-md', 'compact-lg', 'compact-xl'] as const).map((size) => (
+          {(['compact-sm', 'compact-md', 'compact-lg', 'compact-xl'] as const).map((size) => (
             <Button key={size} size={size}>{size}</Button>
           ))}
         </div>
@@ -440,13 +440,18 @@ export const States: Story = {
       <div style={card}>
         <h3 style={sectionTitle}>Button States</h3>
 
-        <h4 style={variantTitle}>Disabled</h4>
+        <h4 style={variantTitle}>Disabled (per-variant styling)</h4>
         <div style={row}>
-          <Button disabled>Disabled Solid</Button>
-          <Button variant="outlined" disabled>Disabled Outlined</Button>
-          <Button variant="soft" disabled>Disabled Soft</Button>
-          <Button variant="plain" disabled>Disabled Plain</Button>
+          <Button disabled>Solid</Button>
+          <Button variant="soft" disabled>Soft</Button>
+          <Button variant="outlined" disabled>Outlined</Button>
+          <Button variant="plain" disabled>Plain</Button>
         </div>
+        <p style={{ fontSize: 11, color: '#9ca3af', margin: '4px 0 0' }}>
+          solid/soft: disabledBackground + disabledColor &nbsp;|&nbsp;
+          outlined: disabledBackground border + disabledColor &nbsp;|&nbsp;
+          plain: disabledColor only
+        </p>
 
         <h4 style={variantTitle}>Loading</h4>
         <div style={row}>
@@ -541,7 +546,7 @@ export const DarkSchemeFullMatrix: Story = {
                   </td>
                   {VARIANTS.map((variant) => (
                     <td key={variant} style={{ padding: '8px 12px', borderBottom: '1px solid #32383E', textAlign: 'center' }}>
-                      <Button variant={variant} color={color} size="xs">{color}</Button>
+                      <Button variant={variant} color={color} size="sm">{color}</Button>
                     </td>
                   ))}
                 </tr>

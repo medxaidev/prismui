@@ -486,43 +486,63 @@ export interface GridColProps
 
 ---
 
-## 7. Phase D: Button System
+## 7. Phase D: Button System ✅
 
-### D1: Button
+### D1: Button ✅
 
 **Goal:** The primary interactive component. Polymorphic, variant-driven, with loading state and icon sections.
 
-**Props:**
+**Implemented Props:**
 
 ```typescript
-export interface ButtonProps extends BoxProps, StylesApiProps<ButtonFactory> {
-  size?: PrismuiSize | `compact-${PrismuiSize}` | (string & {});
-  color?: string; // theme color or CSS
+export interface ButtonProps
+  extends
+    BoxProps,
+    StylesApiProps<ButtonFactory>,
+    ElementProps<"button", "color"> {
+  size?:
+    | "sm"
+    | "md"
+    | "lg"
+    | "xl"
+    | "compact-sm"
+    | "compact-md"
+    | "compact-lg"
+    | "compact-xl"
+    | (string & {}); // @default 'sm'
+  color?: string; // @default 'primary'
   variant?: ButtonVariant; // @default 'solid'
-  justify?: React.CSSProperties["justifyContent"]; // inner content alignment
+  justify?: React.CSSProperties["justifyContent"]; // @default 'center'
   leftSection?: React.ReactNode;
   rightSection?: React.ReactNode;
-  fullWidth?: boolean;
+  fullWidth?: boolean; // @default false
   radius?: PrismuiRadius;
-  disabled?: boolean;
-  loading?: boolean;
-  loaderProps?: LoaderProps; // future: Loader component
-  autoContrast?: boolean;
+  disabled?: boolean; // @default false
+  loading?: boolean; // @default false
+  disableRipple?: boolean;
+  centerRipple?: boolean;
+  focusRipple?: boolean;
   children?: React.ReactNode;
 }
-
-export type ButtonVariant = PrismuiVariantKey;
-// Built-in: 'solid' | 'soft' | 'outlined' | 'plain'
-// Extensible via PrismuiThemeVariantsOverride
 ```
 
 **CSS Variables:**
 
 ```
 --button-justify, --button-height, --button-padding-x, --button-fz,
---button-radius, --button-bg, --button-hover, --button-hover-color,
---button-color, --button-bd
+--button-icon-size, --button-radius, --button-bg, --button-hover,
+--button-hover-color, --button-hover-border, --button-hover-shadow,
+--button-color, --button-bd, --button-shadow
 ```
+
+**Height tokens (ADR-009: MUI-aligned, line-height: 1.75):**
+
+| Size | Font | Regular | Compact | Padding-X | Icon Size |
+| ---- | ---- | ------- | ------- | --------- | --------- |
+| sm   | 14px | 32px    | 26px    | 8px       | 18px      |
+| md   | 16px | 36px    | 30px    | 12px      | 20px      |
+| lg   | 18px | 42px    | 36px    | 16px      | 24px      |
+| xl   | 20px | 48px    | 42px    | 20px      | 28px      |
 
 **Styles Names:** `root`, `inner`, `section`, `label`, `loader`
 
@@ -530,57 +550,70 @@ export type ButtonVariant = PrismuiVariantKey;
 
 - Extends `ButtonBase` (inherits ripple, polymorphic, keyboard accessibility)
 - Uses `variantColorResolver` to compute color CSS variables
-- `loading` state: disables interaction, shows loader overlay (simplified — no Transition component initially, use CSS opacity)
+- `loading` state: disables interaction, shows `Loader` component (circular SVG spinner)
 - `compact-{size}` reduces height/padding
-- `leftSection` / `rightSection` for icons
-
-**Factory:** `PolymorphicFactory` (renders as `<button>` by default, can be `<a>`, etc.)
+- `leftSection` / `rightSection` with 8px gap and sized icons
+- Per-variant disabled styles:
+  - **solid/soft**: `disabledBackground` bg + `disabled` color
+  - **outlined**: `disabledBackground` border + `disabled` color
+  - **plain**: `disabled` color only
+- All transitions: `250ms cubic-bezier(0.4, 0, 0.2, 1)`
 
 **Files:**
 
-- `components/Button/Button.tsx`, `Button.module.css`, `Button.test.tsx`, `Button.stories.tsx`
+- `components/Button/Button.tsx` — polymorphicFactory, varsResolver with variantColorResolver
+- `components/Button/Button.module.css` — height/padding/icon-size tokens, per-variant disabled, transitions
+- `components/Button/Button.test.tsx` — 45 tests
+- `components/Button/Button.stories.tsx` — 13 stories
+- `components/Button/index.ts`
 
-**Tests:** ~30 tests
+**Tests:** 45 tests (basic rendering, variants, colors, sizes, disabled per-variant, loading with Loader, sections, icon sizing, fullWidth, radius, polymorphic, Styles API, ripple)
 
-### D2: Button.Group
+### D2: Button.Group ✅
 
-**Goal:** Group buttons together with shared border radius (first/last child rounding).
+**Goal:** Group buttons together with shared border radius. Supports all 4 variants with appropriate border handling.
 
-**Props:**
+**Implemented Props:**
 
 ```typescript
 export interface ButtonGroupProps
   extends BoxProps, StylesApiProps<ButtonGroupFactory>, ElementProps<"div"> {
   orientation?: "horizontal" | "vertical"; // @default 'horizontal'
+  variant?: PrismuiVariant; // @default 'outlined'
 }
 ```
 
-**CSS Variables:** `--group-orientation`
 **Styles Names:** `group`
 
-**Key behaviors:**
+**Key behaviors (per variant):**
 
-- Uses CSS `> :not(:first-child):not(:last-child) { border-radius: 0 }` pattern
-- Provides context to child Buttons for border handling
-- Horizontal: removes right border of non-last children
-- Vertical: removes bottom border of non-last children
+- **solid / soft**: Right border removed between siblings (horizontal), bottom border removed (vertical)
+- **outlined**: Negative margin to overlap borders (avoid double-width)
+- **plain**: Subtle divider separator between buttons
+- Border radius: first/last child rounding, inner children radius = 0
+- `role="group"` by default (overridable)
 
 **Files:**
 
-- `components/Button/ButtonGroup/ButtonGroup.tsx`, `ButtonGroup.module.css`, `ButtonGroup.test.tsx`
+- `components/Button/ButtonGroup.tsx` — factory-based with rootSelector='group'
+- `components/Button/ButtonGroup.module.css` — horizontal + vertical × 4 variants
+- `components/Button/ButtonGroup.test.tsx` — 16 tests
+- `components/Button/ButtonGroup.stories.tsx` — 9 stories
 
-**Tests:** ~12 tests
+**Tests:** 16 tests (basic rendering, orientation, variant, Styles API, HTML attributes, role override)
 
 ### D Phase Acceptance Criteria
 
-- [ ] Button renders with correct variant colors via `variantColorResolver`
-- [ ] Button supports all 4 variants (solid/soft/outlined/plain) with correct visual output
-- [ ] Button `loading` state disables interaction and shows loader
-- [ ] Button `leftSection` / `rightSection` render correctly
-- [ ] Button inherits ripple from ButtonBase
-- [ ] Button is polymorphic (`component="a"` works)
-- [ ] Button.Group groups buttons with shared border radius
-- [ ] All tests pass, tsc clean
+- [x] Button renders with correct variant colors via `variantColorResolver` — 45 tests
+- [x] Button supports all 4 variants (solid/soft/outlined/plain) with correct visual output
+- [x] Button `loading` state disables interaction and shows Loader component
+- [x] Button `leftSection` / `rightSection` render correctly with 8px gap and sized icons
+- [x] Button inherits ripple from ButtonBase
+- [x] Button is polymorphic (`component="a"` works)
+- [x] Button per-variant disabled styles (solid/soft bg, outlined border, plain text)
+- [x] Button.Group groups buttons with shared border radius — 16 tests
+- [x] Button.Group supports all 4 variants with appropriate border handling
+- [x] All tests pass, tsc clean — 707 tests, 0 failures
 
 ---
 
@@ -726,10 +759,10 @@ describe("headless mode", () => {
 | Container                    | 10-15        | 17     |
 | Group                        | 15-20        | 19     |
 | Grid + Grid.Col              | 20-30        | 30     |
-| Button                       | 25-35        | 38     |
-| Button.Group                 | 10-15        |        |
+| Button                       | 25-35        | 45     |
+| Button.Group                 | 10-15        | 16     |
 | Loader                       | 15-25        | 21     |
-| **Total (new)**              | **~140-195** | 248    |
+| **Total (new)**              | **~140-195** | 271    |
 
 ---
 
@@ -831,10 +864,10 @@ Box (basic)            CSS Modules              Container, Divider          Docu
 | Grid + Grid.Col renders 12-column responsive layout                                           | ✅     |
 | Button renders with variant colors, loading, sections                                         | ✅     |
 | Button inherits ripple from ButtonBase                                                        | ✅     |
-| Button.Group groups buttons with shared border radius                                         |        |
+| Button.Group groups buttons with shared border radius                                         | ✅     |
 | Loader renders circular spinner with dash animation                                           | ✅     |
 | All components support `classNames`, `styles`, `unstyled`                                     | ✅     |
-| Test count ≥ 140 (new tests)                                                                  | ✅ 248 |
+| Test count ≥ 140 (new tests)                                                                  | ✅ 271 |
 | All Storybook stories render correctly                                                        | ✅     |
 | Zero TypeScript compilation errors (excluding pre-existing TS6133)                            | ✅     |
 | Zero known regressions in Stage-1/Stage-2                                                     | ✅     |

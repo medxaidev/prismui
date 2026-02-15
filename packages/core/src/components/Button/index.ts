@@ -6,3 +6,10 @@ export type {
   ButtonVariant,
   ButtonCssVariables,
 } from './Button';
+
+export { ButtonGroup } from './ButtonGroup';
+export type {
+  ButtonGroupProps,
+  ButtonGroupFactory,
+  ButtonGroupStylesNames,
+} from './ButtonGroup';

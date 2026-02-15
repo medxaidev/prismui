@@ -162,6 +162,26 @@ describe('Button — disabled', () => {
     renderWithProvider(<Button disabled>Disabled</Button>);
     expect(screen.getByRole('button').getAttribute('data-disabled')).toBeTruthy();
   });
+
+  it('sets data-variant for solid (default)', () => {
+    renderWithProvider(<Button disabled>Disabled</Button>);
+    expect(screen.getByRole('button').getAttribute('data-variant')).toBe('solid');
+  });
+
+  it('sets data-variant for outlined', () => {
+    renderWithProvider(<Button variant="outlined" disabled>Disabled</Button>);
+    expect(screen.getByRole('button').getAttribute('data-variant')).toBe('outlined');
+  });
+
+  it('sets data-variant for plain', () => {
+    renderWithProvider(<Button variant="plain" disabled>Disabled</Button>);
+    expect(screen.getByRole('button').getAttribute('data-variant')).toBe('plain');
+  });
+
+  it('sets data-variant for soft', () => {
+    renderWithProvider(<Button variant="soft" disabled>Disabled</Button>);
+    expect(screen.getByRole('button').getAttribute('data-variant')).toBe('soft');
+  });
 });
 
 // ---------------------------------------------------------------------------
@@ -179,12 +199,18 @@ describe('Button — loading', () => {
     expect(screen.getByRole('button').getAttribute('data-loading')).toBeTruthy();
   });
 
-  it('renders loading indicator', () => {
+  it('renders Loader component', () => {
     renderWithProvider(<Button loading>Loading</Button>);
     const btn = screen.getByRole('button');
-    // The loader span should be present
-    const loader = btn.querySelector('.prismui-Button-loader, [class*="loader"]');
+    const loader = btn.querySelector('[role="status"]');
     expect(loader).toBeTruthy();
+  });
+
+  it('renders SVG spinner inside loader', () => {
+    renderWithProvider(<Button loading>Loading</Button>);
+    const btn = screen.getByRole('button');
+    const svg = btn.querySelector('svg');
+    expect(svg).toBeTruthy();
   });
 });
 
@@ -215,6 +241,28 @@ describe('Button — sections', () => {
   it('sets data-with-right-section when rightSection provided', () => {
     renderWithProvider(<Button rightSection={<span>→</span>}>Right</Button>);
     expect(screen.getByRole('button').getAttribute('data-with-right-section')).toBeTruthy();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Icon sizing
+// ---------------------------------------------------------------------------
+
+describe('Button — icon sizing', () => {
+  it('sets --button-icon-size CSS variable', () => {
+    renderWithProvider(
+      <Button size="md" leftSection={<span>←</span>}>Icon</Button>,
+    );
+    const style = screen.getByRole('button').getAttribute('style') || '';
+    expect(style).toContain('--button-icon-size');
+  });
+
+  it('section element has section class', () => {
+    renderWithProvider(
+      <Button leftSection={<span data-testid="icon">←</span>}>Icon</Button>,
+    );
+    const section = screen.getByTestId('icon').parentElement;
+    expect(section?.className).toContain('section');
   });
 });
 

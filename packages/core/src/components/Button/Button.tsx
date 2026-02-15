@@ -12,6 +12,7 @@ import type {
 import type { BoxProps, ElementProps } from '../Box';
 import { Box } from '../Box';
 import { ButtonBase } from '../ButtonBase';
+import { Loader } from '../Loader';
 import { getRadius } from '../../core/theme/get-radius';
 import { getSize } from '../../core/theme/get-size';
 import { getFontSize } from '../../core/theme/get-font-size';
@@ -34,6 +35,7 @@ export type ButtonCssVariables = {
   | '--button-height'
   | '--button-padding-x'
   | '--button-fz'
+  | '--button-icon-size'
   | '--button-radius'
   | '--button-bg'
   | '--button-hover'
@@ -128,14 +130,17 @@ const varsResolver = createVarsResolver<ButtonFactory>(
       scheme,
     });
 
+    const baseSize = size?.includes('compact')
+      ? size.replace('compact-', '')
+      : size;
+
     return {
       root: {
         '--button-justify': justify,
         '--button-height': getSize(size, 'button-height'),
         '--button-padding-x': getSize(size, 'button-padding-x'),
-        '--button-fz': size?.includes('compact')
-          ? getFontSize(size.replace('compact-', ''))
-          : getFontSize(size),
+        '--button-fz': getFontSize(baseSize),
+        '--button-icon-size': getSize(baseSize, 'button-icon-size'),
         '--button-radius': radius === undefined ? undefined : getRadius(radius),
         '--button-bg': colors.background,
         '--button-hover': colors.hoverBackground,
@@ -215,6 +220,7 @@ export const Button = polymorphicFactory<ButtonFactory>((_props, ref) => {
           block: fullWidth,
           'with-left-section': hasLeftSection,
           'with-right-section': hasRightSection,
+          variant,
         },
         mod,
       ]}
@@ -222,7 +228,7 @@ export const Button = polymorphicFactory<ButtonFactory>((_props, ref) => {
     >
       {loading && (
         <Box component="span" {...getStyles('loader')} aria-hidden>
-          <LoadingDots />
+          <Loader size="xs" />
         </Box>
       )}
 
@@ -249,35 +255,3 @@ export const Button = polymorphicFactory<ButtonFactory>((_props, ref) => {
 
 Button.classes = classes;
 Button.displayName = '@prismui/core/Button';
-
-// ---------------------------------------------------------------------------
-// Simple loading dots (no Loader component dependency)
-// ---------------------------------------------------------------------------
-
-function LoadingDots() {
-  const dotStyle: React.CSSProperties = {
-    width: 6,
-    height: 6,
-    borderRadius: '50%',
-    background: 'currentColor',
-    display: 'inline-block',
-    margin: '0 2px',
-    animation: 'prismui-button-loading-dot 1.4s infinite ease-in-out both',
-  };
-
-  return (
-    <>
-      <style>{`
-        @keyframes prismui-button-loading-dot {
-          0%, 80%, 100% { transform: scale(0); opacity: 0.5; }
-          40% { transform: scale(1); opacity: 1; }
-        }
-      `}</style>
-      <span style={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-        <span style={{ ...dotStyle, animationDelay: '-0.32s' }} />
-        <span style={{ ...dotStyle, animationDelay: '-0.16s' }} />
-        <span style={dotStyle} />
-      </span>
-    </>
-  );
-}
