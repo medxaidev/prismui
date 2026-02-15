@@ -1,27 +1,23 @@
 .root {
-  --button-height-xs: 30px;
-  --button-height-sm: 36px;
-  --button-height-md: 42px;
-  --button-height-lg: 50px;
-  --button-height-xl: 60px;
+  --button-height-sm: 32px;
+  --button-height-md: 36px;
+  --button-height-lg: 42px;
+  --button-height-xl: 48px;
 
-  --button-height-compact-xs: 22px;
   --button-height-compact-sm: 26px;
   --button-height-compact-md: 30px;
-  --button-height-compact-lg: 34px;
-  --button-height-compact-xl: 40px;
+  --button-height-compact-lg: 36px;
+  --button-height-compact-xl: 42px;
 
-  --button-padding-x-xs: 14px;
-  --button-padding-x-sm: 18px;
-  --button-padding-x-md: 22px;
-  --button-padding-x-lg: 26px;
-  --button-padding-x-xl: 32px;
+  --button-padding-x-sm: 16px;
+  --button-padding-x-md: 20px;
+  --button-padding-x-lg: 24px;
+  --button-padding-x-xl: 28px;
 
-  --button-padding-x-compact-xs: 7px;
-  --button-padding-x-compact-sm: 8px;
-  --button-padding-x-compact-md: 10px;
-  --button-padding-x-compact-lg: 12px;
-  --button-padding-x-compact-xl: 14px;
+  --button-padding-x-compact-sm: 12px;
+  --button-padding-x-compact-md: 14px;
+  --button-padding-x-compact-lg: 16px;
+  --button-padding-x-compact-xl: 20px;
 
   --button-height: var(--button-height-sm);
   --button-padding-x: var(--button-padding-x-sm);
@@ -29,7 +25,7 @@
   user-select: none;
   font-weight: 600;
   position: relative;
-  line-height: 1;
+  line-height: 1.75;
   text-align: center;
   overflow: hidden;
 

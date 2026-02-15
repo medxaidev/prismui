@@ -50,8 +50,8 @@ export interface ButtonProps
   StylesApiProps<ButtonFactory>,
   ElementProps<'button', 'color'> {
   /** Controls button `height`, `font-size` and horizontal `padding` @default 'sm' */
-  size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl'
-  | 'compact-xs' | 'compact-sm' | 'compact-md' | 'compact-lg' | 'compact-xl'
+  size?: 'sm' | 'md' | 'lg' | 'xl'
+  | 'compact-sm' | 'compact-md' | 'compact-lg' | 'compact-xl'
   | (string & {});
 
   /** Theme color key or CSS color @default 'primary' */

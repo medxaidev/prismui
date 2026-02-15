@@ -144,7 +144,7 @@ export const defaultTheme: PrismuiThemeInput = {
   errorColor: 'red',
   neutralColor: 'neutral',
 
-  fontSize: 14,
+  fontSize: 16,
   fontSizes: {
     xs: '0.75rem',
     sm: '0.875rem',
