@@ -1,0 +1,34 @@
+/* ------------------------------------------------------------------ */
+/* Grid                                                               */
+/* ------------------------------------------------------------------ */
+
+.root {
+  --grid-gutter: var(--prismui-spacing-md, 16px);
+  --grid-columns: 12;
+  --grid-overflow: visible;
+
+  overflow: var(--grid-overflow);
+}
+
+.inner {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: var(--grid-justify, flex-start);
+  align-items: var(--grid-align, stretch);
+  margin: calc(var(--grid-gutter) / -2);
+}
+
+.col {
+  --col-flex-grow: 0;
+  --col-offset: 0px;
+
+  flex-shrink: 0;
+  order: var(--col-order, 0);
+  flex-basis: var(--col-flex-basis, 100%);
+  width: var(--col-width, auto);
+  max-width: var(--col-max-width, 100%);
+  flex-grow: var(--col-flex-grow);
+  margin-inline-start: var(--col-offset);
+  padding: calc(var(--grid-gutter) / 2);
+  box-sizing: border-box;
+}

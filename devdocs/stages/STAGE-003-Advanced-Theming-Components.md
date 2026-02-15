@@ -367,34 +367,11 @@ export interface DividerProps
 
 ## 6. Phase C: Layout Components
 
-### C1: Container
+### C1: Group ✅
 
-**Goal:** Max-width centered container. Simple wrapper with responsive `size` prop.
+**Goal:** Horizontal flex layout (complement to Stack's vertical layout). Mantine pattern — MUI has no Group equivalent.
 
-**Props:**
-
-```typescript
-export interface ContainerProps
-  extends BoxProps, StylesApiProps<ContainerFactory>, ElementProps<"div"> {
-  size?: PrismuiSize | (string & {}) | number; // max-width
-  fluid?: boolean; // 100% width, ignore size
-}
-```
-
-**CSS Variables:** `--container-size`
-**Default sizes:** xs=540px, sm=720px, md=960px, lg=1140px, xl=1320px
-
-**Files:**
-
-- `components/Container/Container.tsx`, `Container.module.css`, `Container.test.tsx`, `Container.stories.tsx`, `index.ts`
-
-**Tests:** ~12 tests
-
-### C2: Group
-
-**Goal:** Horizontal flex layout (complement to Stack's vertical layout). Supports `gap`, `align`, `justify`, `wrap`, `grow`.
-
-**Props:**
+**Implemented Props:**
 
 ```typescript
 export interface GroupProps
@@ -402,37 +379,70 @@ export interface GroupProps
   justify?: React.CSSProperties["justifyContent"]; // @default 'flex-start'
   align?: React.CSSProperties["alignItems"]; // @default 'center'
   wrap?: React.CSSProperties["flexWrap"]; // @default 'wrap'
-  gap?: PrismuiSpacing; // @default 'md'
-  grow?: boolean; // children flex-grow
-  preventGrowOverflow?: boolean; // max-width per child @default true
+  gap?: string | number; // @default 'md'
+  grow?: boolean; // @default false
+  preventGrowOverflow?: boolean; // @default true
 }
 ```
 
 **CSS Variables:** `--group-gap`, `--group-align`, `--group-justify`, `--group-wrap`, `--group-child-width`
-**Context:** `GroupStylesCtx` with computed `childWidth` for `preventGrowOverflow`
 
 **Files:**
 
-- `components/Group/Group.tsx`, `Group.module.css`, `Group.test.tsx`, `Group.stories.tsx`, `index.ts`
-- `components/Group/filter-falsy-children.ts`
+- `components/Group/Group.tsx` — factory-based, filterFalsyChildren, dynamic childWidth
+- `components/Group/Group.module.css` — flex layout with data-grow
+- `components/Group/Group.test.tsx` — 19 tests
+- `components/Group/Group.stories.tsx` — 7 stories
+- `components/Group/index.ts`
 
-**Tests:** ~18 tests
+**New utility:** `core/theme/get-spacing.ts` — resolves spacing tokens to `var(--prismui-spacing-*)` CSS variables
 
-### C3: Grid + Grid.Col
+**Tests:** 19 tests (basic rendering, falsy children, grow, gap, justify/align/wrap, Styles API, HTML attributes)
 
-**Goal:** 12-column CSS grid layout with responsive column spans.
+### C2: Container ✅
+
+**Goal:** Max-width centered container. Combines Mantine (factory, fluid, size tokens) and MUI (disableGutters, fixed, MUI breakpoint sizes).
+
+**Implemented Props:**
+
+```typescript
+export interface ContainerProps
+  extends BoxProps, StylesApiProps<ContainerFactory>, ElementProps<"div"> {
+  size?: string | number; // max-width @default 'lg'
+  fluid?: boolean; // 100% width @default false
+  disableGutters?: boolean; // MUI: remove padding @default false
+  fixed?: boolean; // MUI: width = max-width @default false
+}
+```
+
+**CSS Variables:** `--container-size`
+**Default sizes (MUI-inspired):** xs=444px, sm=600px, md=900px, lg=1200px, xl=1536px
+
+**Files:**
+
+- `components/Container/Container.tsx` — factory-based with varsResolver
+- `components/Container/Container.module.css` — size tokens, fluid, disableGutters, fixed
+- `components/Container/Container.test.tsx` — 17 tests
+- `components/Container/Container.stories.tsx` — 6 stories
+- `components/Container/index.ts`
+
+**Tests:** 17 tests (basic rendering, size, fluid, disableGutters, fixed, Styles API, HTML attributes)
+
+### C3: Grid + Grid.Col ✅
+
+**Goal:** 12-column flexbox grid layout. Combines Mantine (factory, context, grow, span/offset/order) and MUI (gutter, justify, align) patterns.
 
 **Grid Props:**
 
 ```typescript
 export interface GridProps
   extends BoxProps, StylesApiProps<GridFactory>, ElementProps<"div"> {
-  gutter?: PrismuiResponsiveValue<PrismuiSpacing>; // @default 'md'
-  grow?: boolean; // last row fills space
+  gutter?: string | number; // @default 'md'
+  grow?: boolean; // @default false
   columns?: number; // @default 12
-  justify?: React.CSSProperties["justifyContent"];
-  align?: React.CSSProperties["alignItems"];
-  overflow?: React.CSSProperties["overflow"];
+  justify?: React.CSSProperties["justifyContent"]; // @default 'flex-start'
+  align?: React.CSSProperties["alignItems"]; // @default 'stretch'
+  overflow?: React.CSSProperties["overflow"]; // @default 'visible'
 }
 ```
 
@@ -441,40 +451,38 @@ export interface GridProps
 ```typescript
 export interface GridColProps
   extends BoxProps, StylesApiProps<GridColFactory>, ElementProps<"div"> {
-  span?: PrismuiResponsiveValue<number | "auto" | "content">; // column span
-  offset?: PrismuiResponsiveValue<number>; // column offset
-  order?: PrismuiResponsiveValue<number>; // flex order
+  span?: number | "auto" | "content"; // @default 12
+  offset?: number; // column offset
+  order?: number; // flex order
 }
 ```
 
-**CSS Variables:** `--grid-justify`, `--grid-align`, `--grid-overflow` (Grid), responsive `--col-span-*`, `--col-offset-*` (GridCol)
-**Styles Names:** Grid: `root`, `inner`; GridCol: `col`
+**CSS Variables:** Grid: `--grid-gutter`, `--grid-justify`, `--grid-align`, `--grid-overflow`; Col: `--col-flex-basis`, `--col-max-width`, `--col-flex-grow`, `--col-offset`, `--col-order`, `--col-width`
+**Styles Names:** `root`, `inner`, `col`
 **Static Components:** `Grid.Col`
-
-**Implementation notes:**
-
-- Grid provides context to Grid.Col via `GridProvider`
-- Responsive column spans use `resolveResponsiveVars` (from Stage-2 Stack)
-- `GridVariables` component generates responsive CSS for gutter/span/offset
 
 **Files:**
 
-- `components/Grid/Grid.tsx`, `Grid.module.css`, `Grid.context.ts`, `GridVariables.tsx`
-- `components/Grid/GridCol/GridCol.tsx`, `GridCol.module.css`, `GridColVariables.tsx`
-- `components/Grid/Grid.test.tsx`, `Grid.stories.tsx`, `index.ts`
+- `components/Grid/Grid.tsx` — factory-based with GridProvider context
+- `components/Grid/GridCol.tsx` — uses context for columns/grow
+- `components/Grid/Grid.context.ts` — React context for Grid→Col communication
+- `components/Grid/Grid.module.css` — flex-wrap layout with negative margin gutter
+- `components/Grid/Grid.test.tsx` — 30 tests
+- `components/Grid/Grid.stories.tsx` — 9 stories
+- `components/Grid/index.ts`
 
-**Tests:** ~25 tests
+**Tests:** 30 tests (basic rendering, gutter, justify/align/overflow, static component, Col span/offset/order, custom columns, grow, Styles API, error without Grid parent)
 
 ### C Phase Acceptance Criteria
 
-- [ ] Container centers content with correct max-width
-- [ ] Container `fluid` prop makes it 100% width
-- [ ] Group renders horizontal flex layout with correct gap/align/justify
-- [ ] Group `grow` distributes children evenly
-- [ ] Grid renders 12-column layout
-- [ ] Grid.Col `span` controls column width
-- [ ] Grid supports responsive gutter and column spans
-- [ ] All tests pass, tsc clean
+- [x] Container centers content with correct max-width — 17 tests
+- [x] Container `fluid` prop makes it 100% width
+- [x] Group renders horizontal flex layout with correct gap/align/justify — 19 tests
+- [x] Group `grow` distributes children evenly
+- [x] Grid renders 12-column layout — 30 tests
+- [x] Grid.Col `span` controls column width (number, auto, content)
+- [x] Grid.Col supports offset and order
+- [x] All tests pass, tsc clean — 663 tests, 0 failures
 
 ---
 

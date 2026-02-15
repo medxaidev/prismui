@@ -18,3 +18,4 @@ export { getThemeColor } from './get-theme-color';
 
 export { getSize } from './get-size';
 export { getFontSize } from './get-font-size';
+export { getSpacing } from './get-spacing';
