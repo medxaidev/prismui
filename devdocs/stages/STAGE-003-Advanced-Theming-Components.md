@@ -1,9 +1,10 @@
 # STAGE-003: Advanced Theming & Layout Components
 
-> **Status:** In Progress (Phase A ✅ Complete)
+> **Status:** ✅ Complete
 > **Predecessor:** STAGE-002 (Component Factory) — ✅ Complete
 > **Owner:** Development Team
 > **Created:** 2026-02-13
+> **Completed:** 2026-02-16
 
 ---
 
@@ -874,21 +875,29 @@ Box (basic)            CSS Modules              Container, Divider          Docu
 
 ---
 
-## 15. Stage-3 Final Statistics (Template)
-
-> _Stage-3 完成后填写_
+## 15. Stage-3 Final Statistics
 
 | Metric                     | Value |
 | -------------------------- | ----- |
-| Infrastructure files (new) |       |
-| Component files (new)      |       |
-| CSS Module files (new)     |       |
-| Test files (new)           |       |
-| Total new tests            |       |
-| Total tests (cumulative)   |       |
-| Storybook stories (new)    |       |
-| Public API functions (new) |       |
-| Public API types (new)     |       |
+| Infrastructure files (new) | 12    |
+| Component files (new)      | 43    |
+| CSS Module files (new)     | 7     |
+| Test files (new)           | 11    |
+| Total new tests            | 271   |
+| Total tests (cumulative)   | 707   |
+| Storybook stories (new)    | 48    |
+| Public API functions (new) | 5     |
+| Public API types (new)     | 15+   |
+
+**Breakdown by Phase:**
+
+- Phase A (Theming): 12 infrastructure files, 87 tests, 8 stories
+- Phase B (Utility): 9 component files, 62 tests, 15 stories
+- Phase C (Layout): 20 component files, 66 tests, 16 stories
+- Phase D (Button): 9 component files, 61 tests, 22 stories (13 Button + 9 ButtonGroup)
+- Phase E (Loader): 5 component files, 21 tests, 7 stories
+
+**Total:** 55 new files, 271 new tests, 48 new stories, 707 cumulative tests, 0 regressions
 
 ---
 

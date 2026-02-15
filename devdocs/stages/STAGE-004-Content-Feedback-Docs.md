@@ -15,14 +15,15 @@ Deliver content display components (Text, typography system), feedback/overlay c
 
 ## 2. Prerequisites
 
-| Dependency                 | Source           | Status  |
-| -------------------------- | ---------------- | ------- |
-| All Stage-2 infrastructure | Stage-2          | ✅      |
-| `variantColorResolver`     | Stage-3 Phase A  | Pending |
-| Headless mode              | Stage-3 Phase A4 | Pending |
-| Portal                     | Stage-3 Phase B1 | Pending |
-| Button                     | Stage-3 Phase D1 | Pending |
-| Container, Group, Grid     | Stage-3 Phase C  | Pending |
+| Dependency                 | Source           | Status |
+| -------------------------- | ---------------- | ------ |
+| All Stage-2 infrastructure | Stage-2          | ✅     |
+| `variantColorResolver`     | Stage-3 Phase A  | ✅     |
+| Headless mode              | Stage-3 Phase A4 | ✅     |
+| Portal                     | Stage-3 Phase B1 | ✅     |
+| Button                     | Stage-3 Phase D1 | ✅     |
+| Container, Group, Grid     | Stage-3 Phase C  | ✅     |
+| Loader                     | Stage-3 Phase E  | ✅     |
 
 ---
 
