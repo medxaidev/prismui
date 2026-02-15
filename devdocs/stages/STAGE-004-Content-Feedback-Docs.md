@@ -1,7 +1,7 @@
 # STAGE-004: Content Components, Feedback & Documentation Site
 
-> **Status:** Not Started
-> **Predecessor:** STAGE-003 (Advanced Theming & Layout Components)
+> **Status:** In Progress (Phase A)
+> **Predecessor:** STAGE-003 (Advanced Theming & Layout Components) — ✅ Complete
 > **Owner:** Development Team
 > **Created:** 2026-02-13
 
@@ -30,14 +30,12 @@ Deliver content display components (Text, typography system), feedback/overlay c
 ## 3. Phase Overview
 
 ```
-Phase A: Typography System
-  ├── A1: Text component (polymorphic, theme-aware)
-  ├── A2: Title component (h1-h6 semantic headings)
-  └── A3: Anchor component (styled link, extends Text)
+Phase A: Typography System (ADR-010: Unified Text + Title)
+  ├── A1: Text component (unified typography — h1-h6, subtitle, body, caption, overline) ✅
+  └── A2: Anchor component (styled link, extends Text) ✅
 
 Phase B: Feedback Components
-  ├── B1: Loader / Spinner
-  ├── B2: Transition (animation wrapper)
+  ├── B1: Transition (animation wrapper)
   ├── B3: Alert (info/success/warning/error banners)
   ├── B4: Toast / Notification system
   └── B5: Badge
@@ -59,13 +57,12 @@ Phase D: Documentation Site
 
 ## 4. Component Summary
 
-### Phase A: Typography
+### Phase A: Typography (ADR-010: Unified)
 
-| Component  | Type               | Description                                                                  |
-| ---------- | ------------------ | ---------------------------------------------------------------------------- |
-| **Text**   | polymorphicFactory | Styled text with `size`, `color`, `weight`, `align`, `truncate`, `lineClamp` |
-| **Title**  | factory            | Semantic headings (h1-h6) with consistent sizing from theme                  |
-| **Anchor** | polymorphicFactory | Styled `<a>` extending Text, with `underline` prop                           |
+| Component  | Type               | Status | Description                                                                                      |
+| ---------- | ------------------ | ------ | ------------------------------------------------------------------------------------------------ |
+| **Text**   | polymorphicFactory | ✅     | Unified typography: h1-h6 (responsive), subtitle1/2, body1/2, caption, overline + color/truncate |
+| **Anchor** | polymorphicFactory | ✅     | Styled `<a>` extending Text, with `underline` and `external` props                               |
 
 ### Phase B: Feedback
 
@@ -100,10 +97,8 @@ Phase D: Documentation Site
 ## 5. Key Dependencies Within Stage-4
 
 ```
-Text ← (standalone, no deps beyond Stage-2)
-Title ← Text
-Anchor ← Text
-Loader ← (standalone)
+Text ← (standalone, no deps beyond Stage-2) ✅
+Anchor ← Text ✅
 Transition ← (standalone, CSS-only)
 Alert ← variantColorResolver (Stage-3)
 Badge ← variantColorResolver (Stage-3)
@@ -119,13 +114,13 @@ Documentation Site ← all components
 
 ## 6. Estimated Scope
 
-| Category          | Estimated Components | Estimated Tests |
-| ----------------- | -------------------- | --------------- |
-| Typography (A)    | 3                    | ~40             |
-| Feedback (B)      | 5                    | ~80             |
-| Overlay (C)       | 4                    | ~60             |
-| Documentation (D) | —                    | —               |
-| **Total**         | **12**               | **~180**        |
+| Category          | Estimated Components | Estimated Tests | Actual Tests |
+| ----------------- | -------------------- | --------------- | ------------ |
+| Typography (A)    | 2 (Text+Anchor)      | ~65             | 80 ✅        |
+| Feedback (B)      | 4                    | ~80             |              |
+| Overlay (C)       | 4                    | ~60             |              |
+| Documentation (D) | —                    | —               |              |
+| **Total**         | **10**               | **~205**        | **54**       |
 
 ---
 

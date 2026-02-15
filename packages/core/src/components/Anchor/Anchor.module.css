@@ -1,0 +1,44 @@
+/* ------------------------------------------------------------------ */
+/* Anchor — Styled link component                                     */
+/* ------------------------------------------------------------------ */
+
+.root {
+  color: var(--anchor-color, var(--prismui-primary-main));
+  text-decoration: none;
+  appearance: none;
+  border: none;
+  display: inline;
+  padding: 0;
+  margin: 0;
+  background-color: transparent;
+  cursor: pointer;
+  transition: color 250ms cubic-bezier(0.4, 0, 0.2, 1);
+
+  &:where([data-underline='hover']) {
+    @media (hover: hover) {
+      &:hover {
+        text-decoration: underline;
+      }
+    }
+  }
+
+  &:where([data-underline='always']) {
+    text-decoration: underline;
+  }
+
+  /* never: no underline at all (default text-decoration: none above) */
+
+  @media (hover: hover) {
+    &:hover {
+      color: var(--anchor-hover-color, var(--prismui-primary-dark));
+    }
+  }
+
+  /* Gradient text should never show underline */
+  &:where([data-gradient]) {
+    &,
+    &:hover {
+      text-decoration: none;
+    }
+  }
+}

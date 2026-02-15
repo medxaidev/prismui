@@ -1,167 +1,160 @@
 # STAGE-004 详细开发计划
 
 > **Created:** 2026-02-16
-> **Status:** Ready to Start
-> **Estimated Duration:** 12-16 sessions
-> **Estimated New Tests:** ~180
+> **Status:** In Progress (Phase A)
+> **Estimated Duration:** 10-14 sessions
+> **Estimated New Tests:** ~205
 
 ---
 
 ## 1. 总体策略
 
 ### 开发顺序
+
 遵循依赖关系，按以下顺序开发：
 
 ```
 Phase A (Typography) → Phase B (Feedback) → Phase C (Overlay) → Phase D (Docs)
      ↓                      ↓                      ↓
-  Text → Title → Anchor    Alert → Badge          Modal → Popover → Tooltip
+  Text ✅ → Anchor          Alert → Badge          Modal → Popover → Tooltip
                            Toast (依赖 Transition)
 ```
 
-### 关键决策点
+### 关键决策
 
-1. **Loader 已完成** (Stage-3 Phase E) — 可直接使用
-2. **Transition 组件** — 先实现简化版 (CSS-only)，后续可扩展
-3. **Toast 系统** — 使用 React Context + Portal，避免引入外部状态库
-4. **Popover 定位** — 评估 `@floating-ui/react` vs 自研简化版
-5. **文档站点** — 优先级可调整，可延后到 Phase A/B/C 完成后
+1. **ADR-010: 统一 Typography 系统** — Text + Title 合并为单一 Text 组件，通过 `variant` prop 选择排版样式 (h1-h6, subtitle1/2, body1/2, caption, overline)
+2. **Loader 已完成** (Stage-3 Phase E) — 可直接使用
+3. **Transition 组件** — 先实现简化版 (CSS-only)，后续可扩展
+4. **Toast 系统** — 使用 React Context + Portal，避免引入外部状态库
+5. **Popover 定位** — 评估 `@floating-ui/react` vs 自研简化版
+6. **文档站点** — 优先级可调整，可延后到 Phase A/B/C 完成后
 
 ---
 
-## 2. Phase A: Typography System (3 sessions)
+## 2. Phase A: Typography System (2 sessions) — ADR-010
 
-### A1: Text Component (1 session)
+> **决策:** Text + Title 合并为统一的 Text 组件 (ADR-010)。
+> 通过 `variant` prop 选择排版样式，自动映射到正确的 HTML 元素。
 
-**目标:** 多态文本组件，支持 size, color, weight, align, truncate, lineClamp
+### A1: Text Component ✅ (1 session)
 
-**API 设计:**
+**目标:** 统一排版组件，支持 12 种 variant (h1-h6, subtitle1/2, body1/2, caption, overline)
+
+**实现的 API:**
+
 ```typescript
-export interface TextProps extends BoxProps, StylesApiProps<TextFactory>,
-  ElementProps<'span', 'color'> {
-  size?: PrismuiSize | (string & {});           // @default 'md'
-  color?: string;                                // theme color or CSS
-  weight?: React.CSSProperties['fontWeight'];    // @default 400
-  align?: React.CSSProperties['textAlign'];      // @default 'left'
-  transform?: React.CSSProperties['textTransform'];
-  truncate?: boolean | 'end' | 'start';          // @default false
-  lineClamp?: number;                            // multi-line truncate
-  inherit?: boolean;                             // inherit parent styles
-  gradient?: { from: string; to: string; deg?: number }; // gradient text
+export type TextVariant =
+  | "h1"
+  | "h2"
+  | "h3"
+  | "h4"
+  | "h5"
+  | "h6"
+  | "subtitle1"
+  | "subtitle2"
+  | "body1"
+  | "body2"
+  | "caption"
+  | "overline";
+
+export interface TextProps
+  extends BoxProps, StylesApiProps<TextFactory>, ElementProps<"p", "color"> {
+  variant?: TextVariant; // @default 'body1'
+  color?: string; // theme color or CSS
+  align?: React.CSSProperties["textAlign"];
+  truncate?: boolean | "end" | "start";
+  lineClamp?: number;
+  inline?: boolean; // line-height: 1
+  inherit?: boolean; // inherit parent font
+  gutterBottom?: boolean; // margin-bottom: 0.35em
+  textTransform?: React.CSSProperties["textTransform"];
+  gradient?: { from: string; to: string; deg?: number };
+  span?: boolean; // shorthand for component="span"
 }
 ```
 
-**CSS Variables:**
-```
---text-fz, --text-lh, --text-color, --text-gradient
-```
+**Typography 规格 (MUI Minimals):**
 
-**关键特性:**
-- `truncate` → `text-overflow: ellipsis` + `overflow: hidden`
-- `lineClamp` → `-webkit-line-clamp` + `display: -webkit-box`
-- `gradient` → `background-clip: text` + linear-gradient
-- `inherit` → 继承父元素 font-size/color/weight
+| Variant   | Element | Weight | Size      | Line Height | Responsive    |
+| --------- | ------- | ------ | --------- | ----------- | ------------- |
+| h1        | h1      | 800    | 2.5rem    | 1.25        | ✅ 52→58→64px |
+| h2        | h2      | 800    | 2rem      | 1.33        | ✅ 40→44→48px |
+| h3        | h3      | 700    | 1.5rem    | 1.5         | ✅ 26→30→32px |
+| h4        | h4      | 700    | 1.25rem   | 1.5         | ✅ →24px      |
+| h5        | h5      | 700    | 1.125rem  | 1.5         | ✅ →19px      |
+| h6        | h6      | 600    | 1.0625rem | 1.56        | ✅ →18px      |
+| subtitle1 | p       | 600    | 1rem      | 1.5         | ❌            |
+| subtitle2 | p       | 600    | 0.875rem  | 1.57        | ❌            |
+| body1     | p       | 400    | 1rem      | 1.5         | ❌            |
+| body2     | p       | 400    | 0.875rem  | 1.57        | ❌            |
+| caption   | span    | 400    | 0.75rem   | 1.5         | ❌            |
+| overline  | span    | 700    | 0.75rem   | 1.5         | ❌            |
+
+**CSS Variables:** `--text-fz`, `--text-fw`, `--text-lh`, `--text-color`, `--text-align`, `--text-transform`, `--text-line-clamp`, `--text-gradient`
 
 **文件:**
-- `components/Text/Text.tsx` (polymorphicFactory, default: `<span>`)
-- `components/Text/Text.module.css`
-- `components/Text/Text.test.tsx` (~15 tests)
-- `components/Text/Text.stories.tsx` (~8 stories)
+
+- `components/Text/Text.tsx` — polymorphicFactory, TYPOGRAPHY_MAP, varsResolver
+- `components/Text/Text.module.css` — responsive media queries for h1-h6
+- `components/Text/Text.test.tsx` — 54 tests
+- `components/Text/Text.stories.tsx` — 13 stories
 - `components/Text/index.ts`
 
 **验收标准:**
-- [ ] Text 支持所有 size tokens (xs/sm/md/lg/xl)
-- [ ] Text color 支持 theme colors 和 CSS colors
-- [ ] truncate 单行截断正常工作
-- [ ] lineClamp 多行截断正常工作 (webkit + fallback)
-- [ ] gradient 渐变文字正常显示
-- [ ] 多态性正常 (component="p", component="div")
-- [ ] 15 tests pass, tsc clean
+
+- [x] 12 种 variant 渲染正确的 HTML 元素
+- [x] h1-h6 响应式字体大小 (600/900/1200px breakpoints)
+- [x] color 支持 semantic colors, palette tokens, CSS passthrough
+- [x] truncate/lineClamp/gradient/inherit/inline/gutterBottom 正常工作
+- [x] 多态性正常 (component="div", component="a")
+- [x] 54 tests pass, tsc clean, 761 total tests
 
 ---
 
-### A2: Title Component (1 session)
+### A2: Anchor Component ✅ (1 session)
 
-**目标:** 语义化标题组件 (h1-h6)，从 theme 获取一致的尺寸
+**目标:** 样式化链接组件，基于 Text 构建
 
-**API 设计:**
+**实现的 API:**
+
 ```typescript
-export interface TitleProps extends BoxProps, StylesApiProps<TitleFactory>,
-  ElementProps<'h1'> {
-  order?: 1 | 2 | 3 | 4 | 5 | 6;                 // @default 1
-  size?: PrismuiSize | (string & {});            // override theme size
-  color?: string;
-  weight?: React.CSSProperties['fontWeight'];
-  align?: React.CSSProperties['textAlign'];
-  truncate?: boolean;
-  lineClamp?: number;
+export interface AnchorProps
+  extends BoxProps, StylesApiProps<AnchorFactory>, ElementProps<"a", "color"> {
+  variant?: TextVariant; // @default 'body1'
+  color?: string; // @default 'primary'
+  underline?: "always" | "hover" | "never"; // @default 'hover'
+  external?: boolean; // target="_blank" rel="noopener noreferrer"
+  // Inherits all Text features: align, truncate, lineClamp, gradient, etc.
 }
 ```
 
-**CSS Variables:**
-```
---title-fz, --title-lh, --title-fw, --title-color
-```
+**CSS Variables:** `--anchor-color`, `--anchor-hover-color`
 
 **关键特性:**
-- `order` 决定渲染的 HTML tag (`<h1>` ~ `<h6>`)
-- 默认尺寸从 theme 映射: h1=xl, h2=lg, h3=md, h4=sm, h5=xs, h6=xs
-- 默认 font-weight: h1/h2=700, h3/h4=600, h5/h6=500
-- 复用 Text 的 truncate/lineClamp 逻辑
 
-**文件:**
-- `components/Title/Title.tsx` (factory, 非多态)
-- `components/Title/Title.module.css`
-- `components/Title/Title.test.tsx` (~12 tests)
-- `components/Title/Title.stories.tsx` (~6 stories)
-- `components/Title/index.ts`
-
-**验收标准:**
-- [ ] Title order 1-6 渲染正确的 h1-h6 tag
-- [ ] 默认尺寸映射正确
-- [ ] 支持 size override
-- [ ] truncate/lineClamp 正常工作
-- [ ] 12 tests pass, tsc clean
-
----
-
-### A3: Anchor Component (1 session)
-
-**目标:** 样式化链接组件，扩展 Text
-
-**API 设计:**
-```typescript
-export interface AnchorProps extends TextProps {
-  underline?: 'always' | 'hover' | 'never';     // @default 'hover'
-  external?: boolean;                            // add target="_blank" rel="noopener"
-}
-```
-
-**CSS Variables:**
-```
-继承 Text 的所有 CSS 变量
-```
-
-**关键特性:**
-- 默认渲染 `<a>`
-- `underline` 控制 text-decoration
+- 默认渲染 `<a>`，默认 color 为 primary
+- `underline` 控制 text-decoration (always/hover/never)
 - `external` 自动添加 `target="_blank" rel="noopener noreferrer"`
-- 默认 color 为 theme primary color
-- hover 状态: 加深颜色
+- hover 状态: 自动使用 `{color}.dark` 加深颜色
+- 内部使用 Text 组件，继承所有排版功能
+- gradient 模式下自动禁用 underline
 
 **文件:**
-- `components/Anchor/Anchor.tsx` (polymorphicFactory, default: `<a>`)
-- `components/Anchor/Anchor.module.css`
-- `components/Anchor/Anchor.test.tsx` (~13 tests)
-- `components/Anchor/Anchor.stories.tsx` (~6 stories)
+
+- `components/Anchor/Anchor.tsx` — polymorphicFactory, wraps Text with component="a"
+- `components/Anchor/Anchor.module.css` — underline modes, hover color transition
+- `components/Anchor/Anchor.test.tsx` — 26 tests
+- `components/Anchor/Anchor.stories.tsx` — 8 stories
 - `components/Anchor/index.ts`
 
 **验收标准:**
-- [ ] Anchor 默认渲染 `<a>` tag
-- [ ] underline 三种模式正常工作
-- [ ] external 自动添加 target 和 rel
-- [ ] 继承 Text 的所有功能 (truncate, lineClamp, etc.)
-- [ ] 13 tests pass, tsc clean
+
+- [x] Anchor 默认渲染 `<a>` tag
+- [x] underline 三种模式正常工作
+- [x] external 自动添加 target 和 rel
+- [x] 默认 color 为 primary，hover 加深
+- [x] 继承 Text 的所有功能 (variant, truncate, lineClamp, gradient, etc.)
+- [x] 26 tests pass, tsc clean, 787 total tests
 
 ---
 
@@ -172,13 +165,20 @@ export interface AnchorProps extends TextProps {
 **目标:** CSS 过渡动画包装器，支持 mount/unmount 动画
 
 **API 设计:**
+
 ```typescript
 export interface TransitionProps {
-  mounted: boolean;                              // control visibility
-  transition?: 'fade' | 'scale' | 'slide-up' | 'slide-down' | 'slide-left' | 'slide-right';
-  duration?: number;                             // @default 250
-  timingFunction?: string;                       // @default 'ease'
-  keepMounted?: boolean;                         // keep in DOM when unmounted
+  mounted: boolean; // control visibility
+  transition?:
+    | "fade"
+    | "scale"
+    | "slide-up"
+    | "slide-down"
+    | "slide-left"
+    | "slide-right";
+  duration?: number; // @default 250
+  timingFunction?: string; // @default 'ease'
+  keepMounted?: boolean; // keep in DOM when unmounted
   onEnter?: () => void;
   onEntered?: () => void;
   onExit?: () => void;
@@ -188,12 +188,14 @@ export interface TransitionProps {
 ```
 
 **实现策略:**
+
 - 使用 CSS transitions + React state machine
 - 状态: `unmounted` → `entering` → `entered` → `exiting` → `unmounted`
 - 不依赖第三方库 (react-transition-group)
 - 简化版实现，足够支持 Modal/Toast/Popover
 
 **文件:**
+
 - `components/Transition/Transition.tsx`
 - `components/Transition/Transition.module.css`
 - `components/Transition/Transition.test.tsx` (~18 tests)
@@ -201,6 +203,7 @@ export interface TransitionProps {
 - `components/Transition/index.ts`
 
 **验收标准:**
+
 - [ ] mounted=true 触发 enter 动画
 - [ ] mounted=false 触发 exit 动画
 - [ ] 所有 transition 类型正常工作
@@ -214,20 +217,22 @@ export interface TransitionProps {
 **目标:** 信息横幅组件，支持 icon, title, message, close button
 
 **API 设计:**
+
 ```typescript
-export interface AlertProps extends BoxProps, StylesApiProps<AlertFactory>,
-  ElementProps<'div'> {
-  variant?: PrismuiVariant;                      // @default 'soft'
-  color?: string;                                // @default 'primary'
+export interface AlertProps
+  extends BoxProps, StylesApiProps<AlertFactory>, ElementProps<"div"> {
+  variant?: PrismuiVariant; // @default 'soft'
+  color?: string; // @default 'primary'
   title?: React.ReactNode;
   icon?: React.ReactNode;
-  withCloseButton?: boolean;                     // @default false
+  withCloseButton?: boolean; // @default false
   onClose?: () => void;
   radius?: PrismuiRadius;
 }
 ```
 
 **CSS Variables:**
+
 ```
 --alert-bg, --alert-color, --alert-bd, --alert-radius
 ```
@@ -235,12 +240,14 @@ export interface AlertProps extends BoxProps, StylesApiProps<AlertFactory>,
 **Styles Names:** `root`, `wrapper`, `icon`, `body`, `title`, `message`, `closeButton`
 
 **关键特性:**
+
 - 使用 `variantColorResolver` 解析颜色
 - 默认 icon 根据 color 自动选择 (info/success/warning/error)
 - closeButton 使用 ButtonBase
 - 支持 4 种 variant (solid/soft/outlined/plain)
 
 **文件:**
+
 - `components/Alert/Alert.tsx`
 - `components/Alert/Alert.module.css`
 - `components/Alert/Alert.test.tsx` (~20 tests)
@@ -248,6 +255,7 @@ export interface AlertProps extends BoxProps, StylesApiProps<AlertFactory>,
 - `components/Alert/index.ts`
 
 **验收标准:**
+
 - [ ] Alert 支持所有 4 种 variant
 - [ ] variantColorResolver 正确解析颜色
 - [ ] title + message 布局正确
@@ -262,13 +270,14 @@ export interface AlertProps extends BoxProps, StylesApiProps<AlertFactory>,
 **目标:** 小标签/徽章组件
 
 **API 设计:**
+
 ```typescript
-export interface BadgeProps extends BoxProps, StylesApiProps<BadgeFactory>,
-  ElementProps<'div'> {
-  variant?: PrismuiVariant;                      // @default 'soft'
-  color?: string;                                // @default 'primary'
-  size?: 'sm' | 'md' | 'lg';                     // @default 'md'
-  radius?: PrismuiRadius;                        // @default 'xl' (pill)
+export interface BadgeProps
+  extends BoxProps, StylesApiProps<BadgeFactory>, ElementProps<"div"> {
+  variant?: PrismuiVariant; // @default 'soft'
+  color?: string; // @default 'primary'
+  size?: "sm" | "md" | "lg"; // @default 'md'
+  radius?: PrismuiRadius; // @default 'xl' (pill)
   leftSection?: React.ReactNode;
   rightSection?: React.ReactNode;
   fullWidth?: boolean;
@@ -276,17 +285,20 @@ export interface BadgeProps extends BoxProps, StylesApiProps<BadgeFactory>,
 ```
 
 **CSS Variables:**
+
 ```
 --badge-height, --badge-padding-x, --badge-fz, --badge-bg, --badge-color, --badge-bd
 ```
 
 **关键特性:**
+
 - 使用 `variantColorResolver`
 - 默认 pill 形状 (radius=xl)
 - 支持 leftSection/rightSection (如 dot indicator)
 - 高度: sm=18px, md=22px, lg=26px
 
 **文件:**
+
 - `components/Badge/Badge.tsx`
 - `components/Badge/Badge.module.css`
 - `components/Badge/Badge.test.tsx` (~18 tests)
@@ -294,6 +306,7 @@ export interface BadgeProps extends BoxProps, StylesApiProps<BadgeFactory>,
 - `components/Badge/index.ts`
 
 **验收标准:**
+
 - [ ] Badge 支持所有 4 种 variant
 - [ ] 3 种 size 正确渲染
 - [ ] leftSection/rightSection 正常工作
@@ -306,12 +319,18 @@ export interface BadgeProps extends BoxProps, StylesApiProps<BadgeFactory>,
 **目标:** 通知 Toast 系统，支持 auto-dismiss, stacking, positioning
 
 **API 设计:**
+
 ```typescript
 // Toast Provider
 export interface ToastProviderProps {
-  position?: 'top-left' | 'top-center' | 'top-right' | 
-             'bottom-left' | 'bottom-center' | 'bottom-right';
-  maxToasts?: number;                            // @default 5
+  position?:
+    | "top-left"
+    | "top-center"
+    | "top-right"
+    | "bottom-left"
+    | "bottom-center"
+    | "bottom-right";
+  maxToasts?: number; // @default 5
   children: React.ReactNode;
 }
 
@@ -319,28 +338,30 @@ export interface ToastProviderProps {
 export interface ToastOptions {
   title?: string;
   message: string;
-  color?: string;                                // @default 'primary'
+  color?: string; // @default 'primary'
   icon?: React.ReactNode;
-  autoClose?: number | false;                    // @default 4000
-  withCloseButton?: boolean;                     // @default true
+  autoClose?: number | false; // @default 4000
+  withCloseButton?: boolean; // @default true
   onClose?: () => void;
 }
 
 // Imperative API
-toast.show(options)
-toast.success(message, options)
-toast.error(message, options)
-toast.info(message, options)
-toast.warning(message, options)
+toast.show(options);
+toast.success(message, options);
+toast.error(message, options);
+toast.info(message, options);
+toast.warning(message, options);
 ```
 
 **实现策略:**
+
 - React Context + Portal
 - 每个 toast 使用 Transition 组件
 - 内部使用 Alert 组件样式
 - 状态管理: 简单的 reducer (add/remove/update)
 
 **文件:**
+
 - `components/Toast/ToastProvider.tsx`
 - `components/Toast/Toast.tsx`
 - `components/Toast/Toast.module.css`
@@ -350,6 +371,7 @@ toast.warning(message, options)
 - `components/Toast/index.ts`
 
 **验收标准:**
+
 - [ ] ToastProvider 正确渲染 Portal
 - [ ] toast.show() 显示 toast
 - [ ] autoClose 自动关闭
@@ -366,19 +388,21 @@ toast.warning(message, options)
 **目标:** 半透明背景遮罩
 
 **API 设计:**
+
 ```typescript
-export interface OverlayProps extends BoxProps, StylesApiProps<OverlayFactory>,
-  ElementProps<'div'> {
-  opacity?: number;                              // @default 0.6
-  color?: string;                                // @default '#000'
-  blur?: number;                                 // backdrop-filter blur
-  fixed?: boolean;                               // position fixed
-  center?: boolean;                              // center children
+export interface OverlayProps
+  extends BoxProps, StylesApiProps<OverlayFactory>, ElementProps<"div"> {
+  opacity?: number; // @default 0.6
+  color?: string; // @default '#000'
+  blur?: number; // backdrop-filter blur
+  fixed?: boolean; // position fixed
+  center?: boolean; // center children
   zIndex?: number;
 }
 ```
 
 **文件:**
+
 - `components/Overlay/Overlay.tsx`
 - `components/Overlay/Overlay.module.css`
 - `components/Overlay/Overlay.test.tsx` (~10 tests)
@@ -392,19 +416,20 @@ export interface OverlayProps extends BoxProps, StylesApiProps<OverlayFactory>,
 **目标:** 对话框组件，使用 Portal + Overlay + Transition + focus trap
 
 **API 设计:**
+
 ```typescript
 export interface ModalProps extends BoxProps, StylesApiProps<ModalFactory> {
   opened: boolean;
   onClose: () => void;
   title?: React.ReactNode;
-  centered?: boolean;                            // @default false
-  size?: PrismuiSize | number;                   // @default 'md'
+  centered?: boolean; // @default false
+  size?: PrismuiSize | number; // @default 'md'
   fullScreen?: boolean;
-  withCloseButton?: boolean;                     // @default true
-  closeOnClickOutside?: boolean;                 // @default true
-  closeOnEscape?: boolean;                       // @default true
-  trapFocus?: boolean;                           // @default true
-  lockScroll?: boolean;                          // @default true
+  withCloseButton?: boolean; // @default true
+  closeOnClickOutside?: boolean; // @default true
+  closeOnEscape?: boolean; // @default true
+  trapFocus?: boolean; // @default true
+  lockScroll?: boolean; // @default true
   overlayProps?: OverlayProps;
   transitionProps?: TransitionProps;
   zIndex?: number;
@@ -414,6 +439,7 @@ export interface ModalProps extends BoxProps, StylesApiProps<ModalFactory> {
 **Styles Names:** `root`, `overlay`, `content`, `header`, `title`, `close`, `body`
 
 **关键特性:**
+
 - Portal 渲染到 body
 - Overlay 背景遮罩
 - Transition 进入/退出动画
@@ -423,6 +449,7 @@ export interface ModalProps extends BoxProps, StylesApiProps<ModalFactory> {
 - 点击外部关闭
 
 **文件:**
+
 - `components/Modal/Modal.tsx`
 - `components/Modal/Modal.module.css`
 - `components/Modal/use-focus-trap.ts` (简化 focus trap hook)
@@ -432,6 +459,7 @@ export interface ModalProps extends BoxProps, StylesApiProps<ModalFactory> {
 - `components/Modal/index.ts`
 
 **验收标准:**
+
 - [ ] Modal opened=true 显示
 - [ ] Overlay 正确渲染
 - [ ] closeOnClickOutside 正常工作
@@ -447,29 +475,41 @@ export interface ModalProps extends BoxProps, StylesApiProps<ModalFactory> {
 **目标:** 浮动内容组件，锚定到触发元素
 
 **API 设计:**
+
 ```typescript
 export interface PopoverProps {
-  opened?: boolean;                              // controlled
-  defaultOpened?: boolean;                       // uncontrolled
+  opened?: boolean; // controlled
+  defaultOpened?: boolean; // uncontrolled
   onClose?: () => void;
-  position?: 'top' | 'right' | 'bottom' | 'left' | 
-             'top-start' | 'top-end' | 'right-start' | 'right-end' |
-             'bottom-start' | 'bottom-end' | 'left-start' | 'left-end';
-  offset?: number;                               // @default 8
-  withArrow?: boolean;                           // @default false
+  position?:
+    | "top"
+    | "right"
+    | "bottom"
+    | "left"
+    | "top-start"
+    | "top-end"
+    | "right-start"
+    | "right-end"
+    | "bottom-start"
+    | "bottom-end"
+    | "left-start"
+    | "left-end";
+  offset?: number; // @default 8
+  withArrow?: boolean; // @default false
   arrowSize?: number;
-  width?: number | 'target';                     // @default 'target'
+  width?: number | "target"; // @default 'target'
   shadow?: PrismuiShadow;
   radius?: PrismuiRadius;
   transitionProps?: TransitionProps;
-  closeOnClickOutside?: boolean;                 // @default true
-  closeOnEscape?: boolean;                       // @default true
-  trapFocus?: boolean;                           // @default false
+  closeOnClickOutside?: boolean; // @default true
+  closeOnEscape?: boolean; // @default true
+  trapFocus?: boolean; // @default false
   children: [React.ReactElement, React.ReactElement]; // [Target, Dropdown]
 }
 ```
 
 **实现策略:**
+
 - **简化版定位**: 不使用 floating-ui，手动计算位置
 - 使用 `getBoundingClientRect()` 获取 target 位置
 - Portal 渲染 dropdown
@@ -477,6 +517,7 @@ export interface PopoverProps {
 - 监听 window resize/scroll 更新位置
 
 **文件:**
+
 - `components/Popover/Popover.tsx`
 - `components/Popover/PopoverTarget.tsx`
 - `components/Popover/PopoverDropdown.tsx`
@@ -487,6 +528,7 @@ export interface PopoverProps {
 - `components/Popover/index.ts`
 
 **验收标准:**
+
 - [ ] Popover 正确定位到 target
 - [ ] 12 种 position 正常工作
 - [ ] withArrow 显示箭头
@@ -500,24 +542,27 @@ export interface PopoverProps {
 **目标:** 简单文本提示，基于 Popover
 
 **API 设计:**
+
 ```typescript
 export interface TooltipProps {
   label: React.ReactNode;
-  position?: PopoverProps['position'];           // @default 'top'
-  offset?: number;                               // @default 5
-  withArrow?: boolean;                           // @default true
-  openDelay?: number;                            // @default 0
-  closeDelay?: number;                           // @default 0
+  position?: PopoverProps["position"]; // @default 'top'
+  offset?: number; // @default 5
+  withArrow?: boolean; // @default true
+  openDelay?: number; // @default 0
+  closeDelay?: number; // @default 0
   children: React.ReactElement;
 }
 ```
 
 **实现策略:**
+
 - 内部使用 Popover
 - 默认 hover 触发
 - 简化的 API (只保留常用 props)
 
 **文件:**
+
 - `components/Tooltip/Tooltip.tsx`
 - `components/Tooltip/Tooltip.module.css`
 - `components/Tooltip/Tooltip.test.tsx` (~15 tests)
@@ -525,6 +570,7 @@ export interface TooltipProps {
 - `components/Tooltip/index.ts`
 
 **验收标准:**
+
 - [ ] Tooltip hover 显示
 - [ ] openDelay/closeDelay 正常工作
 - [ ] 15 tests pass, tsc clean
@@ -538,6 +584,7 @@ export interface TooltipProps {
 **目标:** 搭建 Next.js + Nextra 文档站点
 
 **任务:**
+
 - [ ] 创建 `apps/docs` Next.js 项目 (App Router)
 - [ ] 安装 Nextra (`nextra`, `nextra-theme-docs`)
 - [ ] 配置 `next.config.js` + `theme.config.tsx`
@@ -546,6 +593,7 @@ export interface TooltipProps {
 - [ ] 配置 Tailwind CSS (用于文档站点自身样式)
 
 **文件结构:**
+
 ```
 apps/docs/
 ├── app/
@@ -571,12 +619,14 @@ apps/docs/
 **目标:** 自动生成 props 表格
 
 **任务:**
+
 - [ ] 编写 TypeScript 类型提取脚本
 - [ ] 生成 props 表格组件 `<PropsTable />`
 - [ ] 为每个组件创建 MDX 文档页面
 - [ ] 添加 live demo 组件 `<ComponentDemo />`
 
 **示例页面结构:**
+
 ```mdx
 # Button
 
@@ -601,6 +651,7 @@ import { Button } from '@prismui/core';
 ## Examples
 
 ### Variants
+
 ...
 ```
 
@@ -611,6 +662,7 @@ import { Button } from '@prismui/core';
 **目标:** 编写主题定制教程
 
 **任务:**
+
 - [ ] Getting Started 页面
 - [ ] Theme 概念解释
 - [ ] Color System 文档
@@ -623,22 +675,22 @@ import { Button } from '@prismui/core';
 
 ## 6. 时间线估算
 
-| Phase | Component | Duration | Cumulative |
-|-------|-----------|----------|------------|
-| A1 | Text | 1 session | 1 |
-| A2 | Title | 1 session | 2 |
-| A3 | Anchor | 1 session | 3 |
-| B1 | Transition | 1 session | 4 |
-| B2 | Alert | 1 session | 5 |
-| B3 | Badge | 1 session | 6 |
-| B4 | Toast | 1 session | 7 |
-| C1 | Overlay | 0.5 session | 7.5 |
-| C2 | Modal | 1.5 sessions | 9 |
-| C3 | Popover | 1 session | 10 |
-| C4 | Tooltip | 0.5 session | 10.5 |
-| D1 | Docs Setup | 1 session | 11.5 |
-| D2 | API Docs | 1 session | 12.5 |
-| D3 | Theme Guide | 1 session | 13.5 |
+| Phase | Component   | Duration     | Cumulative |
+| ----- | ----------- | ------------ | ---------- |
+| A1    | Text        | 1 session    | 1          |
+| A2    | Title       | 1 session    | 2          |
+| A3    | Anchor      | 1 session    | 3          |
+| B1    | Transition  | 1 session    | 4          |
+| B2    | Alert       | 1 session    | 5          |
+| B3    | Badge       | 1 session    | 6          |
+| B4    | Toast       | 1 session    | 7          |
+| C1    | Overlay     | 0.5 session  | 7.5        |
+| C2    | Modal       | 1.5 sessions | 9          |
+| C3    | Popover     | 1 session    | 10         |
+| C4    | Tooltip     | 0.5 session  | 10.5       |
+| D1    | Docs Setup  | 1 session    | 11.5       |
+| D2    | API Docs    | 1 session    | 12.5       |
+| D3    | Theme Guide | 1 session    | 13.5       |
 
 **总计:** 12-16 sessions (Phase D 可选)
 
@@ -646,12 +698,12 @@ import { Button } from '@prismui/core';
 
 ## 7. 测试目标
 
-| Phase | Components | Estimated Tests |
-|-------|------------|-----------------|
-| A | Text, Title, Anchor | ~40 |
-| B | Transition, Alert, Badge, Toast | ~80 |
-| C | Overlay, Modal, Popover, Tooltip | ~70 |
-| **Total** | **11 components** | **~190** |
+| Phase     | Components                       | Estimated Tests |
+| --------- | -------------------------------- | --------------- |
+| A         | Text, Title, Anchor              | ~40             |
+| B         | Transition, Alert, Badge, Toast  | ~80             |
+| C         | Overlay, Modal, Popover, Tooltip | ~70             |
+| **Total** | **11 components**                | **~190**        |
 
 **累计测试:** 707 (Stage-3) + 190 (Stage-4) = **897 tests**
 
@@ -659,20 +711,20 @@ import { Button } from '@prismui/core';
 
 ## 8. 风险与缓解
 
-| 风险 | 缓解措施 |
-|------|----------|
-| Popover 定位复杂度高 | 先实现简化版，后续可引入 floating-ui |
-| Modal focus trap 实现困难 | 参考 Mantine 实现，先做简化版 |
-| Toast 状态管理复杂 | 使用 Context + useReducer，避免外部库 |
-| 文档站点工具链问题 | 使用成熟的 Nextra，配置简单 |
-| 时间估算不准 | Phase D 可延后，优先完成 A/B/C |
+| 风险                      | 缓解措施                              |
+| ------------------------- | ------------------------------------- |
+| Popover 定位复杂度高      | 先实现简化版，后续可引入 floating-ui  |
+| Modal focus trap 实现困难 | 参考 Mantine 实现，先做简化版         |
+| Toast 状态管理复杂        | 使用 Context + useReducer，避免外部库 |
+| 文档站点工具链问题        | 使用成熟的 Nextra，配置简单           |
+| 时间估算不准              | Phase D 可延后，优先完成 A/B/C        |
 
 ---
 
 ## 9. 下一步行动
 
 1. **立即开始:** Phase A1 (Text Component)
-2. **准备工作:** 
+2. **准备工作:**
    - 复习 Stage-2/3 的 factory/useStyles 模式
    - 确认 variantColorResolver 可用
    - 准备 Storybook 环境
