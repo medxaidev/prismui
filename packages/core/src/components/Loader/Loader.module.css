@@ -1,0 +1,65 @@
+/* ------------------------------------------------------------------ */
+/* Loader — Circular spinner (Minimals / MUI CircularProgress style)  */
+/* ------------------------------------------------------------------ */
+
+.root {
+  --loader-size-xs: 18px;
+  --loader-size-sm: 22px;
+  --loader-size-md: 36px;
+  --loader-size-lg: 44px;
+  --loader-size-xl: 58px;
+  --loader-size: var(--loader-size-md);
+  --loader-color: currentColor;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--loader-size);
+  height: var(--loader-size);
+  flex-shrink: 0;
+}
+
+/* ---- SVG container: rotates continuously ---- */
+@keyframes loader-rotate {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+.spinner {
+  width: var(--loader-size);
+  height: var(--loader-size);
+  animation: loader-rotate 1.4s linear infinite;
+}
+
+/* ---- Circle stroke: dash chasing animation (Minimals style) ---- */
+@keyframes loader-dash {
+  0% {
+    stroke-dasharray: 1px, 200px;
+    stroke-dashoffset: 0;
+  }
+  50% {
+    stroke-dasharray: 100px, 200px;
+    stroke-dashoffset: -15px;
+  }
+  100% {
+    stroke-dasharray: 100px, 200px;
+    stroke-dashoffset: -125px;
+  }
+}
+
+.circle {
+  stroke: var(--loader-color);
+  stroke-dasharray: 80px, 200px;
+  stroke-dashoffset: 0;
+  stroke-linecap: round;
+  animation: loader-dash 1.4s ease-in-out infinite;
+  cx: 44;
+  cy: 44;
+  r: 20.2;
+  fill: none;
+  stroke-width: 3.6;
+}

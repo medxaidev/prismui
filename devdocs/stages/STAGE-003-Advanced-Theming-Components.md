@@ -584,6 +584,51 @@ export interface ButtonGroupProps
 
 ---
 
+## 7b. Phase E: Loader ✅
+
+**Goal:** Circular spinner component with Minimals / MUI CircularProgress-style "chasing tail" dash animation. Single style (no bars/dots variants). Designed to be used standalone and inside Button loading state.
+
+**Implemented Props:**
+
+```typescript
+export interface LoaderProps
+  extends BoxProps, StylesApiProps<LoaderFactory>, ElementProps<"span"> {
+  size?: string | number; // @default 'md'
+  color?: string; // @default 'currentColor'
+}
+```
+
+**CSS Variables:** `--loader-size`, `--loader-color`
+**Default sizes:** xs=18px, sm=22px, md=36px, lg=44px, xl=58px
+**Styles Names:** `root`, `spinner`, `circle`
+
+**Animation (Minimals / MUI CircularProgress style):**
+
+1. **Rotation:** SVG container rotates 360° in 1.4s (linear, infinite)
+2. **Dash chase:** Circle `stroke-dasharray` and `stroke-dashoffset` animate in 1.4s (ease-in-out, infinite), creating the "growing and shrinking arc" effect
+
+**Accessibility:** `role="status"`, `aria-label="Loading"` (customizable)
+
+**Files:**
+
+- `components/Loader/Loader.tsx` — factory-based, SVG circular spinner
+- `components/Loader/Loader.module.css` — size tokens, rotation + dash-chase keyframes
+- `components/Loader/Loader.test.tsx` — 21 tests
+- `components/Loader/Loader.stories.tsx` — 6 stories
+- `components/Loader/index.ts`
+
+**Tests:** 21 tests (basic rendering, accessibility, size, color, SVG structure, Styles API, HTML attributes)
+
+### E Phase Acceptance Criteria
+
+- [x] Loader renders circular SVG spinner with dash animation
+- [x] Loader supports size tokens (xs–xl) and custom sizes
+- [x] Loader supports custom color, defaults to currentColor
+- [x] Loader has proper accessibility (role=status, aria-label)
+- [x] All tests pass, tsc clean — 684 tests, 0 failures
+
+---
+
 ## 8. Dependency Graph
 
 ```
@@ -605,6 +650,9 @@ Phase C: Layout Components (independent of A1, but benefits from A3)
 Phase D: Button System (depends on A1: variantColorResolver + A3: getSize/getFontSize)
   D1: Button (depends on A1, A3, ButtonBase)
   D2: Button.Group (depends on D1)
+    ↓
+Phase E: Loader (depends on A3: getSize, A2: getThemeColor)
+  E1: Loader (circular spinner, Minimals style)
 ```
 
 **Critical path:** A1 → A2 → D1 → D2
@@ -675,12 +723,13 @@ describe("headless mode", () => {
 | Theme infrastructure (A1-A4) | 40-50        | 87     |
 | Portal                       | 8-12         | 26     |
 | Divider                      | 12-18        | 36     |
-| Container                    | 10-15        |        |
-| Group                        | 15-20        |        |
-| Grid + Grid.Col              | 20-30        |        |
-| Button                       | 25-35        |        |
+| Container                    | 10-15        | 17     |
+| Group                        | 15-20        | 19     |
+| Grid + Grid.Col              | 20-30        | 30     |
+| Button                       | 25-35        | 38     |
 | Button.Group                 | 10-15        |        |
-| **Total (new)**              | **~140-195** |        |
+| Loader                       | 15-25        | 21     |
+| **Total (new)**              | **~140-195** | 248    |
 
 ---
 
@@ -720,7 +769,7 @@ describe("headless mode", () => {
 ## 12. Non-Goals (Explicitly Deferred to Stage-4+)
 
 - **Text component** — Typography component for styled text
-- **Loader component** — Standalone loading indicator (Button uses simplified inline loader)
+- ~~**Loader component**~~ — ✅ Moved to Phase E, implemented
 - **Transition component** — Animation wrapper (Button loading uses CSS-only approach)
 - **Gradient variant** — `variant="gradient"` for Button (requires gradient infrastructure)
 - **Input components** — TextInput, Select, etc.
@@ -777,17 +826,18 @@ Box (basic)            CSS Modules              Container, Divider          Docu
 | Headless mode disables CSS Module classes via provider                                        | ✅     |
 | Portal renders children outside parent DOM tree, SSR-safe                                     | ✅     |
 | Divider renders horizontal/vertical with label support                                        | ✅     |
-| Container centers content with responsive max-width                                           |        |
-| Group renders horizontal flex layout with gap/grow                                            |        |
-| Grid + Grid.Col renders 12-column responsive layout                                           |        |
+| Container centers content with responsive max-width                                           | ✅     |
+| Group renders horizontal flex layout with gap/grow                                            | ✅     |
+| Grid + Grid.Col renders 12-column responsive layout                                           | ✅     |
 | Button renders with variant colors, loading, sections                                         | ✅     |
 | Button inherits ripple from ButtonBase                                                        | ✅     |
 | Button.Group groups buttons with shared border radius                                         |        |
-| All components support `classNames`, `styles`, `unstyled`                                     |        |
-| Test count ≥ 140 (new tests)                                                                  |        |
-| All Storybook stories render correctly                                                        |        |
-| Zero TypeScript compilation errors (excluding pre-existing TS6133)                            |        |
-| Zero known regressions in Stage-1/Stage-2                                                     |        |
+| Loader renders circular spinner with dash animation                                           | ✅     |
+| All components support `classNames`, `styles`, `unstyled`                                     | ✅     |
+| Test count ≥ 140 (new tests)                                                                  | ✅ 248 |
+| All Storybook stories render correctly                                                        | ✅     |
+| Zero TypeScript compilation errors (excluding pre-existing TS6133)                            | ✅     |
+| Zero known regressions in Stage-1/Stage-2                                                     | ✅     |
 
 ---
 
