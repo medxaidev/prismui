@@ -60,3 +60,10 @@ export type {
   OverlayStylesNames,
   OverlayCssVariables,
 } from './Overlay';
+
+export { VisuallyHidden } from './VisuallyHidden';
+export type {
+  VisuallyHiddenProps,
+  VisuallyHiddenFactory,
+  VisuallyHiddenStylesNames,
+} from './VisuallyHidden';

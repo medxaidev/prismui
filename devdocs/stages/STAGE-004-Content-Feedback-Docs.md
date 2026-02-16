@@ -74,6 +74,13 @@ Phase D: Documentation Site
 | **Toast**      | system  | Notification toasts with auto-dismiss, stacking, positioning                 |
 | **Badge**      | factory | Small label/tag with variant colors                                          |
 
+### Utility Additions
+
+| Item               | Type    | Status | Description                                                      |
+| ------------------ | ------- | ------ | ---------------------------------------------------------------- |
+| **VisuallyHidden** | factory | ✅     | sr-only component for accessibility (screen reader visible only) |
+| **useMergedRef**   | hook    | ✅     | Merge multiple refs into one callback ref (for Modal etc.)       |
+
 ### Phase C: Overlay
 
 | Component   | Type               | Description                                                         |
@@ -114,13 +121,14 @@ Documentation Site ← all components
 
 ## 6. Estimated Scope
 
-| Category          | Estimated Components | Estimated Tests | Actual Tests                    |
-| ----------------- | -------------------- | --------------- | ------------------------------- |
-| Typography (A)    | 2 (Text+Anchor)      | ~65             | 80 ✅                           |
-| Feedback (B)      | 4                    | ~80             | 154 (Transition 113 + Alert 41) |
-| Overlay (C)       | 4                    | ~60             | 29 (Overlay 29)                 |
-| Documentation (D) | —                    | —               |                                 |
-| **Total**         | **10**               | **~205**        | **263**                         |
+| Category          | Estimated Components | Estimated Tests | Actual Tests                            |
+| ----------------- | -------------------- | --------------- | --------------------------------------- |
+| Typography (A)    | 2 (Text+Anchor)      | ~65             | 80 ✅                                   |
+| Feedback (B)      | 4                    | ~80             | 154 (Transition 113 + Alert 41)         |
+| Utility Additions | 2                    | —               | 22 (VisuallyHidden 9 + useMergedRef 13) |
+| Overlay (C)       | 4                    | ~60             | 29 (Overlay 29)                         |
+| Documentation (D) | —                    | —               |                                         |
+| **Total**         | **12**               | **~205**        | **285**                                 |
 
 ---
 

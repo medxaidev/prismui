@@ -4,3 +4,5 @@ export type {
   UseTransitionInput,
   UseTransitionOutput,
 } from './use-transition';
+
+export { useMergedRef, mergeRefs, assignRef } from './use-merged-ref';

@@ -453,6 +453,76 @@ toast.warning(message, options);
 
 ---
 
+## 3.5 Utility Additions (inserted)
+
+### VisuallyHidden Component ✅
+
+**目标:** 无障碍辅助组件，视觉隐藏但对屏幕阅读器可见 (Mantine-inspired)
+
+**实现的 API:**
+
+```typescript
+export interface VisuallyHiddenProps
+  extends
+    BoxProps,
+    StylesApiProps<VisuallyHiddenFactory>,
+    ElementProps<"div"> {}
+```
+
+**关键特性:**
+
+- `factory` 组件，默认渲染 `<span>`
+- 使用标准 sr-only CSS 技巧 (clip, 1px, overflow hidden)
+- 用于 Modal close button label、icon-only button label 等无障碍场景
+
+**文件:**
+
+- `components/VisuallyHidden/VisuallyHidden.tsx`
+- `components/VisuallyHidden/VisuallyHidden.module.css`
+- `components/VisuallyHidden/VisuallyHidden.test.tsx` — **9 tests**
+- `components/VisuallyHidden/index.ts`
+
+**验收标准:**
+
+- [x] 渲染为 span，视觉隐藏但屏幕阅读器可访问
+- [x] 支持 Styles API (className, style, ref)
+- [x] 9 tests pass, tsc clean
+
+---
+
+### useMergedRef Hook ✅
+
+**目标:** 合并多个 ref 的 hook，Modal 等组件需要同时支持内部 ref 和用户 ref
+
+**实现的 API:**
+
+```typescript
+function assignRef<T>(ref: PossibleRef<T>, value: T | null): void;
+function mergeRefs<T>(...refs: PossibleRef<T>[]): (node: T | null) => void;
+function useMergedRef<T>(...refs: PossibleRef<T>[]): (node: T | null) => void;
+```
+
+**关键特性:**
+
+- `assignRef` — 安全地赋值给 object ref 或 function ref
+- `mergeRefs` — 合并多个 ref 为单个 callback ref
+- `useMergedRef` — useCallback 包装的 mergeRefs，用于组件内部
+- 支持 undefined/null ref，不会报错
+
+**文件:**
+
+- `hooks/use-merged-ref.ts`
+- `hooks/use-merged-ref.test.ts` — **13 tests**
+
+**验收标准:**
+
+- [x] assignRef 支持 object ref 和 function ref
+- [x] mergeRefs 合并多个 ref
+- [x] useMergedRef 返回 memoized callback ref
+- [x] 13 tests pass, tsc clean
+
+---
+
 ## 4. Phase C: Overlay Components (3 sessions)
 
 ### C1: Overlay Component ✅ (0.5 session)
