@@ -100,6 +100,9 @@ export type ButtonFactory = PolymorphicFactory<{
   stylesNames: ButtonStylesNames;
   vars: ButtonCssVariables;
   variant: ButtonVariant;
+  staticComponents: {
+    Group: typeof import('./ButtonGroup').ButtonGroup;
+  };
 }>;
 
 // ---------------------------------------------------------------------------

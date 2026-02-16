@@ -2,8 +2,9 @@ import React from 'react';
 import { render, screen } from '@testing-library/react';
 import { describe, it, expect } from 'vitest';
 import { PrismuiProvider } from '../../core/PrismuiProvider/PrismuiProvider';
-import { ButtonGroup } from './ButtonGroup';
-import { Button } from './Button';
+import { Button } from './index';
+
+const ButtonGroup = Button.Group;
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -34,7 +35,7 @@ describe('ButtonGroup — basic rendering', () => {
   });
 
   it('has correct displayName', () => {
-    expect(ButtonGroup.displayName).toBe('@prismui/core/ButtonGroup');
+    expect(Button.Group.displayName).toBe('@prismui/core/ButtonGroup');
   });
 
   it('forwards ref', () => {

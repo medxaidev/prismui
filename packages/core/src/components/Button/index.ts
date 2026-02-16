@@ -1,4 +1,12 @@
-export { Button } from './Button';
+import { Button as _Button } from './Button';
+import { ButtonGroup } from './ButtonGroup';
+
+// Attach ButtonGroup as Button.Group (Mantine pattern)
+const Button = Object.assign(_Button, {
+  Group: ButtonGroup,
+});
+
+export { Button };
 export type {
   ButtonProps,
   ButtonFactory,
@@ -7,7 +15,6 @@ export type {
   ButtonCssVariables,
 } from './Button';
 
-export { ButtonGroup } from './ButtonGroup';
 export type {
   ButtonGroupProps,
   ButtonGroupFactory,
