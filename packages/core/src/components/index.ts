@@ -67,3 +67,6 @@ export type {
   VisuallyHiddenFactory,
   VisuallyHiddenStylesNames,
 } from './VisuallyHidden';
+
+export { FocusTrap, FocusTrapInitialFocus } from './FocusTrap';
+export type { FocusTrapProps } from './FocusTrap';

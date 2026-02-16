@@ -523,6 +523,75 @@ function useMergedRef<T>(...refs: PossibleRef<T>[]): (node: T | null) => void;
 
 ---
 
+### FocusTrap System ✅
+
+**目标:** 焦点陷阱系统，Modal 等组件的核心依赖 (Mantine-inspired)
+
+**新增 Utilities:**
+
+| Utility                   | 文件                                                         | 说明                                                            |
+| ------------------------- | ------------------------------------------------------------ | --------------------------------------------------------------- |
+| `isElement`               | `utils/is-element/is-element.ts`                             | 判断 React children 是否为有效元素（排除 Fragment、null、数组） |
+| `getSingleElementChild`   | `utils/get-single-element-child/get-single-element-child.ts` | 从 children 中提取单个 React 元素                               |
+| `tabbable` / `focusable`  | `utils/tabbable/tabbable.ts`                                 | 判断 DOM 元素是否可聚焦/可 Tab                                  |
+| `findTabbableDescendants` | `utils/tabbable/tabbable.ts`                                 | 查找容器内所有可 Tab 的后代元素                                 |
+| `scopeTab`                | `utils/tabbable/scope-tab.ts`                                | 将 Tab 键限制在容器内循环（支持 Shift+Tab、radio group）        |
+
+**新增 Hooks:**
+
+| Hook             | 文件                        | 说明                                                |
+| ---------------- | --------------------------- | --------------------------------------------------- |
+| `useDidUpdate`   | `hooks/use-did-update.ts`   | 类似 useEffect 但跳过首次渲染                       |
+| `useFocusTrap`   | `hooks/use-focus-trap.ts`   | 返回 RefCallback，自动聚焦首个可聚焦元素 + Tab 循环 |
+| `useFocusReturn` | `hooks/use-focus-return.ts` | 记录打开前的 activeElement，关闭时恢复焦点          |
+
+**FocusTrap 组件 API:**
+
+```typescript
+export interface FocusTrapProps {
+  children: any;
+  active?: boolean; // @default true
+  refProp?: string; // @default 'ref'
+  innerRef?: React.ForwardedRef<any>;
+}
+
+// Compound component
+FocusTrap.InitialFocus; // VisuallyHidden with data-autofocus + tabIndex=-1
+```
+
+**关键特性:**
+
+- `useFocusTrap` — 自动聚焦 `[data-autofocus]` 元素，否则聚焦首个可 Tab 元素
+- `scopeTab` — Tab/Shift+Tab 在容器内循环，支持 radio group
+- `useFocusReturn` — 使用 `useDidUpdate` 跳过首次渲染，关闭时延迟恢复焦点
+- `FocusTrap.InitialFocus` — 用于指定初始焦点位置的不可见元素
+- `getSingleElementChild` — 安全提取单个子元素，通过 `cloneElement` 注入 ref
+
+**文件:**
+
+- `utils/is-element/is-element.ts` + test — **9 tests**
+- `utils/get-single-element-child/get-single-element-child.ts` + test — **9 tests**
+- `utils/tabbable/tabbable.ts` + `scope-tab.ts` + test — **15 tests**
+- `hooks/use-did-update.ts` + test — **5 tests**
+- `hooks/use-focus-trap.ts`
+- `hooks/use-focus-return.ts`
+- `components/FocusTrap/FocusTrap.tsx` + test — **16 tests**
+- `components/FocusTrap/index.ts`
+
+**验收标准:**
+
+- [x] isElement 正确判断 React 元素
+- [x] getSingleElementChild 提取单个子元素
+- [x] tabbable/focusable 正确判断 DOM 元素
+- [x] scopeTab 限制 Tab 在容器内循环
+- [x] useFocusTrap 自动聚焦 + Tab 循环
+- [x] useFocusReturn 恢复焦点
+- [x] FocusTrap 组件正确包装子元素
+- [x] FocusTrap.InitialFocus 渲染 data-autofocus 元素
+- [x] 54 tests pass, tsc clean, 1046 total tests
+
+---
+
 ## 4. Phase C: Overlay Components (3 sessions)
 
 ### C1: Overlay Component ✅ (0.5 session)

@@ -76,10 +76,11 @@ Phase D: Documentation Site
 
 ### Utility Additions
 
-| Item               | Type    | Status | Description                                                      |
-| ------------------ | ------- | ------ | ---------------------------------------------------------------- |
-| **VisuallyHidden** | factory | ✅     | sr-only component for accessibility (screen reader visible only) |
-| **useMergedRef**   | hook    | ✅     | Merge multiple refs into one callback ref (for Modal etc.)       |
+| Item               | Type      | Status | Description                                                       |
+| ------------------ | --------- | ------ | ----------------------------------------------------------------- | --- |
+| **VisuallyHidden** | factory   | ✅     | sr-only component for accessibility (screen reader visible only)  |
+| **useMergedRef**   | hook      | ✅     | Merge multiple refs into one callback ref (for Modal etc.)        |
+| **FocusTrap**      | component | ✅     | Focus trap system: useFocusTrap + useFocusReturn + tabbable utils |     |
 
 ### Phase C: Overlay
 
