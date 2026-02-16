@@ -333,7 +333,9 @@ export interface AlertProps
 
 ---
 
-### B3: Badge Component (1 session)
+### B3: Badge Component ⏸️ (DEFERRED)
+
+**状态:** 延期至后续阶段，设计待确认
 
 **目标:** 小标签/徽章组件
 
@@ -382,7 +384,9 @@ export interface BadgeProps
 
 ---
 
-### B4: Toast System (1 session)
+### B4: Toast System ⏸️ (DEFERRED)
+
+**状态:** 延期至后续阶段，设计待确认
 
 **目标:** 通知 Toast 系统，支持 auto-dismiss, stacking, positioning
 
@@ -451,31 +455,59 @@ toast.warning(message, options);
 
 ## 4. Phase C: Overlay Components (3 sessions)
 
-### C1: Overlay Component (0.5 session)
+### C1: Overlay Component ✅ (0.5 session)
 
-**目标:** 半透明背景遮罩
+**目标:** 半透明背景遮罩 (Mantine-inspired)
 
-**API 设计:**
+**实现的 API:**
 
 ```typescript
 export interface OverlayProps
   extends BoxProps, StylesApiProps<OverlayFactory>, ElementProps<"div"> {
-  opacity?: number; // @default 0.6
+  backgroundOpacity?: number; // @default 0.6
   color?: string; // @default '#000'
-  blur?: number; // backdrop-filter blur
-  fixed?: boolean; // position fixed
-  center?: boolean; // center children
-  zIndex?: number;
+  blur?: number | string; // backdrop-filter blur @default 0
+  gradient?: string; // CSS gradient, overrides color
+  fixed?: boolean; // position fixed @default false
+  center?: boolean; // center children @default false
+  zIndex?: number | string; // @default 200
+  radius?: PrismuiRadius; // border-radius @default 0
+  children?: React.ReactNode;
 }
 ```
+
+**CSS Variables:** `--overlay-bg`, `--overlay-filter`, `--overlay-radius`, `--overlay-z-index`
+
+**Styles Names:** `root`
+
+**关键特性:**
+
+- `polymorphicFactory` — 支持 `component` prop
+- `backgroundOpacity` + `color` → rgba background
+- `gradient` prop 覆盖 `color` prop
+- `blur` → backdrop-filter (frosted glass effect)
+- `fixed` → position: fixed (covers viewport)
+- `center` → flexbox center children
+- `radius` → border-radius (for card overlays)
+- Simple rgba converter for hex colors
 
 **文件:**
 
 - `components/Overlay/Overlay.tsx`
 - `components/Overlay/Overlay.module.css`
-- `components/Overlay/Overlay.test.tsx` (~10 tests)
-- `components/Overlay/Overlay.stories.tsx` (~5 stories)
+- `components/Overlay/Overlay.test.tsx` — **29 tests**
+- `components/Overlay/Overlay.stories.tsx` — **8 stories**
 - `components/Overlay/index.ts`
+
+**验收标准:**
+
+- [x] Overlay 支持 absolute 和 fixed positioning
+- [x] backgroundOpacity + color 正确生成 rgba
+- [x] gradient prop 覆盖 color
+- [x] blur 生成 backdrop-filter
+- [x] center 使用 flexbox 居中 children
+- [x] radius 支持命名和数值
+- [x] 29 tests pass, tsc clean, 970 total tests
 
 ---
 

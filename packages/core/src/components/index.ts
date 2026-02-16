@@ -52,3 +52,11 @@ export type {
   AlertVariant,
   AlertSeverity,
 } from './Alert';
+
+export { Overlay } from './Overlay';
+export type {
+  OverlayProps,
+  OverlayFactory,
+  OverlayStylesNames,
+  OverlayCssVariables,
+} from './Overlay';

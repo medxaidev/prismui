@@ -37,11 +37,11 @@ Phase A: Typography System (ADR-010: Unified Text + Title)
 Phase B: Feedback Components
   ├── B1: Transition System (Transition + TransitionGroup + SwitchTransition) ✅
   ├── B2: Alert (severity + variant + description + actions + close) ✅
-  ├── B4: Toast / Notification system
-  └── B5: Badge
+  ├── B3: Badge ⏸️ (DEFERRED)
+  └── B4: Toast / Notification system ⏸️ (DEFERRED)
 
 Phase C: Overlay Components
-  ├── C1: Overlay (backdrop)
+  ├── C1: Overlay (backdrop with blur, gradient, center) ✅
   ├── C2: Modal (dialog, uses Portal + Overlay + Transition)
   ├── C3: Popover (floating content, uses Portal)
   └── C4: Tooltip (simple popover variant)
@@ -76,12 +76,12 @@ Phase D: Documentation Site
 
 ### Phase C: Overlay
 
-| Component   | Type    | Description                                                 |
-| ----------- | ------- | ----------------------------------------------------------- |
-| **Overlay** | factory | Semi-transparent backdrop                                   |
-| **Modal**   | factory | Dialog window (Portal + Overlay + Transition + focus trap)  |
-| **Popover** | factory | Floating content anchored to trigger (Portal + positioning) |
-| **Tooltip** | factory | Simple text popover on hover/focus                          |
+| Component   | Type               | Description                                                         |
+| ----------- | ------------------ | ------------------------------------------------------------------- |
+| **Overlay** | polymorphicFactory | ✅ Backdrop with blur, gradient, center, fixed/absolute positioning |
+| **Modal**   | factory            | Dialog window (Portal + Overlay + Transition + focus trap)          |
+| **Popover** | factory            | Floating content anchored to trigger (Portal + positioning)         |
+| **Tooltip** | factory            | Simple text popover on hover/focus                                  |
 
 ### Phase D: Documentation Site
 
@@ -118,9 +118,9 @@ Documentation Site ← all components
 | ----------------- | -------------------- | --------------- | ------------------------------- |
 | Typography (A)    | 2 (Text+Anchor)      | ~65             | 80 ✅                           |
 | Feedback (B)      | 4                    | ~80             | 154 (Transition 113 + Alert 41) |
-| Overlay (C)       | 4                    | ~60             |                                 |
+| Overlay (C)       | 4                    | ~60             | 29 (Overlay 29)                 |
 | Documentation (D) | —                    | —               |                                 |
-| **Total**         | **10**               | **~205**        | **234**                         |
+| **Total**         | **10**               | **~205**        | **263**                         |
 
 ---
 
