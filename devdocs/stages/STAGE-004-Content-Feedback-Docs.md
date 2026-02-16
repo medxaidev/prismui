@@ -36,7 +36,7 @@ Phase A: Typography System (ADR-010: Unified Text + Title)
 
 Phase B: Feedback Components
   ├── B1: Transition System (Transition + TransitionGroup + SwitchTransition) ✅
-  ├── B2: Alert (info/success/warning/error banners)
+  ├── B2: Alert (severity + variant + description + actions + close) ✅
   ├── B4: Toast / Notification system
   └── B5: Badge
 
@@ -70,7 +70,7 @@ Phase D: Documentation Site
 | -------------- | ------- | ---------------------------------------------------------------------------- |
 | **Loader**     | factory | Spinning/pulsing loading indicator (oval, dots, bars variants)               |
 | **Transition** | utility | ✅ Transition + TransitionGroup + SwitchTransition, 19 presets (translate3d) |
-| **Alert**      | factory | Banner with icon, title, message, close button. Uses `variantColorResolver`  |
+| **Alert**      | factory | ✅ 4 severities × 4 variants, description, actions, built-in icons, close    |
 | **Toast**      | system  | Notification toasts with auto-dismiss, stacking, positioning                 |
 | **Badge**      | factory | Small label/tag with variant colors                                          |
 
@@ -114,13 +114,13 @@ Documentation Site ← all components
 
 ## 6. Estimated Scope
 
-| Category          | Estimated Components | Estimated Tests | Actual Tests     |
-| ----------------- | -------------------- | --------------- | ---------------- |
-| Typography (A)    | 2 (Text+Anchor)      | ~65             | 80 ✅            |
-| Feedback (B)      | 4                    | ~80             | 113 (Transition) |
-| Overlay (C)       | 4                    | ~60             |                  |
-| Documentation (D) | —                    | —               |                  |
-| **Total**         | **10**               | **~205**        | **193**          |
+| Category          | Estimated Components | Estimated Tests | Actual Tests                    |
+| ----------------- | -------------------- | --------------- | ------------------------------- |
+| Typography (A)    | 2 (Text+Anchor)      | ~65             | 80 ✅                           |
+| Feedback (B)      | 4                    | ~80             | 154 (Transition 113 + Alert 41) |
+| Overlay (C)       | 4                    | ~60             |                                 |
+| Documentation (D) | —                    | —               |                                 |
+| **Total**         | **10**               | **~205**        | **234**                         |
 
 ---
 

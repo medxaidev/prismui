@@ -265,56 +265,71 @@ theme.transitions = {
 
 ---
 
-### B2: Alert Component (1 session)
+### B2: Alert Component ✅ (1 session)
 
-**目标:** 信息横幅组件，支持 icon, title, message, close button
+**目标:** 信息横幅组件，支持 severity, icon, title, description, actions, close button
 
-**API 设计:**
+**实现的 API:**
 
 ```typescript
 export interface AlertProps
-  extends BoxProps, StylesApiProps<AlertFactory>, ElementProps<"div"> {
-  variant?: PrismuiVariant; // @default 'soft'
-  color?: string; // @default 'primary'
+  extends BoxProps, StylesApiProps<AlertFactory>, ElementProps<"div", "title"> {
+  variant?: "solid" | "soft" | "outlined" | "plain"; // @default 'soft'
+  severity?: "info" | "success" | "warning" | "error"; // @default 'info'
+  color?: string; // override severity color
   title?: React.ReactNode;
-  icon?: React.ReactNode;
+  description?: React.ReactNode; // rendered below title
+  icon?: React.ReactNode | false; // false to hide default icon
+  actions?: React.ReactNode; // action buttons below description
   withCloseButton?: boolean; // @default false
   onClose?: () => void;
-  radius?: PrismuiRadius;
+  closeButtonLabel?: string; // @default 'Close'
+  radius?: PrismuiRadius; // @default 'md'
 }
 ```
 
-**CSS Variables:**
+**CSS Variables:** `--alert-radius`, `--alert-bg`, `--alert-color`, `--alert-bd`, `--alert-icon-color`
 
-```
---alert-bg, --alert-color, --alert-bd, --alert-radius
-```
+**Styles Names:** `root`, `wrapper`, `icon`, `body`, `title`, `description`, `actions`, `closeButton`
 
-**Styles Names:** `root`, `wrapper`, `icon`, `body`, `title`, `message`, `closeButton`
+**内置 Icons (src/icons/):**
+
+- `CloseIcon` — stroke outline X (14px in close button)
+- `InfoIcon` — filled info circle (24px)
+- `SuccessIcon` — filled check circle (24px)
+- `WarningIcon` — filled alert triangle (24px)
+- `ErrorIcon` — filled info hexagon (24px)
 
 **关键特性:**
 
-- 使用 `variantColorResolver` 解析颜色
-- 默认 icon 根据 color 自动选择 (info/success/warning/error)
-- closeButton 使用 ButtonBase
-- 支持 4 种 variant (solid/soft/outlined/plain)
+- `severity` 自动映射 color + default icon
+- `variantColorResolver` 解析 4 种 variant (solid/soft/outlined/plain)
+- Close button 继承 ButtonBase (20×20)，icon 14px
+- Alert 提示 icon 大小 24px
+- Description 显示效果 (opacity: 0.85, smaller font)
+- Actions 区域支持自定义按钮
+- 支持 children 作为 description 内容
 
 **文件:**
 
+- `icons/CloseIcon.tsx`, `InfoIcon.tsx`, `SuccessIcon.tsx`, `WarningIcon.tsx`, `ErrorIcon.tsx`, `index.ts`
 - `components/Alert/Alert.tsx`
 - `components/Alert/Alert.module.css`
-- `components/Alert/Alert.test.tsx` (~20 tests)
-- `components/Alert/Alert.stories.tsx` (~10 stories)
+- `components/Alert/Alert.test.tsx` — **41 tests**
+- `components/Alert/Alert.stories.tsx` — **9 stories**
 - `components/Alert/index.ts`
 
 **验收标准:**
 
-- [ ] Alert 支持所有 4 种 variant
-- [ ] variantColorResolver 正确解析颜色
-- [ ] title + message 布局正确
-- [ ] icon 正确显示
-- [ ] closeButton 点击触发 onClose
-- [ ] 20 tests pass, tsc clean
+- [x] Alert 支持所有 4 种 variant (solid/soft/outlined/plain)
+- [x] 4 种 severity (info/success/warning/error) 自动映射颜色和图标
+- [x] variantColorResolver 正确解析颜色
+- [x] title + description 布局正确
+- [x] icon 正确显示 (24px)，支持自定义和隐藏
+- [x] closeButton 继承 ButtonBase (20×20)，点击触发 onClose
+- [x] actions 区域正常工作
+- [x] 内置 icons 在 src/icons/ 目录
+- [x] 41 tests pass, tsc clean, 941 total tests
 
 ---
 
