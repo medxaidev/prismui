@@ -24,3 +24,21 @@ export type {
   AnchorStylesNames,
   AnchorCssVariables,
 } from './Anchor';
+
+export {
+  Transition,
+  TransitionGroup,
+  SwitchTransition,
+  transitions as PRISMUI_TRANSITIONS,
+  getTransitionStyles,
+} from './Transition';
+export type {
+  TransitionProps,
+  TransitionOverride,
+  TransitionGroupProps,
+  SwitchTransitionProps,
+  SwitchTransitionMode,
+  PrismuiTransitionStyles,
+  PrismuiTransitionName,
+  PrismuiTransition,
+} from './Transition';

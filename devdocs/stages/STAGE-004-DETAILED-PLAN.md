@@ -160,55 +160,108 @@ export interface AnchorProps
 
 ## 3. Phase B: Feedback Components (4 sessions)
 
-### B1: Transition Component (1 session)
+### B1: Transition System ✅ (1 session)
 
-**目标:** CSS 过渡动画包装器，支持 mount/unmount 动画
+**目标:** 完整的 CSS 过渡动画系统，包含 Transition、TransitionGroup、SwitchTransition
 
-**API 设计:**
+**实现的 API:**
 
 ```typescript
+// --- Transition (render-prop pattern, like Mantine) ---
 export interface TransitionProps {
-  mounted: boolean; // control visibility
-  transition?:
-    | "fade"
-    | "scale"
-    | "slide-up"
-    | "slide-down"
-    | "slide-left"
-    | "slide-right";
-  duration?: number; // @default 250
-  timingFunction?: string; // @default 'ease'
-  keepMounted?: boolean; // keep in DOM when unmounted
+  mounted: boolean;
+  transition?: PrismuiTransitionName | PrismuiTransitionStyles; // @default 'fade'
+  duration?: number; // @default 225 (MUI enteringScreen)
+  exitDuration?: number; // defaults to duration
+  timingFunction?: string; // @default 'cubic-bezier(0.4, 0, 0.2, 1)' (MUI easeInOut)
+  keepMounted?: boolean;
+  enterDelay?: number;
+  exitDelay?: number;
   onEnter?: () => void;
   onEntered?: () => void;
   onExit?: () => void;
   onExited?: () => void;
-  children: React.ReactElement;
+  reduceMotion?: boolean;
+  children: (styles: React.CSSProperties) => React.JSX.Element;
+}
+
+// --- TransitionGroup (react-transition-group inspired, no deps) ---
+export interface TransitionGroupProps {
+  children: React.ReactNode; // children must have unique keys
+  component?: React.ElementType | null; // @default 'div'
+  className?: string;
+  style?: React.CSSProperties;
+}
+
+// --- SwitchTransition (react-transition-group inspired, no deps) ---
+export interface SwitchTransitionProps {
+  mode?: "out-in" | "in-out"; // @default 'out-in'
+  children: React.ReactElement; // single child with unique key
 }
 ```
 
-**实现策略:**
+**19 transition presets (all using translate3d/scale3d for GPU acceleration):**
 
-- 使用 CSS transitions + React state machine
-- 状态: `unmounted` → `entering` → `entered` → `exiting` → `unmounted`
-- 不依赖第三方库 (react-transition-group)
-- 简化版实现，足够支持 Modal/Toast/Popover
+| Category  | Names                                                                                                                | Description                          |
+| --------- | -------------------------------------------------------------------------------------------------------------------- | ------------------------------------ |
+| Placement | top, top-start, top-end, bottom, bottom-start, bottom-end, left, left-start, left-end, right, right-start, right-end | Tooltip/popover style (MUI Minimals) |
+| Generic   | fade, grow, zoom                                                                                                     | Common effects                       |
+| Slide     | slide-up, slide-down, slide-left, slide-right                                                                        | Full-distance slide                  |
+
+**Theme transitions config (MUI-inspired):**
+
+```typescript
+theme.transitions = {
+  duration: {
+    shortest: 150,
+    shorter: 200,
+    short: 250,
+    standard: 300,
+    complex: 375,
+    enteringScreen: 225,
+    leavingScreen: 195,
+  },
+  easing: {
+    easeInOut: "cubic-bezier(0.4,0,0.2,1)",
+    easeOut: "cubic-bezier(0,0,0.2,1)",
+    easeIn: "cubic-bezier(0.4,0,1,1)",
+    sharp: "cubic-bezier(0.4,0,0.6,1)",
+  },
+};
+```
+
+**useTransition hook (core/src/hooks/):**
+
+- State machine: exited → pre-entering → entering → entered → pre-exiting → exiting → exited
+- Double-rAF for browser paint sync (same as Mantine)
+- Supports enterDelay/exitDelay, reduceMotion
+- Lifecycle callbacks: onEnter, onEntered, onExit, onExited
 
 **文件:**
 
-- `components/Transition/Transition.tsx`
-- `components/Transition/Transition.module.css`
-- `components/Transition/Transition.test.tsx` (~18 tests)
-- `components/Transition/Transition.stories.tsx` (~8 stories)
-- `components/Transition/index.ts`
+- `hooks/use-transition.ts` — useTransition hook
+- `hooks/index.ts` — hooks barrel export
+- `components/Transition/transitions.ts` — 19 presets with translate3d/scale3d
+- `components/Transition/get-transition-styles.ts` — status → CSS styles resolver
+- `components/Transition/Transition.tsx` — render-prop Transition component
+- `components/Transition/TransitionGroup.tsx` — list enter/exit animation
+- `components/Transition/SwitchTransition.tsx` — out-in / in-out key-swap animation
+- `components/Transition/index.ts` — barrel export
+- `core/theme/types/transitions.ts` — PrismuiTransitions types
+- Tests: transitions.test.ts (67), get-transition-styles.test.ts (15), Transition.test.tsx (18), TransitionGroup.test.tsx (8), SwitchTransition.test.tsx (5) = **113 tests**
+- Stories: Transition.stories.tsx — **11 stories**
 
 **验收标准:**
 
-- [ ] mounted=true 触发 enter 动画
-- [ ] mounted=false 触发 exit 动画
-- [ ] 所有 transition 类型正常工作
-- [ ] 生命周期回调正确触发
-- [ ] 18 tests pass, tsc clean
+- [x] mounted=true 触发 enter 动画，mounted=false 触发 exit 动画
+- [x] 19 种 transition preset 正常工作 (placement + generic + slide)
+- [x] 所有 transform 使用 translate3d/scale3d (GPU 加速)
+- [x] 生命周期回调正确触发 (onEnter/onEntered/onExit/onExited)
+- [x] TransitionGroup 支持列表动画 (add/remove children)
+- [x] SwitchTransition 支持 out-in / in-out 模式
+- [x] Theme transitions config (duration + easing) 已添加
+- [x] useTransition hook 在 hooks/ 目录
+- [x] 113 tests pass, tsc clean, 900 total tests
 
 ---
 

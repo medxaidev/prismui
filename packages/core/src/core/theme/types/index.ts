@@ -95,3 +95,9 @@ export type {
 
 export type { PrismuiStyle, PrismuiStyleProp } from './prismui-style';
 export type { PrismuiCSSVars } from './prismui-css-vars';
+
+export type {
+  PrismuiTransitionDurations,
+  PrismuiTransitionEasings,
+  PrismuiTransitions,
+} from './transitions';

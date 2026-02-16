@@ -35,8 +35,8 @@ Phase A: Typography System (ADR-010: Unified Text + Title)
   └── A2: Anchor component (styled link, extends Text) ✅
 
 Phase B: Feedback Components
-  ├── B1: Transition (animation wrapper)
-  ├── B3: Alert (info/success/warning/error banners)
+  ├── B1: Transition System (Transition + TransitionGroup + SwitchTransition) ✅
+  ├── B2: Alert (info/success/warning/error banners)
   ├── B4: Toast / Notification system
   └── B5: Badge
 
@@ -66,13 +66,13 @@ Phase D: Documentation Site
 
 ### Phase B: Feedback
 
-| Component      | Type    | Description                                                                 |
-| -------------- | ------- | --------------------------------------------------------------------------- |
-| **Loader**     | factory | Spinning/pulsing loading indicator (oval, dots, bars variants)              |
-| **Transition** | utility | CSS transition wrapper with mount/unmount animation                         |
-| **Alert**      | factory | Banner with icon, title, message, close button. Uses `variantColorResolver` |
-| **Toast**      | system  | Notification toasts with auto-dismiss, stacking, positioning                |
-| **Badge**      | factory | Small label/tag with variant colors                                         |
+| Component      | Type    | Description                                                                  |
+| -------------- | ------- | ---------------------------------------------------------------------------- |
+| **Loader**     | factory | Spinning/pulsing loading indicator (oval, dots, bars variants)               |
+| **Transition** | utility | ✅ Transition + TransitionGroup + SwitchTransition, 19 presets (translate3d) |
+| **Alert**      | factory | Banner with icon, title, message, close button. Uses `variantColorResolver`  |
+| **Toast**      | system  | Notification toasts with auto-dismiss, stacking, positioning                 |
+| **Badge**      | factory | Small label/tag with variant colors                                          |
 
 ### Phase C: Overlay
 
@@ -99,7 +99,7 @@ Phase D: Documentation Site
 ```
 Text ← (standalone, no deps beyond Stage-2) ✅
 Anchor ← Text ✅
-Transition ← (standalone, CSS-only)
+Transition ← (standalone, CSS-only) ✅
 Alert ← variantColorResolver (Stage-3)
 Badge ← variantColorResolver (Stage-3)
 Toast ← Portal (Stage-3) + Transition
@@ -114,13 +114,13 @@ Documentation Site ← all components
 
 ## 6. Estimated Scope
 
-| Category          | Estimated Components | Estimated Tests | Actual Tests |
-| ----------------- | -------------------- | --------------- | ------------ |
-| Typography (A)    | 2 (Text+Anchor)      | ~65             | 80 ✅        |
-| Feedback (B)      | 4                    | ~80             |              |
-| Overlay (C)       | 4                    | ~60             |              |
-| Documentation (D) | —                    | —               |              |
-| **Total**         | **10**               | **~205**        | **54**       |
+| Category          | Estimated Components | Estimated Tests | Actual Tests     |
+| ----------------- | -------------------- | --------------- | ---------------- |
+| Typography (A)    | 2 (Text+Anchor)      | ~65             | 80 ✅            |
+| Feedback (B)      | 4                    | ~80             | 113 (Transition) |
+| Overlay (C)       | 4                    | ~60             |                  |
+| Documentation (D) | —                    | —               |                  |
+| **Total**         | **10**               | **~205**        | **193**          |
 
 ---
 

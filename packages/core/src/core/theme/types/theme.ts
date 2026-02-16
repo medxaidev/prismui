@@ -10,6 +10,7 @@ import type { PrismuiFontSizesValues } from './font-size';
 import type { PrismuiLineHeightsValues } from './line-height';
 import type { PrismuiRadiusValues } from './radius';
 import type { VariantColorResolver } from '../variant-color-resolver/variant-color-resolver';
+import type { PrismuiTransitions } from './transitions';
 
 // ---------------------------------------------------------------------------
 // Theme-level component customization
@@ -71,6 +72,9 @@ export interface PrismuiTheme {
 
   /** Resolves variant + color to CSS values (background, color, border, hover) */
   variantColorResolver: VariantColorResolver;
+
+  /** Transition durations and easing curves (MUI-inspired) */
+  transitions: PrismuiTransitions;
 
   /** Allows adding `classNames`, `styles` and `defaultProps` to any component */
   components: PrismuiThemeComponents;
