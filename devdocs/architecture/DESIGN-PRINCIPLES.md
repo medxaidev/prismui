@@ -1,18 +1,30 @@
 # PrismUI Design Principles
 
+**Version**: 2.0 — Runtime Platform Era  
+**Last Updated**: 2026-02-17  
+**Authority**: [ADR-011](../decisions/ADR-011-Runtime-Platform-Architecture.md)
+
 This document captures PrismUI's design and development principles.
 It is intentionally opinionated and practical.
 
 The goal is not to maximize configuration.
-The goal is to ship a small set of components that look great by default,
-remain consistent over time, and are easy to evolve.
+The goal is to ship a platform that enables large-scale applications with beautiful components,
+runtime coordination, and programmatic control.
 
 ---
 
 ## 1. Positioning
 
-PrismUI is built for real product work.
-It is primarily a library the maintainers will use directly.
+> **PrismUI is a Composable UI Runtime Platform for Large-Scale Applications.**
+
+PrismUI is **not just a component library** — it is a runtime platform that provides:
+
+- **Design System**: Beautiful components with thoughtful defaults
+- **Runtime System**: Overlay coordination, focus management, positioning
+- **Programmatic APIs**: Imperative control (dialog.confirm(), toast.show())
+- **Module System**: Tree-shakable, opt-in capabilities
+
+PrismUI is built for real product work, primarily for the maintainers' use.
 If it becomes useful to other developers, that is a welcome consequence.
 
 ---
@@ -103,12 +115,53 @@ but the product quality comes from choosing good defaults.
 
 ---
 
-## 8. Practical Guidance for New Components
+## 8. Runtime Platform Principles
+
+### 8.1 Separation of Concerns
+
+**Runtime ≠ Design System**
+
+- Runtime modules (Overlay, Focus, Positioning) MUST NOT access theme tokens
+- Design components (Dialog, Drawer) MUST NOT contain runtime logic
+- Behavior bases (ModalBase) bridge runtime and design
+
+### 8.2 Four-Layer Architecture
+
+Complex overlay components MUST follow:
+
+1. **Layer 0**: Runtime Kernel (module system)
+2. **Layer 1**: Runtime Systems (coordination)
+3. **Layer 2**: Behavior Bases (integration)
+4. **Layer 3**: Semantic Components (design)
+5. **Layer 4**: Programmatic Controllers (imperative APIs)
+
+### 8.3 Module-First Design
+
+- All runtime capabilities via pluggable modules
+- No boolean flags for features
+- Tree-shakable by default
+- Third-party extensible
+
+---
+
+## 9. Practical Guidance for New Components
 
 When creating a component:
 
 1. Study the equivalent component in Mantine and MUI/Joy UI.
-2. Define the minimal API (props, sizes, variants) that covers real needs.
-3. Decide beautiful defaults first (before adding configuration).
-4. Ensure theme-level micro-adjustments are sufficient for most use cases.
-5. Validate with Storybook examples and unit tests.
+2. Determine if it requires runtime coordination (overlay, positioning, etc.)
+3. If yes, follow four-layer architecture; if no, use standard factory pattern
+4. Define the minimal API (props, sizes, variants) that covers real needs.
+5. Decide beautiful defaults first (before adding configuration).
+6. Ensure theme-level micro-adjustments are sufficient for most use cases.
+7. Validate with Storybook examples and unit tests.
+
+### 9.1 For Runtime-Coordinated Components
+
+Additional steps:
+
+1. Identify which Layer 1 runtime system it depends on (Overlay, Focus, Positioning)
+2. Create or use existing Layer 2 behavior base
+3. Build Layer 3 semantic component with design tokens
+4. Consider if Layer 4 programmatic API is needed (dialog.confirm(), toast.show())
+5. Ensure proper module dependencies are documented

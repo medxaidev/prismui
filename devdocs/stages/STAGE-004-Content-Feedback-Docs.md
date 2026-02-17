@@ -1,13 +1,32 @@
 # STAGE-004: Content Components, Feedback & Documentation Site
 
-> **Status:** In Progress (Phase A)
+> **Status:** ⚠️ SUPERSEDED by STAGE-005 (Runtime Platform Architecture)
 > **Predecessor:** STAGE-003 (Advanced Theming & Layout Components) — ✅ Complete
 > **Owner:** Development Team
 > **Created:** 2026-02-13
+> **Superseded:** 2026-02-17
 
 ---
 
-## 1. Goal
+## ⚠️ ARCHITECTURAL PIVOT NOTICE
+
+**This stage has been superseded by [STAGE-005: Runtime Platform Architecture](./STAGE-005-Runtime-Platform.md).**
+
+Per [ADR-011](../decisions/ADR-011-Runtime-Platform-Architecture.md), PrismUI has pivoted from a component library to a **UI Runtime Platform**. The Modal/Dialog/Overlay work planned in Phase C is now implemented using a four-layer architecture:
+
+- **Layer 0**: Runtime Kernel
+- **Layer 1**: Overlay Runtime System
+- **Layer 2**: ModalBase (Behavior)
+- **Layer 3**: Dialog (Semantic)
+- **Layer 4**: DialogController (Programmatic)
+
+**Completed work from STAGE-004** (Text, Anchor, Transition, Alert, Overlay, VisuallyHidden, FocusTrap) remains valid and will be integrated into STAGE-005.
+
+**Incomplete work** (Modal, Popover, Toast, Badge) will be reimplemented using the new runtime architecture.
+
+---
+
+## 1. Original Goal (Archived)
 
 Deliver content display components (Text, typography system), feedback/overlay components (Alert, Toast, Modal, Popover), and the public-facing documentation website for PrismUI.
 

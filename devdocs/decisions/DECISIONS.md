@@ -16,14 +16,15 @@
 | [ADR-008](./ADR-008-Variant-Styling-Strategy.md)        | Variant Styling Strategy        | Accepted | 2026-02-11 | High - variantColorResolver, 4 variants, opacity + channel       |
 | [ADR-009](./ADR-009-Button-Sizing-Rules.md)             | Button Sizing Rules             | Accepted | 2026-02-15 | Medium - line-height 1.75, MUI-aligned heights 32/36/42/48       |
 | [ADR-010](./ADR-010-Unified-Typography-System.md)       | Unified Typography System       | Accepted | 2026-02-16 | High - Merge Text+Title, MUI variant system, responsive headings |
+| [ADR-011](./ADR-011-Runtime-Platform-Architecture.md)   | Runtime Platform Architecture   | Accepted | 2026-02-17 | Critical - Defines PrismUI as UI Runtime Platform, 4-layer model |
 
 ## Planned ADRs
 
 | ID      | Title                             | Status | Date |
 | ------- | --------------------------------- | ------ | ---- |
-| ADR-011 | Component Testing Strategy        | Draft  | TBD  |
-| ADR-012 | Bundle Size Optimization Approach | Draft  | TBD  |
-| ADR-013 | Animation System Design           | Draft  | TBD  |
+| ADR-012 | Component Testing Strategy        | Draft  | TBD  |
+| ADR-013 | Bundle Size Optimization Approach | Draft  | TBD  |
+| ADR-014 | Animation System Design           | Draft  | TBD  |
 
 ## ADR Template
 

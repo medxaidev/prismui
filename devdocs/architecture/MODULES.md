@@ -1,9 +1,18 @@
 # MODULES (Enforceable)
 
 **Status:** Active  
-**Version:** v2.0  
-**Last Updated:** 2026-02-10  
-**Scope:** Defines all modules and components in PrismUI
+**Version:** v3.0 — Runtime Platform Architecture  
+**Last Updated:** 2026-02-17  
+**Scope:** Defines all modules and components in PrismUI  
+**Authority:** [ADR-011](../decisions/ADR-011-Runtime-Platform-Architecture.md)
+
+---
+
+## 🎯 Platform Definition
+
+> **PrismUI is a Composable UI Runtime Platform for Large-Scale Applications.**
+
+See [RUNTIME-PLATFORM.md](./RUNTIME-PLATFORM.md) for the complete architectural vision.
 
 ---
 
@@ -22,17 +31,27 @@ packages/
 │       │   ├── css-baseline/       # CSS reset/baseline
 │       │   ├── style-engine/       # insertCssOnce, StyleRegistry, SSR support
 │       │   ├── system/             # SystemProps (config, resolvers, split)
-│       │   ├── factory/            # [Stage-2] Component factory system
-│       │   ├── styles-api/         # [Stage-2] useStyles, getClassName, getStyle
+│       │   ├── factory/            # Component factory system
+│       │   ├── styles-api/         # useStyles, getClassName, getStyle
+│       │   ├── runtime/            # [Stage-5] Runtime Kernel, modules
+│       │   │   ├── RuntimeKernel.ts
+│       │   │   ├── overlay/        # OverlayModule, OverlayManager
+│       │   │   ├── dialog/         # DialogModule, DialogController
+│       │   │   └── toast/          # ToastModule (future)
 │       │   ├── types/              # Polymorphic types, style prop types
 │       │   ├── color-functions/    # Color parsing utilities
 │       │   └── index.ts            # Core barrel export
 │       ├── components/     # All components
-│       │   ├── Box/                # [Stage-1] Base polymorphic component
-│       │   ├── Stack/              # [Stage-2] Vertical layout
-│       │   ├── ButtonBase/         # [Stage-2] Unstyled accessible button
-│       │   ├── Paper/              # [Stage-2] Elevated container
-│       │   └── Button/             # [Stage-2] Styled button
+│       │   ├── Box/                # Base polymorphic component
+│       │   ├── Stack/              # Vertical layout
+│       │   ├── ButtonBase/         # Unstyled accessible button
+│       │   ├── Paper/              # Elevated container
+│       │   ├── Button/             # Styled button
+│       │   ├── ModalBase/          # [Stage-5] Behavior base (Layer 2)
+│       │   ├── Dialog/             # [Stage-5] Semantic component (Layer 3)
+│       │   └── ...
+│       ├── hooks/          # Shared hooks
+│       ├── utils/          # Shared utilities
 │       └── index.ts        # Public API barrel export
 └── nextjs/                 # @prismui/nextjs — Next.js App Router integration (future)
 ```
