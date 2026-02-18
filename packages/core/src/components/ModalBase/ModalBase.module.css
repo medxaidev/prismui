@@ -1,0 +1,51 @@
+/* ---------------------------------------------------------------------------
+ * ModalBase — Behavior Layer (Layer 2)
+ *
+ * DOM structure (managed by ModalBase.tsx):
+ *
+ *   .root                – fixed fullscreen container
+ *   ├── .overlay-layer   – absolute, holds <Overlay> backdrop
+ *   └── .inner           – absolute, holds <Content> card
+ *
+ * .overlay-layer comes FIRST in DOM, .inner comes SECOND.
+ * Later siblings paint on top of earlier ones, so .inner is always
+ * above .overlay-layer — no z-index needed.
+ * --------------------------------------------------------------------------- */
+
+.root {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+}
+
+.root[data-active] {
+  pointer-events: auto;
+}
+
+/* ---- Overlay layer (backdrop, visual only) ---- */
+.overlayLayer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+/* ---- Content layer (dialog card + click-outside area) ---- */
+.inner {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding-top: var(--mb-y-offset, 5vh);
+  overflow-y: auto;
+}
+
+.inner[data-centered] {
+  align-items: center;
+  padding-top: 0;
+}
+
+.content {
+  pointer-events: auto;
+  position: relative;
+}
