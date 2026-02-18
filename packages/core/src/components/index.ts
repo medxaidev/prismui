@@ -73,3 +73,15 @@ export type { FocusTrapProps } from './FocusTrap';
 
 export { Tooltip } from './Tooltip';
 export type { TooltipProps, TooltipPosition } from './Tooltip';
+
+export { PopoverBase } from './PopoverBase';
+export type {
+  PopoverBaseProps,
+  PopoverBaseTargetProps,
+  PopoverBaseDropdownProps,
+  PopoverBaseContextValue,
+  PopoverBasePosition,
+} from './PopoverBase';
+
+export { Popover } from './Popover';
+export type { PopoverProps, PopoverDropdownProps } from './Popover';

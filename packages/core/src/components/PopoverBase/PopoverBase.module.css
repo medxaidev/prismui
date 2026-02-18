@@ -1,0 +1,46 @@
+/* ---------------------------------------------------------------------------
+ * PopoverBase — Behavior Layer (Layer 2)
+ *
+ * Minimal styles for the floating dropdown panel.
+ * Semantic layers (Popover, Menu, Select) add their own visual styles.
+ *
+ * DOM structure:
+ *   .dropdown  — positioned floating element (portal)
+ *   └── .arrow — CSS triangle arrow
+ * --------------------------------------------------------------------------- */
+
+.dropdown {
+  position: fixed;
+  box-sizing: border-box;
+}
+
+/* ---- Arrow ---- */
+
+.arrow {
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  background-color: inherit;
+  transform: rotate(45deg);
+  z-index: -1;
+}
+
+/* Arrow placement: dropdown is above target → arrow at bottom */
+.dropdown[data-position^='top'] > .arrow {
+  bottom: -5px;
+}
+
+/* Arrow placement: dropdown is below target → arrow at top */
+.dropdown[data-position^='bottom'] > .arrow {
+  top: -5px;
+}
+
+/* Arrow placement: dropdown is left of target → arrow at right */
+.dropdown[data-position^='left'] > .arrow {
+  right: -5px;
+}
+
+/* Arrow placement: dropdown is right of target → arrow at left */
+.dropdown[data-position^='right'] > .arrow {
+  left: -5px;
+}

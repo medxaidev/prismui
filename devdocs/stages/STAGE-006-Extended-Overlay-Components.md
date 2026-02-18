@@ -302,61 +302,109 @@ It uses a fixed high z-index (1500) and self-contained positioning logic.
 
 ---
 
-### Phase C: Popover (2 sessions)
+### Phase C: Popover (2 sessions) — ✅ COMPLETED
 
-**Goal**: Implement Popover (Layer 2 + 3 + 4).
+**Goal**: Implement Popover (Layer 2 + 3 + 4) with full four-layer architecture.
 
-#### C1: PopoverBase (0.5 session)
+**Architecture Decision**: Popover serves as the base for future Menu, Select, Autocomplete, and
+DatePicker components. Unlike Tooltip, it registers with OverlayManager for z-index stack management
+and Escape key handling, enabling correct behavior with nested popovers and Dialog coexistence.
+
+```
+ModalBase (full-screen overlays)  ←→  PopoverBase (anchored floating panels)
+    ↓                                      ↓
+  Dialog, Drawer                     Popover, Menu, Select (future)
+```
+
+#### C1: PopoverBase — Layer 2 (Behavior Base)
 
 **Files**:
 
-- `components/PopoverBase/PopoverBase.tsx`
-- `components/PopoverBase/PopoverBase.module.css`
+- `components/PopoverBase/PopoverBase.tsx` — Main component, OverlayManager registration, click-outside, Context provider
+- `components/PopoverBase/PopoverBase.context.tsx` — Context + `usePopoverBaseContext()` hook
+- `components/PopoverBase/PopoverBaseTarget.tsx` — Compound target (click trigger, aria attributes)
+- `components/PopoverBase/PopoverBaseDropdown.tsx` — Compound dropdown (positioning, portal, transition)
+- `components/PopoverBase/positioning.ts` — Shared `getFloatingCoords()` utility (12 positions + arrow)
+- `components/PopoverBase/PopoverBase.module.css` — Minimal structural styles (position: fixed, arrow)
+- `components/PopoverBase/PopoverBase.test.tsx` — 40 tests
+- `components/PopoverBase/index.ts` — Barrel exports
 
 **Features**:
 
-- Positioning
-- Click-outside
-- Nested support
+- OverlayManager registration (z-index stack + Escape handling)
+- 12 position variants (top/bottom/left/right × start/center/end)
+- Arrow support with automatic placement
+- Click-outside detection (with setTimeout guard for open-click propagation)
+- Controlled and uncontrolled modes
+- Disabled state
+- Portal rendering (OptionalPortal)
+- Fade transition animation
+- Accessibility (aria-haspopup, aria-expanded, aria-controls, role="dialog")
+- Scroll/resize repositioning listeners
 
-**Tests**: 18 tests
+**Tests**: 40 tests ✅ (10 groups: rendering, uncontrolled toggle, controlled mode, click outside, escape key, accessibility, context, arrow, styling, positions)
 
----
-
-#### C2: Popover Component (1 session)
-
-**Files**:
-
-- `components/Popover/Popover.tsx`
-- `components/Popover/Popover.module.css`
-- `components/Popover/Popover.test.tsx`
-- `components/Popover/Popover.stories.tsx`
-
-**Compound Components**:
-
-- `Popover.Target`
-- `Popover.Dropdown`
-
-**Tests**: 25 tests
-**Stories**: 8 stories
-
----
-
-#### C3: PopoverController (0.5 session)
+#### C2: Popover — Layer 3 (Semantic Layer)
 
 **Files**:
 
-- `core/runtime/popover/PopoverController.ts`
-- `core/runtime/popover/popoverModule.ts`
-- `core/runtime/popover/usePopoverController.ts`
+- `components/Popover/Popover.tsx` — Semantic wrapper with `Popover.Target` + `Popover.Dropdown`
+- `components/Popover/Popover.module.css` — Glassmorphism styling (backdrop-filter, radial gradient SVGs)
+- `components/Popover/Popover.stories.tsx` — 10 stories
+- `components/Popover/index.ts` — Barrel exports
+
+**Glassmorphism Styling**:
+
+- Dual radial gradient SVG backgrounds (cyan top-right, orange bottom-left)
+- `backdrop-filter: blur(20px)`
+- `background-color: rgba(var(--prismui-background-paperChannel) / 90%)`
+- `box-shadow: var(--prismui-shadow-dropdown)`
+- `border-radius: 10px`, `padding: 16px`
+
+**Stories**: 10 stories ✅ (Basic, Positions, Controlled, NoArrow, RichContent, Disabled, NoCloseOnClickOutside, Multiple, CustomOffset, FormContent)
+
+#### C3: PopoverController — Layer 4 (Programmatic Controller)
+
+**Files**:
+
+- `core/runtime/popover/types.ts` — `PopoverController`, `PopoverControllerOptions`, `PopoverInstance` interfaces
+- `core/runtime/popover/PopoverController.ts` — `createPopoverController()` factory (Map + Set pattern)
+- `core/runtime/popover/popoverModule.ts` — Runtime module (registers + exposes controller as `'popover'`)
+- `core/runtime/popover/usePopoverController.ts` — Hook to access controller from kernel
+- `core/runtime/popover/PopoverRenderer.tsx` — Renders programmatic popovers with positioning + click-outside + escape
+- `core/runtime/popover/PopoverController.test.ts` — 15 tests
+- `core/runtime/popover/index.ts` — Barrel exports
 
 **API**:
 
-- `open(options)`
-- `close(id)`
-- `closeAll()`
+```typescript
+interface PopoverController {
+  open(options: PopoverControllerOptions): string;
+  close(id: string): void;
+  closeAll(): void;
+  getPopovers(): PopoverInstance[];
+  subscribe(listener: PopoverChangeListener): () => void;
+}
+```
 
-**Tests**: 20 tests
+**Tests**: 15 tests ✅ (4 groups: creation, open/close, subscribe, options preservation)
+
+**Total Popover Tests**: 55 tests ✅ (40 PopoverBase + 15 PopoverController)
+
+**Acceptance Criteria**:
+
+- [x] PopoverBase registers with OverlayManager
+- [x] 12 position variants work
+- [x] Arrow renders correctly per position
+- [x] Click-outside closes popover
+- [x] Escape key closes popover (via OverlayManager)
+- [x] Controlled and uncontrolled modes work
+- [x] Disabled state works
+- [x] Accessibility attributes correct (aria-haspopup, aria-expanded, aria-controls)
+- [x] Glassmorphism styling applied
+- [x] PopoverController open/close/closeAll work
+- [x] PopoverRenderer renders programmatic popovers
+- [x] 55 tests pass, tsc clean, zero regressions (1301 total)
 
 ---
 
