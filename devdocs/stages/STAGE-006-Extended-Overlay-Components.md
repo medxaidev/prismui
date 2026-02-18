@@ -1,7 +1,7 @@
 # STAGE-006: Extended Overlay Components
 
-**Status**: Planning  
-**Start Date**: TBD  
+**Status**: Active  
+**Start Date**: 2026-02-18  
 **Target**: Q1 2026  
 **Priority**: High  
 **Dependencies**: STAGE-005 ✅
@@ -12,7 +12,8 @@
 
 STAGE-006 extends the Runtime Platform architecture established in STAGE-005 by implementing additional overlay-based components: **Tooltip**, **Popover**, **Toast**, and **Drawer**. Each component follows the proven four-layer architecture pattern, ensuring consistency, modularity, and programmatic control.
 
-**Core Philosophy**: 
+**Core Philosophy**:
+
 > Leverage the Runtime Platform to build a complete suite of overlay components with unified behavior, predictable z-index management, and powerful programmatic APIs.
 
 ---
@@ -20,18 +21,21 @@ STAGE-006 extends the Runtime Platform architecture established in STAGE-005 by 
 ## Strategic Goals
 
 ### 1. Component Coverage
+
 - ✅ Tooltip (Layer 2 + 3)
 - ✅ Popover (Layer 2 + 3 + 4)
 - ✅ Toast (Layer 2 + 3 + 4)
 - ✅ Drawer (Layer 2 + 3 + 4)
 
 ### 2. Positioning Engine (Layer 1 Extension)
+
 - ✅ Floating UI integration for smart positioning
 - ✅ Auto-placement with collision detection
 - ✅ Arrow positioning
 - ✅ Offset and padding configuration
 
 ### 3. Animation Presets
+
 - ✅ Slide transitions for Drawer (slide-left, slide-right, slide-up, slide-down)
 - ✅ Placement-based transitions for Tooltip/Popover
 - ✅ Toast enter/exit animations
@@ -79,6 +83,7 @@ STAGE-006 extends the Runtime Platform architecture established in STAGE-005 by 
 **Layers**: 2 (TooltipBase) + 3 (Tooltip)
 
 **Features**:
+
 - Hover/focus trigger
 - Smart positioning (top, bottom, left, right, auto)
 - Arrow support
@@ -86,6 +91,7 @@ STAGE-006 extends the Runtime Platform architecture established in STAGE-005 by 
 - Accessibility (aria-describedby)
 
 **API**:
+
 ```tsx
 <Tooltip label="Helpful text" position="top" withArrow>
   <button>Hover me</button>
@@ -101,6 +107,7 @@ STAGE-006 extends the Runtime Platform architecture established in STAGE-005 by 
 **Layers**: 2 (PopoverBase) + 3 (Popover) + 4 (PopoverController)
 
 **Features**:
+
 - Click/hover trigger
 - Smart positioning with Floating UI
 - Dropdown/menu mode
@@ -108,25 +115,25 @@ STAGE-006 extends the Runtime Platform architecture established in STAGE-005 by 
 - Nested popover support
 
 **Declarative API**:
+
 ```tsx
 <Popover>
   <Popover.Target>
     <button>Open</button>
   </Popover.Target>
-  <Popover.Dropdown>
-    Content
-  </Popover.Dropdown>
+  <Popover.Dropdown>Content</Popover.Dropdown>
 </Popover>
 ```
 
 **Programmatic API**:
+
 ```tsx
 const popover = usePopoverController();
 
 popover.open({
   target: buttonRef.current,
   content: <Menu />,
-  position: 'bottom-start',
+  position: "bottom-start",
 });
 ```
 
@@ -137,6 +144,7 @@ popover.open({
 **Layers**: 2 (ToastBase) + 3 (Toast) + 4 (ToastController)
 
 **Features**:
+
 - Auto-dismiss with timer
 - Queue management
 - Position variants (top-right, bottom-center, etc.)
@@ -145,21 +153,23 @@ popover.open({
 - Swipe-to-dismiss (mobile)
 
 **Programmatic API**:
+
 ```tsx
 const toast = useToastController();
 
 toast.show({
-  title: 'Success',
-  message: 'Item saved',
-  severity: 'success',
+  title: "Success",
+  message: "Item saved",
+  severity: "success",
   duration: 3000,
 });
 
-toast.success('Quick success message');
-toast.error('Error occurred');
+toast.success("Quick success message");
+toast.error("Error occurred");
 ```
 
 **Declarative API** (for custom layouts):
+
 ```tsx
 <Toast opened={opened} onClose={close} severity="info">
   Custom toast content
@@ -173,6 +183,7 @@ toast.error('Error occurred');
 **Layers**: 2 (DrawerBase) + 3 (Drawer) + 4 (DrawerController)
 
 **Features**:
+
 - Side panel (left, right, top, bottom)
 - Slide transitions
 - Overlay backdrop
@@ -180,6 +191,7 @@ toast.error('Error occurred');
 - Nested drawer support
 
 **Declarative API**:
+
 ```tsx
 <Drawer opened={opened} onClose={close} position="right" size="md">
   <Drawer.Header>Settings</Drawer.Header>
@@ -188,13 +200,14 @@ toast.error('Error occurred');
 ```
 
 **Programmatic API**:
+
 ```tsx
 const drawer = useDrawerController();
 
 drawer.open({
-  position: 'right',
+  position: "right",
   content: <SettingsPanel />,
-  size: 'lg',
+  size: "lg",
 });
 ```
 
@@ -209,11 +222,13 @@ drawer.open({
 #### A1: Floating UI Integration (1 session)
 
 **Files**:
+
 - `core/runtime/positioning/PositioningEngine.ts`
 - `core/runtime/positioning/types.ts`
 - `core/runtime/positioning/usePositioning.ts`
 
 **Features**:
+
 - Floating UI wrapper
 - Auto-placement
 - Collision detection
@@ -227,10 +242,12 @@ drawer.open({
 #### A2: Positioning Module (1 session)
 
 **Files**:
+
 - `core/runtime/positioning/positioningModule.ts`
 - `core/runtime/positioning/index.ts`
 
 **Integration**:
+
 - Register in RuntimeKernel
 - Expose positioning utilities
 - Hook for component usage
@@ -239,40 +256,49 @@ drawer.open({
 
 ---
 
-### Phase B: Tooltip (1.5 sessions)
+### Phase B: Tooltip (1 session) — ✅ COMPLETED
 
-**Goal**: Implement Tooltip (Layer 2 + 3).
+**Goal**: Implement Tooltip (Layer 3 only — lightweight, no separate Base needed).
 
-#### B1: TooltipBase (0.5 session)
-
-**Files**:
-- `components/TooltipBase/TooltipBase.tsx`
-- `components/TooltipBase/TooltipBase.module.css`
-
-**Features**:
-- Positioning integration
-- Hover/focus triggers
-- Delay control
-
-**Tests**: 15 tests
-
----
-
-#### B2: Tooltip Component (1 session)
+**Architecture Decision**: Tooltip is simple enough that a separate TooltipBase is unnecessary.
+It does not register with OverlayManager (no scroll lock, focus trap, or escape handling needed).
+It uses a fixed high z-index (1500) and self-contained positioning logic.
 
 **Files**:
-- `components/Tooltip/Tooltip.tsx`
-- `components/Tooltip/Tooltip.module.css`
-- `components/Tooltip/Tooltip.test.tsx`
-- `components/Tooltip/Tooltip.stories.tsx`
+
+- `components/Tooltip/Tooltip.tsx` — Main component with positioning, hover/focus triggers, delay
+- `components/Tooltip/Tooltip.module.css` — Styles with CSS variables for customization
+- `components/Tooltip/Tooltip.test.tsx` — 43 tests
+- `components/Tooltip/Tooltip.stories.tsx` — 10 stories
+- `components/Tooltip/index.ts` — Barrel exports
 
 **Features**:
-- Arrow support
-- Semantic styling
-- Accessibility
 
-**Tests**: 20 tests
-**Stories**: 6 stories
+- 12 position variants (top/bottom/left/right × start/center/end)
+- Arrow support with automatic placement
+- Open/close delay
+- Controlled and uncontrolled modes
+- Hover, focus, and touch event triggers (configurable)
+- Multiline support
+- Custom color via CSS variable
+- Portal rendering (OptionalPortal)
+- Placement-based transitions from Transition system
+- Accessibility (role="tooltip", aria-describedby)
+
+**Tests**: 43 tests ✅
+**Stories**: 10 stories ✅
+
+**Acceptance Criteria**:
+
+- [x] Tooltip renders on hover/focus
+- [x] 12 position variants work
+- [x] Arrow renders correctly per position
+- [x] Open/close delay works
+- [x] Controlled mode works
+- [x] Disabled state works
+- [x] Custom color/className/zIndex work
+- [x] Accessibility attributes correct
+- [x] 43 tests pass, tsc clean
 
 ---
 
@@ -283,10 +309,12 @@ drawer.open({
 #### C1: PopoverBase (0.5 session)
 
 **Files**:
+
 - `components/PopoverBase/PopoverBase.tsx`
 - `components/PopoverBase/PopoverBase.module.css`
 
 **Features**:
+
 - Positioning
 - Click-outside
 - Nested support
@@ -298,12 +326,14 @@ drawer.open({
 #### C2: Popover Component (1 session)
 
 **Files**:
+
 - `components/Popover/Popover.tsx`
 - `components/Popover/Popover.module.css`
 - `components/Popover/Popover.test.tsx`
 - `components/Popover/Popover.stories.tsx`
 
 **Compound Components**:
+
 - `Popover.Target`
 - `Popover.Dropdown`
 
@@ -315,11 +345,13 @@ drawer.open({
 #### C3: PopoverController (0.5 session)
 
 **Files**:
+
 - `core/runtime/popover/PopoverController.ts`
 - `core/runtime/popover/popoverModule.ts`
 - `core/runtime/popover/usePopoverController.ts`
 
 **API**:
+
 - `open(options)`
 - `close(id)`
 - `closeAll()`
@@ -335,10 +367,12 @@ drawer.open({
 #### D1: ToastBase (0.5 session)
 
 **Files**:
+
 - `components/ToastBase/ToastBase.tsx`
 - `components/ToastBase/ToastBase.module.css`
 
 **Features**:
+
 - Auto-dismiss timer
 - Enter/exit animations
 - Position variants
@@ -350,12 +384,14 @@ drawer.open({
 #### D2: Toast Component (1 session)
 
 **Files**:
+
 - `components/Toast/Toast.tsx`
 - `components/Toast/Toast.module.css`
 - `components/Toast/Toast.test.tsx`
 - `components/Toast/Toast.stories.tsx`
 
 **Features**:
+
 - Severity variants
 - Icon support
 - Action buttons
@@ -369,6 +405,7 @@ drawer.open({
 #### D3: ToastController (1 session)
 
 **Files**:
+
 - `core/runtime/toast/ToastController.ts`
 - `core/runtime/toast/ToastQueue.ts`
 - `core/runtime/toast/toastModule.ts`
@@ -376,12 +413,14 @@ drawer.open({
 - `core/runtime/toast/useToastController.ts`
 
 **Features**:
+
 - Queue management
 - Auto-dismiss
 - Position management
 - Shorthand methods (success, error, etc.)
 
 **API**:
+
 ```typescript
 interface ToastController {
   show(options: ToastOptions): string;
@@ -405,11 +444,13 @@ interface ToastController {
 #### E1: DrawerBase (1 session)
 
 **Files**:
+
 - `components/DrawerBase/DrawerBase.tsx`
 - `components/DrawerBase/DrawerBase.module.css`
 - `components/DrawerBase/DrawerBase.context.tsx`
 
 **Features**:
+
 - Position variants (left, right, top, bottom)
 - Slide transitions
 - Overlay integration
@@ -422,12 +463,14 @@ interface ToastController {
 #### E2: Drawer Component (1 session)
 
 **Files**:
+
 - `components/Drawer/Drawer.tsx`
 - `components/Drawer/Drawer.module.css`
 - `components/Drawer/Drawer.test.tsx`
 - `components/Drawer/Drawer.stories.tsx`
 
 **Compound Components**:
+
 - `Drawer.Header`
 - `Drawer.Body`
 - `Drawer.Footer`
@@ -441,11 +484,13 @@ interface ToastController {
 #### E3: DrawerController (0.5 session)
 
 **Files**:
+
 - `core/runtime/drawer/DrawerController.ts`
 - `core/runtime/drawer/drawerModule.ts`
 - `core/runtime/drawer/useDrawerController.ts`
 
 **API**:
+
 - `open(options)`
 - `close(id)`
 - `closeAll()`
@@ -459,6 +504,7 @@ interface ToastController {
 **Goal**: Comprehensive documentation and final polish.
 
 **Files**:
+
 - `devdocs/guides/TOOLTIP-USAGE.md`
 - `devdocs/guides/POPOVER-USAGE.md`
 - `devdocs/guides/TOAST-USAGE.md`
@@ -468,6 +514,7 @@ interface ToastController {
 **Stories**: 32+ total across all components
 
 **Acceptance Criteria**:
+
 - [ ] All guides complete
 - [ ] 32+ Storybook stories
 - [ ] All examples work correctly
@@ -478,6 +525,7 @@ interface ToastController {
 ## Testing Strategy
 
 ### Unit Tests
+
 - **Positioning Engine**: 45 tests
 - **Tooltip**: 35 tests
 - **Popover**: 63 tests (Base + Component + Controller)
@@ -486,6 +534,7 @@ interface ToastController {
 - **Total**: ~280 new tests
 
 ### Integration Tests
+
 - Nested popovers with correct z-index
 - Toast queue management
 - Drawer + Dialog interaction
@@ -497,18 +546,21 @@ interface ToastController {
 ## Success Metrics
 
 ### Technical
+
 - [ ] 280+ new tests passing
 - [ ] tsc --noEmit clean
 - [ ] Zero runtime errors in Storybook
 - [ ] Bundle size impact < 15KB (gzipped)
 
 ### Architectural
+
 - [ ] All components follow four-layer pattern
 - [ ] Positioning engine reusable
 - [ ] No z-index conflicts
 - [ ] Consistent API patterns
 
 ### Developer Experience
+
 - [ ] Intuitive declarative APIs
 - [ ] Powerful programmatic APIs
 - [ ] Excellent TypeScript types
@@ -518,14 +570,14 @@ interface ToastController {
 
 ## Timeline
 
-| Phase | Duration | Cumulative |
-|-------|----------|------------|
-| A: Positioning Engine | 2 sessions | 2 |
-| B: Tooltip | 1.5 sessions | 3.5 |
-| C: Popover | 2 sessions | 5.5 |
-| D: Toast | 2.5 sessions | 8 |
-| E: Drawer | 2.5 sessions | 10.5 |
-| F: Documentation | 1 session | 11.5 |
+| Phase                 | Duration     | Cumulative |
+| --------------------- | ------------ | ---------- |
+| A: Positioning Engine | 2 sessions   | 2          |
+| B: Tooltip            | 1.5 sessions | 3.5        |
+| C: Popover            | 2 sessions   | 5.5        |
+| D: Toast              | 2.5 sessions | 8          |
+| E: Drawer             | 2.5 sessions | 10.5       |
+| F: Documentation      | 1 session    | 11.5       |
 
 **Total**: 11.5 sessions (~3 weeks)
 
@@ -534,6 +586,7 @@ interface ToastController {
 ## Future Extensions (Post-STAGE-006)
 
 ### STAGE-007 Candidates
+
 - **CommandPaletteModule**: ⌘K command palette
 - **ContextMenuModule**: Right-click context menus
 - **NotificationCenterModule**: Persistent notification center
@@ -541,6 +594,7 @@ interface ToastController {
 - **A/B Testing Runtime**: Feature flag overlays
 
 ### Advanced Features
+
 - **Gesture Support**: Swipe, pinch, drag for mobile
 - **Virtual Scrolling**: For large toast queues
 - **Accessibility Enhancements**: Screen reader announcements, focus management

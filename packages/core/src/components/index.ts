@@ -70,3 +70,6 @@ export type {
 
 export { FocusTrap, FocusTrapInitialFocus } from './FocusTrap';
 export type { FocusTrapProps } from './FocusTrap';
+
+export { Tooltip } from './Tooltip';
+export type { TooltipProps, TooltipPosition } from './Tooltip';
