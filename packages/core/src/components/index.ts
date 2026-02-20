@@ -98,3 +98,22 @@ export type {
 
 export { Toast, createToastRenderer } from './Toast';
 export type { ToastProps, ToastSeverity, ToastRenderOptions } from './Toast';
+
+export { DrawerBase } from './DrawerBase';
+export type {
+  DrawerBaseProps,
+  DrawerBaseContextValue,
+  DrawerPosition,
+} from './DrawerBase';
+
+export { Drawer } from './Drawer';
+export type {
+  DrawerProps,
+  DrawerStylesNames,
+  DrawerHeaderProps,
+  DrawerTitleProps,
+  DrawerBodyProps,
+  DrawerFooterProps,
+  DrawerCloseButtonProps,
+  DrawerContextValue,
+} from './Drawer';

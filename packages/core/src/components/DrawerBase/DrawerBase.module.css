@@ -1,0 +1,57 @@
+/* ---------------------------------------------------------------------------
+ * DrawerBase — Behavior Layer (Layer 2)
+ *
+ * Extends ModalBase with side-panel positioning.
+ * The drawer content slides in from one of four edges.
+ *
+ * DOM structure (managed by ModalBase):
+ *   .root                – fixed fullscreen container (from ModalBase)
+ *   ├── .overlay-layer   – backdrop (from ModalBase)
+ *   └── .inner           – scrollable layer (from ModalBase)
+ *       └── .content     – the drawer panel
+ * --------------------------------------------------------------------------- */
+
+/* ---- Content panel ---- */
+
+.content {
+  pointer-events: auto;
+  position: fixed;
+  display: flex;
+  flex-direction: column;
+  background-color: var(--prismui-background-paper);
+  box-shadow: var(--prismui-shadow-dialog, 0px 0px 2px 0px rgba(0, 0, 0, 0.24), -20px 20px 40px -4px rgba(0, 0, 0, 0.24));
+  overflow-y: auto;
+  outline: none;
+  max-width: 100vw;
+  max-height: 100vh;
+}
+
+/* ---- Position variants ---- */
+
+.content[data-position='left'] {
+  top: 0;
+  left: 0;
+  bottom: 0;
+  width: var(--drawer-size, 320px);
+}
+
+.content[data-position='right'] {
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: var(--drawer-size, 320px);
+}
+
+.content[data-position='top'] {
+  top: 0;
+  left: 0;
+  right: 0;
+  height: var(--drawer-size, 320px);
+}
+
+.content[data-position='bottom'] {
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: var(--drawer-size, 320px);
+}
