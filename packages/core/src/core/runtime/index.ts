@@ -10,3 +10,4 @@ export {
 export * from './overlay';
 export * from './dialog';
 export * from './popover';
+export * from './toast';

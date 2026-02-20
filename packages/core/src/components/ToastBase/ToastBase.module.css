@@ -1,0 +1,82 @@
+/* ---------------------------------------------------------------------------
+ * ToastBase — Behavior Layer (Layer 2)
+ *
+ * Minimal positioning and stacking styles for toast notifications.
+ * Semantic layers (Toast) add their own visual styles.
+ *
+ * DOM structure:
+ *   .container — fixed-position region on screen edge
+ *   └── .list  — flex column holding toast items
+ *       └── .item — individual toast wrapper (handles stacking transforms)
+ * --------------------------------------------------------------------------- */
+
+/* ---- Container: fixed position on screen ---- */
+
+.container {
+  position: fixed;
+  z-index: var(--toast-z-index, 1500);
+  box-sizing: border-box;
+  pointer-events: none;
+  display: flex;
+  flex-direction: column;
+  padding: 16px;
+}
+
+/* Horizontal alignment */
+.container[data-position$='-left'] {
+  left: 0;
+}
+
+.container[data-position$='-center'] {
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.container[data-position$='-right'] {
+  right: 0;
+}
+
+/* Vertical alignment */
+.container[data-position^='top'] {
+  top: 0;
+}
+
+.container[data-position^='bottom'] {
+  bottom: 0;
+}
+
+/* Stack direction: bottom positions stack upward, top positions stack downward */
+.container[data-position^='bottom'] .list {
+  flex-direction: column-reverse;
+}
+
+.container[data-position^='top'] .list {
+  flex-direction: column;
+}
+
+/* ---- List: holds all toast items ---- */
+
+.list {
+  display: flex;
+  width: var(--toast-width, 356px);
+  position: relative;
+  gap: var(--toast-gap, 14px);
+}
+
+/* ---- Item: individual toast wrapper ---- */
+
+.item {
+  pointer-events: auto;
+  width: 100%;
+  box-sizing: border-box;
+  position: relative;
+  transition-property: transform, opacity, max-height, margin, padding;
+  transition-duration: var(--toast-transition-duration, 300ms);
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  will-change: transform, opacity;
+}
+
+/* Exiting toast */
+.item[data-exiting='true'] {
+  transition-timing-function: cubic-bezier(0.4, 0, 1, 1);
+}

@@ -269,6 +269,16 @@ export function getPaletteVars(
     }
   }
 
+  // Gray-800 (used by Toast default dark background)
+  const gray800 = theme.colorFamilies.gray?.[800];
+  if (gray800) {
+    vars['--prismui-color-gray-800'] = gray800;
+    const gray800Channel = getColorChannels(gray800);
+    if (gray800Channel) {
+      vars['--prismui-color-gray-800Channel'] = gray800Channel;
+    }
+  }
+
   // --- Semantic palette colors ---
   const center = theme.primaryShade[scheme];
   const resolvedSemantic: Record<string, PrismuiPaletteColor> = {};

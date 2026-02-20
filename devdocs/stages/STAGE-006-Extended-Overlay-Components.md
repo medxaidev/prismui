@@ -408,80 +408,96 @@ interface PopoverController {
 
 ---
 
-### Phase D: Toast (2.5 sessions)
+### Phase D: Toast ✅ COMPLETED
 
 **Goal**: Implement Toast (Layer 2 + 3 + 4).
 
-#### D1: ToastBase (0.5 session)
+#### D1: ToastBase (Layer 2) ✅
 
 **Files**:
 
-- `components/ToastBase/ToastBase.tsx`
-- `components/ToastBase/ToastBase.module.css`
+- `components/ToastBase/ToastBase.tsx` — Main container (positioned toast list, hover-to-expand)
+- `components/ToastBase/ToastBase.context.tsx` — Shared context (ToastPosition, ToastData, ToastHandlers)
+- `components/ToastBase/ToastBaseItem.tsx` — Individual toast item (timer, stacking transforms, enter/exit)
+- `components/ToastBase/ToastBase.module.css` — Minimal positioning & stacking CSS
+- `components/ToastBase/index.ts` — Barrel exports
 
 **Features**:
 
-- Auto-dismiss timer
-- Enter/exit animations
-- Position variants
-
-**Tests**: 15 tests
+- [x] Auto-dismiss timer with pause on hover / resume on leave
+- [x] Sonner-style stacking animation (collapsed/expanded)
+- [x] 6 position variants (top-left/center/right, bottom-left/center/right)
+- [x] Enter/exit transitions (slide + fade + height collapse)
+- [x] Configurable visible toasts, gap, width, transition duration
 
 ---
 
-#### D2: Toast Component (1 session)
+#### D2: Toast Component (Layer 3) ✅
 
 **Files**:
 
-- `components/Toast/Toast.tsx`
-- `components/Toast/Toast.module.css`
-- `components/Toast/Toast.test.tsx`
-- `components/Toast/Toast.stories.tsx`
+- `components/Toast/Toast.tsx` — Styled toast with severity variants + default icons
+- `components/Toast/Toast.module.css` — Severity-specific styles (default dark, semantic light)
+- `components/Toast/Toast.stories.tsx` — 11 Storybook stories
+- `components/Toast/index.ts` — Barrel exports
 
 **Features**:
 
-- Severity variants
-- Icon support
-- Action buttons
-- Close button
+- [x] `default` severity: dark background (`--prismui-color-gray-800`), white text
+- [x] `primary/info/success/warning/error`: white background, 48px icon area with `color-mix` tint
+- [x] Three-area layout: Icon (48px) | Title+Description | Action, gap 12px
+- [x] Default SVG icons per severity (info ℹ, success ✓, warning ⚠, error ✕)
+- [x] Loading state with `<Loader>` component (24px)
+- [x] Close button (16px icon, 28px hit area, ModalBase-style)
+- [x] Title: 13px, `--prismui-text-primary`; Description: 13px, `--prismui-text-secondary`
+- [x] Custom icon override, custom action area
 
-**Tests**: 22 tests
-**Stories**: 8 stories
+**Stories**: 11 stories
 
 ---
 
-#### D3: ToastController (1 session)
+#### D3: ToastController (Layer 4) ✅
 
 **Files**:
 
-- `core/runtime/toast/ToastController.ts`
-- `core/runtime/toast/ToastQueue.ts`
-- `core/runtime/toast/toastModule.ts`
-- `core/runtime/toast/ToastRenderer.tsx`
-- `core/runtime/toast/useToastController.ts`
-
-**Features**:
-
-- Queue management
-- Auto-dismiss
-- Position management
-- Shorthand methods (success, error, etc.)
+- `core/runtime/toast/types.ts` — ToastController, ToastControllerOptions, ToastInstance, ToastPromiseOptions
+- `core/runtime/toast/ToastController.ts` — Controller factory (Map-based, subscriber notification)
+- `core/runtime/toast/toastModule.ts` — Runtime module registration
+- `core/runtime/toast/useToastController.ts` — React hook
+- `core/runtime/toast/ToastRenderer.tsx` — Subscribes to controller, renders ToastBase + Toast per position
+- `core/runtime/toast/ToastController.test.ts` — 31 tests
+- `core/runtime/toast/index.ts` — Barrel exports
 
 **API**:
 
 ```typescript
 interface ToastController {
-  show(options: ToastOptions): string;
+  show(options: ToastControllerOptions): string;
   hide(id: string): void;
   hideAll(): void;
-  success(message: string, options?: Partial<ToastOptions>): string;
-  error(message: string, options?: Partial<ToastOptions>): string;
-  warning(message: string, options?: Partial<ToastOptions>): string;
-  info(message: string, options?: Partial<ToastOptions>): string;
+  success(title: string, options?: Partial<ToastControllerOptions>): string;
+  error(title: string, options?: Partial<ToastControllerOptions>): string;
+  warning(title: string, options?: Partial<ToastControllerOptions>): string;
+  info(title: string, options?: Partial<ToastControllerOptions>): string;
+  promise<T>(promise: Promise<T>, options: ToastPromiseOptions<T>): string;
+  update(id: string, options: Partial<ToastControllerOptions>): void;
+  getToasts(): ToastInstance[];
+  subscribe(listener: ToastChangeListener): () => void;
 }
 ```
 
-**Tests**: 35 tests
+**Tests**: 31 tests
+
+**Acceptance Criteria**:
+
+- [x] All severity variants render correctly (default dark, semantic light)
+- [x] Icon area: 48px, `color-mix(in srgb, currentcolor 8%, transparent)` background
+- [x] Promise toast: loading → success/error state transition
+- [x] Auto-dismiss with pause on hover
+- [x] Sonner-style stacking (collapsed/expanded on hover)
+- [x] 6 position variants
+- [x] Programmatic API: show/hide/hideAll/success/error/warning/info/promise/update
+- [x] 31 tests pass, tsc clean, zero regressions (1332 total)
 
 ---
 
