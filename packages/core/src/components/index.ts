@@ -137,7 +137,7 @@ export type {
   InputCssVariables,
 } from './Input';
 
-export { ComboboxBase } from './ComboboxBase';
+export { ComboboxBase, useCombobox } from './ComboboxBase';
 export type {
   ComboboxBaseProps,
   ComboboxBaseTargetProps,
@@ -147,6 +147,9 @@ export type {
   ComboboxBaseSearchProps,
   ComboboxBaseEmptyProps,
   ComboboxBaseContextValue,
+  ComboboxStore,
+  UseComboboxOptions,
+  ComboboxDropdownEventSource,
 } from './ComboboxBase';
 
 export { Select } from './Select';

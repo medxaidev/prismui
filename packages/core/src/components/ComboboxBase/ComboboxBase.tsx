@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useCallback, useId } from 'react';
+import React from 'react';
 import { PopoverBase } from '../PopoverBase/PopoverBase';
 import type { PopoverBaseProps } from '../PopoverBase/PopoverBase';
 import { ComboboxBaseContext } from './ComboboxBase.context';
@@ -10,6 +10,8 @@ import { ComboboxBaseOptions } from './ComboboxBaseOptions';
 import { ComboboxBaseOption } from './ComboboxBaseOption';
 import { ComboboxBaseSearch } from './ComboboxBaseSearch';
 import { ComboboxBaseEmpty } from './ComboboxBaseEmpty';
+import { useCombobox } from './useCombobox';
+import type { ComboboxStore } from './useCombobox';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -26,37 +28,25 @@ export interface ComboboxBaseProps
     | 'closeOnClickOutside'
   > {
   /** Combobox content (Target + Dropdown). */
-  children: React.ReactNode;
+  children?: React.ReactNode;
 
-  /** Controlled opened state. */
-  opened?: boolean;
+  /** Combobox store — can be used to control combobox state externally. */
+  store?: ComboboxStore;
 
-  /** Callback when dropdown opens. */
-  onOpen?: () => void;
+  /** Called when an option is submitted (clicked or Enter). */
+  onOptionSubmit?: (value: string, optionProps: Record<string, unknown>) => void;
 
-  /** Callback when dropdown closes. */
+  /** Called when dropdown closes. */
   onClose?: () => void;
 
-  /** Callback when opened state changes. */
-  onDropdownChange?: (opened: boolean) => void;
+  /** Controls option font-size and padding. @default 'sm' */
+  size?: string;
 
-  /** Controlled selected value. */
-  value?: string | null;
+  /** Whether selection resets on option hover. @default false */
+  resetSelectionOnOptionHover?: boolean;
 
-  /** Default selected value (uncontrolled). */
-  defaultValue?: string | null;
-
-  /** Callback when a value is selected. */
-  onOptionSubmit?: (value: string) => void;
-
-  /** Controlled search value. */
-  searchValue?: string;
-
-  /** Default search value (uncontrolled). */
-  defaultSearchValue?: string;
-
-  /** Callback when search value changes. */
-  onSearchChange?: (value: string) => void;
+  /** Whether the combobox is read-only. */
+  readOnly?: boolean;
 
   /** Whether the combobox is disabled. @default false */
   disabled?: boolean;
@@ -68,16 +58,12 @@ export interface ComboboxBaseProps
 
 export function ComboboxBase({
   children,
-  opened: controlledOpened,
-  onOpen: onOpenProp,
-  onClose: onCloseProp,
-  onDropdownChange,
-  value: controlledValue,
-  defaultValue = null,
+  store: controlledStore,
   onOptionSubmit,
-  searchValue: controlledSearch,
-  defaultSearchValue = '',
-  onSearchChange,
+  onClose,
+  size = 'sm',
+  resetSelectionOnOptionHover = false,
+  readOnly,
   disabled = false,
   position = 'bottom-start',
   offset = 4,
@@ -86,91 +72,27 @@ export function ComboboxBase({
   zIndex,
   closeOnClickOutside = true,
 }: ComboboxBaseProps) {
-  // ---- Open state ----
-  const [uncontrolledOpened, setUncontrolledOpened] = useState(false);
-  const isOpenControlled = controlledOpened !== undefined;
-  const opened = isOpenControlled ? controlledOpened! : uncontrolledOpened;
+  const uncontrolledStore = useCombobox();
+  const store = controlledStore || uncontrolledStore;
 
-  // ---- Value state ----
-  const [uncontrolledValue, setUncontrolledValue] = useState<string | null>(defaultValue);
-  const isValueControlled = controlledValue !== undefined;
-  const value = isValueControlled ? controlledValue! : uncontrolledValue;
-
-  // ---- Search state ----
-  const [uncontrolledSearch, setUncontrolledSearch] = useState(defaultSearchValue);
-  const isSearchControlled = controlledSearch !== undefined;
-  const searchValue = isSearchControlled ? controlledSearch! : uncontrolledSearch;
-
-  // ---- Active index ----
-  const [activeIndex, setActiveIndex] = useState(-1);
-
-  // ---- Options count ----
-  const [optionsCount, setOptionsCount] = useState(0);
-
-  // ---- ID ----
-  const comboboxId = useId();
-
-  // ---- Handlers ----
-  const onOpen = useCallback(() => {
-    if (disabled) return;
-    if (!isOpenControlled) setUncontrolledOpened(true);
-    onOpenProp?.();
-    onDropdownChange?.(true);
-  }, [disabled, isOpenControlled, onOpenProp, onDropdownChange]);
-
-  const onClose = useCallback(() => {
-    if (!isOpenControlled) setUncontrolledOpened(false);
-    onCloseProp?.();
-    onDropdownChange?.(false);
-    setActiveIndex(-1);
-  }, [isOpenControlled, onCloseProp, onDropdownChange]);
-
-  const onToggle = useCallback(() => {
-    if (opened) onClose();
-    else onOpen();
-  }, [opened, onOpen, onClose]);
-
-  const onSelect = useCallback(
-    (val: string) => {
-      if (!isValueControlled) setUncontrolledValue(val);
-      onOptionSubmit?.(val);
-      onClose();
-    },
-    [isValueControlled, onOptionSubmit, onClose],
-  );
-
-  const handleSearchChange = useCallback(
-    (val: string) => {
-      if (!isSearchControlled) setUncontrolledSearch(val);
-      onSearchChange?.(val);
-    },
-    [isSearchControlled, onSearchChange],
-  );
+  const onDropdownClose = () => {
+    onClose?.();
+    store.closeDropdown();
+  };
 
   return (
     <ComboboxBaseContext.Provider
       value={{
-        opened,
-        onOpen,
-        onClose,
-        onToggle,
-        value,
-        onSelect,
-        activeIndex,
-        setActiveIndex,
-        optionsCount,
-        setOptionsCount,
-        searchValue,
-        setSearchValue: handleSearchChange,
-        comboboxId,
-        disabled,
+        store,
+        onOptionSubmit,
+        size,
+        resetSelectionOnOptionHover,
+        readOnly,
       }}
     >
       <PopoverBase
-        opened={opened}
-        onOpen={onOpen}
-        onClose={onClose}
-        onChange={onDropdownChange}
+        opened={store.dropdownOpened}
+        onClose={onDropdownClose}
         position={position}
         offset={offset}
         withinPortal={withinPortal}

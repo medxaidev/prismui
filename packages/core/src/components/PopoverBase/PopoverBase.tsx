@@ -166,6 +166,7 @@ export function PopoverBase({
     withArrow,
     offset,
     setTargetRef: (node) => { targetRef.current = node; },
+    getTargetRef: () => targetRef.current,  // stable — reads ref, no deps
     setDropdownRef: (node) => { dropdownRef.current = node; },
     popoverId,
     disabled,

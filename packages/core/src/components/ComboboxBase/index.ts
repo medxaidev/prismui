@@ -21,3 +21,6 @@ export type { ComboboxBaseEmptyProps } from './ComboboxBaseEmpty';
 
 export { ComboboxBaseContext, useComboboxBaseContext } from './ComboboxBase.context';
 export type { ComboboxBaseContextValue } from './ComboboxBase.context';
+
+export { useCombobox } from './useCombobox';
+export type { ComboboxStore, UseComboboxOptions, ComboboxDropdownEventSource } from './useCombobox';

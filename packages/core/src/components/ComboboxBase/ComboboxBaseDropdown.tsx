@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { useComboboxBaseContext } from './ComboboxBase.context';
+import { PopoverBaseDropdown } from '../PopoverBase/PopoverBaseDropdown';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -16,6 +16,9 @@ export interface ComboboxBaseDropdownProps {
 
   /** Additional style for the dropdown element. */
   style?: React.CSSProperties;
+
+  /** Whether the dropdown should be hidden (e.g. no options). */
+  hidden?: boolean;
 }
 
 // ---------------------------------------------------------------------------
@@ -26,21 +29,20 @@ export function ComboboxBaseDropdown({
   children,
   className,
   style,
+  hidden,
 }: ComboboxBaseDropdownProps) {
-  const ctx = useComboboxBaseContext();
-
-  if (!ctx.opened) return null;
-
+  // Delegate entirely to PopoverBase.Dropdown — no double-gating.
+  // PopoverBase controls visibility via Transition + opened state.
   return (
-    <div
-      id={`${ctx.comboboxId}-listbox`}
-      role="listbox"
-      aria-label="Options"
+    <PopoverBaseDropdown
       className={className}
-      style={style}
+      style={{
+        ...style,
+        display: hidden ? 'none' : undefined,
+      }}
     >
       {children}
-    </div>
+    </PopoverBaseDropdown>
   );
 }
 

@@ -1,9 +1,8 @@
 'use client';
 
-import React, { useMemo, useCallback, useRef } from 'react';
+import React, { useMemo, useCallback, useState, useRef } from 'react';
 import { ComboboxBase } from '../ComboboxBase/ComboboxBase';
-import { useComboboxKeyboard } from '../ComboboxBase/useComboboxKeyboard';
-import { useComboboxBaseContext } from '../ComboboxBase/ComboboxBase.context';
+import { useCombobox } from '../ComboboxBase/useCombobox';
 import { InputBase } from '../InputBase/InputBase';
 import type { InputBaseSize, InputBaseVariant } from '../InputBase/InputBase';
 import type { PrismuiRadius } from '../../core/theme/types';
@@ -104,6 +103,12 @@ export interface SelectProps {
 
   /** Custom render function for options. */
   renderOption?: (option: SelectOption, props: { selected: boolean; active: boolean }) => React.ReactNode;
+
+  /** Whether to render dropdown within a portal. @default true */
+  withinPortal?: boolean;
+
+  /** Transition duration in ms. @default 150 */
+  transitionDuration?: number;
 }
 
 // ---------------------------------------------------------------------------
@@ -172,15 +177,14 @@ function ClearButton({ onClick }: { onClick: (e: React.MouseEvent) => void }) {
 }
 
 // ---------------------------------------------------------------------------
-// Inner component (needs ComboboxBase context)
+// Select — public component
 // ---------------------------------------------------------------------------
 
-interface SelectInnerProps extends Omit<SelectProps, 'value' | 'defaultValue' | 'onChange'> {
-  onClear: () => void;
-}
-
-function SelectInner({
+export function Select({
   data,
+  value: controlledValue,
+  defaultValue,
+  onChange,
   placeholder,
   label,
   description,
@@ -199,64 +203,85 @@ function SelectInner({
   style,
   id,
   renderOption,
-  onClear,
-}: SelectInnerProps) {
-  const ctx = useComboboxBaseContext();
-  const normalizedData = useMemo(() => normalizeData(data), [data]);
-  const inputRef = useRef<HTMLInputElement>(null);
+  withinPortal,
+  transitionDuration,
+}: SelectProps) {
+  // ---- Value state (controlled/uncontrolled) ----
+  const isControlled = controlledValue !== undefined;
+  const [uncontrolledValue, setUncontrolledValue] = useState<string | null>(defaultValue ?? null);
+  const _value = isControlled ? controlledValue : uncontrolledValue;
 
-  // Find the label for the current value
-  const selectedOption = useMemo(
-    () => normalizedData.find((opt) => opt.value === ctx.value),
-    [normalizedData, ctx.value],
+  const setValue = useCallback(
+    (val: string | null) => {
+      if (!isControlled) setUncontrolledValue(val);
+      onChange?.(val);
+    },
+    [isControlled, onChange],
   );
 
-  // Keyboard navigation
-  const { handleKeyDown } = useComboboxKeyboard({
-    opened: ctx.opened,
-    onOpen: ctx.onOpen,
-    onClose: ctx.onClose,
-    activeIndex: ctx.activeIndex,
-    setActiveIndex: ctx.setActiveIndex,
-    optionsCount: ctx.optionsCount,
-    onSelectActive: () => {
-      // Find the option at activeIndex
-      let idx = 0;
-      for (const opt of normalizedData) {
-        if (!opt.disabled) {
-          if (idx === ctx.activeIndex) {
-            ctx.onSelect(opt.value);
-            return;
-          }
-          idx++;
-        }
-      }
+  // ---- Combobox store ----
+  const combobox = useCombobox({
+    onDropdownOpen: () => {
+      // When opening, select the active option (the one matching current value)
+      combobox.updateSelectedOptionIndex('active', { scrollIntoView: true });
+    },
+    onDropdownClose: () => {
+      combobox.resetSelectedOption();
     },
   });
+
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  // ---- Data ----
+  const normalizedData = useMemo(() => normalizeData(data), [data]);
+
+  // Build options lockup for fast value → label lookup
+  const optionsLockup = useMemo(() => {
+    const map: Record<string, SelectOption> = {};
+    for (const opt of normalizedData) {
+      map[opt.value] = opt;
+    }
+    return map;
+  }, [normalizedData]);
+
+  const selectedOption = _value != null ? optionsLockup[_value] : undefined;
+
+  // ---- Handlers ----
+  const handleOptionSubmit = useCallback(
+    (val: string) => {
+      const nextValue = _value === val ? null : val; // allow deselect
+      setValue(nextValue);
+      combobox.closeDropdown();
+    },
+    [_value, setValue, combobox],
+  );
 
   const handleClear = useCallback(
     (e: React.MouseEvent) => {
       e.stopPropagation();
-      onClear();
+      setValue(null);
       inputRef.current?.focus();
     },
-    [onClear],
+    [setValue],
   );
 
-  // Build right section: clear button + chevron
-  const showClear = clearable && ctx.value != null && !disabled;
+  const handleClick = useCallback(() => {
+    if (!disabled) {
+      combobox.toggleDropdown();
+    }
+  }, [disabled, combobox]);
+
+  // ---- Right section ----
+  const showClear = clearable && _value != null && !disabled;
   const rightSection = (
     <>
       {showClear && <ClearButton onClick={handleClear} />}
-      <ChevronIcon opened={ctx.opened} />
+      <ChevronIcon opened={combobox.dropdownOpened} />
     </>
   );
 
-  // Group options
+  // ---- Render options ----
   const grouped = useMemo(() => groupOptions(normalizedData), [normalizedData]);
-
-  // Render options
-  let optionIndex = 0;
   const optionElements: React.ReactNode[] = [];
 
   for (const [groupName, groupOpts] of grouped) {
@@ -265,89 +290,54 @@ function SelectInner({
         <div key={`group-${groupName}`} className={classes.group}>
           <div className={classes.groupLabel}>{groupName}</div>
           {groupOpts.map((opt) => {
-            if (opt.disabled) {
-              return (
-                <div
-                  key={opt.value}
-                  className={classes.option}
-                  data-disabled
-                  role="option"
-                  aria-disabled="true"
-                  aria-selected={false}
-                >
-                  {opt.label || opt.value}
-                </div>
-              );
-            }
-            const idx = optionIndex++;
-            const isSelected = ctx.value === opt.value;
-            const isActive = ctx.activeIndex === idx;
+            const isSelected = _value === opt.value;
             return (
-              <div
+              <ComboboxBase.Option
                 key={opt.value}
-                id={`${ctx.comboboxId}-option-${idx}`}
-                role="option"
-                aria-selected={isSelected}
-                data-selected={isSelected || undefined}
-                data-active={isActive || undefined}
+                value={opt.value}
+                disabled={opt.disabled}
+                active={isSelected}
                 className={classes.option}
-                onClick={() => ctx.onSelect(opt.value)}
-                onMouseEnter={() => ctx.setActiveIndex(idx)}
               >
                 {renderOption
-                  ? renderOption(opt, { selected: isSelected, active: isActive })
+                  ? renderOption(opt, { selected: isSelected, active: false })
                   : (opt.label || opt.value)}
-              </div>
+              </ComboboxBase.Option>
             );
           })}
         </div>,
       );
     } else {
       for (const opt of groupOpts) {
-        if (opt.disabled) {
-          optionElements.push(
-            <div
-              key={opt.value}
-              className={classes.option}
-              data-disabled
-              role="option"
-              aria-disabled="true"
-              aria-selected={false}
-            >
-              {opt.label || opt.value}
-            </div>,
-          );
-          continue;
-        }
-        const idx = optionIndex++;
-        const isSelected = ctx.value === opt.value;
-        const isActive = ctx.activeIndex === idx;
+        const isSelected = _value === opt.value;
         optionElements.push(
-          <div
+          <ComboboxBase.Option
             key={opt.value}
-            id={`${ctx.comboboxId}-option-${idx}`}
-            role="option"
-            aria-selected={isSelected}
-            data-selected={isSelected || undefined}
-            data-active={isActive || undefined}
+            value={opt.value}
+            disabled={opt.disabled}
+            active={isSelected}
             className={classes.option}
-            onClick={() => ctx.onSelect(opt.value)}
-            onMouseEnter={() => ctx.setActiveIndex(idx)}
           >
             {renderOption
-              ? renderOption(opt, { selected: isSelected, active: isActive })
+              ? renderOption(opt, { selected: isSelected, active: false })
               : (opt.label || opt.value)}
-          </div>,
+          </ComboboxBase.Option>,
         );
       }
     }
   }
 
-  const hasOptions = optionIndex > 0;
+  const hasOptions = normalizedData.filter((o) => !o.disabled).length > 0;
 
   return (
-    <>
-      <ComboboxBase.Target>
+    <ComboboxBase
+      store={combobox}
+      onOptionSubmit={handleOptionSubmit}
+      disabled={disabled}
+      withinPortal={withinPortal}
+      transitionDuration={transitionDuration}
+    >
+      <ComboboxBase.Target targetType="button">
         <InputBase
           ref={inputRef}
           label={label}
@@ -367,7 +357,7 @@ function SelectInner({
           value={selectedOption ? (selectedOption.label || selectedOption.value) : ''}
           placeholder={placeholder}
           id={id}
-          onKeyDown={handleKeyDown}
+          onClick={handleClick}
           className={className}
           style={style}
         />
@@ -383,39 +373,6 @@ function SelectInner({
           </ComboboxBase.Empty>
         )}
       </ComboboxBase.Dropdown>
-    </>
-  );
-}
-
-// ---------------------------------------------------------------------------
-// Select — public component
-// ---------------------------------------------------------------------------
-
-export function Select({
-  value,
-  defaultValue,
-  onChange,
-  ...rest
-}: SelectProps) {
-  const handleOptionSubmit = useCallback(
-    (val: string) => {
-      onChange?.(val);
-    },
-    [onChange],
-  );
-
-  const handleClear = useCallback(() => {
-    onChange?.(null);
-  }, [onChange]);
-
-  return (
-    <ComboboxBase
-      value={value}
-      defaultValue={defaultValue}
-      onOptionSubmit={handleOptionSubmit}
-      disabled={rest.disabled}
-    >
-      <SelectInner {...rest} onClear={handleClear} />
     </ComboboxBase>
   );
 }

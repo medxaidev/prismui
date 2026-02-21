@@ -48,6 +48,9 @@ export interface PopoverBaseContextValue {
   /** Ref setter for the target element. */
   setTargetRef: (node: HTMLElement | null) => void;
 
+  /** Getter for the target element (for positioning). */
+  getTargetRef: () => HTMLElement | null;
+
   /** Ref setter for the dropdown element. */
   setDropdownRef: (node: HTMLDivElement | null) => void;
 

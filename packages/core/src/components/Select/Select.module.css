@@ -23,7 +23,7 @@
   transition: transform 200ms cubic-bezier(0.4, 0, 0.2, 1);
   color: var(--prismui-text-secondary);
 
-  & > svg {
+  &>svg {
     width: 1em;
     height: 1em;
   }
@@ -51,7 +51,7 @@
     background-color: var(--prismui-action-hover);
   }
 
-  & > svg {
+  &>svg {
     width: 0.875em;
     height: 0.875em;
   }
@@ -81,17 +81,17 @@
   transition: background-color 100ms;
   gap: 8px;
 
-  &[data-active] {
-    background-color: var(--prismui-action-hover);
-  }
-
-  &[data-selected] {
+  &[data-combobox-active] {
     background-color: color-mix(in srgb, var(--prismui-primary-main) 12%, transparent);
     color: var(--prismui-primary-main);
     font-weight: 500;
   }
 
-  &[data-disabled] {
+  &[data-combobox-selected] {
+    background-color: var(--prismui-action-hover);
+  }
+
+  &[data-combobox-disabled] {
     color: var(--prismui-action-disabled);
     cursor: not-allowed;
     pointer-events: none;

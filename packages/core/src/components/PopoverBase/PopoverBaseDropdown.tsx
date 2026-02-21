@@ -43,9 +43,8 @@ export const PopoverBaseDropdown = forwardRef<HTMLDivElement, PopoverBaseDropdow
       const dropdown = dropdownRef.current;
       if (!dropdown) return;
 
-      // Get target from context ref setter — we need to read it from the DOM
-      const targetId = ctx.popoverId;
-      const target = document.querySelector(`[aria-controls="${targetId}"]`) as HTMLElement | null;
+      // Get target element from context ref
+      const target = ctx.getTargetRef();
       if (!target) return;
 
       const targetRect = target.getBoundingClientRect();
@@ -59,6 +58,8 @@ export const PopoverBaseDropdown = forwardRef<HTMLDivElement, PopoverBaseDropdow
 
       dropdown.style.top = `${coords.top}px`;
       dropdown.style.left = `${coords.left}px`;
+      // Match target width so dropdown is at least as wide as the trigger
+      dropdown.style.minWidth = `${targetRect.width}px`;
 
       // Position arrow via DOM
       const arrow = arrowRef.current;
@@ -68,7 +69,7 @@ export const PopoverBaseDropdown = forwardRef<HTMLDivElement, PopoverBaseDropdow
         if (coords.arrowTop !== undefined) arrow.style.top = `${coords.arrowTop}px`;
         else arrow.style.top = '';
       }
-    }, [ctx.position, ctx.popoverId, effectiveOffset]);
+    }, [ctx.position, effectiveOffset]); // eslint-disable-line react-hooks/exhaustive-deps — getTargetRef reads a ref
 
     // Reset positioned flag when closed; listen to scroll/resize while open
     useEffect(() => {

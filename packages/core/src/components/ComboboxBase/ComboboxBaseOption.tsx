@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useId } from 'react';
 import { useComboboxBaseContext } from './ComboboxBase.context';
 
 // ---------------------------------------------------------------------------
@@ -17,14 +17,17 @@ export interface ComboboxBaseOptionProps {
   /** Whether this option is disabled. @default false */
   disabled?: boolean;
 
-  /** 0-based index within the options list (set by parent). */
-  index: number;
+  /** Whether this option is currently active (e.g. matches current value). */
+  active?: boolean;
 
   /** Additional className. */
   className?: string;
 
   /** Additional style. */
   style?: React.CSSProperties;
+
+  /** Additional id (auto-generated if not provided). */
+  id?: string;
 }
 
 // ---------------------------------------------------------------------------
@@ -35,40 +38,40 @@ export function ComboboxBaseOption({
   value,
   children,
   disabled = false,
-  index,
+  active,
   className,
   style,
+  id,
 }: ComboboxBaseOptionProps) {
   const ctx = useComboboxBaseContext();
-
-  const isSelected = ctx.value === value;
-  const isActive = ctx.activeIndex === index;
-
-  const handleClick = () => {
-    if (!disabled) {
-      ctx.onSelect(value);
-    }
-  };
-
-  const handleMouseEnter = () => {
-    if (!disabled) {
-      ctx.setActiveIndex(index);
-    }
-  };
+  const uuid = useId();
+  const _id = id || uuid;
 
   return (
     <div
-      id={`${ctx.comboboxId}-option-${index}`}
+      id={_id}
       role="option"
-      aria-selected={isSelected}
-      aria-disabled={disabled || undefined}
-      data-selected={isSelected || undefined}
-      data-active={isActive || undefined}
-      data-disabled={disabled || undefined}
+      data-combobox-option
+      data-combobox-active={active || undefined}
+      data-combobox-disabled={disabled || undefined}
       className={className}
       style={style}
-      onClick={handleClick}
-      onMouseEnter={handleMouseEnter}
+      onClick={(event) => {
+        if (!disabled) {
+          ctx.onOptionSubmit?.(value, { value, children, disabled, active });
+        } else {
+          event.preventDefault();
+        }
+      }}
+      onMouseDown={(event) => {
+        // Prevent focus loss from the trigger
+        event.preventDefault();
+      }}
+      onMouseOver={() => {
+        if (ctx.resetSelectionOnOptionHover) {
+          ctx.store.resetSelectedOption();
+        }
+      }}
     >
       {children}
     </div>

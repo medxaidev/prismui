@@ -1,9 +1,8 @@
 'use client';
 
-import React, { useMemo, useCallback, useRef, useEffect } from 'react';
+import React, { useMemo, useCallback, useState, useRef, useEffect } from 'react';
 import { ComboboxBase } from '../ComboboxBase/ComboboxBase';
-import { useComboboxKeyboard } from '../ComboboxBase/useComboboxKeyboard';
-import { useComboboxBaseContext } from '../ComboboxBase/ComboboxBase.context';
+import { useCombobox } from '../ComboboxBase/useCombobox';
 import { InputBase } from '../InputBase/InputBase';
 import type { InputBaseSize, InputBaseVariant } from '../InputBase/InputBase';
 import type { PrismuiRadius } from '../../core/theme/types';
@@ -92,6 +91,12 @@ export interface ComboboxProps {
 
   /** Custom render function for options. */
   renderOption?: (option: SelectOption, props: { selected: boolean; active: boolean }) => React.ReactNode;
+
+  /** Whether to render dropdown within a portal. @default true */
+  withinPortal?: boolean;
+
+  /** Transition duration in ms. @default 150 */
+  transitionDuration?: number;
 }
 
 // ---------------------------------------------------------------------------
@@ -155,15 +160,16 @@ function ClearButton({ onClick }: { onClick: (e: React.MouseEvent) => void }) {
 }
 
 // ---------------------------------------------------------------------------
-// Inner component (needs ComboboxBase context)
+// Combobox — public component
 // ---------------------------------------------------------------------------
 
-interface ComboboxInnerProps extends Omit<ComboboxProps, 'value' | 'defaultValue' | 'onChange' | 'searchValue' | 'onSearchChange'> {
-  onClear: () => void;
-}
-
-function ComboboxInner({
+export function Combobox({
   data,
+  value: controlledValue,
+  defaultValue,
+  onChange,
+  searchValue: controlledSearch,
+  onSearchChange,
   filter = defaultFilter,
   placeholder,
   searchPlaceholder = 'Search...',
@@ -184,124 +190,156 @@ function ComboboxInner({
   style,
   id,
   renderOption,
-  onClear,
-}: ComboboxInnerProps) {
-  const ctx = useComboboxBaseContext();
-  const normalizedData = useMemo(() => normalizeData(data), [data]);
-  const searchRef = useRef<HTMLInputElement>(null);
+  withinPortal,
+  transitionDuration,
+}: ComboboxProps) {
+  // ---- Value state (controlled/uncontrolled) ----
+  const isValueControlled = controlledValue !== undefined;
+  const [uncontrolledValue, setUncontrolledValue] = useState<string | null>(defaultValue ?? null);
+  const _value = isValueControlled ? controlledValue : uncontrolledValue;
+
+  const setValue = useCallback(
+    (val: string | null) => {
+      if (!isValueControlled) setUncontrolledValue(val);
+      onChange?.(val);
+    },
+    [isValueControlled, onChange],
+  );
+
+  // ---- Search state (controlled/uncontrolled) ----
+  const isSearchControlled = controlledSearch !== undefined;
+  const [uncontrolledSearch, setUncontrolledSearch] = useState('');
+  const _search = isSearchControlled ? controlledSearch : uncontrolledSearch;
+
+  const setSearch = useCallback(
+    (val: string) => {
+      if (!isSearchControlled) setUncontrolledSearch(val);
+      onSearchChange?.(val);
+    },
+    [isSearchControlled, onSearchChange],
+  );
+
+  // ---- Combobox store ----
+  const combobox = useCombobox({
+    onDropdownOpen: () => {
+      combobox.updateSelectedOptionIndex('active', { scrollIntoView: true });
+    },
+    onDropdownClose: () => {
+      combobox.resetSelectedOption();
+    },
+  });
+
   const triggerRef = useRef<HTMLInputElement>(null);
+  const searchRef = useRef<HTMLInputElement>(null);
+
+  // ---- Data ----
+  const normalizedData = useMemo(() => normalizeData(data), [data]);
+
+  // Build options lockup
+  const optionsLockup = useMemo(() => {
+    const map: Record<string, SelectOption> = {};
+    for (const opt of normalizedData) {
+      map[opt.value] = opt;
+    }
+    return map;
+  }, [normalizedData]);
+
+  const selectedOption = _value != null ? optionsLockup[_value] : undefined;
 
   // Filter options based on search
   const filteredData = useMemo(
     () =>
-      ctx.searchValue
-        ? normalizedData.filter((opt) => filter(opt, ctx.searchValue))
+      _search
+        ? normalizedData.filter((opt) => filter(opt, _search))
         : normalizedData,
-    [normalizedData, ctx.searchValue, filter],
-  );
-
-  // Find the label for the current value
-  const selectedOption = useMemo(
-    () => normalizedData.find((opt) => opt.value === ctx.value),
-    [normalizedData, ctx.value],
+    [normalizedData, _search, filter],
   );
 
   // Focus search input when dropdown opens
   useEffect(() => {
-    if (ctx.opened) {
-      // Small delay to ensure dropdown is rendered
+    if (combobox.dropdownOpened) {
       requestAnimationFrame(() => {
         searchRef.current?.focus();
       });
     }
-  }, [ctx.opened]);
+  }, [combobox.dropdownOpened]);
 
-  // Keyboard navigation
-  const enabledOptions = useMemo(
-    () => filteredData.filter((opt) => !opt.disabled),
-    [filteredData],
-  );
-
-  const { handleKeyDown } = useComboboxKeyboard({
-    opened: ctx.opened,
-    onOpen: ctx.onOpen,
-    onClose: ctx.onClose,
-    activeIndex: ctx.activeIndex,
-    setActiveIndex: ctx.setActiveIndex,
-    optionsCount: enabledOptions.length,
-    onSelectActive: () => {
-      if (ctx.activeIndex >= 0 && ctx.activeIndex < enabledOptions.length) {
-        ctx.onSelect(enabledOptions[ctx.activeIndex].value);
-      }
+  // ---- Handlers ----
+  const handleOptionSubmit = useCallback(
+    (val: string) => {
+      const nextValue = _value === val ? null : val;
+      setValue(nextValue);
+      setSearch('');
+      combobox.closeDropdown();
+      triggerRef.current?.focus();
     },
-  });
+    [_value, setValue, setSearch, combobox],
+  );
 
   const handleClear = useCallback(
     (e: React.MouseEvent) => {
       e.stopPropagation();
-      onClear();
-      ctx.setSearchValue('');
+      setValue(null);
+      setSearch('');
       triggerRef.current?.focus();
     },
-    [onClear, ctx],
+    [setValue, setSearch],
   );
 
-  // Build right section
-  const showClear = clearable && ctx.value != null && !disabled;
+  const handleClick = useCallback(() => {
+    if (!disabled) {
+      combobox.toggleDropdown();
+    }
+  }, [disabled, combobox]);
+
+  const handleSearchChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      setSearch(e.target.value);
+      combobox.resetSelectedOption();
+    },
+    [setSearch, combobox],
+  );
+
+  // ---- Right section ----
+  const showClear = clearable && _value != null && !disabled;
   const rightSection = (
     <>
       {showClear && <ClearButton onClick={handleClear} />}
-      <ChevronIcon opened={ctx.opened} />
+      <ChevronIcon opened={combobox.dropdownOpened} />
     </>
   );
 
-  // Render options
-  let optionIndex = 0;
+  // ---- Render options ----
   const optionElements: React.ReactNode[] = [];
 
   for (const opt of filteredData) {
-    if (opt.disabled) {
-      optionElements.push(
-        <div
-          key={opt.value}
-          className={classes.option}
-          data-disabled
-          role="option"
-          aria-disabled="true"
-          aria-selected={false}
-        >
-          {opt.label || opt.value}
-        </div>,
-      );
-      continue;
-    }
-    const idx = optionIndex++;
-    const isSelected = ctx.value === opt.value;
-    const isActive = ctx.activeIndex === idx;
+    const isSelected = _value === opt.value;
     optionElements.push(
-      <div
+      <ComboboxBase.Option
         key={opt.value}
-        id={`${ctx.comboboxId}-option-${idx}`}
-        role="option"
-        aria-selected={isSelected}
-        data-selected={isSelected || undefined}
-        data-active={isActive || undefined}
+        value={opt.value}
+        disabled={opt.disabled}
+        active={isSelected}
         className={classes.option}
-        onClick={() => ctx.onSelect(opt.value)}
-        onMouseEnter={() => ctx.setActiveIndex(idx)}
       >
         {renderOption
-          ? renderOption(opt, { selected: isSelected, active: isActive })
+          ? renderOption(opt, { selected: isSelected, active: false })
           : (opt.label || opt.value)}
-      </div>,
+      </ComboboxBase.Option>,
     );
   }
 
-  const hasOptions = optionIndex > 0;
+  const hasEnabledOptions = filteredData.some((o) => !o.disabled);
 
   return (
-    <>
-      <ComboboxBase.Target>
+    <ComboboxBase
+      store={combobox}
+      onOptionSubmit={handleOptionSubmit}
+      disabled={disabled}
+      withinPortal={withinPortal}
+      transitionDuration={transitionDuration}
+    >
+      <ComboboxBase.Target targetType="button">
         <InputBase
           ref={triggerRef}
           label={label}
@@ -321,7 +359,7 @@ function ComboboxInner({
           value={selectedOption ? (selectedOption.label || selectedOption.value) : ''}
           placeholder={placeholder}
           id={id}
-          onKeyDown={handleKeyDown}
+          onClick={handleClick}
           className={className}
           style={style}
         />
@@ -332,56 +370,20 @@ function ComboboxInner({
           ref={searchRef}
           className={classes.search}
           placeholder={searchPlaceholder}
-          onKeyDown={handleKeyDown}
+          value={_search}
+          onChange={handleSearchChange}
         />
         <div className={classes.options}>
           <ComboboxBase.Options>
             {optionElements}
           </ComboboxBase.Options>
-          {!hasOptions && nothingFoundMessage && (
+          {!hasEnabledOptions && nothingFoundMessage && (
             <ComboboxBase.Empty className={classes.empty}>
               {nothingFoundMessage}
             </ComboboxBase.Empty>
           )}
         </div>
       </ComboboxBase.Dropdown>
-    </>
-  );
-}
-
-// ---------------------------------------------------------------------------
-// Combobox — public component
-// ---------------------------------------------------------------------------
-
-export function Combobox({
-  value,
-  defaultValue,
-  onChange,
-  searchValue,
-  onSearchChange,
-  ...rest
-}: ComboboxProps) {
-  const handleOptionSubmit = useCallback(
-    (val: string) => {
-      onChange?.(val);
-    },
-    [onChange],
-  );
-
-  const handleClear = useCallback(() => {
-    onChange?.(null);
-  }, [onChange]);
-
-  return (
-    <ComboboxBase
-      value={value}
-      defaultValue={defaultValue}
-      onOptionSubmit={handleOptionSubmit}
-      searchValue={searchValue}
-      onSearchChange={onSearchChange}
-      disabled={rest.disabled}
-    >
-      <ComboboxInner {...rest} onClear={handleClear} />
     </ComboboxBase>
   );
 }

@@ -1,53 +1,27 @@
 'use client';
 
 import { createContext, useContext } from 'react';
+import type { ComboboxStore } from './useCombobox';
 
 // ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
 
 export interface ComboboxBaseContextValue {
-  /** Whether the dropdown is open. */
-  opened: boolean;
+  /** The combobox store (DOM-based selection, open/close, keyboard nav). */
+  store: ComboboxStore;
 
-  /** Open the dropdown. */
-  onOpen: () => void;
+  /** Called when an option is submitted (clicked or Enter). */
+  onOptionSubmit?: (value: string, optionProps: Record<string, unknown>) => void;
 
-  /** Close the dropdown. */
-  onClose: () => void;
+  /** Controls option font-size and padding. */
+  size?: string;
 
-  /** Toggle the dropdown. */
-  onToggle: () => void;
+  /** Whether selection should be reset on option hover. @default false */
+  resetSelectionOnOptionHover?: boolean;
 
-  /** Currently selected value (single). */
-  value: string | null;
-
-  /** Set the selected value and close the dropdown. */
-  onSelect: (value: string) => void;
-
-  /** Currently active option index for keyboard navigation. */
-  activeIndex: number;
-
-  /** Set the active option index. */
-  setActiveIndex: (index: number) => void;
-
-  /** Total number of options (registered by ComboboxBaseOptions). */
-  optionsCount: number;
-
-  /** Register the total option count. */
-  setOptionsCount: (count: number) => void;
-
-  /** Search value (for Combobox). */
-  searchValue: string;
-
-  /** Set search value. */
-  setSearchValue: (value: string) => void;
-
-  /** Unique id for ARIA linking. */
-  comboboxId: string;
-
-  /** Whether the combobox is disabled. */
-  disabled: boolean;
+  /** Whether the combobox is read-only. */
+  readOnly?: boolean;
 }
 
 // ---------------------------------------------------------------------------

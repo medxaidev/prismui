@@ -26,7 +26,16 @@ function Wrapper({ children }: { children: React.ReactNode }) {
 }
 
 function renderCombobox(props: Partial<React.ComponentProps<typeof Combobox>> = {}) {
-  return render(<Combobox data={FRUITS} placeholder="Pick one" {...props} />, { wrapper: Wrapper });
+  return render(
+    <Combobox
+      data={FRUITS}
+      placeholder="Pick one"
+      withinPortal={false}
+      transitionDuration={0}
+      {...props}
+    />,
+    { wrapper: Wrapper },
+  );
 }
 
 // ---------------------------------------------------------------------------
@@ -101,7 +110,7 @@ describe('Combobox', () => {
       const filter = vi.fn((opt: { value: string; label?: string }, search: string) => {
         return opt.value.startsWith(search);
       });
-      render(<Combobox data={OBJECT_DATA} placeholder="Pick" filter={filter} />, { wrapper: Wrapper });
+      render(<Combobox data={OBJECT_DATA} placeholder="Pick" filter={filter} withinPortal={false} transitionDuration={0} />, { wrapper: Wrapper });
       fireEvent.click(screen.getByPlaceholderText('Pick'));
       const searchInput = screen.getByRole('searchbox');
       fireEvent.change(searchInput, { target: { value: 'b' } });
@@ -186,7 +195,7 @@ describe('Combobox', () => {
     it('opens dropdown on ArrowDown', () => {
       renderCombobox();
       const trigger = screen.getByPlaceholderText('Pick one');
-      fireEvent.keyDown(trigger, { key: 'ArrowDown' });
+      fireEvent.keyDown(trigger, { key: 'ArrowDown', code: 'ArrowDown' });
       expect(screen.getByRole('listbox')).toBeDefined();
     });
 
@@ -194,8 +203,8 @@ describe('Combobox', () => {
       renderCombobox();
       fireEvent.click(screen.getByPlaceholderText('Pick one'));
       expect(screen.getByRole('listbox')).toBeDefined();
-      const searchInput = screen.getByRole('searchbox');
-      fireEvent.keyDown(searchInput, { key: 'Escape' });
+      const trigger = screen.getByPlaceholderText('Pick one');
+      fireEvent.keyDown(trigger, { key: 'Escape' });
       expect(screen.queryByRole('listbox')).toBeNull();
     });
   });

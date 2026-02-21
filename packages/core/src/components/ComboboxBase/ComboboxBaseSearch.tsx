@@ -8,7 +8,7 @@ import { useComboboxBaseContext } from './ComboboxBase.context';
 // ---------------------------------------------------------------------------
 
 export interface ComboboxBaseSearchProps
-  extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'value' | 'onChange'> {
+  extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'size'> {
   /** Additional className. */
   className?: string;
 
@@ -21,24 +21,28 @@ export interface ComboboxBaseSearchProps
 // ---------------------------------------------------------------------------
 
 export const ComboboxBaseSearch = React.forwardRef<HTMLInputElement, ComboboxBaseSearchProps>(
-  function ComboboxBaseSearch({ className, style, onKeyDown, ...rest }, ref) {
+  function ComboboxBaseSearch({ className, style, onKeyDown, onChange, ...rest }, ref) {
     const ctx = useComboboxBaseContext();
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-      ctx.setSearchValue(e.target.value);
-      // Reset active index when search changes
-      ctx.setActiveIndex(0);
+      onChange?.(e);
+      // Reset selection when search changes
+      ctx.store.resetSelectedOption();
     };
 
     return (
       <input
-        ref={ref}
+        ref={(node) => {
+          // Merge refs: forward ref + store.searchRef
+          if (typeof ref === 'function') ref(node);
+          else if (ref) (ref as React.MutableRefObject<HTMLInputElement | null>).current = node;
+          (ctx.store.searchRef as React.MutableRefObject<HTMLInputElement | null>).current = node;
+        }}
         role="searchbox"
         aria-autocomplete="list"
-        aria-controls={`${ctx.comboboxId}-listbox`}
-        value={ctx.searchValue}
-        onChange={handleChange}
+        aria-controls={ctx.store.listId || undefined}
         onKeyDown={onKeyDown}
+        onChange={handleChange}
         className={className}
         style={style}
         {...rest}

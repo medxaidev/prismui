@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, Children } from 'react';
+import React, { useEffect, useId } from 'react';
 import { useComboboxBaseContext } from './ComboboxBase.context';
 
 // ---------------------------------------------------------------------------
@@ -16,6 +16,9 @@ export interface ComboboxBaseOptionsProps {
 
   /** Additional style. */
   style?: React.CSSProperties;
+
+  /** Id of the element that labels the options list. */
+  labelledBy?: string;
 }
 
 // ---------------------------------------------------------------------------
@@ -26,17 +29,28 @@ export function ComboboxBaseOptions({
   children,
   className,
   style,
+  labelledBy,
 }: ComboboxBaseOptionsProps) {
   const ctx = useComboboxBaseContext();
+  const _id = useId();
 
-  // Count visible children and register with context
-  const count = Children.count(children);
+  // Register listId with the store so keyboard nav can find options
   useEffect(() => {
-    ctx.setOptionsCount(count);
-  }, [count]); // eslint-disable-line react-hooks/exhaustive-deps
+    ctx.store.setListId(_id);
+  }, [_id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
-    <div className={className} style={style}>
+    <div
+      id={_id}
+      role="listbox"
+      aria-labelledby={labelledBy}
+      className={className}
+      style={style}
+      onMouseDown={(e) => {
+        // Prevent focus loss from the trigger when clicking options
+        e.preventDefault();
+      }}
+    >
       {children}
     </div>
   );

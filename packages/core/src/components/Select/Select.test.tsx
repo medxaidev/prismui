@@ -32,7 +32,16 @@ function Wrapper({ children }: { children: React.ReactNode }) {
 }
 
 function renderSelect(props: Partial<React.ComponentProps<typeof Select>> = {}) {
-  return render(<Select data={FRUITS} placeholder="Pick one" {...props} />, { wrapper: Wrapper });
+  return render(
+    <Select
+      data={FRUITS}
+      placeholder="Pick one"
+      withinPortal={false}
+      transitionDuration={0}
+      {...props}
+    />,
+    { wrapper: Wrapper },
+  );
 }
 
 // ---------------------------------------------------------------------------
@@ -62,7 +71,7 @@ describe('Select', () => {
     });
 
     it('renders with object data', () => {
-      render(<Select data={OBJECT_DATA} placeholder="Pick" />, { wrapper: Wrapper });
+      render(<Select data={OBJECT_DATA} placeholder="Pick" withinPortal={false} transitionDuration={0} />, { wrapper: Wrapper });
       expect(screen.getByPlaceholderText('Pick')).toBeDefined();
     });
   });
@@ -84,7 +93,7 @@ describe('Select', () => {
     });
 
     it('shows options from object data', () => {
-      render(<Select data={OBJECT_DATA} placeholder="Pick" />, { wrapper: Wrapper });
+      render(<Select data={OBJECT_DATA} placeholder="Pick" withinPortal={false} transitionDuration={0} />, { wrapper: Wrapper });
       fireEvent.click(screen.getByPlaceholderText('Pick'));
       expect(screen.getByText('Apple')).toBeDefined();
       expect(screen.getByText('Banana')).toBeDefined();
@@ -106,7 +115,7 @@ describe('Select', () => {
     });
 
     it('displays label for object data selection', () => {
-      render(<Select data={OBJECT_DATA} value="banana" placeholder="Pick" />, { wrapper: Wrapper });
+      render(<Select data={OBJECT_DATA} value="banana" placeholder="Pick" withinPortal={false} transitionDuration={0} />, { wrapper: Wrapper });
       expect((screen.getByPlaceholderText('Pick') as HTMLInputElement).value).toBe('Banana');
     });
 
@@ -145,7 +154,7 @@ describe('Select', () => {
 
   describe('Grouped options', () => {
     it('renders group labels', () => {
-      render(<Select data={GROUPED_DATA} placeholder="Pick" />, { wrapper: Wrapper });
+      render(<Select data={GROUPED_DATA} placeholder="Pick" withinPortal={false} transitionDuration={0} />, { wrapper: Wrapper });
       fireEvent.click(screen.getByPlaceholderText('Pick'));
       expect(screen.getByText('Fruits')).toBeDefined();
       expect(screen.getByText('Vegetables')).toBeDefined();
@@ -153,17 +162,17 @@ describe('Select', () => {
   });
 
   describe('Disabled options', () => {
-    it('renders disabled options with aria-disabled', () => {
-      render(<Select data={OBJECT_DATA} placeholder="Pick" />, { wrapper: Wrapper });
+    it('renders disabled options with data-combobox-disabled', () => {
+      render(<Select data={OBJECT_DATA} placeholder="Pick" withinPortal={false} transitionDuration={0} />, { wrapper: Wrapper });
       fireEvent.click(screen.getByPlaceholderText('Pick'));
       const cherryOption = screen.getByText('Cherry');
-      expect(cherryOption.getAttribute('aria-disabled')).toBe('true');
+      expect(cherryOption.closest('[data-combobox-disabled]')).not.toBeNull();
     });
   });
 
   describe('Empty state', () => {
     it('shows nothing found message when data is empty', () => {
-      render(<Select data={[]} placeholder="Pick" nothingFoundMessage="No items" />, { wrapper: Wrapper });
+      render(<Select data={[]} placeholder="Pick" nothingFoundMessage="No items" withinPortal={false} transitionDuration={0} />, { wrapper: Wrapper });
       fireEvent.click(screen.getByPlaceholderText('Pick'));
       expect(screen.getByText('No items')).toBeDefined();
     });
@@ -203,14 +212,14 @@ describe('Select', () => {
     it('opens dropdown on ArrowDown', () => {
       renderSelect();
       const trigger = screen.getByPlaceholderText('Pick one');
-      fireEvent.keyDown(trigger, { key: 'ArrowDown' });
+      fireEvent.keyDown(trigger, { key: 'ArrowDown', code: 'ArrowDown' });
       expect(screen.getByRole('listbox')).toBeDefined();
     });
 
-    it('opens dropdown on Enter', () => {
+    it('opens dropdown on Space (button target)', () => {
       renderSelect();
       const trigger = screen.getByPlaceholderText('Pick one');
-      fireEvent.keyDown(trigger, { key: 'Enter' });
+      fireEvent.keyDown(trigger, { key: ' ', code: 'Space' });
       expect(screen.getByRole('listbox')).toBeDefined();
     });
 
@@ -230,6 +239,8 @@ describe('Select', () => {
         <Select
           data={OBJECT_DATA}
           placeholder="Pick"
+          withinPortal={false}
+          transitionDuration={0}
           renderOption={(opt, { selected }) => (
             <span data-testid={`custom-${opt.value}`}>
               {selected ? '✓ ' : ''}{opt.label}
