@@ -1,0 +1,97 @@
+/* ------------------------------------------------------------------ */
+/* Input — Layer 3                                                     */
+/* Applies variant colors and focus ring on top of InputBase          */
+/* ------------------------------------------------------------------ */
+
+/* ---- outlined (default) ------------------------------------------ */
+.wrapper:where([data-variant='outlined']) {
+  --input-bg: var(--prismui-bg-paper);
+  --input-bd: var(--prismui-divider);
+  --input-color: var(--prismui-text-primary);
+  --input-placeholder-color: var(--prismui-text-disabled);
+  --input-focus-ring-color: color-mix(in srgb, var(--input-focus-bd-color) 20%, transparent);
+  --input-focus-ring-width: 3px;
+
+  /* Focus: border color changes, ring appears */
+  &:where([data-focused]) {
+    --input-bd: var(--input-focus-bd-color);
+  }
+
+  /* Error: red border */
+  &:where([data-error]) {
+    --input-bd: var(--prismui-error-main);
+    --input-focus-ring-color: color-mix(in srgb, var(--prismui-error-main) 20%, transparent);
+  }
+
+  /* Disabled */
+  &:where([data-disabled]) {
+    --input-bg: var(--prismui-action-disabledBackground);
+    --input-bd: var(--prismui-divider);
+    --input-color: var(--prismui-action-disabled);
+    cursor: not-allowed;
+    pointer-events: none;
+  }
+}
+
+/* ---- soft --------------------------------------------------------- */
+.wrapper:where([data-variant='soft']) {
+  --input-bg: var(--prismui-action-hover);
+  --input-bd: transparent;
+  --input-bd-width: 0px;
+  --input-color: var(--prismui-text-primary);
+  --input-placeholder-color: var(--prismui-text-disabled);
+  --input-focus-ring-color: transparent;
+  --input-focus-ring-width: 0px;
+
+  /* Focus: bg lightens slightly, bottom border appears */
+  &:where([data-focused]) {
+    --input-bg: color-mix(in srgb, var(--prismui-action-hover) 60%, var(--prismui-bg-paper));
+    --input-bd: var(--input-focus-bd-color);
+    --input-bd-width: 1px;
+  }
+
+  /* Error */
+  &:where([data-error]) {
+    --input-bg: color-mix(in srgb, var(--prismui-error-main) 8%, transparent);
+    --input-bd: var(--prismui-error-main);
+    --input-bd-width: 1px;
+  }
+
+  /* Disabled */
+  &:where([data-disabled]) {
+    --input-bg: var(--prismui-action-disabledBackground);
+    --input-color: var(--prismui-action-disabled);
+    cursor: not-allowed;
+    pointer-events: none;
+  }
+}
+
+/* ---- plain -------------------------------------------------------- */
+.wrapper:where([data-variant='plain']) {
+  --input-bg: transparent;
+  --input-bd: transparent;
+  --input-bd-width: 0px;
+  --input-color: var(--prismui-text-primary);
+  --input-placeholder-color: var(--prismui-text-disabled);
+  --input-focus-ring-color: transparent;
+  --input-focus-ring-width: 0px;
+
+  /* Focus: subtle bottom border only */
+  &:where([data-focused]) {
+    --input-bd: var(--input-focus-bd-color);
+    --input-bd-width: 1px;
+  }
+
+  /* Error */
+  &:where([data-error]) {
+    --input-bd: var(--prismui-error-main);
+    --input-bd-width: 1px;
+  }
+
+  /* Disabled */
+  &:where([data-disabled]) {
+    --input-color: var(--prismui-action-disabled);
+    cursor: not-allowed;
+    pointer-events: none;
+  }
+}

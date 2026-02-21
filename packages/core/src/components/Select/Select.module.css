@@ -1,0 +1,126 @@
+/* ------------------------------------------------------------------ */
+/* Select — Layer 3                                                    */
+/* Single-value dropdown picker built on ComboboxBase + InputBase     */
+/* ------------------------------------------------------------------ */
+
+/* ---- Trigger (reuses Input wrapper styles via wrapperClassName) --- */
+.trigger {
+  cursor: pointer;
+  user-select: none;
+}
+
+.triggerInput {
+  cursor: pointer;
+  caret-color: transparent;
+}
+
+/* ---- Chevron icon ---- */
+.chevron {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  transition: transform 200ms cubic-bezier(0.4, 0, 0.2, 1);
+  color: var(--prismui-text-secondary);
+
+  & > svg {
+    width: 1em;
+    height: 1em;
+  }
+}
+
+.chevron[data-opened] {
+  transform: rotate(180deg);
+}
+
+/* ---- Clear button ---- */
+.clearButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  padding: 2px;
+  border: none;
+  background: none;
+  color: var(--prismui-text-secondary);
+  border-radius: var(--prismui-radius-xs);
+  transition: color 150ms, background-color 150ms;
+
+  &:hover {
+    color: var(--prismui-text-primary);
+    background-color: var(--prismui-action-hover);
+  }
+
+  & > svg {
+    width: 0.875em;
+    height: 0.875em;
+  }
+}
+
+/* ---- Dropdown ---- */
+.dropdown {
+  background: var(--prismui-bg-paper);
+  border: 1px solid var(--prismui-divider);
+  border-radius: var(--prismui-radius-sm);
+  box-shadow: var(--prismui-shadow-md);
+  padding: 4px 0;
+  max-height: 280px;
+  overflow-y: auto;
+  min-width: var(--select-dropdown-min-width, 200px);
+}
+
+/* ---- Option ---- */
+.option {
+  display: flex;
+  align-items: center;
+  padding: 6px 12px;
+  font-size: var(--input-fz, var(--prismui-font-size-sm));
+  color: var(--prismui-text-primary);
+  cursor: pointer;
+  user-select: none;
+  transition: background-color 100ms;
+  gap: 8px;
+
+  &[data-active] {
+    background-color: var(--prismui-action-hover);
+  }
+
+  &[data-selected] {
+    background-color: color-mix(in srgb, var(--prismui-primary-main) 12%, transparent);
+    color: var(--prismui-primary-main);
+    font-weight: 500;
+  }
+
+  &[data-disabled] {
+    color: var(--prismui-action-disabled);
+    cursor: not-allowed;
+    pointer-events: none;
+  }
+}
+
+/* ---- Group ---- */
+.group {
+  padding: 0;
+}
+
+.groupLabel {
+  padding: 8px 12px 4px;
+  font-size: calc(var(--input-fz, var(--prismui-font-size-sm)) * 0.85);
+  font-weight: 600;
+  color: var(--prismui-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* ---- Empty state ---- */
+.empty {
+  padding: 12px 16px;
+  text-align: center;
+  font-size: var(--input-fz, var(--prismui-font-size-sm));
+  color: var(--prismui-text-disabled);
+}
+
+/* ---- Placeholder text in trigger ---- */
+.placeholder {
+  color: var(--prismui-text-disabled);
+}

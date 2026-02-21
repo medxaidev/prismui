@@ -1,0 +1,162 @@
+/* ------------------------------------------------------------------ */
+/* InputBase — Layer 2                                                 */
+/* Provides DOM structure + CSS variable interface only.              */
+/* Colors and variant styles are applied by Layer 3 (Input).          */
+/* ------------------------------------------------------------------ */
+
+/* ---- Size token defaults (overridden by varsResolver in Layer 3) -- */
+.wrapper {
+  /* Size tokens */
+  --input-height-sm: 2rem;       /* 32px */
+  --input-height-md: 2.25rem;    /* 36px */
+  --input-height-lg: 2.625rem;   /* 42px */
+
+  --input-fz-sm: var(--prismui-font-size-sm);
+  --input-fz-md: var(--prismui-font-size-md);
+  --input-fz-lg: var(--prismui-font-size-lg);
+
+  --input-padding-x-sm: 0.75rem;
+  --input-padding-x-md: 0.875rem;
+  --input-padding-x-lg: 1rem;
+
+  --input-section-size-sm: 2rem;
+  --input-section-size-md: 2.25rem;
+  --input-section-size-lg: 2.625rem;
+
+  /* Working vars — set by varsResolver */
+  --input-height: var(--input-height-sm);
+  --input-fz: var(--input-fz-sm);
+  --input-padding-x: var(--input-padding-x-sm);
+  --input-section-size: var(--input-section-size-sm);
+  --input-radius: var(--prismui-radius-sm);
+
+  /* Color interface — set by varsResolver (Layer 3) */
+  --input-bg: transparent;
+  --input-bd: transparent;
+  --input-bd-width: 1px;
+  --input-color: inherit;
+  --input-placeholder-color: var(--prismui-text-disabled);
+  --input-focus-ring-color: transparent;
+  --input-focus-ring-width: 0px;
+  --input-section-color: var(--prismui-text-secondary);
+
+  /* ---- Layout ---- */
+  position: relative;
+  display: flex;
+  align-items: center;
+  height: var(--input-height);
+  border-radius: var(--input-radius);
+  background: var(--input-bg);
+  border: var(--input-bd-width) solid var(--input-bd);
+  transition:
+    border-color 200ms cubic-bezier(0.4, 0, 0.2, 1),
+    background-color 200ms cubic-bezier(0.4, 0, 0.2, 1),
+    box-shadow 200ms cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* Focus ring — driven by CSS vars from Layer 3 */
+  &:where([data-focused]) {
+    box-shadow: 0 0 0 var(--input-focus-ring-width) var(--input-focus-ring-color);
+  }
+
+  /* Section padding adjustments */
+  &:where([data-with-left-section]) {
+    padding-inline-start: 0;
+  }
+
+  &:where([data-with-right-section]) {
+    padding-inline-end: 0;
+  }
+}
+
+/* ---- Native input ---- */
+.input {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  border: none;
+  outline: none;
+  background: transparent;
+  padding-inline: var(--input-padding-x);
+  font-size: var(--input-fz);
+  color: var(--input-color);
+  font-family: inherit;
+  line-height: 1.5;
+
+  &::placeholder {
+    color: var(--input-placeholder-color);
+    opacity: 1;
+  }
+
+  &:disabled {
+    cursor: not-allowed;
+  }
+
+  /* pointer mode: used by Select trigger */
+  &:where([data-pointer]) {
+    cursor: pointer;
+    user-select: none;
+    caret-color: transparent;
+  }
+}
+
+/* ---- Section slots (left / right) ---- */
+.section {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: var(--input-section-size);
+  height: 100%;
+  color: var(--input-section-color);
+
+  & > svg {
+    width: calc(var(--input-fz) * 1.3);
+    height: calc(var(--input-fz) * 1.3);
+  }
+}
+
+/* ------------------------------------------------------------------ */
+/* InputWrapper — label + input + description + error layout          */
+/* ------------------------------------------------------------------ */
+
+.root {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+
+  &:where([data-full-width]) {
+    width: 100%;
+
+    & .wrapper {
+      width: 100%;
+    }
+  }
+}
+
+.label {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: var(--input-fz, var(--prismui-font-size-sm));
+  font-weight: 500;
+  color: var(--prismui-text-primary);
+  line-height: 1.5;
+}
+
+.required {
+  color: var(--prismui-error-main);
+  font-size: inherit;
+  line-height: inherit;
+}
+
+.description {
+  font-size: calc(var(--input-fz, var(--prismui-font-size-sm)) * 0.9);
+  color: var(--prismui-text-secondary);
+  line-height: 1.4;
+}
+
+.error {
+  font-size: calc(var(--input-fz, var(--prismui-font-size-sm)) * 0.9);
+  color: var(--prismui-error-main);
+  line-height: 1.4;
+}
