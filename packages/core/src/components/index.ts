@@ -154,3 +154,11 @@ export type { SelectProps, SelectOption, SelectStylesNames } from './Select';
 
 export { Combobox } from './Combobox';
 export type { ComboboxProps } from './Combobox';
+
+export { TextField } from './TextField';
+export type {
+  TextFieldProps,
+  TextFieldVariant,
+  TextFieldSize,
+  TextFieldStylesNames,
+} from './TextField';
