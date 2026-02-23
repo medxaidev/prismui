@@ -1,0 +1,105 @@
+/* ---------------------------------------------------------------------------
+ * ScrollArea — Layer 3
+ *
+ * Custom scrollbar container with cross-browser consistency.
+ * Wraps @radix-ui/react-scroll-area with PrismUI styling.
+ *
+ * CSS Variables:
+ *   --scrollarea-scrollbar-size  — scrollbar width/height (default: 0.625rem)
+ * --------------------------------------------------------------------------- */
+
+.root {
+  --scrollarea-scrollbar-size: 0.625rem;
+
+  position: relative;
+  overflow: hidden;
+}
+
+/* ---- Viewport (scrollable container) ---- */
+
+.viewport {
+  width: 100%;
+  height: 100%;
+  border-radius: inherit;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  -webkit-overflow-scrolling: touch;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* Offset scrollbars — add padding so content doesn't overlap scrollbar */
+  &:where([data-offset-scrollbars='xy'], [data-offset-scrollbars='y']) {
+    padding-inline-end: var(--scrollarea-scrollbar-size);
+  }
+
+  &:where([data-offset-scrollbars='xy'], [data-offset-scrollbars='x']) {
+    padding-bottom: var(--scrollarea-scrollbar-size);
+  }
+}
+
+/* Radix injects a viewport > div for content — ensure it fills */
+.viewport > div {
+  min-width: 100%;
+  display: table;
+}
+
+/* ---- Scrollbar track ---- */
+
+.scrollbar {
+  display: flex;
+  user-select: none;
+  touch-action: none;
+  box-sizing: border-box;
+  padding: calc(var(--scrollarea-scrollbar-size) / 5);
+  background-color: transparent;
+  transition: background-color 150ms ease, opacity 150ms ease;
+
+  &:where([data-orientation='vertical']) {
+    width: var(--scrollarea-scrollbar-size);
+  }
+
+  &:where([data-orientation='horizontal']) {
+    height: var(--scrollarea-scrollbar-size);
+    flex-direction: column;
+  }
+
+  &:hover {
+    background-color: var(--prismui-action-hover, rgba(0, 0, 0, 0.04));
+  }
+}
+
+/* ---- Scrollbar thumb ---- */
+
+.thumb {
+  flex: 1;
+  border-radius: var(--scrollarea-scrollbar-size);
+  position: relative;
+  background-color: var(--prismui-action-disabled, rgba(0, 0, 0, 0.26));
+  transition: background-color 150ms ease;
+  overflow: hidden;
+
+  /* Enlarge touch target */
+  &::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 100%;
+    height: 100%;
+    min-width: 44px;
+    min-height: 44px;
+  }
+
+  &:hover {
+    background-color: var(--prismui-text-secondary, rgba(0, 0, 0, 0.4));
+  }
+}
+
+/* ---- Corner (intersection of horizontal + vertical scrollbars) ---- */
+
+.corner {
+  background-color: transparent;
+}

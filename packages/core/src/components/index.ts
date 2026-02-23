@@ -158,6 +158,15 @@ export type { SelectProps, SelectOption, SelectStylesNames } from './Select';
 export { Combobox } from './Combobox';
 export type { ComboboxProps } from './Combobox';
 
+export { Collapse } from './Collapse';
+export type { CollapseProps } from './Collapse';
+
+export { ScrollArea, ScrollAreaAutosize } from './ScrollArea';
+export type { ScrollAreaProps, ScrollAreaAutosizeProps, ScrollAreaType } from './ScrollArea';
+
+export { Tabs, TabsList, TabsTab, TabsPanel } from './Tabs';
+export type { TabsProps, TabsVariant, TabsListProps, TabsTabProps, TabsPanelProps } from './Tabs';
+
 export { TextField } from './TextField';
 export type {
   TextFieldProps,
