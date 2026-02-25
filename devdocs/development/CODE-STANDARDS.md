@@ -43,7 +43,7 @@ type PolicyVerdict = "allow" | "deny" | "transform";
 type EventReducer = (
   event: RuntimeEvent,
   prevState: Readonly<RuntimeState>,
-) => RuntimeState;
+) => ReducerCommitResult;
 ```
 
 ### 2.3 Explicit Return Types
@@ -131,9 +131,10 @@ Each package has a single `index.ts` that exports the public API.
 export { createEventBus } from './event-bus';
 export { createRuntimeStore } from './store';
 export { createScheduler } from './scheduler';
-export { createPageController } from './page-controller';
 export { createInteractionRuntime } from './runtime';
-export type { RuntimeEvent, EventBus, RuntimeStore, RuntimeState, ... } from './types';
+export { createPageModule } from './modules/page-module';
+export { createModalModule } from './modules/modal-module';
+export type { RuntimeEvent, EventBus, RuntimeStore, RuntimeState, RuntimeModule, ReducerCommitResult, ... } from './types';
 ```
 
 ### 5.2 No Default Exports
@@ -233,7 +234,7 @@ A CI lint rule enforces:
 
 ### 8.3 Pure Functions
 
-All handlers and middleware MUST be pure functions (deterministic, no side effects).
+All reducers MUST be pure functions (deterministic, no side effects). Middleware MUST NOT call `store.setState()`.
 
 ---
 

@@ -102,11 +102,16 @@ function createRuntimeStore(initial?: Partial<RuntimeState>): RuntimeStore;
 Event processing pipeline with **Reducer Commit Model**. The Scheduler is the **only** place where `store.setState()` is called.
 
 ```typescript
-/** Pure function: (event, prevState) → nextState. No side effects. */
+interface ReducerCommitResult {
+  nextState: RuntimeState;
+  sideEffects?: RuntimeEvent[]; // Events dispatched AFTER commit
+}
+
+/** Pure function: (event, prevState) → ReducerCommitResult. No side effects. */
 type EventReducer = (
   event: RuntimeEvent,
   prevState: Readonly<RuntimeState>,
-) => RuntimeState;
+) => ReducerCommitResult;
 
 type SchedulerMiddleware = (event: RuntimeEvent, next: () => void) => void;
 
@@ -135,14 +140,15 @@ dispatch(event)
             → reducer = reducers.get(event.type)
             → if reducer:
                 → prevState = store.getState()
-                → nextState = reducer(event, prevState)   // pure computation
-                → store.setState(() => nextState)          // commit
+                → result = reducer(event, prevState)      // pure computation
+                → store.setState(() => result.nextState)   // commit
                     → subscribers notified
+                → for each result.sideEffects → bus.dispatch // after commit
 ```
 
 **Design decisions:**
 
-- **Reducer Commit Model** — reducers are pure: `(event, prevState) → nextState`. No store access.
+- **Reducer Commit Model** — reducers are pure: `(event, prevState) → ReducerCommitResult`. No store access.
 - **Centralized commit** — only the Scheduler calls `store.setState()`. No other code path may write state.
 - **Middleware chain** — Express/Koa-style, composable pipeline (STAGE-002 injects Policy + Audit here)
 - **STAGE-001: synchronous** — no priority, no queue (added in STAGE-002)
@@ -152,56 +158,50 @@ dispatch(event)
 
 ---
 
-### 4. PageOrchestrator (PageController)
+### 4. Module System
 
-Pages are Runtime Resources, not JSX trees.
+Modules are the extension mechanism. Core never needs modification.
 
 ```typescript
-interface PageController {
-  mount(pageId: string): void;
-  unmount(pageId: string): void;
-  transition(pageId: string): void;
-  lock(): void;
-  unlock(): void;
-  getCurrent(): string | null;
-  getMounted(): string[];
-  isLocked(): boolean;
+interface RuntimeModule<TController = unknown> {
+  name: string;
+  initialState?: Partial<RuntimeState>;
+  reducers?: Record<string, EventReducer>;
+  middleware?: SchedulerMiddleware[];
+  createController?: (core: {
+    bus: EventBus;
+    scheduler: Scheduler;
+    store: RuntimeStore;
+  }) => TController;
 }
-
-function createPageController(
-  bus: EventBus,
-  scheduler: Scheduler,
-  store: RuntimeStore,
-): PageController;
 ```
 
-**Event types:**
-| Event | Effect |
-|-------|--------|
-| `PAGE_MOUNT` | Add page to `mountedPages`, set as `currentPage` |
-| `PAGE_UNMOUNT` | Remove from `mountedPages`, clear if current |
-| `PAGE_TRANSITION` | Change `currentPage` (must be mounted) |
-| `PAGE_LOCK` | Set `locked = true` |
-| `PAGE_UNLOCK` | Set `locked = false` |
+**Built-in modules (Layer 0.5):**
 
-**Design decisions:**
+- `createPageModule()` — page lifecycle (mount/unmount/transition/lock)
+- `createModalModule()` — modal stack (open/close/closeAll)
 
-- **All operations dispatch events** — `mount()` dispatches `PAGE_MOUNT`, reducer returns new state
-- **Lock prevents transition** — when locked, `PAGE_TRANSITION` is rejected
-- **Pages are string IDs** — not React components, not JSX
+These ship with Core but plug in via the same `RuntimeModule` interface as any consumer module.
 
 ---
 
 ## Runtime Factory
 
-Composes all subsystems into a single entry point.
+Composes Core subsystems + modules into a single entry point.
 
 ```typescript
+interface RuntimeOptions {
+  historySize?: number;
+  initialState?: Partial<RuntimeState>;
+  modules?: RuntimeModule[];
+  middleware?: SchedulerMiddleware[];
+}
+
 interface InteractionRuntime {
   bus: EventBus;
   store: RuntimeStore;
   scheduler: Scheduler;
-  page: PageController;
+  modules: Record<string, unknown>;
 
   dispatch(event: RuntimeEvent): void;
   getState(): Readonly<RuntimeState>;
@@ -212,12 +212,18 @@ interface InteractionRuntime {
 function createInteractionRuntime(options?: RuntimeOptions): InteractionRuntime;
 ```
 
+**Factory wiring order:**
+
+1. Create EventBus → RuntimeStore → Scheduler
+2. For each module: merge `initialState`, register `reducers`, add `middleware`, create controller
+3. Add `options.middleware` (after module middleware)
+
 **`destroy()` cleanup:**
 
 - Clears all event listeners
 - Clears all store subscribers
 - Clears event history
-- Unregisters all handlers
+- Unregisters all reducers
 
 ---
 

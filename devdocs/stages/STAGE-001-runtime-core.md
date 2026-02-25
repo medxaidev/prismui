@@ -5,7 +5,7 @@
 **Priority:** Critical  
 **Dependencies:** None (foundational stage)  
 **Estimated Sessions:** 9  
-**Estimated Tests:** ~98
+**Estimated Tests:** ~107
 
 ---
 
@@ -22,10 +22,11 @@ Build the **minimal viable Interaction Runtime** — a framework-agnostic event-
 ## Strategic Goals
 
 1. ✅ Framework-agnostic Interaction Core (pure TypeScript, zero dependencies)
-2. ✅ Deterministic flow: `Event → Scheduler → State Update → Render`
-3. ✅ React as a thin adapter layer (zero business logic in adapter)
-4. ✅ Page as Runtime Resource (mount/unmount/transition/lock)
-5. ✅ Minimal demo proving Runtime-controlled page flow
+2. ✅ Deterministic flow: `Event → Scheduler → [Middleware] → Reducer → Commit → Render`
+3. ✅ Module injection pattern: Core is extensible without modification
+4. ✅ React as a thin adapter layer (zero business logic in adapter)
+5. ✅ Page + Modal as built-in modules (proving the module pattern works)
+6. ✅ Minimal demo proving Runtime-controlled interaction flow
 
 ---
 
@@ -51,13 +52,26 @@ Stage-1 implements:
 
 ### Included
 
+**Interaction Core (Layer 0 — pure infrastructure):**
+
 - EventBus (dispatch, subscribe, type-filtered, history)
 - RuntimeStore (immutable state, versioned snapshots, subscriber notification)
-- Basic Scheduler (Reducer Commit Engine, middleware chain, synchronous)
-- PageController (mount/unmount/transition/lock/unlock)
-- Runtime Factory (`createInteractionRuntime()`)
-- React Provider + core hooks
-- Minimal Demo (3 scenarios)
+- Scheduler (Reducer Commit Engine, middleware chain, synchronous)
+- Runtime Factory (`createInteractionRuntime()` with module/middleware injection)
+
+**Built-in Modules (Layer 0.5 — shipped with Core, plugged in via module system):**
+
+- Page Module (`createPageModule()` — mount/unmount/transition/lock)
+- Modal Module (`createModalModule()` — open/close/closeAll)
+
+**React Adapter (Layer 2):**
+
+- Provider + core hooks (`useRuntime`, `useRuntimeState`)
+- Convenience hooks (`usePage`, `useModal`)
+
+**Demo (Layer 3):**
+
+- Minimal Demo (4 scenarios)
 
 ### Excluded (Explicit Non-Goals)
 
@@ -118,7 +132,7 @@ No implicit side effects. No hidden state transitions.
 interface RuntimeEvent<T = unknown> {
   type: string;
   payload?: T;
-  timestamp: number;
+  timestamp: number; // Added by runtime.dispatch(), NOT by caller
   source?: string;
 }
 
@@ -182,12 +196,13 @@ function createEventBus(options?: { historySize?: number }): EventBus;
 **API Design:**
 
 ```typescript
+/**
+ * Core state: minimal, extensible via modules.
+ * Page/Modal fields are added by built-in modules, not hardcoded in Core.
+ */
 interface RuntimeState {
-  currentPage: string | null;
-  mountedPages: string[];
-  modalStack: string[];
-  locked: boolean;
   version: number;
+  [key: string]: unknown; // Module-contributed state (page, modal, etc.)
 }
 
 interface RuntimeStore {
@@ -200,6 +215,11 @@ interface RuntimeStore {
 function createRuntimeStore(initial?: Partial<RuntimeState>): RuntimeStore;
 ```
 
+> **Design Note:** `RuntimeState` only owns `version`. Business fields like `currentPage`, `mountedPages`,
+> `modalStack`, `locked` are contributed by built-in modules (Page Module, Modal Module) via `initialState`
+> in their module definition. This keeps Core generic — future modules add their own state slices
+> without modifying Core types. TypeScript narrowing is done via module-specific interfaces that extend `RuntimeState`.
+
 **Implementation Details:**
 
 - State stored as plain object, never mutated directly
@@ -207,7 +227,7 @@ function createRuntimeStore(initial?: Partial<RuntimeState>): RuntimeStore;
 - `version` auto-incremented on every `setState` call
 - `getSnapshot()` returns `Object.freeze({ ...state })` (deep frozen)
 - Subscribers called synchronously after state change
-- Default initial state: `{ currentPage: null, mountedPages: [], modalStack: [], locked: false, version: 0 }`
+- Default initial state: `{ version: 0 }` (modules extend this via `initialState`)
 
 **Tests (~15):**
 
@@ -240,13 +260,9 @@ function createRuntimeStore(initial?: Partial<RuntimeState>): RuntimeStore;
 
 ---
 
-### Phase B: Scheduler + PageController (2 sessions)
+### Phase B: Scheduler — Reducer Commit Engine (1 session)
 
-**Goal:** Build the event processing pipeline and page lifecycle manager.
-
----
-
-#### Phase B1: Scheduler + Reducer Commit Engine (1 session)
+**Goal:** Build the event processing pipeline with Reducer Commit Model.
 
 **Files:**
 
@@ -256,15 +272,25 @@ function createRuntimeStore(initial?: Partial<RuntimeState>): RuntimeStore;
 **API Design (Reducer Commit Model):**
 
 > **Critical upgrade from original design:** Handlers are replaced by **pure reducers**.
-> Reducers MUST NOT access `store` directly. They receive `prevState` and return `nextState`.
+> Reducers MUST NOT access `store` directly. They receive `prevState` and return `ReducerCommitResult`.
 > Only the Scheduler's internal commit mechanism writes to the store.
 
 ```typescript
-/** Pure function: (event, prevState) → nextState. No side effects. */
+/**
+ * Reducer return type. Supports declarative side-effect events.
+ * Reducers remain pure — they don't dispatch events themselves,
+ * they declare what events SHOULD be dispatched after commit.
+ */
+interface ReducerCommitResult {
+  nextState: RuntimeState;
+  sideEffects?: RuntimeEvent[]; // Events to dispatch AFTER commit (STAGE-002+)
+}
+
+/** Pure function: (event, prevState) → ReducerCommitResult. No side effects. */
 type EventReducer = (
   event: RuntimeEvent,
   prevState: Readonly<RuntimeState>,
-) => RuntimeState;
+) => ReducerCommitResult;
 
 type SchedulerMiddleware = (event: RuntimeEvent, next: () => void) => void;
 
@@ -282,6 +308,14 @@ interface Scheduler {
 function createScheduler(store: RuntimeStore, bus: EventBus): Scheduler;
 ```
 
+> **Design Note — `sideEffects`:** Reducers are pure, but sometimes a state change must trigger
+> follow-up events (e.g., `PAGE_UNMOUNT` after lock timeout). Instead of dispatching inside reducers
+> (impure), reducers **declare** side-effect events in `ReducerCommitResult.sideEffects`.
+> The Scheduler dispatches them AFTER commit. In STAGE-001, this field is optional and may be empty.
+> STAGE-002 (Governance) and STAGE-004 (Interaction Modules) will leverage it.
+>
+> **Shorthand:** When a reducer only needs to return state, it can return `{ nextState: newState }`.
+
 **Implementation Details — Reducer Commit Model:**
 
 The Scheduler is the **only place** where `store.setState()` is called. Reducers never touch the store.
@@ -292,6 +326,7 @@ The Scheduler is the **only place** where `store.setState()` is called. Reducers
 - If no reducer found for event type, event is silently dropped (no error)
 - Middleware pattern: `(event, next) => { /* before */ next(); /* after */ }`
 - Scheduler subscribes to EventBus on creation — processes every dispatched event
+- After commit, if `result.sideEffects` is non-empty, dispatch each via `bus.dispatch()`
 
 **Processing Flow (Reducer Commit):**
 
@@ -303,8 +338,9 @@ bus.dispatch(event)
             → reducer = reducers.get(event.type)
             → if reducer:
                 → prevState = store.getState()
-                → nextState = reducer(event, prevState)   // pure computation
-                → store.setState(() => nextState)          // commit (only here)
+                → result = reducer(event, prevState)          // pure computation
+                → store.setState(() => result.nextState)      // commit (only here)
+                → for each result.sideEffects → bus.dispatch  // after commit
 ```
 
 **Why Reducer Commit (see ADR-006):**
@@ -327,48 +363,191 @@ If a reducer throws an exception:
 3. **Dispatch SYSTEM_ERROR event** — `{ type: 'SYSTEM_ERROR', payload: { originalEvent, error } }`
 4. **SYSTEM_ERROR itself is NOT processed by reducers** — prevents infinite loops
 
-**Tests (~16):**
+**Tests (~18):**
 
 | #   | Test                                              | Group       |
 | --- | ------------------------------------------------- | ----------- |
 | 1   | creates Scheduler instance                        | creation    |
 | 2   | routes event to registered reducer                | reducer     |
 | 3   | reducer receives event and prevState (not store)  | reducer     |
-| 4   | reducer return value is committed to store        | reducer     |
+| 4   | reducer result.nextState is committed to store    | reducer     |
 | 5   | unregistered event types are silently dropped     | reducer     |
 | 6   | registerReducer returns unregister function       | reducer     |
 | 7   | unregistered reducer no longer receives events    | reducer     |
 | 8   | store.setState is only called by Scheduler commit | commit      |
 | 9   | prevState and nextState are captured correctly    | commit      |
-| 10  | middleware executes before reducer                | middleware  |
-| 11  | multiple middleware execute in order              | middleware  |
-| 12  | middleware can stop chain by not calling next     | middleware  |
-| 13  | middleware receives the event                     | middleware  |
-| 14  | reducer error does not commit state               | error       |
-| 15  | processes events from EventBus automatically      | integration |
-| 16  | has no React/DOM imports                          | isolation   |
+| 10  | sideEffects are dispatched after commit           | sideEffects |
+| 11  | sideEffects are not dispatched if empty/undefined | sideEffects |
+| 12  | middleware executes before reducer                | middleware  |
+| 13  | multiple middleware execute in order              | middleware  |
+| 14  | middleware can stop chain by not calling next     | middleware  |
+| 15  | middleware receives the event                     | middleware  |
+| 16  | reducer error does not commit state               | error       |
+| 17  | processes events from EventBus automatically      | integration |
+| 18  | has no React/DOM imports                          | isolation   |
 
 **Acceptance Criteria:**
 
-- [ ] Reducers are pure: `(event, prevState) → nextState` — no store access
+- [ ] Reducers are pure: `(event, prevState) → ReducerCommitResult` — no store access
 - [ ] Only Scheduler calls `store.setState()` (commit boundary)
+- [ ] `sideEffects` dispatched after successful commit (not before, not on error)
 - [ ] Middleware chain executes in registration order
 - [ ] Middleware can intercept (not call `next()`)
 - [ ] Reducer errors do not corrupt state
-- [ ] 16 tests pass, `tsc --noEmit` clean
+- [ ] 18 tests pass, `tsc --noEmit` clean
 
 ---
 
-#### Phase B2: PageController (1 session)
+### Phase C: Runtime Factory + Module System (2 sessions)
+
+**Goal:** Build the module injection system and compose everything into `createInteractionRuntime()`.
+
+---
+
+#### Phase C1: Module System + Runtime Factory (1 session)
 
 **Files:**
 
-- `packages/core/src/page-controller.ts`
-- `packages/core/src/page-controller.test.ts`
+- `packages/core/src/module.ts` (RuntimeModule interface)
+- `packages/core/src/runtime.ts`
+- `packages/core/src/types.ts` (consolidated public types)
+- `packages/core/src/index.ts` (barrel exports)
+- `packages/core/src/runtime.test.ts`
 
 **API Design:**
 
 ```typescript
+/**
+ * A RuntimeModule plugs into the Factory.
+ * It contributes: initial state, reducers, middleware, and an optional controller.
+ * Modules are the extension mechanism — Core never needs modification.
+ */
+interface RuntimeModule<TController = unknown> {
+  /** Unique module identifier */
+  name: string;
+
+  /** State slice contributed by this module (merged into RuntimeState) */
+  initialState?: Partial<RuntimeState>;
+
+  /** Reducers to register with Scheduler. Map<eventType, reducer>. */
+  reducers?: Record<string, EventReducer>;
+
+  /** Middleware to add to Scheduler pipeline */
+  middleware?: SchedulerMiddleware[];
+
+  /**
+   * Factory function to create the module's controller.
+   * Called after Core is wired. Receives Core subsystems.
+   * Returns a controller object exposed on `runtime.modules[name]`.
+   */
+  createController?: (core: {
+    bus: EventBus;
+    scheduler: Scheduler;
+    store: RuntimeStore;
+  }) => TController;
+}
+
+interface InteractionRuntime {
+  readonly bus: EventBus;
+  readonly store: RuntimeStore;
+  readonly scheduler: Scheduler;
+
+  /** Module controllers, keyed by module name */
+  readonly modules: Record<string, unknown>;
+
+  dispatch<T = unknown>(event: Omit<RuntimeEvent<T>, "timestamp">): void;
+  getState(): Readonly<RuntimeState>;
+  subscribe(listener: (state: RuntimeState) => void): () => void;
+  destroy(): void;
+}
+
+interface RuntimeOptions {
+  historySize?: number;
+  initialState?: Partial<RuntimeState>;
+  modules?: RuntimeModule[]; // ← module injection
+  middleware?: SchedulerMiddleware[]; // ← additional middleware
+}
+
+function createInteractionRuntime(options?: RuntimeOptions): InteractionRuntime;
+```
+
+> **Design Note — Why modules?** PageController and Modal are not Core infrastructure.
+> They are built-in Interaction Modules that happen to ship with Core. This pattern means:
+>
+> - **STAGE-002:** `createInteractionRuntime({ middleware: [createPolicyMiddleware()] })` — no Core changes
+> - **STAGE-004:** `createInteractionRuntime({ modules: [createDrawerModule()] })` — no Core changes
+> - **User-land:** Custom modules can be created by consumers
+>
+> Core only knows about EventBus, Store, Scheduler, and the Module contract.
+
+**Implementation Details:**
+
+- Factory creates: EventBus → RuntimeStore → Scheduler
+- Factory iterates `options.modules`:
+  1. Merge each module's `initialState` into the store's initial state
+  2. Register each module's `reducers` with Scheduler
+  3. Add each module's `middleware` to Scheduler
+  4. Call each module's `createController()` and store result in `runtime.modules[name]`
+- Factory adds `options.middleware` to Scheduler (after module middleware)
+- `dispatch()` convenience: adds `timestamp: Date.now()` then delegates to `bus.dispatch()`
+  (callers pass `Omit<RuntimeEvent, "timestamp">` — the timestamp is the **single source of time**)
+- `getState()` convenience: delegates to `store.getState()`
+- `subscribe()` convenience: delegates to `store.subscribe()`
+- `destroy()`: calls `bus.clear()`, removes all store subscriptions, unregisters all reducers
+
+**Tests (~12):**
+
+| #   | Test                                                      | Group       |
+| --- | --------------------------------------------------------- | ----------- |
+| 1   | creates runtime with all subsystems                       | creation    |
+| 2   | dispatch adds timestamp and dispatches event              | dispatch    |
+| 3   | getState returns current store state                      | convenience |
+| 4   | subscribe notifies on state change                        | convenience |
+| 5   | full pipeline: dispatch → reducer → commit → state update | integration |
+| 6   | module initialState is merged into store                  | modules     |
+| 7   | module reducers are registered with Scheduler             | modules     |
+| 8   | module middleware is added to Scheduler                   | modules     |
+| 9   | module controller is accessible via runtime.modules       | modules     |
+| 10  | destroy cleans up all subscriptions and reducers          | destroy     |
+| 11  | multiple runtime instances are isolated                   | isolation   |
+| 12  | has no React/DOM imports                                  | isolation   |
+
+**Acceptance Criteria:**
+
+- [ ] Factory composes Core from EventBus + Store + Scheduler
+- [ ] Modules inject state, reducers, middleware, and controllers
+- [ ] Convenience methods delegate correctly
+- [ ] `destroy()` cleans up everything
+- [ ] Multiple instances don't interfere
+- [ ] Zero React/DOM imports in `packages/core/`
+- [ ] 12 tests pass, `tsc --noEmit` clean
+
+---
+
+#### Phase C2: Built-in Modules — Page + Modal (1 session)
+
+**Goal:** Implement Page and Modal as `RuntimeModule` instances, proving the module pattern works.
+
+> **Architectural Position:** These are **Layer 0.5 — Built-in Interaction Modules**.
+> They ship with `packages/core/` but are NOT Core infrastructure.
+> They plug in via the same `RuntimeModule` interface that any consumer module would use.
+
+**Files:**
+
+- `packages/core/src/modules/page-module.ts`
+- `packages/core/src/modules/page-module.test.ts`
+- `packages/core/src/modules/modal-module.ts`
+- `packages/core/src/modules/modal-module.test.ts`
+
+**Page Module API:**
+
+```typescript
+interface PageModuleState {
+  currentPage: string | null;
+  mountedPages: string[];
+  locked: boolean;
+}
+
 interface PageController {
   mount(pageId: string): void;
   unmount(pageId: string): void;
@@ -380,25 +559,50 @@ interface PageController {
   isLocked(): boolean;
 }
 
-function createPageController(
-  bus: EventBus,
-  scheduler: Scheduler,
-  store: RuntimeStore,
-): PageController;
+function createPageModule(): RuntimeModule<PageController>;
 ```
 
-**Implementation Details:**
+**Modal Module API:**
 
+```typescript
+interface ModalModuleState {
+  modalStack: string[];
+}
+
+interface ModalController {
+  open(modalId: string): void;
+  close(modalId?: string): void;
+  closeAll(): void;
+  isOpen(modalId: string): boolean;
+  getStack(): string[];
+}
+
+function createModalModule(): RuntimeModule<ModalController>;
+```
+
+**Usage (in setup.ts):**
+
+```typescript
+const runtime = createInteractionRuntime({
+  modules: [createPageModule(), createModalModule()],
+});
+
+// Access controllers via typed helpers
+const page = runtime.modules.page as PageController;
+const modal = runtime.modules.modal as ModalController;
+
+page.transition("Dashboard");
+modal.open("confirm");
+```
+
+**Implementation Details — Page Module:**
+
+- `initialState`: `{ currentPage: null, mountedPages: [], locked: false }`
+- Reducers registered for: `PAGE_MOUNT`, `PAGE_UNMOUNT`, `PAGE_TRANSITION`, `PAGE_LOCK`, `PAGE_UNLOCK`
 - Each method dispatches an event via `bus.dispatch()`
-- Reducers registered with Scheduler during `createPageController()`
-- `mount(id)` → dispatches `PAGE_MOUNT` → reducer returns new state with page added to `mountedPages` + set as `currentPage`
-- `unmount(id)` → dispatches `PAGE_UNMOUNT` → reducer returns new state with page removed from `mountedPages`
-- `transition(id)` → dispatches `PAGE_TRANSITION` → reducer returns new state with `currentPage` changed (only if mounted and not locked)
-- `lock()` → dispatches `PAGE_LOCK` → reducer returns new state with `locked = true`
-- `unlock()` → dispatches `PAGE_UNLOCK` → reducer returns new state with `locked = false`
 - Convenience getters (`getCurrent`, `getMounted`, `isLocked`) read directly from `store.getState()`
 
-**Event Types:**
+**Event Types — Page Module:**
 
 | Method           | Event Type        | Payload              |
 | ---------------- | ----------------- | -------------------- |
@@ -408,101 +612,54 @@ function createPageController(
 | `lock()`         | `PAGE_LOCK`       | —                    |
 | `unlock()`       | `PAGE_UNLOCK`     | —                    |
 
-**Tests (~15):**
+**Implementation Details — Modal Module:**
 
-| #   | Test                                         | Group      |
-| --- | -------------------------------------------- | ---------- |
-| 1   | creates PageController instance              | creation   |
-| 2   | mount adds page to mountedPages              | mount      |
-| 3   | mount sets page as currentPage               | mount      |
-| 4   | mount dispatches PAGE_MOUNT event            | mount      |
-| 5   | unmount removes page from mountedPages       | unmount    |
-| 6   | unmount clears currentPage if it was current | unmount    |
-| 7   | transition changes currentPage               | transition |
-| 8   | transition only works for mounted pages      | transition |
-| 9   | transition is blocked when locked            | transition |
-| 10  | lock sets locked to true                     | lock       |
-| 11  | lock dispatches PAGE_LOCK event              | lock       |
-| 12  | unlock sets locked to false                  | unlock     |
-| 13  | getCurrent returns current page              | getters    |
-| 14  | getMounted returns mounted pages list        | getters    |
-| 15  | isLocked returns lock status                 | getters    |
+- `initialState`: `{ modalStack: [] }`
+- Reducers registered for: `MODAL_OPEN`, `MODAL_CLOSE`, `MODAL_CLOSE_ALL`
+- Each method dispatches an event via `bus.dispatch()`
+- `open(id)` → pushes to `modalStack`; `close(id?)` → pops specific or top; `closeAll()` → empties stack
+
+**Event Types — Modal Module:**
+
+| Method       | Event Type        | Payload                |
+| ------------ | ----------------- | ---------------------- |
+| `open(id)`   | `MODAL_OPEN`      | `{ modalId: string }`  |
+| `close(id?)` | `MODAL_CLOSE`     | `{ modalId?: string }` |
+| `closeAll()` | `MODAL_CLOSE_ALL` | —                      |
+
+**Tests (~20):**
+
+| #   | Test                                          | Group      |
+| --- | --------------------------------------------- | ---------- |
+| 1   | createPageModule returns valid RuntimeModule  | creation   |
+| 2   | page module contributes initialState          | module     |
+| 3   | mount adds page to mountedPages               | mount      |
+| 4   | mount sets page as currentPage                | mount      |
+| 5   | mount dispatches PAGE_MOUNT event             | mount      |
+| 6   | unmount removes page from mountedPages        | unmount    |
+| 7   | unmount clears currentPage if it was current  | unmount    |
+| 8   | transition changes currentPage                | transition |
+| 9   | transition only works for mounted pages       | transition |
+| 10  | transition is blocked when locked             | transition |
+| 11  | lock sets locked to true                      | lock       |
+| 12  | unlock sets locked to false                   | unlock     |
+| 13  | createModalModule returns valid RuntimeModule | creation   |
+| 14  | modal module contributes initialState         | module     |
+| 15  | open adds to modalStack                       | modal      |
+| 16  | close removes from modalStack                 | modal      |
+| 17  | closeAll empties modalStack                   | modal      |
+| 18  | isOpen returns correct status                 | modal      |
+| 19  | getStack returns current modal stack          | modal      |
+| 20  | modules have no React/DOM imports             | isolation  |
 
 **Acceptance Criteria:**
 
-- [ ] All page operations dispatch events (not direct state mutation)
-- [ ] Lock prevents transition
-- [ ] Convenience getters reflect current state
+- [ ] Both modules implement `RuntimeModule` interface
+- [ ] Page + Modal state is contributed via `initialState` (not hardcoded in Core)
+- [ ] All operations dispatch events (not direct state mutation)
+- [ ] Lock prevents page transition
 - [ ] All events visible in EventBus history
-- [ ] 15 tests pass, `tsc --noEmit` clean
-
----
-
-### Phase C: Runtime Factory (1 session)
-
-**Goal:** Compose all core pieces into a single `createInteractionRuntime()` factory.
-
-**Files:**
-
-- `packages/core/src/runtime.ts`
-- `packages/core/src/types.ts` (consolidated public types)
-- `packages/core/src/index.ts` (barrel exports)
-- `packages/core/src/runtime.test.ts`
-
-**API Design:**
-
-```typescript
-interface InteractionRuntime {
-  readonly bus: EventBus;
-  readonly store: RuntimeStore;
-  readonly scheduler: Scheduler;
-  readonly page: PageController;
-
-  dispatch<T = unknown>(event: Omit<RuntimeEvent<T>, "timestamp">): void;
-  getState(): Readonly<RuntimeState>;
-  subscribe(listener: (state: RuntimeState) => void): () => void;
-  destroy(): void;
-}
-
-interface RuntimeOptions {
-  historySize?: number;
-  initialState?: Partial<RuntimeState>;
-}
-
-function createInteractionRuntime(options?: RuntimeOptions): InteractionRuntime;
-```
-
-**Implementation Details:**
-
-- Factory creates: EventBus → RuntimeStore → Scheduler → PageController
-- `dispatch()` convenience: adds `timestamp: Date.now()` then delegates to `bus.dispatch()`
-- `getState()` convenience: delegates to `store.getState()`
-- `subscribe()` convenience: delegates to `store.subscribe()`
-- `destroy()`: calls `bus.clear()`, removes all store subscriptions, unregisters all reducers
-
-**Tests (~10):**
-
-| #   | Test                                                      | Group       |
-| --- | --------------------------------------------------------- | ----------- |
-| 1   | creates runtime with all subsystems                       | creation    |
-| 2   | dispatch adds timestamp and dispatches event              | dispatch    |
-| 3   | getState returns current store state                      | convenience |
-| 4   | subscribe notifies on state change                        | convenience |
-| 5   | page operations work through runtime                      | integration |
-| 6   | full pipeline: dispatch → reducer → commit → state update | integration |
-| 7   | destroy cleans up all subscriptions                       | destroy     |
-| 8   | destroy clears event history                              | destroy     |
-| 9   | multiple runtime instances are isolated                   | isolation   |
-| 10  | has no React/DOM imports                                  | isolation   |
-
-**Acceptance Criteria:**
-
-- [ ] Single factory creates complete, wired runtime
-- [ ] Convenience methods delegate correctly
-- [ ] `destroy()` cleans up everything
-- [ ] Multiple instances don't interfere
-- [ ] Zero React/DOM imports in `packages/core/`
-- [ ] 10 tests pass, `tsc --noEmit` clean
+- [ ] 20 tests pass, `tsc --noEmit` clean
 
 ---
 
@@ -540,7 +697,8 @@ const state = useRuntimeState(); // reactive read-only state
 - `RuntimeContext` created via `React.createContext<InteractionRuntime | null>(null)`
 - `PrismUIProvider` stores runtime in context, renders children
 - `useRuntime()` reads context, throws `[PrismUI] useRuntime must be used within a PrismUIProvider`
-- `useRuntimeState()` uses `useState` + `useEffect` to subscribe to store changes
+- `useRuntimeState()` uses `useSyncExternalStore(store.subscribe, store.getState, store.getSnapshot)`
+  (React 18 recommended pattern — avoids tearing, no manual `useState` + `useEffect`)
 
 **Tests (~15):**
 
@@ -610,9 +768,9 @@ function useModal(): UseModalReturn;
 
 **Implementation Details:**
 
-- `usePage()` combines `useRuntimeState()` for reactive data and `useRuntime().page` for actions
-- `useModal()` combines `useRuntimeState()` for `modalStack` and dispatches modal events
-- Action functions are stable references (wrapped in `useCallback` referencing runtime)
+- `usePage()` combines `useRuntimeState()` for reactive data and `runtime.modules.page` controller for actions
+- `useModal()` combines `useRuntimeState()` for `modalStack` and `runtime.modules.modal` controller for actions
+- Action functions are stable references (wrapped in `useCallback` referencing runtime module controllers)
 
 **Tests (~12):**
 
@@ -635,7 +793,7 @@ function useModal(): UseModalReturn;
 
 - [ ] All hooks are thin wrappers around runtime APIs
 - [ ] State changes trigger re-render
-- [ ] Actions delegate to `runtime.page.*` or `runtime.dispatch()`
+- [ ] Actions delegate to module controllers or `runtime.dispatch()`
 - [ ] 27 tests pass (D1: 15 + D2: 12), `tsc --noEmit` clean
 
 ---
@@ -648,7 +806,7 @@ function useModal(): UseModalReturn;
 
 - `packages/demo/src/main.tsx` (entry point)
 - `packages/demo/src/App.tsx` (root with PrismUIProvider)
-- `packages/demo/src/setup.ts` (runtime creation)
+- `packages/demo/src/setup.ts` (runtime creation with module injection)
 - `packages/demo/src/pages/Dashboard.tsx`
 - `packages/demo/src/pages/PatientDetail.tsx`
 - `packages/demo/src/components/ConfirmModal.tsx`
@@ -656,14 +814,32 @@ function useModal(): UseModalReturn;
 - `packages/demo/package.json`
 - `packages/demo/vite.config.ts`
 
+**setup.ts (Module Injection Pattern):**
+
+```typescript
+import {
+  createInteractionRuntime,
+  createPageModule,
+  createModalModule,
+} from "@prismui/core";
+
+export const runtime = createInteractionRuntime({
+  modules: [createPageModule(), createModalModule()],
+});
+```
+
 **Demo Scenarios:**
 
-| #   | Scenario            | User Action                         | Expected Result                                                                             |
-| --- | ------------------- | ----------------------------------- | ------------------------------------------------------------------------------------------- |
-| 1   | **Page Transition** | Click "Go to Patient Detail" button | `runtime.page.transition("PatientDetail")` → UI shows PatientDetail page                    |
-| 2   | **Modal Mount**     | Click "Open Confirm" button         | `runtime.dispatch({ type: 'MODAL_OPEN', payload: { modalId: 'confirm' } })` → Modal appears |
-| 3   | **Page Lock**       | Click "Lock Page" button            | `runtime.page.lock()` → All navigation buttons disabled, status shows "LOCKED"              |
-| 4   | **Event History**   | All of the above                    | EventLog component shows dispatched event history from `bus.getHistory()`                   |
+| #   | Scenario            | User Action                         | Expected Result                                                                           |
+| --- | ------------------- | ----------------------------------- | ----------------------------------------------------------------------------------------- |
+| 1   | **Page Transition** | Click "Go to Patient Detail" button | Page module controller `.transition("PatientDetail")` → UI shows PatientDetail page       |
+| 2   | **Modal Mount**     | Click "Open Confirm" button         | Modal module controller `.open("confirm")` → Modal appears                                |
+| 3   | **Page Lock**       | Click "Lock Page" button            | Page module controller `.lock()` → All navigation disabled, status shows "LOCKED"         |
+| 4   | **Event History**   | All of the above                    | EventLog shows: `type`, `timestamp`, `prevVersion → nextVersion` for each committed event |
+
+> **EventLog Enhancement:** The Event History panel visualizes the Reducer Commit Model by showing
+> `prevVersion → nextVersion` for each state change. This proves that every interaction flows through
+> the deterministic pipeline: Event → Reducer → Commit → version increment.
 
 **Key Constraint:** No `useState` for page/modal/lock state in any component. All interaction state comes from `useRuntimeState()`, `usePage()`, or `useModal()`.
 
@@ -671,8 +847,8 @@ function useModal(): UseModalReturn;
 
 - [ ] All 4 scenarios work visually
 - [ ] Zero `useState` for page/modal/lock state in components
-- [ ] All interactions flow through `runtime.dispatch()` or `runtime.page.*`
-- [ ] Event history panel shows all dispatched events
+- [ ] All interactions flow through module controllers or `runtime.dispatch()`
+- [ ] EventLog shows `type`, `timestamp`, `prevVersion → nextVersion` per event
 - [ ] Demo runs with `pnpm dev`
 
 ---
@@ -684,15 +860,15 @@ function useModal(): UseModalReturn;
 **Deliverables:**
 
 - [ ] This document (`STAGE-001-runtime-core.md`) updated with implementation notes for each phase
-- [ ] `ARCHITECTURE.md` verified accurate for Layer 0 + Layer 2
-- [ ] `ADR-001` through `ADR-005` finalized
-- [ ] `RULES.md` verified (all 16 rules applicable)
+- [ ] `PRISMUI-ARCHITECTURE.md` verified accurate for Layer 0 + Layer 2
+- [ ] `ADR-001` through `ADR-006` finalized
+- [ ] `RULES.md` verified (all 17 rules applicable)
 - [ ] `STAGE.md` overview table updated with final test count
 - [ ] `RUNTIME-API-SPEC.md` finalized with actual implemented API
 
 **Verification Checklist:**
 
-- [ ] `pnpm test` — all ~98 tests pass
+- [ ] `pnpm test` — all ~107 tests pass
 - [ ] `pnpm typecheck` — `tsc --noEmit` clean across all packages
 - [ ] Zero React/DOM imports in `packages/core/src/` (verified via grep)
 - [ ] Demo runs successfully (`pnpm dev`)
@@ -702,18 +878,18 @@ function useModal(): UseModalReturn;
 
 ## Summary Table
 
-| Phase  | Content               | Sessions | New Tests | Cumulative |
-| ------ | --------------------- | -------- | --------- | ---------- |
-| **A1** | EventBus              | 1        | ~15       | ~15        |
-| **A2** | RuntimeStore          | 1        | ~15       | ~30        |
-| **B1** | Scheduler (Reducer)   | 1        | ~16       | ~46        |
-| **B2** | PageController        | 1        | ~15       | ~61        |
-| **C**  | Runtime Factory       | 1        | ~10       | ~71        |
-| **D1** | Provider + Core Hooks | 1        | ~15       | ~86        |
-| **D2** | Convenience Hooks     | 1        | ~12       | ~98        |
-| **E**  | Minimal Demo          | 1        | —         | ~98        |
-| **F**  | Docs + Verification   | 1        | —         | **~98**    |
-|        | **Total**             | **9**    | **~98**   |            |
+| Phase  | Content                         | Sessions | New Tests | Cumulative |
+| ------ | ------------------------------- | -------- | --------- | ---------- |
+| **A1** | EventBus                        | 1        | ~15       | ~15        |
+| **A2** | RuntimeStore                    | 1        | ~15       | ~30        |
+| **B**  | Scheduler (Reducer Commit)      | 1        | ~18       | ~48        |
+| **C1** | Module System + Runtime Factory | 1        | ~12       | ~60        |
+| **C2** | Built-in Modules (Page+Modal)   | 1        | ~20       | ~80        |
+| **D1** | Provider + Core Hooks           | 1        | ~15       | ~95        |
+| **D2** | Convenience Hooks               | 1        | ~12       | ~107       |
+| **E**  | Minimal Demo                    | 1        | —         | ~107       |
+| **F**  | Docs + Verification             | 1        | —         | **~107**   |
+|        | **Total**                       | **9**    | **~107**  |            |
 
 ---
 
@@ -727,14 +903,19 @@ packages/
 │   │   ├── event-bus.test.ts
 │   │   ├── store.ts               # Phase A2
 │   │   ├── store.test.ts
-│   │   ├── scheduler.ts           # Phase B1
+│   │   ├── scheduler.ts           # Phase B
 │   │   ├── scheduler.test.ts
-│   │   ├── page-controller.ts     # Phase B2
-│   │   ├── page-controller.test.ts
-│   │   ├── runtime.ts             # Phase C
+│   │   ├── module.ts              # Phase C1 (RuntimeModule interface)
+│   │   ├── runtime.ts             # Phase C1 (Factory + module wiring)
 │   │   ├── runtime.test.ts
-│   │   ├── types.ts               # Phase C (consolidated types)
-│   │   └── index.ts               # Phase C (barrel exports)
+│   │   ├── types.ts               # Phase C1 (consolidated types)
+│   │   ├── index.ts               # Phase C1 (barrel exports)
+│   │   └── modules/               # Layer 0.5 — Built-in Modules
+│   │       ├── page-module.ts     # Phase C2
+│   │       ├── page-module.test.ts
+│   │       ├── modal-module.ts    # Phase C2
+│   │       ├── modal-module.test.ts
+│   │       └── index.ts
 │   ├── package.json
 │   ├── tsconfig.json
 │   └── vitest.config.ts
@@ -744,7 +925,7 @@ packages/
 │   │   ├── context.ts             # Phase D1
 │   │   ├── provider.tsx           # Phase D1
 │   │   ├── use-runtime.ts         # Phase D1
-│   │   ├── use-runtime-state.ts   # Phase D1
+│   │   ├── use-runtime-state.ts   # Phase D1 (useSyncExternalStore)
 │   │   ├── use-page.ts            # Phase D2
 │   │   ├── use-modal.ts           # Phase D2
 │   │   ├── provider.test.tsx      # Phase D1
@@ -758,13 +939,13 @@ packages/
     ├── src/
     │   ├── main.tsx
     │   ├── App.tsx
-    │   ├── setup.ts
+    │   ├── setup.ts               # Module injection pattern
     │   ├── pages/
     │   │   ├── Dashboard.tsx
     │   │   └── PatientDetail.tsx
     │   └── components/
     │       ├── ConfirmModal.tsx
-    │       └── EventLog.tsx
+    │       └── EventLog.tsx       # Shows type, timestamp, prevVersion → nextVersion
     ├── package.json
     ├── vite.config.ts
     └── index.html
@@ -776,14 +957,14 @@ packages/
 
 Stage-1 is complete when **ALL** of the following are true:
 
-1. ✅ Page flow controlled entirely by Runtime dispatch
-2. ✅ Components hold zero global interaction state
-3. ✅ React adapter contains zero business logic
-4. ✅ `packages/core/` has zero React/DOM imports
-5. ✅ ~98 tests passing
-6. ✅ `tsc --noEmit` clean across all packages
-7. ✅ Demo runs with all 4 scenarios working
-8. ✅ All devdocs frozen and reviewed
+1. [ ] Page flow controlled entirely by Runtime dispatch
+2. [ ] Components hold zero global interaction state
+3. [ ] React adapter contains zero business logic
+4. [ ] `packages/core/` has zero React/DOM imports
+5. [ ] ~107 tests passing
+6. [ ] `tsc --noEmit` clean across all packages
+7. [ ] Demo runs with all 4 scenarios working
+8. [ ] All devdocs frozen and reviewed
 
 ---
 
@@ -803,22 +984,31 @@ Stage-1 is complete when **ALL** of the following are true:
 
 If successful, this stage proves:
 
-1. **Runtime can control pages** — mount, unmount, transition, lock
-2. **React is just a rendering layer** — zero business logic in adapter
-3. **Interactions are abstractable** — all behavior through dispatch
-4. **System is extensible** — middleware slot ready for Governance (STAGE-002)
-5. **Framework isolation works** — core runs without React
-6. **Reducer Commit Model works** — state mutation is centralized, deterministic, auditable
+1. **Runtime can control pages + modals** — via built-in modules, not hardcoded Core
+2. **Module system works** — Page and Modal plug in via `RuntimeModule` interface
+3. **React is just a rendering layer** — zero business logic in adapter
+4. **Interactions are abstractable** — all behavior through dispatch
+5. **System is extensible** — modules + middleware injection, no Core modification needed
+6. **Framework isolation works** — core runs without React
+7. **Reducer Commit Model works** — state mutation is centralized, deterministic, auditable
+8. **ReducerCommitResult.sideEffects** — declarative event chain is ready for STAGE-002+
 
 ---
 
 ## Next Stage Preview
 
-**STAGE-002: Governance Layer** will add:
+**STAGE-002: Governance Layer** will add via module/middleware injection:
+
+```typescript
+createInteractionRuntime({
+  modules: [createPageModule(), createModalModule()],
+  middleware: [createPolicyMiddleware(), createAuditMiddleware()],
+});
+```
 
 - Policy Engine (interaction rules: allow/deny/transform) — as Scheduler middleware
 - Audit Trail (immutable event logging with prevState/nextState snapshots) — trivial because Reducer Commit captures both
 - Replay System (deterministic event replay) — guaranteed by pure reducers
 - Priority Scheduler (event priority levels, conflict resolution) — optional, preserves synchronous semantics
 
-Because STAGE-001 implements the Reducer Commit Model, STAGE-002 **only adds middleware modules** — Layer 0 core remains unchanged.
+Because STAGE-001 implements the Module System + Reducer Commit Model, STAGE-002 **only adds middleware** — Layer 0 Core remains unchanged.

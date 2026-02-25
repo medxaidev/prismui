@@ -150,14 +150,14 @@ function useModal(): UseModalReturn;
 
 ## Hard Constraints
 
-| Rule     | Description                                                          |
-| -------- | -------------------------------------------------------------------- |
-| **A-01** | Adapter MUST NOT contain business logic                              |
-| **A-02** | Adapter MUST NOT call `store.setState()` directly                    |
-| **A-03** | Adapter MUST NOT implement scheduling or policy                      |
-| **A-04** | All actions MUST go through `runtime.dispatch()` or `runtime.page.*` |
-| **A-05** | Hooks are thin wrappers — no derived state computation               |
-| **A-06** | Provider accepts externally-created runtime (not internal creation)  |
+| Rule     | Description                                                            |
+| -------- | ---------------------------------------------------------------------- |
+| **A-01** | Adapter MUST NOT contain business logic                                |
+| **A-02** | Adapter MUST NOT call `store.setState()` directly                      |
+| **A-03** | Adapter MUST NOT implement scheduling or policy                        |
+| **A-04** | All actions MUST go through `runtime.dispatch()` or module controllers |
+| **A-05** | Hooks are thin wrappers — no derived state computation                 |
+| **A-06** | Provider accepts externally-created runtime (not internal creation)    |
 
 ---
 

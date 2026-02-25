@@ -16,6 +16,8 @@ Main entry point. Creates a fully wired runtime instance.
 interface RuntimeOptions {
   historySize?: number; // EventBus history buffer size (default: 100)
   initialState?: Partial<RuntimeState>; // Override initial state
+  modules?: RuntimeModule[]; // Module injection (Page, Modal, etc.)
+  middleware?: SchedulerMiddleware[]; // Additional Scheduler middleware
 }
 
 function createInteractionRuntime(options?: RuntimeOptions): InteractionRuntime;
@@ -34,8 +36,8 @@ interface InteractionRuntime {
   /** Scheduler instance */
   readonly scheduler: Scheduler;
 
-  /** PageController instance */
-  readonly page: PageController;
+  /** Module controllers, keyed by module name */
+  readonly modules: Record<string, unknown>;
 
   /** Convenience: dispatch event through bus → scheduler pipeline */
   dispatch<T = unknown>(event: Omit<RuntimeEvent<T>, "timestamp">): void;
@@ -46,7 +48,7 @@ interface InteractionRuntime {
   /** Convenience: subscribe to state changes */
   subscribe(listener: (state: RuntimeState) => void): () => void;
 
-  /** Cleanup all subscriptions, handlers, and history */
+  /** Cleanup all subscriptions, reducers, and history */
   destroy(): void;
 }
 ```
@@ -89,11 +91,8 @@ function createEventBus(options?: { historySize?: number }): EventBus;
 
 ```typescript
 interface RuntimeState {
-  currentPage: string | null;
-  mountedPages: string[];
-  modalStack: string[];
-  locked: boolean;
   version: number;
+  [key: string]: unknown; // Module-contributed state slices
 }
 
 interface RuntimeStore {
@@ -113,28 +112,32 @@ interface RuntimeStore {
 function createRuntimeStore(initial?: Partial<RuntimeState>): RuntimeStore;
 ```
 
-**Initial state defaults:**
+**Initial state defaults (Core only):**
 
 ```typescript
 {
-  currentPage: null,
-  mountedPages: [],
-  modalStack: [],
-  locked: false,
-  version: 0,
+  version: 0;
 }
 ```
+
+> Module-contributed fields (e.g. `currentPage`, `mountedPages`, `modalStack`, `locked`)
+> are merged by the Factory from each module's `initialState`.
 
 ---
 
 ### 1.5 Scheduler (Reducer Commit Engine)
 
 ```typescript
-/** Pure function: (event, prevState) → nextState. No side effects. */
+interface ReducerCommitResult {
+  nextState: RuntimeState;
+  sideEffects?: RuntimeEvent[]; // Events dispatched AFTER commit
+}
+
+/** Pure function: (event, prevState) → ReducerCommitResult. No side effects. */
 type EventReducer = (
   event: RuntimeEvent,
   prevState: Readonly<RuntimeState>,
-) => RuntimeState;
+) => ReducerCommitResult;
 
 type SchedulerMiddleware = (event: RuntimeEvent, next: () => void) => void;
 
@@ -152,44 +155,52 @@ interface Scheduler {
 function createScheduler(store: RuntimeStore, bus: EventBus): Scheduler;
 ```
 
-**Commit boundary:** Only the Scheduler calls `store.setState()`. Reducers receive `prevState` and return `nextState` — they never touch the store.
+**Commit boundary:** Only the Scheduler calls `store.setState()`. Reducers receive `prevState` and return `ReducerCommitResult` — they never touch the store. `sideEffects` are dispatched after successful commit.
 
-**Error handling:** If a reducer throws, state is NOT committed. A `SYSTEM_ERROR` event is dispatched (not processed by reducers).
+**Error handling:** If a reducer throws, state is NOT committed and `sideEffects` are NOT dispatched. A `SYSTEM_ERROR` event is dispatched (not processed by reducers).
 
-### 1.6 PageController
+### 1.6 RuntimeModule
 
 ```typescript
+interface RuntimeModule<TController = unknown> {
+  /** Unique module identifier */
+  name: string;
+
+  /** State slice contributed by this module */
+  initialState?: Partial<RuntimeState>;
+
+  /** Reducers to register. Map<eventType, reducer>. */
+  reducers?: Record<string, EventReducer>;
+
+  /** Middleware to add to Scheduler pipeline */
+  middleware?: SchedulerMiddleware[];
+
+  /** Create controller exposed on runtime.modules[name] */
+  createController?: (core: {
+    bus: EventBus;
+    scheduler: Scheduler;
+    store: RuntimeStore;
+  }) => TController;
+}
+```
+
+### 1.7 Built-in Modules
+
+#### Page Module (`createPageModule()`)
+
+```typescript
+function createPageModule(): RuntimeModule<PageController>;
+
 interface PageController {
-  /** Register a page as available */
   mount(pageId: string): void;
-
-  /** Remove a page from registry */
   unmount(pageId: string): void;
-
-  /** Set a mounted page as current */
   transition(pageId: string): void;
-
-  /** Lock all page transitions */
   lock(): void;
-
-  /** Unlock page transitions */
   unlock(): void;
-
-  /** Get current page ID */
   getCurrent(): string | null;
-
-  /** Get all mounted page IDs */
   getMounted(): string[];
-
-  /** Check if transitions are locked */
   isLocked(): boolean;
 }
-
-function createPageController(
-  bus: EventBus,
-  scheduler: Scheduler,
-  store: RuntimeStore,
-): PageController;
 ```
 
 **Event types dispatched:**
@@ -201,6 +212,28 @@ function createPageController(
 | `transition(id)` | `PAGE_TRANSITION` | `{ pageId: string }` |
 | `lock()`         | `PAGE_LOCK`       | `undefined`          |
 | `unlock()`       | `PAGE_UNLOCK`     | `undefined`          |
+
+#### Modal Module (`createModalModule()`)
+
+```typescript
+function createModalModule(): RuntimeModule<ModalController>;
+
+interface ModalController {
+  open(modalId: string): void;
+  close(modalId?: string): void;
+  closeAll(): void;
+  isOpen(modalId: string): boolean;
+  getStack(): string[];
+}
+```
+
+**Event types dispatched:**
+
+| Method       | Event Type        | Payload                |
+| ------------ | ----------------- | ---------------------- |
+| `open(id)`   | `MODAL_OPEN`      | `{ modalId: string }`  |
+| `close(id?)` | `MODAL_CLOSE`     | `{ modalId?: string }` |
+| `closeAll()` | `MODAL_CLOSE_ALL` | `undefined`            |
 
 ---
 
@@ -287,7 +320,7 @@ const MODAL_CLOSE_ALL = "MODAL_CLOSE_ALL";
 | Error                                                              | When                           |
 | ------------------------------------------------------------------ | ------------------------------ |
 | `[PrismUI] useRuntime must be used within a PrismUIProvider`       | Hook called outside provider   |
-| `[PrismUI] Handler for event type "${type}" is already registered` | Duplicate handler registration |
+| `[PrismUI] Reducer for event type "${type}" is already registered` | Duplicate reducer registration |
 | `[PrismUI] Page "${pageId}" is not mounted`                        | Transition to unmounted page   |
 | `[PrismUI] Page transitions are locked`                            | Transition while locked        |
 | `[PrismUI] Page "${pageId}" is already mounted`                    | Duplicate mount                |

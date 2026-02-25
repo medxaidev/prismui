@@ -71,10 +71,10 @@ runtime.dispatch({ type: "PAGE_TRANSITION", payload: { pageId: "Dashboard" } });
 
 // ✅ Deterministic pure reducer (Reducer Commit Model)
 const pageTransitionReducer: EventReducer = (event, prevState) => ({
-  ...prevState,
-  currentPage: event.payload.pageId,
+  nextState: { ...prevState, currentPage: event.payload.pageId },
 });
-// Scheduler commits: store.setState(() => pageTransitionReducer(event, prevState))
+// Scheduler commits: store.setState(() => result.nextState)
+// Then dispatches result.sideEffects (if any)
 
 // ✅ Timestamps added by EventBus (single source of time)
 // EventBus automatically adds `timestamp: Date.now()` on dispatch

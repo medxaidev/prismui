@@ -154,15 +154,19 @@ No layer may bypass the layer below it. No cross-layer direct references.
 **Simple usage:**
 
 ```typescript
-const runtime = createInteractionRuntime();
-runtime.page.mount("Dashboard");
-runtime.page.transition("Settings");
+const runtime = createInteractionRuntime({
+  modules: [createPageModule()],
+});
+const page = runtime.modules.page as PageController;
+page.mount("Dashboard");
+page.transition("Settings");
 ```
 
 **Advanced usage:**
 
 ```typescript
 const runtime = createInteractionRuntime({
+  modules: [createPageModule(), createModalModule()],
   middleware: [
     policyMiddleware({ rules: [...] }),
     auditMiddleware({ maxEntries: 10000 }),

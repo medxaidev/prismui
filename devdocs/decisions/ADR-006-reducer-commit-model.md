@@ -35,16 +35,29 @@ Replace handlers with **pure reducers**. Only the Scheduler's internal commit me
 ### New model:
 
 ```typescript
-/** Pure function: (event, prevState) → nextState. No side effects. */
-type EventReducer = (event: RuntimeEvent, prevState: Readonly<RuntimeState>) => RuntimeState;
+interface ReducerCommitResult {
+  nextState: RuntimeState;
+  sideEffects?: RuntimeEvent[]; // Events dispatched AFTER commit (declarative, not imperative)
+}
+
+/** Pure function: (event, prevState) → ReducerCommitResult. No side effects. */
+type EventReducer = (
+  event: RuntimeEvent,
+  prevState: Readonly<RuntimeState>,
+) => ReducerCommitResult;
 ```
+
+> **`sideEffects`:** Reducers are pure, but sometimes a state change must trigger follow-up events.
+> Instead of dispatching inside reducers (impure), reducers **declare** side-effect events.
+> The Scheduler dispatches them AFTER commit. This preserves reducer purity while enabling event chains.
 
 ### Scheduler commit flow:
 
 ```
 1. prevState = store.getState()
-2. nextState = reducer(event, prevState)     // pure computation
-3. store.setState(() => nextState)            // commit (ONLY here)
+2. result = reducer(event, prevState)         // pure computation
+3. store.setState(() => result.nextState)     // commit (ONLY here)
+4. for each result.sideEffects → bus.dispatch  // after commit
 ```
 
 ### State Mutation Rule (Constitutional):
@@ -55,6 +68,7 @@ type EventReducer = (event: RuntimeEvent, prevState: Readonly<RuntimeState>) => 
 ### Error handling:
 
 If a reducer throws:
+
 1. Do NOT commit — state remains unchanged
 2. Record Audit entry with error information
 3. Dispatch `SYSTEM_ERROR` event (not processed by reducers — prevents loops)
@@ -117,13 +131,13 @@ STAGE-002 **only adds middleware modules**. Layer 0 core code remains unchanged.
 
 ## Architecture Maturity Progression
 
-| Stage | System Level |
-|-------|-------------|
-| Stage-001 (handler model) | Event-driven state system |
+| Stage                     | System Level                    |
+| ------------------------- | ------------------------------- |
+| Stage-001 (handler model) | Event-driven state system       |
 | Stage-001 (reducer model) | **Deterministic state machine** |
-| + Audit (Stage-002) | Auditable kernel |
-| + Replay (Stage-002) | Replayable engine |
-| + Policy (Stage-002) | Governable platform |
+| + Audit (Stage-002)       | Auditable kernel                |
+| + Replay (Stage-002)      | Replayable engine               |
+| + Policy (Stage-002)      | Governable platform             |
 
 ---
 

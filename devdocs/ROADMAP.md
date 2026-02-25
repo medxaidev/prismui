@@ -23,14 +23,14 @@ PrismUI 2.0 is not a component library. It is a **UI Operating System Kernel** t
 
 PrismUI 1.x evolved from a component library to a runtime platform (at STAGE-005). The key insight:
 
-| Realization | Implication |
-|-------------|-------------|
-| Runtime controls behavior better than components | Rebuild with Runtime-first from Day 1 |
-| React is just a rendering adapter | Core must be framework-agnostic TypeScript |
-| Pages are resources, not JSX trees | Page Orchestration as a first-class concept |
-| Theme is more than colors | Semantic Intent → Behavior Derivation |
-| Governance is essential for enterprise | Policy, Audit, Replay built into Layer 1 |
-| UI should be programmable | Interaction DSL for automation + AI agents |
+| Realization                                      | Implication                                 |
+| ------------------------------------------------ | ------------------------------------------- |
+| Runtime controls behavior better than components | Rebuild with Runtime-first from Day 1       |
+| React is just a rendering adapter                | Core must be framework-agnostic TypeScript  |
+| Pages are resources, not JSX trees               | Page Orchestration as a first-class concept |
+| Theme is more than colors                        | Semantic Intent → Behavior Derivation       |
+| Governance is essential for enterprise           | Policy, Audit, Replay built into Layer 1    |
+| UI should be programmable                        | Interaction DSL for automation + AI agents  |
 
 ---
 
@@ -73,7 +73,7 @@ PrismUI 1.x evolved from a component library to a runtime platform (at STAGE-005
 │  Enterprise-grade control. Page Lock, Interaction Policy.   │
 ├─────────────────────────────────────────────────────────────┤
 │  Layer 0 — Interaction Core (Pure TypeScript)               │
-│  EventBus, RuntimeStore, Scheduler, PageOrchestrator        │
+│  EventBus, RuntimeStore, Scheduler, Module System            │
 │  Framework-agnostic. Zero dependencies.                     │
 └─────────────────────────────────────────────────────────────┘
 ```
@@ -82,24 +82,25 @@ PrismUI 1.x evolved from a component library to a runtime platform (at STAGE-005
 
 ## Stage Plan
 
-| Stage | Name | Status | Focus |
-|-------|------|--------|-------|
-| 1 | Runtime Core | 🔄 In Progress | EventBus, Store, Scheduler, PageController, React Adapter, Demo |
-| 2 | Governance Layer | Planned | Policy Engine, Audit Trail, Replay, Priority Scheduler |
-| 3 | Semantic Theme | Planned | Token Layer, Semantic Layer, Behavior Derivation |
-| 4 | Interaction Modules | Planned | Modal Runtime, Drawer Runtime, Notification Runtime |
-| 5 | Form & Async Runtime | Planned | Form State Runtime, Async State Runtime |
-| 6 | Page Orchestration | Planned | Page lifecycle, Page scheduling, Page priority |
-| 7 | Interaction DSL | Planned | `ui.modal.open()`, `ui.confirm()`, `ui.workflow.start()` |
-| 8 | DevTools & Automation | Planned | Runtime Inspector, Event Replay UI, AI Agent interface |
+| Stage | Name                  | Status         | Focus                                                           |
+| ----- | --------------------- | -------------- | --------------------------------------------------------------- |
+| 1     | Runtime Core          | 🔄 In Progress | EventBus, Store, Scheduler, PageController, React Adapter, Demo |
+| 2     | Governance Layer      | Planned        | Policy Engine, Audit Trail, Replay, Priority Scheduler          |
+| 3     | Semantic Theme        | Planned        | Token Layer, Semantic Layer, Behavior Derivation                |
+| 4     | Interaction Modules   | Planned        | Modal Runtime, Drawer Runtime, Notification Runtime             |
+| 5     | Form & Async Runtime  | Planned        | Form State Runtime, Async State Runtime                         |
+| 6     | Page Orchestration    | Planned        | Page lifecycle, Page scheduling, Page priority                  |
+| 7     | Interaction DSL       | Planned        | `ui.modal.open()`, `ui.confirm()`, `ui.workflow.start()`        |
+| 8     | DevTools & Automation | Planned        | Runtime Inspector, Event Replay UI, AI Agent interface          |
 
 ---
 
 ## Long-Term Capabilities
 
 ### Programmable UI
+
 ```typescript
-ui.runtime.dispatch({ type: "OPEN_MODAL", payload: { id: "approval" } })
+ui.runtime.dispatch({ type: "OPEN_MODAL", payload: { id: "approval" } });
 ```
 
 - UI is schedulable, controllable, remotely operable, automatable
@@ -108,18 +109,20 @@ ui.runtime.dispatch({ type: "OPEN_MODAL", payload: { id: "approval" } })
 - Dashboard becomes a Runtime, not a static component tree
 
 ### Three-Layer Extension System
+
 ```typescript
 // 1. Token Override (Static)
-runtime.theme.overrideTokens({ color: { primary: 'indigo' } })
+runtime.theme.overrideTokens({ color: { primary: "indigo" } });
 
 // 2. Semantic Override (Rules)
-runtime.theme.overrideIntent("destructive", { requireConfirm: true })
+runtime.theme.overrideIntent("destructive", { requireConfirm: true });
 
 // 3. Behavior Override (Runtime)
-runtime.interaction.override("modal", { animation: 'none' })
+runtime.interaction.override("modal", { animation: "none" });
 ```
 
 ### Cross-Framework
+
 - Core runs without React — can be used with Vue, Svelte, or bare TypeScript
 - Suitable for SSR, CLI tools, Dashboard engines, automated testing
 

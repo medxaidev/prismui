@@ -20,19 +20,22 @@
 
 ## Runtime Components
 
-| Term               | Definition                                                                                                              | 定义                                                                         |
-| ------------------ | ----------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------- |
-| **EventBus**       | Central event dispatcher. All communication flows through typed events.                                                 | 中央事件分发器。所有通信通过类型化事件流转。                                 |
-| **RuntimeEvent**   | A serializable message with `type`, optional `payload`, `timestamp`, and `source`.                                      | 可序列化消息，包含 `type`、可选 `payload`、`timestamp` 和 `source`。         |
-| **RuntimeStore**   | Centralized, immutable state container with versioned snapshots and subscriber notification.                            | 集中式、不可变状态容器，带版本化快照和订阅者通知。                           |
-| **RuntimeState**   | The shape of the global runtime state: `currentPage`, `mountedPages`, `modalStack`, `locked`, `version`.                | 全局运行时状态结构。                                                         |
-| **Scheduler**      | Event processing pipeline with middleware chain and handler registration.                                               | 事件处理管线，带中间件链和处理器注册。                                       |
-| **Middleware**     | Interceptor in the Scheduler pipeline. `(event, next) → void`. Used for logging, policy, audit.                         | Scheduler 管线中的拦截器。用于日志、策略、审计。                             |
-| **EventReducer**   | Pure function: `(event, prevState) → nextState`. No side effects. Only way to compute state changes.                    | 纯函数。无副作用。唯一计算状态变更的方式。                                   |
-| **Commit**         | The Scheduler's internal step that calls `store.setState()` with the reducer's result. Only commit point in the system. | Scheduler 内部步骤，用 reducer 结果调用 `store.setState()`。系统唯一提交点。 |
-| **Transform**      | Policy verdict that modifies an event's payload before reducer execution. One-time only, cannot change event type.      | 策略裁决，在 reducer 执行前修改事件 payload。仅一次，不能更改事件类型。      |
-| **SYSTEM_ERROR**   | Special event dispatched when a reducer throws. Not processed by reducers (prevents loops).                             | 当 reducer 抛出异常时分发的特殊事件。不被 reducer 处理（防止循环）。         |
-| **PageController** | Manages page lifecycle: mount, unmount, transition, lock, unlock.                                                       | 管理页面生命周期：挂载、卸载、转换、锁定、解锁。                             |
+| Term                    | Definition                                                                                                                                | 定义                                                                                               |
+| ----------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------- |
+| **EventBus**            | Central event dispatcher. All communication flows through typed events.                                                                   | 中央事件分发器。所有通信通过类型化事件流转。                                                       |
+| **RuntimeEvent**        | A serializable message with `type`, optional `payload`, `timestamp`, and `source`.                                                        | 可序列化消息，包含 `type`、可选 `payload`、`timestamp` 和 `source`。                               |
+| **RuntimeStore**        | Centralized, immutable state container with versioned snapshots and subscriber notification.                                              | 集中式、不可变状态容器，带版本化快照和订阅者通知。                                                 |
+| **RuntimeState**        | Extensible global state. Core owns `version`; modules contribute slices (e.g. `currentPage`, `modalStack`).                               | 可扩展全局状态。核心拥有 `version`；模块贡献状态切片。                                             |
+| **Scheduler**           | Reducer Commit Engine: event processing pipeline with middleware chain and reducer registration. Only place `store.setState()` is called. | Reducer Commit 引擎：事件处理管线，带中间件链和 reducer 注册。唯一调用 `store.setState()` 的位置。 |
+| **Middleware**          | Interceptor in the Scheduler pipeline. `(event, next) → void`. Used for logging, policy, audit.                                           | Scheduler 管线中的拦截器。用于日志、策略、审计。                                                   |
+| **EventReducer**        | Pure function: `(event, prevState) → ReducerCommitResult`. No side effects. Only way to compute state changes.                            | 纯函数。无副作用。唯一计算状态变更的方式。                                                         |
+| **ReducerCommitResult** | Return type of EventReducer: `{ nextState, sideEffects? }`. Enables declarative follow-up events after commit.                            | EventReducer 的返回类型：`{ nextState, sideEffects? }`。支持提交后声明式后续事件。                 |
+| **RuntimeModule**       | Extension contract: contributes `initialState`, `reducers`, `middleware`, and optional controller to the Factory.                         | 扩展契约：向工厂贡献 `initialState`、`reducers`、`middleware` 和可选控制器。                       |
+| **Commit**              | The Scheduler's internal step that calls `store.setState()` with the reducer's result. Only commit point in the system.                   | Scheduler 内部步骤，用 reducer 结果调用 `store.setState()`。系统唯一提交点。                       |
+| **Transform**           | Policy verdict that modifies an event's payload before reducer execution. One-time only, cannot change event type.                        | 策略裁决，在 reducer 执行前修改事件 payload。仅一次，不能更改事件类型。                            |
+| **SYSTEM_ERROR**        | Special event dispatched when a reducer throws. Not processed by reducers (prevents loops).                                               | 当 reducer 抛出异常时分发的特殊事件。不被 reducer 处理（防止循环）。                               |
+| **PageController**      | Built-in Module (Layer 0.5): manages page lifecycle via RuntimeModule interface.                                                          | 内置模块（Layer 0.5）：通过 RuntimeModule 接口管理页面生命周期。                                   |
+| **ModalController**     | Built-in Module (Layer 0.5): manages modal stack via RuntimeModule interface.                                                             | 内置模块（Layer 0.5）：通过 RuntimeModule 接口管理模态栈。                                         |
 
 ---
 

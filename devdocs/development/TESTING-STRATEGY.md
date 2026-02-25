@@ -108,9 +108,11 @@ describe('useRuntimeState', () => {
 
     expect(result.current.currentPage).toBeNull();
 
+    const page = runtime.modules.page as PageController;
+
     act(() => {
-      runtime.page.mount('Dashboard');
-      runtime.page.transition('Dashboard');
+      page.mount('Dashboard');
+      page.transition('Dashboard');
     });
 
     expect(result.current.currentPage).toBe('Dashboard');
@@ -146,11 +148,14 @@ Test modules working together through the full pipeline.
 
 ```typescript
 describe("Full Pipeline Integration", () => {
-  it("dispatches event through bus → scheduler → handler → store", () => {
-    const runtime = createInteractionRuntime();
+  it("dispatches event through bus → scheduler → reducer → commit → store", () => {
+    const runtime = createInteractionRuntime({
+      modules: [createPageModule()],
+    });
+    const page = runtime.modules.page as PageController;
 
-    runtime.page.mount("Dashboard");
-    runtime.page.transition("Dashboard");
+    page.mount("Dashboard");
+    page.transition("Dashboard");
 
     expect(runtime.getState().currentPage).toBe("Dashboard");
     expect(runtime.bus.getHistory()).toHaveLength(2);

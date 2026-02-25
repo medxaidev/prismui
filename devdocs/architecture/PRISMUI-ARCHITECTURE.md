@@ -74,8 +74,8 @@ Handler → store.setState() directly              ❌
 Component → runtime.dispatch(event)              ✅
          → Scheduler processes event
          → [Middleware: Policy, Audit, etc.]
-         → Reducer(event, prevState) → nextState  ✅ (pure function)
-         → Scheduler commits nextState to store   ✅ (only commit point)
+         → Reducer(event, prevState) → ReducerCommitResult  ✅ (pure function)
+         → Scheduler commits result.nextState to store     ✅ (only commit point)
          → Subscribers notified
          → React re-renders
 ```
@@ -203,7 +203,13 @@ Enterprise-grade systems require built-in governance capabilities:
 │  EventBus          │
 │  RuntimeStore      │
 │  Scheduler         │
-│  PageOrchestrator  │
+│  Module System     │
+└─────────┬─────────┘
+          │
+┌─────────┴─────────┐
+│  Layer 0.5          │
+│  Built-in Modules   │
+│  (Page, Modal)      │
 └───────────────────┘
 ```
 
@@ -214,14 +220,19 @@ Enterprise-grade systems require built-in governance capabilities:
 **Location:** `packages/core/src/`  
 **Language:** Pure TypeScript  
 **Dependencies:** None  
-**Detail:** [RUNTIME-CORE.md](./RUNTIME-CORE.md)
+**Detail:** [PRISMUI-RUNTIME.md](./PRISMUI-RUNTIME.md)
 
-**Components:**
+**Components (Core infrastructure only):**
 
 - **EventBus** — dispatch, subscribe, type-filtered subscription, event history
-- **RuntimeStore** — centralized immutable state, versioned snapshots, subscriber notification
-- **Scheduler** — event processing pipeline, middleware chain, Reducer Commit Engine
-- **PageOrchestrator** — page lifecycle (mount/unmount/transition/lock/unlock)
+- **RuntimeStore** — extensible immutable state, versioned snapshots, subscriber notification
+- **Scheduler** — Reducer Commit Engine (`ReducerCommitResult`), middleware chain
+- **Module System** — `RuntimeModule` interface for module/middleware injection
+
+**Built-in Modules (Layer 0.5 — shipped with Core, plugged via Module System):**
+
+- **Page Module** (`createPageModule()`) — page lifecycle (mount/unmount/transition/lock)
+- **Modal Module** (`createModalModule()`) — modal stack (open/close/closeAll)
 
 **Hard Constraints:**
 

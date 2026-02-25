@@ -12,16 +12,16 @@ Each stage builds upon the previous one and introduces new capabilities.
 
 ## Stage Overview
 
-| Stage | Name                                                | Status         | Focus                                                                            | Tests |
-| ----- | --------------------------------------------------- | -------------- | -------------------------------------------------------------------------------- | ----- |
-| 1     | [Runtime Core](./STAGE-001-runtime-core.md)         | 🔄 In Progress | EventBus, Store, Scheduler (Reducer Commit), PageController, React Adapter, Demo | ~98   |
-| 2     | [Governance Layer](./STAGE-002-governance-layer.md) | Planned        | Policy Engine, Audit Trail, Replay, Priority Scheduler                           | ~80   |
-| 3     | Semantic Theme                                      | Planned        | Token Layer, Semantic Intent, Behavior Derivation                                | ~60   |
-| 4     | Interaction Modules                                 | Planned        | Modal Runtime, Drawer Runtime, Notification Runtime                              | TBD   |
-| 5     | Form & Async Runtime                                | Planned        | Form State Runtime, Async State Runtime                                          | TBD   |
-| 6     | Page Orchestration                                  | Planned        | Page lifecycle, scheduling, priority, workflow                                   | TBD   |
-| 7     | Interaction DSL                                     | Planned        | `ui.modal.open()`, `ui.confirm()`, `ui.workflow.start()`                         | TBD   |
-| 8     | DevTools & Automation                               | Planned        | Runtime Inspector, Event Replay UI, AI Agent interface                           | TBD   |
+| Stage | Name                                                | Status         | Focus                                                                                                          | Tests |
+| ----- | --------------------------------------------------- | -------------- | -------------------------------------------------------------------------------------------------------------- | ----- |
+| 1     | [Runtime Core](./STAGE-001-runtime-core.md)         | 🔄 In Progress | EventBus, Store, Scheduler (Reducer Commit), Module System, Built-in Modules (Page+Modal), React Adapter, Demo | ~107  |
+| 2     | [Governance Layer](./STAGE-002-governance-layer.md) | Planned        | Policy Engine, Audit Trail, Replay, Priority Scheduler                                                         | ~80   |
+| 3     | Semantic Theme                                      | Planned        | Token Layer, Semantic Intent, Behavior Derivation                                                              | ~60   |
+| 4     | Interaction Modules                                 | Planned        | Modal Runtime, Drawer Runtime, Notification Runtime                                                            | TBD   |
+| 5     | Form & Async Runtime                                | Planned        | Form State Runtime, Async State Runtime                                                                        | TBD   |
+| 6     | Page Orchestration                                  | Planned        | Page lifecycle, scheduling, priority, workflow                                                                 | TBD   |
+| 7     | Interaction DSL                                     | Planned        | `ui.modal.open()`, `ui.confirm()`, `ui.workflow.start()`                                                       | TBD   |
+| 8     | DevTools & Automation                               | Planned        | Runtime Inspector, Event Replay UI, AI Agent interface                                                         | TBD   |
 
 ---
 
@@ -32,12 +32,13 @@ Each stage builds upon the previous one and introduces new capabilities.
 **Deliverables:**
 
 - EventBus (dispatch, subscribe, type-filtered, history)
-- RuntimeStore (immutable state, versioned snapshots)
-- Scheduler (Reducer Commit Engine, middleware chain)
-- PageController (mount/unmount/transition/lock)
-- Runtime Factory (`createInteractionRuntime()`)
-- React Adapter (Provider, useRuntime, useRuntimeState, usePage, useModal)
-- Minimal Demo (page transition, modal mount, page lock)
+- RuntimeStore (extensible immutable state, versioned snapshots)
+- Scheduler (Reducer Commit Engine with `ReducerCommitResult`, middleware chain)
+- Module System (`RuntimeModule` interface, module/middleware injection)
+- Built-in Modules: Page Module (`createPageModule()`), Modal Module (`createModalModule()`)
+- Runtime Factory (`createInteractionRuntime({ modules, middleware })`)
+- React Adapter (Provider, useRuntime, useRuntimeState via `useSyncExternalStore`, usePage, useModal)
+- Minimal Demo (page transition, modal mount, page lock, event history with version tracking)
 
 **Dependencies:** None (foundational stage)  
 **Detail:** [STAGE-001-runtime-core.md](./STAGE-001-runtime-core.md)

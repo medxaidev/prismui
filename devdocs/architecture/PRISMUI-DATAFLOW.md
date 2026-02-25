@@ -85,9 +85,12 @@ state.locked = true;
 // ❌ Handler calling store directly (old model)
 handler(event, store) { store.setState(prev => ({ ...prev, locked: true })); }
 
-// ✅ Pure reducer (new model)
-const lockReducer: EventReducer = (event, prevState) => ({ ...prevState, locked: true });
-// Scheduler commits: store.setState(() => lockReducer(event, prevState))
+// ✅ Pure reducer (new model) — returns ReducerCommitResult
+const lockReducer: EventReducer = (event, prevState) => ({
+  nextState: { ...prevState, locked: true },
+});
+// Scheduler commits: store.setState(() => result.nextState)
+// Then dispatches result.sideEffects (if any)
 ```
 
 ### 4. Event Serialization
@@ -118,13 +121,14 @@ All events MUST be serializable (JSON-compatible). No functions, no class instan
       [STAGE-002] If transform → replace event (one-time, no re-evaluation)
 7.  Reducer = reducers.get(event.type)
 8.  If no reducer → silently drop, done
-9.  nextState = reducer(event, prevState)     // pure computation
-10. If reducer throws → do NOT commit, dispatch SYSTEM_ERROR, done
-11. Scheduler commits: store.setState(() => nextState)   // ONLY commit point
+9.  result = reducer(event, prevState)         // pure computation → ReducerCommitResult
+10. If reducer throws → do NOT commit, do NOT dispatch sideEffects, dispatch SYSTEM_ERROR, done
+11. Scheduler commits: store.setState(() => result.nextState)   // ONLY commit point
 12. Store increments version
 13. Store notifies all subscribers
-14. [STAGE-002] Audit Trail records { event, prevState, nextState }
-15. React Adapter re-renders affected components
+14. Scheduler dispatches result.sideEffects (if any) via bus.dispatch
+15. [STAGE-002] Audit Trail records { event, prevState, nextState }
+16. React Adapter re-renders affected components
 ```
 
 ---
