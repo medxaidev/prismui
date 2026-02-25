@@ -1,0 +1,36 @@
+/* ---------------------------------------------------------------------------
+ * MainLayout — Layer 3
+ *
+ * Simple header + main content layout (no sidebar).
+ *
+ * CSS Variables:
+ *   --ml-header-height   — header height
+ *   --ml-border-color    — border color
+ * --------------------------------------------------------------------------- */
+
+.root {
+  --ml-border-color: var(--prismui-divider, rgba(0, 0, 0, 0.12));
+  position: relative;
+  min-height: 100dvh;
+}
+
+.header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: var(--ml-header-height);
+  display: flex;
+  align-items: center;
+  background-color: var(--prismui-bg-paper, #fff);
+  z-index: 1100;
+}
+
+.header[data-with-border] {
+  border-bottom: 1px solid var(--ml-border-color);
+}
+
+.main {
+  padding-top: var(--ml-header-height);
+  min-height: 100dvh;
+}

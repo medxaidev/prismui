@@ -167,6 +167,15 @@ export type { ScrollAreaProps, ScrollAreaAutosizeProps, ScrollAreaType } from '.
 export { Tabs, TabsList, TabsTab, TabsPanel } from './Tabs';
 export type { TabsProps, TabsVariant, TabsListProps, TabsTabProps, TabsPanelProps } from './Tabs';
 
+export { DashboardLayout, DashboardLayoutHeader, DashboardLayoutNavbar, DashboardLayoutMain, DashboardLayoutSection, useNavbarState } from './DashboardLayout';
+export type { DashboardLayoutProps, DashboardLayoutNavbarConfig, DashboardLayoutHeaderConfig, DashboardLayoutHeaderProps, DashboardLayoutNavbarProps, DashboardLayoutMainProps, DashboardLayoutSectionProps, NavbarState } from './DashboardLayout';
+
+export { MainLayout, MainLayoutHeader, MainLayoutMain } from './MainLayout';
+export type { MainLayoutProps, MainLayoutHeaderProps, MainLayoutMainProps } from './MainLayout';
+
+export { AuthLayout } from './AuthLayout';
+export type { AuthLayoutProps } from './AuthLayout';
+
 export { TextField } from './TextField';
 export type {
   TextFieldProps,

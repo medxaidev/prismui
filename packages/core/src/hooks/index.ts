@@ -22,3 +22,8 @@ export type {
   UseFocusReturnOptions,
   UseFocusReturnReturnValue,
 } from './use-focus-return';
+
+export { useWindowEvent } from './use-window-event';
+
+export { useMediaQuery } from './use-media-query';
+export type { UseMediaQueryOptions } from './use-media-query';
