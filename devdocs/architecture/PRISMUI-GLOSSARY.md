@@ -62,6 +62,18 @@
 
 ---
 
+## FSM Module Concepts
+
+| Term                       | Definition                                                                                                                                  | 定义                                                                                                    |
+| -------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
+| **StateMachineModule**     | A `RuntimeModule` created from a declarative state graph. Auto-generates reducers, guard middleware, and controller. See ADR-007.           | 由声明式状态图创建的 `RuntimeModule`。自动生成 reducer、guard 中间件和控制器。见 ADR-007。              |
+| **StateNode**              | A single node in an FSM state graph. Defines allowed transitions via `on: Record<eventType, TransitionDef>`.                                | FSM 状态图中的单个节点。通过 `on` 定义允许的转移。                                                      |
+| **TransitionDef**          | Transition definition: `{ target, guard?, sideEffects? }`. Target is next state id; guard is a pure predicate; sideEffects are declarative. | 转移定义：`{ target, guard?, sideEffects? }`。target 为下一状态；guard 为纯谓词；sideEffects 为声明式。 |
+| **Guard**                  | Pure predicate `(event, state) → boolean` on a transition. Returns `false` to block the transition. Enforced as Scheduler middleware.       | 转移上的纯谓词。返回 `false` 阻止转移。作为 Scheduler 中间件执行。                                      |
+| **StateMachineController** | Controller exposed on `runtime.modules[name]`. Provides `getCurrentState()`, `can(eventType)`, `allowedEvents()`, `getStateGraph()`.        | 暴露在 `runtime.modules[name]` 上的控制器。提供状态查询和转移可行性检查。                               |
+
+---
+
 ## Architectural Patterns
 
 | Term                         | Definition                                                                                                                                   | 定义                                                                                       |

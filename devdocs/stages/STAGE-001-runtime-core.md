@@ -77,7 +77,7 @@ Stage-1 implements:
 
 - ❌ Governance Layer (Policy, Audit, Replay) — STAGE-002
 - ❌ Semantic Theme System — STAGE-003
-- ❌ Interaction Modules (Modal/Drawer/Notification Runtime) — STAGE-004
+- ❌ Advanced Interaction Modules (Drawer/Notification/Toast Runtime) — STAGE-004
 - ❌ Component Library — not in scope for PrismUI 2.0
 - ❌ Animation / Motion System
 - ❌ Performance Optimization
@@ -132,7 +132,7 @@ No implicit side effects. No hidden state transitions.
 interface RuntimeEvent<T = unknown> {
   type: string;
   payload?: T;
-  timestamp: number; // Added by runtime.dispatch(), NOT by caller
+  timestamp: number; // Added by EventBus.dispatch(), NOT by caller
   source?: string;
 }
 
@@ -225,7 +225,7 @@ function createRuntimeStore(initial?: Partial<RuntimeState>): RuntimeStore;
 - State stored as plain object, never mutated directly
 - `setState(updater)` creates new state via updater function, then notifies subscribers
 - `version` auto-incremented on every `setState` call
-- `getSnapshot()` returns `Object.freeze({ ...state })` (deep frozen)
+- `getSnapshot()` returns `Object.freeze({ ...state })` (shallow freeze — top-level immutable)
 - Subscribers called synchronously after state change
 - Default initial state: `{ version: 0 }` (modules extend this via `initialState`)
 
@@ -326,7 +326,7 @@ The Scheduler is the **only place** where `store.setState()` is called. Reducers
 - If no reducer found for event type, event is silently dropped (no error)
 - Middleware pattern: `(event, next) => { /* before */ next(); /* after */ }`
 - Scheduler subscribes to EventBus on creation — processes every dispatched event
-- After commit, if `result.sideEffects` is non-empty, dispatch each via `bus.dispatch()`
+- After commit, if `result.sideEffects` is non-empty, dispatch each via `bus.dispatch()` (EventBus adds `timestamp`)
 
 **Processing Flow (Reducer Commit):**
 
@@ -359,7 +359,7 @@ bus.dispatch(event)
 If a reducer throws an exception:
 
 1. **Do NOT commit** — state remains unchanged
-2. **Record audit entry** — log the error with event + prevState
+2. **Log error** — `console.error` with event + prevState (Audit Trail deferred to STAGE-002)
 3. **Dispatch SYSTEM_ERROR event** — `{ type: 'SYSTEM_ERROR', payload: { originalEvent, error } }`
 4. **SYSTEM_ERROR itself is NOT processed by reducers** — prevents infinite loops
 
@@ -482,15 +482,17 @@ function createInteractionRuntime(options?: RuntimeOptions): InteractionRuntime;
 
 **Implementation Details:**
 
-- Factory creates: EventBus → RuntimeStore → Scheduler
+- Factory collects all module `initialState` slices and merges them with `options.initialState`
+- Factory creates: EventBus → RuntimeStore (with merged initial state) → Scheduler
 - Factory iterates `options.modules`:
-  1. Merge each module's `initialState` into the store's initial state
+  1. _(initialState already merged above)_
   2. Register each module's `reducers` with Scheduler
   3. Add each module's `middleware` to Scheduler
   4. Call each module's `createController()` and store result in `runtime.modules[name]`
 - Factory adds `options.middleware` to Scheduler (after module middleware)
-- `dispatch()` convenience: adds `timestamp: Date.now()` then delegates to `bus.dispatch()`
-  (callers pass `Omit<RuntimeEvent, "timestamp">` — the timestamp is the **single source of time**)
+- `dispatch()` convenience: delegates to `bus.dispatch()` (callers pass `Omit<RuntimeEvent, "timestamp">`)
+  Timestamp is added by **EventBus.dispatch()** — the **single source of time** for all paths
+  (runtime.dispatch, controller methods, and sideEffects all flow through EventBus)
 - `getState()` convenience: delegates to `store.getState()`
 - `subscribe()` convenience: delegates to `store.subscribe()`
 - `destroy()`: calls `bus.clear()`, removes all store subscriptions, unregisters all reducers
@@ -599,7 +601,7 @@ modal.open("confirm");
 
 - `initialState`: `{ currentPage: null, mountedPages: [], locked: false }`
 - Reducers registered for: `PAGE_MOUNT`, `PAGE_UNMOUNT`, `PAGE_TRANSITION`, `PAGE_LOCK`, `PAGE_UNLOCK`
-- Each method dispatches an event via `bus.dispatch()`
+- Each method dispatches an event via `bus.dispatch()` (EventBus adds `timestamp` — single source of time)
 - Convenience getters (`getCurrent`, `getMounted`, `isLocked`) read directly from `store.getState()`
 
 **Event Types — Page Module:**
@@ -616,7 +618,7 @@ modal.open("confirm");
 
 - `initialState`: `{ modalStack: [] }`
 - Reducers registered for: `MODAL_OPEN`, `MODAL_CLOSE`, `MODAL_CLOSE_ALL`
-- Each method dispatches an event via `bus.dispatch()`
+- Each method dispatches an event via `bus.dispatch()` (EventBus adds `timestamp` — single source of time)
 - `open(id)` → pushes to `modalStack`; `close(id?)` → pops specific or top; `closeAll()` → empties stack
 
 **Event Types — Modal Module:**
@@ -970,13 +972,13 @@ Stage-1 is complete when **ALL** of the following are true:
 
 ## Risks & Mitigations
 
-| Risk                                   | Severity | Mitigation                                                           |
-| -------------------------------------- | -------- | -------------------------------------------------------------------- |
-| **Over-engineering**                   | Medium   | Stick to minimal viable APIs. No premature optimization.             |
-| **React dependency leaking into core** | High     | CI lint rule + grep verification in Phase F.                         |
-| **Components bypassing Runtime**       | High     | RULES.md Rule 2 + code review.                                       |
-| **Scheduler too simple**               | Low      | Phase B1 includes middleware extensibility. STAGE-002 adds priority. |
-| **State management conflicts**         | Medium   | Single RuntimeStore, single source of truth.                         |
+| Risk                                   | Severity | Mitigation                                                          |
+| -------------------------------------- | -------- | ------------------------------------------------------------------- |
+| **Over-engineering**                   | Medium   | Stick to minimal viable APIs. No premature optimization.            |
+| **React dependency leaking into core** | High     | CI lint rule + grep verification in Phase F.                        |
+| **Components bypassing Runtime**       | High     | RULES.md Rule 2 + code review.                                      |
+| **Scheduler too simple**               | Low      | Phase B includes middleware extensibility. STAGE-002 adds priority. |
+| **State management conflicts**         | Medium   | Single RuntimeStore, single source of truth.                        |
 
 ---
 
