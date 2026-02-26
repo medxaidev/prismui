@@ -422,21 +422,21 @@ function createRuntimeStore(initial?: Partial<RuntimeState>): RuntimeStore;
 
 **Acceptance Criteria:**
 
-- [ ] Immutable state updates via updater function
-- [ ] Subscriber notification on every state change
-- [ ] Version tracking auto-increments
-- [ ] `getSnapshot()` returns frozen, isolated copy
-- [ ] Zero React/DOM imports
-- [ ] 15 tests pass, `tsc --noEmit` clean
+- [x] Immutable state updates via updater function
+- [x] Subscriber notification on every state change
+- [x] Version tracking auto-increments
+- [x] `getSnapshot()` returns frozen, isolated copy
+- [x] Zero React/DOM imports
+- [x] 15 tests pass, `tsc --noEmit` clean
 
 **验收标准：**
 
-- [ ] 通过 updater function 实现不可变更新
-- [ ] 每次 state change 都通知 subscribers
-- [ ] `version` 自动递增
-- [ ] `getSnapshot()` 返回冻结且与后续变更隔离的副本
-- [ ] 零 React/DOM imports
-- [ ] 15 个测试通过，`tsc --noEmit` 通过
+- [x] 通过 updater function 实现不可变更新
+- [x] 每次 state change 都通知 subscribers
+- [x] `version` 自动递增
+- [x] `getSnapshot()` 返回冻结且与后续变更隔离的副本
+- [x] 零 React/DOM imports
+- [x] 15 个测试通过，`tsc --noEmit` 通过
 
 ---
 
