@@ -1,16 +1,26 @@
-# Runtime API Specification
+# Runtime API Specification / Runtime API 规范
 
 > **Version:** 2.0  
 > **Last Updated:** 2026-02-25  
 > **Status:** Draft — finalized during STAGE-001 implementation
 
+> **版本：** 2.0  
+> **最后更新：** 2026-02-25  
+> **状态：** Draft —— 将在 STAGE-001 实现过程中定稿
+
 ---
 
 ## 1. Package: `@prismui/core`
 
+## 1. 包：`@prismui/core`
+
+### 1.1 createInteractionRuntime()
+
 ### 1.1 createInteractionRuntime()
 
 Main entry point. Creates a fully wired runtime instance.
+
+主入口：创建一个完成 wiring 的 runtime 实例。
 
 ```typescript
 interface RuntimeOptions {
@@ -24,6 +34,8 @@ function createInteractionRuntime(options?: RuntimeOptions): InteractionRuntime;
 ```
 
 ### 1.2 InteractionRuntime
+
+### 1.2 InteractionRuntime（运行时实例）
 
 ```typescript
 interface InteractionRuntime {
@@ -57,6 +69,8 @@ interface InteractionRuntime {
 
 ### 1.3 EventBus
 
+### 1.3 EventBus（事件总线）
+
 ```typescript
 interface RuntimeEvent<T = unknown> {
   type: string;
@@ -89,6 +103,8 @@ function createEventBus(options?: { historySize?: number }): EventBus;
 
 ### 1.4 RuntimeStore
 
+### 1.4 RuntimeStore（运行时状态仓库）
+
 ```typescript
 interface RuntimeState {
   version: number;
@@ -114,6 +130,8 @@ function createRuntimeStore(initial?: Partial<RuntimeState>): RuntimeStore;
 
 **Initial state defaults (Core only):**
 
+**初始 state 默认值（仅 core）：**
+
 ```typescript
 {
   version: 0;
@@ -123,9 +141,14 @@ function createRuntimeStore(initial?: Partial<RuntimeState>): RuntimeStore;
 > Module-contributed fields (e.g. `currentPage`, `mountedPages`, `modalStack`, `locked`)
 > are merged by the Factory from each module's `initialState`.
 
+> 模块贡献的字段（如 `currentPage`、`mountedPages`、`modalStack`、`locked`）
+> 会在 Factory 中从每个 module 的 `initialState` 合并。
+
 ---
 
 ### 1.5 Scheduler (Reducer Commit Engine)
+
+### 1.5 Scheduler（Reducer Commit 引擎）
 
 ```typescript
 interface ReducerCommitResult {
@@ -157,9 +180,15 @@ function createScheduler(store: RuntimeStore, bus: EventBus): Scheduler;
 
 **Commit boundary:** Only the Scheduler calls `store.setState()`. Reducers receive `prevState` and return `ReducerCommitResult` — they never touch the store. `sideEffects` are dispatched after successful commit.
 
+**Commit 边界：** 只有 Scheduler 可以调用 `store.setState()`。reducer 只接收 `prevState` 并返回 `ReducerCommitResult` —— 它们永远不直接触达 store。`sideEffects` 会在成功 commit 后被 dispatch。
+
 **Error handling:** If a reducer throws, state is NOT committed and `sideEffects` are NOT dispatched. A `SYSTEM_ERROR` event is dispatched (not processed by reducers).
 
+**错误处理：** 如果 reducer 抛错，则 state 不会 commit，`sideEffects` 也不会 dispatch。系统会 dispatch 一个 `SYSTEM_ERROR` 事件（不经 reducers 处理）。
+
 ### 1.6 RuntimeModule
+
+### 1.6 RuntimeModule（运行时模块）
 
 ```typescript
 interface RuntimeModule<TController = unknown> {
@@ -186,7 +215,11 @@ interface RuntimeModule<TController = unknown> {
 
 ### 1.7 Built-in Modules
 
+### 1.7 内置模块（Built-in Modules）
+
 #### Page Module (`createPageModule()`)
+
+#### Page Module（`createPageModule()`）
 
 ```typescript
 function createPageModule(): RuntimeModule<PageController>;
@@ -205,6 +238,8 @@ interface PageController {
 
 **Event types dispatched:**
 
+**dispatch 的事件类型：**
+
 | Method           | Event Type        | Payload              |
 | ---------------- | ----------------- | -------------------- |
 | `mount(id)`      | `PAGE_MOUNT`      | `{ pageId: string }` |
@@ -213,7 +248,17 @@ interface PageController {
 | `lock()`         | `PAGE_LOCK`       | `undefined`          |
 | `unlock()`       | `PAGE_UNLOCK`     | `undefined`          |
 
+| 方法             | 事件类型          | Payload              |
+| ---------------- | ----------------- | -------------------- |
+| `mount(id)`      | `PAGE_MOUNT`      | `{ pageId: string }` |
+| `unmount(id)`    | `PAGE_UNMOUNT`    | `{ pageId: string }` |
+| `transition(id)` | `PAGE_TRANSITION` | `{ pageId: string }` |
+| `lock()`         | `PAGE_LOCK`       | `undefined`          |
+| `unlock()`       | `PAGE_UNLOCK`     | `undefined`          |
+
 #### Modal Module (`createModalModule()`)
+
+#### Modal Module（`createModalModule()`）
 
 ```typescript
 function createModalModule(): RuntimeModule<ModalController>;
@@ -229,7 +274,15 @@ interface ModalController {
 
 **Event types dispatched:**
 
+**dispatch 的事件类型：**
+
 | Method       | Event Type        | Payload                |
+| ------------ | ----------------- | ---------------------- |
+| `open(id)`   | `MODAL_OPEN`      | `{ modalId: string }`  |
+| `close(id?)` | `MODAL_CLOSE`     | `{ modalId?: string }` |
+| `closeAll()` | `MODAL_CLOSE_ALL` | `undefined`            |
+
+| 方法         | 事件类型          | Payload                |
 | ------------ | ----------------- | ---------------------- |
 | `open(id)`   | `MODAL_OPEN`      | `{ modalId: string }`  |
 | `close(id?)` | `MODAL_CLOSE`     | `{ modalId?: string }` |
@@ -239,7 +292,11 @@ interface ModalController {
 
 ## 2. Package: `@prismui/react`
 
+## 2. 包：`@prismui/react`
+
 ### 2.1 PrismUIProvider
+
+### 2.1 PrismUIProvider（Provider）
 
 ```tsx
 interface PrismUIProviderProps {
@@ -252,6 +309,8 @@ function PrismUIProvider(props: PrismUIProviderProps): JSX.Element;
 
 ### 2.2 useRuntime()
 
+### 2.2 useRuntime()（获取 runtime）
+
 ```typescript
 /** Access the full runtime instance. Throws outside PrismUIProvider. */
 function useRuntime(): InteractionRuntime;
@@ -259,12 +318,16 @@ function useRuntime(): InteractionRuntime;
 
 ### 2.3 useRuntimeState()
 
+### 2.3 useRuntimeState()（订阅 runtime state）
+
 ```typescript
 /** Reactive subscription to runtime state. Re-renders on change. */
 function useRuntimeState(): Readonly<RuntimeState>;
 ```
 
 ### 2.4 usePage()
+
+### 2.4 usePage()（页面模块 Hook）
 
 ```typescript
 interface UsePageReturn {
@@ -283,6 +346,8 @@ function usePage(): UsePageReturn;
 
 ### 2.5 useModal()
 
+### 2.5 useModal()（弹窗模块 Hook）
+
 ```typescript
 interface UseModalReturn {
   modalStack: string[];
@@ -298,6 +363,8 @@ function useModal(): UseModalReturn;
 ---
 
 ## 3. Event Type Constants
+
+## 3. 事件类型常量
 
 ```typescript
 // Page events
@@ -317,6 +384,8 @@ const MODAL_CLOSE_ALL = "MODAL_CLOSE_ALL";
 
 ## 4. Error Messages
 
+## 4. 错误信息
+
 | Error                                                              | When                           |
 | ------------------------------------------------------------------ | ------------------------------ |
 | `[PrismUI] useRuntime must be used within a PrismUIProvider`       | Hook called outside provider   |
@@ -324,3 +393,11 @@ const MODAL_CLOSE_ALL = "MODAL_CLOSE_ALL";
 | `[PrismUI] Page "${pageId}" is not mounted`                        | Transition to unmounted page   |
 | `[PrismUI] Page transitions are locked`                            | Transition while locked        |
 | `[PrismUI] Page "${pageId}" is already mounted`                    | Duplicate mount                |
+
+| 错误                                                               | 触发场景                      |
+| ------------------------------------------------------------------ | ----------------------------- |
+| `[PrismUI] useRuntime must be used within a PrismUIProvider`       | hook 在 provider 外调用       |
+| `[PrismUI] Reducer for event type "${type}" is already registered` | 重复注册 reducer              |
+| `[PrismUI] Page "${pageId}" is not mounted`                        | transition 到未 mount 的 page |
+| `[PrismUI] Page transitions are locked`                            | page 被锁定时 transition      |
+| `[PrismUI] Page "${pageId}" is already mounted`                    | 重复 mount                    |
