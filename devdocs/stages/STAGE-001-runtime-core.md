@@ -633,23 +633,23 @@ If a reducer throws an exception:
 
 **Acceptance Criteria:**
 
-- [ ] Reducers are pure: `(event, prevState) → ReducerCommitResult` — no store access
-- [ ] Only Scheduler calls `store.setState()` (commit boundary)
-- [ ] `sideEffects` dispatched after successful commit (not before, not on error)
-- [ ] Middleware chain executes in registration order
-- [ ] Middleware can intercept (not call `next()`)
-- [ ] Reducer errors do not corrupt state
-- [ ] 18 tests pass, `tsc --noEmit` clean
+- [x] Reducers are pure: `(event, prevState) → ReducerCommitResult` — no store access
+- [x] Only Scheduler calls `store.setState()` (commit boundary)
+- [x] `sideEffects` dispatched after successful commit (not before, not on error)
+- [x] Middleware chain executes in registration order
+- [x] Middleware can intercept (not call `next()`)
+- [x] Reducer errors do not corrupt state
+- [x] 18 tests pass, `tsc --noEmit` clean
 
 **验收标准：**
 
-- [ ] Reducer 纯函数：`(event, prevState) → ReducerCommitResult` —— 不允许访问 store
-- [ ] 只有 Scheduler 可以调用 `store.setState()`（commit boundary）
-- [ ] `sideEffects` 仅在 commit 成功后 dispatch（不在 commit 前，不在错误时）
-- [ ] Middleware chain 按注册顺序执行
-- [ ] Middleware 可拦截（不调用 `next()`）
-- [ ] reducer 出错不会破坏 state
-- [ ] 18 个测试通过，`tsc --noEmit` 通过
+- [x] Reducer 纯函数：`(event, prevState) → ReducerCommitResult` —— 不允许访问 store
+- [x] 只有 Scheduler 可以调用 `store.setState()`（commit boundary）
+- [x] `sideEffects` 仅在 commit 成功后 dispatch（不在 commit 前，不在错误时）
+- [x] Middleware chain 按注册顺序执行
+- [x] Middleware 可拦截（不调用 `next()`）
+- [x] reducer 出错不会破坏 state
+- [x] 18 个测试通过，`tsc --noEmit` 通过
 
 ---
 
@@ -822,23 +822,23 @@ function createInteractionRuntime(options?: RuntimeOptions): InteractionRuntime;
 
 **Acceptance Criteria:**
 
-- [ ] Factory composes Core from EventBus + Store + Scheduler
-- [ ] Modules inject state, reducers, middleware, and controllers
-- [ ] Convenience methods delegate correctly
-- [ ] `destroy()` cleans up everything
-- [ ] Multiple instances don't interfere
-- [ ] Zero React/DOM imports in `packages/core/`
-- [ ] 12 tests pass, `tsc --noEmit` clean
+- [x] Factory composes Core from EventBus + Store + Scheduler
+- [x] Modules inject state, reducers, middleware, and controllers
+- [x] Convenience methods delegate correctly
+- [x] `destroy()` cleans up everything
+- [x] Multiple instances don't interfere
+- [x] Zero React/DOM imports in `packages/core/`
+- [x] 12 tests pass, `tsc --noEmit` clean
 
 **验收标准：**
 
-- [ ] Factory 使用 EventBus + Store + Scheduler 组合出 Core
-- [ ] Modules 可注入 state、reducers、middleware、controllers
-- [ ] 便捷方法（convenience methods）委托正确
-- [ ] `destroy()` 能清理所有资源
-- [ ] 多实例互不干扰
-- [ ] `packages/core/` 零 React/DOM imports
-- [ ] 12 个测试通过，`tsc --noEmit` 通过
+- [x] Factory 使用 EventBus + Store + Scheduler 组合出 Core
+- [x] Modules 可注入 state、reducers、middleware、controllers
+- [x] 便捷方法（convenience methods）委托正确
+- [x] `destroy()` 能清理所有资源
+- [x] 多实例互不干扰
+- [x] `packages/core/` 零 React/DOM imports
+- [x] 12 个测试通过，`tsc --noEmit` 通过
 
 ---
 
@@ -1033,21 +1033,21 @@ modal.open("confirm");
 
 **Acceptance Criteria:**
 
-- [ ] Both modules implement `RuntimeModule` interface
-- [ ] Page + Modal state is contributed via `initialState` (not hardcoded in Core)
-- [ ] All operations dispatch events (not direct state mutation)
-- [ ] Lock prevents page transition
-- [ ] All events visible in EventBus history
-- [ ] 20 tests pass, `tsc --noEmit` clean
+- [x] Both modules implement `RuntimeModule` interface
+- [x] Page + Modal state is contributed via `initialState` (not hardcoded in Core)
+- [x] All operations dispatch events (not direct state mutation)
+- [x] Lock prevents page transition
+- [x] All events visible in EventBus history
+- [x] 21 tests pass, `tsc --noEmit` clean
 
 **验收标准：**
 
-- [ ] 两个模块都实现 `RuntimeModule` 接口
-- [ ] Page + Modal 的 state 通过 `initialState` 贡献（不在 Core 中硬编码）
-- [ ] 所有操作都以事件方式 dispatch（不直接修改状态）
-- [ ] Lock 可以阻止页面切换
-- [ ] 所有事件可在 EventBus history 中观察到
-- [ ] 20 个测试通过，`tsc --noEmit` 通过
+- [x] 两个模块都实现 `RuntimeModule` 接口
+- [x] Page + Modal 的 state 通过 `initialState` 贡献（不在 Core 中硬编码）
+- [x] 所有操作都以事件方式 dispatch（不直接修改状态）
+- [x] Lock 可以阻止页面切换
+- [x] 所有事件可在 EventBus history 中观察到
+- [x] 21 个测试通过，`tsc --noEmit` 通过
 
 ---
 
