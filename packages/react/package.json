@@ -1,0 +1,66 @@
+{
+  "name": "@prismui/react",
+  "version": "0.1.0",
+  "description": "React adapter for PrismUI - A composable UI runtime platform with four-layer architecture",
+  "homepage": "https://prismui.dev/",
+  "license": "MIT",
+  "author": "Fangjun <fangjun20208@gmail.com>",
+  "keywords": [
+    "react",
+    "ui",
+    "components",
+    "polymorphic",
+    "prismui",
+    "runtime",
+    "hooks",
+    "provider",
+    "adapter"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/medxaidev/prismui.git",
+    "directory": "packages/react"
+  },
+  "sideEffects": [
+    "*.css"
+  ],
+  "main": "./dist/cjs/index.cjs",
+  "module": "./dist/esm/index.mjs",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": {
+        "types": "./dist/esm/index.d.ts",
+        "default": "./dist/esm/index.mjs"
+      },
+      "require": {
+        "types": "./dist/cjs/index.d.ts",
+        "default": "./dist/cjs/index.cjs"
+      }
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "clean": "rimraf dist",
+    "build": "npm run clean && tsc && node ./scripts/esbuild.mjs",
+    "dev": "",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "peerDependencies": {
+    "react": ">=18.0.0",
+    "react-dom": ">=18.0.0"
+  },
+  "dependencies": {
+    "@prismui/core": "0.1.0"
+  },
+  "devDependencies": {
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.2",
+    "@types/react": "19.2.10",
+    "@types/react-dom": "19.2.3",
+    "react": "19.2.4",
+    "react-dom": "19.2.4"
+  }
+}

@@ -1140,19 +1140,19 @@ const state = useRuntimeState(); // reactive read-only state
 
 **Acceptance Criteria:**
 
-- [ ] Provider bridges runtime to React Context
-- [ ] `useRuntime()` throws with descriptive message outside provider
-- [ ] `useRuntimeState()` triggers re-render on state change
-- [ ] State is read-only from hooks
-- [ ] 15 tests pass, `tsc --noEmit` clean
+- [x] Provider bridges runtime to React Context
+- [x] `useRuntime()` throws with descriptive message outside provider
+- [x] `useRuntimeState()` triggers re-render on state change
+- [x] State is read-only from hooks
+- [x] 15 tests pass, `tsc --noEmit` clean
 
 **验收标准：**
 
-- [ ] Provider 将 runtime 桥接到 React Context
-- [ ] `useRuntime()` 在 provider 外抛出清晰错误信息
-- [ ] `useRuntimeState()` 在 state change 时触发 re-render
-- [ ] Hooks 返回的 state 为只读（read-only）
-- [ ] 15 个测试通过，`tsc --noEmit` 通过
+- [x] Provider 将 runtime 桥接到 React Context
+- [x] `useRuntime()` 在 provider 外抛出清晰错误信息
+- [x] `useRuntimeState()` 在 state change 时触发 re-render
+- [x] Hooks 返回的 state 为只读（read-only）
+- [x] 15 个测试通过，`tsc --noEmit` 通过
 
 ---
 
@@ -1246,17 +1246,17 @@ function useModal(): UseModalReturn;
 
 **Acceptance Criteria (Phase D total):**
 
-- [ ] All hooks are thin wrappers around runtime APIs
-- [ ] State changes trigger re-render
-- [ ] Actions delegate to module controllers or `runtime.dispatch()`
-- [ ] 27 tests pass (D1: 15 + D2: 12), `tsc --noEmit` clean
+- [x] All hooks are thin wrappers around runtime APIs
+- [x] State changes trigger re-render
+- [x] Actions delegate to module controllers or `runtime.dispatch()`
+- [x] 27 tests pass (D1: 15 + D2: 12), `tsc --noEmit` clean
 
 **验收标准（Phase D 总计）：**
 
-- [ ] 所有 hooks 都是对 runtime APIs 的薄封装
-- [ ] state changes 会触发 re-render
-- [ ] actions 委托给 module controllers 或 `runtime.dispatch()`
-- [ ] 27 个测试通过（D1: 15 + D2: 12），`tsc --noEmit` 通过
+- [x] 所有 hooks 都是对 runtime APIs 的薄封装
+- [x] state changes 会触发 re-render
+- [x] actions 委托给 module controllers 或 `runtime.dispatch()`
+- [x] 27 个测试通过（D1: 15 + D2: 12），`tsc --noEmit` 通过
 
 ---
 

@@ -4,8 +4,7 @@
 // ---------------------------------------------------------------------------
 
 import type { EventBus } from './event-bus';
-import type { RuntimeState } from './store';
-import type { RuntimeStore } from './store';
+import type { RuntimeState, RuntimeStore } from './store';
 import type { EventReducer, SchedulerMiddleware, Scheduler } from './scheduler';
 
 /**

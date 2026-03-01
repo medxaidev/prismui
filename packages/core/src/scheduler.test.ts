@@ -369,12 +369,8 @@ describe('Scheduler', () => {
     it('processes events from EventBus automatically', () => {
       const bus = createEventBus();
       const store = createRuntimeStore({ count: 0 });
-      createScheduler(store, bus);
-
-      // Register reducer via the scheduler returned by createScheduler
-      // But we need a reference. Let's use the bus subscription approach:
-      // createScheduler subscribes to bus — so dispatching via bus should trigger processing.
       const scheduler = createScheduler(store, bus);
+
       scheduler.registerReducer('INC', (_e, s) => ({
         nextState: { ...s, count: (s.count as number) + 1 },
       }));

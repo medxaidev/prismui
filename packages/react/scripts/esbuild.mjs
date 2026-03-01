@@ -2,35 +2,31 @@ import { build } from 'esbuild';
 import { writeFileSync, copyFileSync, readFileSync } from 'node:fs';
 import { execSync } from 'node:child_process';
 
-// 读取 package.json
 const pkg = JSON.parse(readFileSync('./package.json', 'utf-8'));
 
-// 设置外部依赖
 const external = [
   ...Object.keys(pkg.dependencies || {}),
   ...Object.keys(pkg.peerDependencies || {}),
+  'react/jsx-runtime',
+  'react/jsx-dev-runtime',
   'node:*'
 ];
 
-// 类型声明文件路径
 const dtsSource = './dist/index.d.ts';
 const dtsEsmDest = './dist/esm/index.d.ts';
 const dtsCjsDest = './dist/cjs/index.d.ts';
 
-// 运行 api-extractor 生成单一类型声明
 console.log('Running api-extractor...');
 execSync('api-extractor run --local', { stdio: 'inherit' });
 
-// 构建通用配置
 const baseOptions = {
-  entryPoints: ['./src/index.ts'],
   bundle: true,
   sourcemap: true,
-  platform: 'neutral',
-  target: ['es2022'],
+  platform: 'browser',
+  target: ['es2022', 'chrome58', 'firefox57', 'safari11'],
   tsconfig: 'tsconfig.json',
-  loader: { '.ts': 'ts' },
-  resolveExtensions: ['.ts', '.js'],
+  loader: { '.ts': 'ts', '.tsx': 'tsx', '.css': 'css' },
+  resolveExtensions: ['.js', '.ts', '.tsx'],
   external
 };
 
@@ -39,6 +35,7 @@ async function buildESM() {
   console.log('Building ESM...');
   await build({
     ...baseOptions,
+    entryPoints: ['./src/index.ts'],
     format: 'esm',
     outfile: './dist/esm/index.mjs'
   });
@@ -68,6 +65,7 @@ async function buildCJS() {
   console.log('Building CJS...');
   await build({
     ...baseOptions,
+    entryPoints: ['./src/index.ts'],
     format: 'cjs',
     outfile: './dist/cjs/index.cjs'
   });
