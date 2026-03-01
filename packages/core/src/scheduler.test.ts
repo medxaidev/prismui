@@ -260,6 +260,60 @@ describe('Scheduler', () => {
       expect(store.getState().count).toBe(0);
     });
 
+    it('example: middleware blocks delete flow while locked, allows after unlock', () => {
+      const bus = createEventBus();
+      const store = createRuntimeStore({
+        items: ['a1', 'b2'],
+        confirmOpen: false,
+        pendingDeleteId: null,
+        locked: true,
+      });
+      const scheduler = createScheduler(store, bus);
+      const order: string[] = [];
+
+      scheduler.use((event, next) => {
+        order.push(`mw:${event.type}`);
+        if ((store.getState().locked as boolean) && event.type === 'DELETE_CLICKED') {
+          return;
+        }
+        next();
+      });
+
+      scheduler.registerReducer('UNLOCK', (_event, prevState) => ({
+        nextState: { ...prevState, locked: false },
+      }));
+
+      scheduler.registerReducer('DELETE_CLICKED', (event, prevState) => {
+        order.push('reducer:DELETE_CLICKED');
+        const id = (event.payload as { id: string } | undefined)?.id;
+        return {
+          nextState: {
+            ...prevState,
+            confirmOpen: true,
+            pendingDeleteId: id ?? null,
+          },
+        };
+      });
+
+      scheduler.process({ type: 'DELETE_CLICKED', payload: { id: 'a1' }, timestamp: 1 });
+      expect(store.getState().confirmOpen).toBe(false);
+      expect(store.getState().pendingDeleteId).toBe(null);
+      expect(order).toEqual(['mw:DELETE_CLICKED']);
+
+      scheduler.process({ type: 'UNLOCK', timestamp: 2 });
+      expect(store.getState().locked).toBe(false);
+
+      scheduler.process({ type: 'DELETE_CLICKED', payload: { id: 'a1' }, timestamp: 3 });
+      expect(store.getState().confirmOpen).toBe(true);
+      expect(store.getState().pendingDeleteId).toBe('a1');
+      expect(order).toEqual([
+        'mw:DELETE_CLICKED',
+        'mw:UNLOCK',
+        'mw:DELETE_CLICKED',
+        'reducer:DELETE_CLICKED',
+      ]);
+    });
+
     it('middleware receives the event', () => {
       const bus = createEventBus();
       const store = createRuntimeStore();
@@ -329,6 +383,63 @@ describe('Scheduler', () => {
       bus.dispatch({ type: 'INC' });
 
       expect(store.getState().count).toBe(1);
+    });
+
+    it('example: delete confirm flow with sideEffects', () => {
+      const bus = createEventBus();
+      const store = createRuntimeStore({
+        items: ['a1', 'b2'],
+        confirmOpen: false,
+        pendingDeleteId: null,
+      });
+      const scheduler = createScheduler(store, bus);
+
+      scheduler.registerReducer('DELETE_CLICKED', (event, prevState) => {
+        const id = (event.payload as { id: string } | undefined)?.id;
+        return {
+          nextState: {
+            ...prevState,
+            confirmOpen: true,
+            pendingDeleteId: id ?? null,
+          },
+        };
+      });
+
+      scheduler.registerReducer('DELETE_CONFIRMED', (_event, prevState) => {
+        const pendingDeleteId = prevState.pendingDeleteId as string | null;
+        const items = prevState.items as string[];
+        return {
+          nextState: {
+            ...prevState,
+            items: pendingDeleteId ? items.filter((x) => x !== pendingDeleteId) : items,
+            confirmOpen: false,
+            pendingDeleteId: null,
+          },
+          sideEffects: [
+            { type: 'TOAST_SHOW', payload: { message: 'Deleted' }, timestamp: 0 },
+            { type: 'TRACK', payload: { name: 'delete_confirmed' }, timestamp: 0 },
+          ],
+        };
+      });
+
+      scheduler.registerReducer('TOAST_SHOW', (event, prevState) => ({
+        nextState: { ...prevState, lastToast: event.payload },
+      }));
+
+      scheduler.registerReducer('TRACK', (event, prevState) => ({
+        nextState: { ...prevState, lastTrack: event.payload },
+      }));
+
+      scheduler.process({ type: 'DELETE_CLICKED', payload: { id: 'a1' }, timestamp: 1 });
+      expect(store.getState().confirmOpen).toBe(true);
+      expect(store.getState().pendingDeleteId).toBe('a1');
+
+      scheduler.process({ type: 'DELETE_CONFIRMED', timestamp: 2 });
+      expect(store.getState().items).toEqual(['b2']);
+      expect(store.getState().confirmOpen).toBe(false);
+      expect(store.getState().pendingDeleteId).toBe(null);
+      expect(store.getState().lastToast).toEqual({ message: 'Deleted' });
+      expect(store.getState().lastTrack).toEqual({ name: 'delete_confirmed' });
     });
   });
 
