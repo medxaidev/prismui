@@ -1,7 +1,7 @@
 # R&D Rules (Strong Constraints) / 研发规则（强约束）
 
 > **Version:** 2.0  
-> **Last Updated:** 2026-02-25  
+> **Last Updated:** 2026-03-02  
 > **Authority:** Constitutional — all contributors MUST comply.
 
 ---
@@ -70,9 +70,9 @@
 
 12. **Tests are mandatory for all modules.** / 所有模块必须测试  
     All runtime modules, adapters, and renderers must have unit tests.
-    Core logic (EventBus, Store, Scheduler, PageController) requires comprehensive testing.  
+    Core logic (EventBus, Store, Scheduler, Module System) requires comprehensive testing.  
     所有运行时模块、适配器和渲染器必须有单元测试。  
-    核心逻辑（EventBus、Store、Scheduler、PageController）需要全面测试。
+    核心逻辑（EventBus、Store、Scheduler、Module System）需要全面测试。
 
 13. **Stage completeness is mandatory.** / 阶段完整性是强制的  
     Each development stage must be completed in full before the next begins.

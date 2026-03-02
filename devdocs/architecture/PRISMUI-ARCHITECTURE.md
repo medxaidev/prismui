@@ -2,13 +2,13 @@
 
 > **Status:** Active  
 > **Version:** 2.0  
-> **Last Updated:** 2026-02-25  
+> **Last Updated:** 2026-03-02  
 > **Authority:** Constitutional — all development MUST comply with this document.  
 > **Supersedes:** PrismUI 1.x Architecture (ADR-011)
 
 > **状态：** Active  
 > **版本：** 2.0  
-> **最后更新：** 2026-02-25  
+> **最后更新：** 2026-03-02  
 > **权威性：** 宪法级 —— 所有开发必须遵循本文档。  
 > **替代：** PrismUI 1.x Architecture（ADR-011）
 
@@ -496,15 +496,17 @@ Enterprise-grade systems require built-in governance capabilities:
 packages/
 ├── core/                    # Layer 0 + Layer 1 (Pure TypeScript)
 │   ├── src/
-│   │   ├── event-bus.ts
-│   │   ├── store.ts
-│   │   ├── scheduler.ts
-│   │   ├── page-controller.ts
+│   │   ├── event-bus.ts      # EventBus
+│   │   ├── store.ts          # RuntimeStore
+│   │   ├── scheduler.ts      # Scheduler (Reducer Commit Engine)
+│   │   ├── module.ts         # RuntimeModule interface
 │   │   ├── runtime.ts        # createInteractionRuntime() factory
 │   │   ├── types.ts          # All public types
-│   │   ├── governance/       # Layer 1 (future: STAGE-002)
-│   │   └── index.ts
-│   ├── __tests__/
+│   │   ├── index.ts          # Barrel exports
+│   │   ├── modules/          # Layer 0.5 — Built-in Modules
+│   │   │   ├── page-module.ts
+│   │   │   └── modal-module.ts
+│   │   └── governance/       # Layer 1 (future: STAGE-002)
 │   └── package.json
 │
 ├── react/                   # Layer 2 + Layer 3 (React Adapter)
@@ -517,7 +519,6 @@ packages/
 │   │   ├── use-modal.ts
 │   │   ├── renderers/       # Layer 3 (future: STAGE-004)
 │   │   └── index.ts
-│   ├── __tests__/
 │   └── package.json
 │
 └── demo/                    # Minimal demo application

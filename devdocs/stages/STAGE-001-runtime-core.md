@@ -1327,19 +1327,19 @@ export const runtime = createInteractionRuntime({
 
 **Acceptance Criteria:**
 
-- [ ] All 4 scenarios work visually
-- [ ] Zero `useState` for page/modal/lock state in components
-- [ ] All interactions flow through module controllers or `runtime.dispatch()`
-- [ ] EventLog shows `type`, `timestamp`, `prevVersion → nextVersion` per event
-- [ ] Demo runs with `pnpm dev`
+- [x] All 4 scenarios work visually
+- [x] Zero `useState` for page/modal/lock state in components
+- [x] All interactions flow through module controllers or `runtime.dispatch()`
+- [x] EventLog shows `type`, `timestamp`, `prevVersion → nextVersion` per event
+- [x] Demo runs with `npm run dev` (in `packages/demo/`)
 
 **验收标准：**
 
-- [ ] 4 个场景在界面上可用
-- [ ] 组件中 page/modal/lock 状态零 `useState`
-- [ ] 所有交互都通过 module controllers 或 `runtime.dispatch()` 流转
-- [ ] EventLog 对每个事件显示 `type`、`timestamp`、`prevVersion → nextVersion`
-- [ ] 使用 `pnpm dev` 可运行 Demo
+- [x] 4 个场景在界面上可用
+- [x] 组件中 page/modal/lock 状态零 `useState`
+- [x] 所有交互都通过 module controllers 或 `runtime.dispatch()` 流转
+- [x] EventLog 对每个事件显示 `type`、`timestamp`、`prevVersion → nextVersion`
+- [x] 使用 `npm run dev`（在 `packages/demo/`）可运行 Demo
 
 ---
 
@@ -1353,35 +1353,35 @@ export const runtime = createInteractionRuntime({
 
 **交付物：**
 
-- [ ] This document (`STAGE-001-runtime-core.md`) updated with implementation notes for each phase
-- [ ] `PRISMUI-ARCHITECTURE.md` verified accurate for Layer 0 + Layer 2
-- [ ] `ADR-001` through `ADR-006` finalized
-- [ ] `RULES.md` verified (all 17 rules applicable)
-- [ ] `STAGE.md` overview table updated with final test count
-- [ ] `RUNTIME-API-SPEC.md` finalized with actual implemented API
+- [x] This document (`STAGE-001-runtime-core.md`) updated with implementation notes for each phase
+- [x] `PRISMUI-ARCHITECTURE.md` verified accurate for Layer 0 + Layer 2
+- [x] `ADR-004` through `ADR-007` + `DECISION-001` through `DECISION-003` finalized
+- [x] `RULES.md` verified (all 17 rules applicable)
+- [x] `STAGE.md` overview table updated with final test count
+- [x] `RUNTIME-API-SPEC.md` finalized with actual implemented API
 
-- [ ] 本文档（`STAGE-001-runtime-core.md`）补齐每个 phase 的实现说明
-- [ ] `PRISMUI-ARCHITECTURE.md` 校验 Layer 0 + Layer 2 描述准确
-- [ ] `ADR-001` 到 `ADR-006` 完成定稿
-- [ ] `RULES.md` 校验（17 条规则均适用）
-- [ ] `STAGE.md` 概览表更新最终测试数量
-- [ ] `RUNTIME-API-SPEC.md` 按实际实现 API 定稿
+- [x] 本文档（`STAGE-001-runtime-core.md`）补齐每个 phase 的实现说明
+- [x] `PRISMUI-ARCHITECTURE.md` 校验 Layer 0 + Layer 2 描述准确
+- [x] `ADR-004` 到 `ADR-007` + `DECISION-001` 到 `DECISION-003` 完成定稿
+- [x] `RULES.md` 校验（17 条规则均适用）
+- [x] `STAGE.md` 概览表更新最终测试数量
+- [x] `RUNTIME-API-SPEC.md` 按实际实现 API 定稿
 
 **Verification Checklist:**
 
 **验证清单：**
 
-- [ ] `pnpm test` — all ~107 tests pass
-- [ ] `pnpm typecheck` — `tsc --noEmit` clean across all packages
-- [ ] Zero React/DOM imports in `packages/core/src/` (verified via grep)
-- [ ] Demo runs successfully (`pnpm dev`)
-- [ ] All devdocs frozen
+- [x] `npm test` — all 110 tests pass
+- [x] `npm run typecheck` — `tsc --noEmit` clean across all packages
+- [x] Zero React/DOM imports in `packages/core/src/` (verified via grep)
+- [x] Demo runs successfully (`npm run dev` in `packages/demo/`)
+- [x] All devdocs frozen
 
-- [ ] `pnpm test` —— 所有约 ~107 个测试通过
-- [ ] `pnpm typecheck` —— 全仓库 `tsc --noEmit` 通过
-- [ ] `packages/core/src/` 零 React/DOM imports（通过 grep 验证）
-- [ ] Demo 可运行（`pnpm dev`）
-- [ ] 所有 devdocs 冻结
+- [x] `npm test` —— 所有 110 个测试通过
+- [x] `npm run typecheck` —— 全仓库 `tsc --noEmit` 通过
+- [x] `packages/core/src/` 零 React/DOM imports（通过 grep 验证）
+- [x] Demo 可运行（`packages/demo/` 中 `npm run dev`）
+- [x] 所有 devdocs 冻结
 
 ---
 
@@ -1389,29 +1389,29 @@ export const runtime = createInteractionRuntime({
 
 | Phase  | Content                         | Sessions | New Tests | Cumulative |
 | ------ | ------------------------------- | -------- | --------- | ---------- |
-| **A1** | EventBus                        | 1        | ~15       | ~15        |
-| **A2** | RuntimeStore                    | 1        | ~15       | ~30        |
-| **B**  | Scheduler (Reducer Commit)      | 1        | ~18       | ~48        |
-| **C1** | Module System + Runtime Factory | 1        | ~12       | ~60        |
-| **C2** | Built-in Modules (Page+Modal)   | 1        | ~20       | ~80        |
-| **D1** | Provider + Core Hooks           | 1        | ~15       | ~95        |
-| **D2** | Convenience Hooks               | 1        | ~12       | ~107       |
-| **E**  | Minimal Demo                    | 1        | —         | ~107       |
-| **F**  | Docs + Verification             | 1        | —         | **~107**   |
-|        | **Total**                       | **9**    | **~107**  |            |
+| **A1** | EventBus                        | 1        | 15        | 15         |
+| **A2** | RuntimeStore                    | 1        | 15        | 30         |
+| **B**  | Scheduler (Reducer Commit)      | 1        | 20        | 50         |
+| **C1** | Module System + Runtime Factory | 1        | 12        | 62         |
+| **C2** | Built-in Modules (Page+Modal)   | 1        | 21        | 83         |
+| **D1** | Provider + Core Hooks           | 1        | 15        | 98         |
+| **D2** | Convenience Hooks               | 1        | 12        | 110        |
+| **E**  | Minimal Demo                    | 1        | —         | 110        |
+| **F**  | Docs + Verification             | 1        | —         | **110**    |
+|        | **Total**                       | **9**    | **110**   |            |
 
-| Phase  | 内容                            | Sessions | 新增测试 | 累计     |
-| ------ | ------------------------------- | -------- | -------- | -------- |
-| **A1** | EventBus                        | 1        | ~15      | ~15      |
-| **A2** | RuntimeStore                    | 1        | ~15      | ~30      |
-| **B**  | Scheduler（Reducer Commit）     | 1        | ~18      | ~48      |
-| **C1** | Module System + Runtime Factory | 1        | ~12      | ~60      |
-| **C2** | 内建模块（Page+Modal）          | 1        | ~20      | ~80      |
-| **D1** | Provider + Core Hooks           | 1        | ~15      | ~95      |
-| **D2** | Convenience Hooks               | 1        | ~12      | ~107     |
-| **E**  | Minimal Demo                    | 1        | —        | ~107     |
-| **F**  | 文档 + 验证                     | 1        | —        | **~107** |
-|        | **合计**                        | **9**    | **~107** |          |
+| Phase  | 内容                            | Sessions | 新增测试 | 累计    |
+| ------ | ------------------------------- | -------- | -------- | ------- |
+| **A1** | EventBus                        | 1        | 15       | 15      |
+| **A2** | RuntimeStore                    | 1        | 15       | 30      |
+| **B**  | Scheduler（Reducer Commit）     | 1        | 20       | 50      |
+| **C1** | Module System + Runtime Factory | 1        | 12       | 62      |
+| **C2** | 内建模块（Page+Modal）          | 1        | 21       | 83      |
+| **D1** | Provider + Core Hooks           | 1        | 15       | 98      |
+| **D2** | Convenience Hooks               | 1        | 12       | 110     |
+| **E**  | Minimal Demo                    | 1        | —        | 110     |
+| **F**  | 文档 + 验证                     | 1        | —        | **110** |
+|        | **合计**                        | **9**    | **110**  |         |
 
 ---
 
@@ -1438,11 +1438,9 @@ packages/
 │   │       ├── page-module.ts     # Phase C2
 │   │       ├── page-module.test.ts
 │   │       ├── modal-module.ts    # Phase C2
-│   │       ├── modal-module.test.ts
-│   │       └── index.ts
+│   │       └── modal-module.test.ts
 │   ├── package.json
-│   ├── tsconfig.json
-│   └── vitest.config.ts
+│   └── tsconfig.json
 │
 ├── react/                         # Layer 2 — React Adapter
 │   ├── src/
@@ -1456,8 +1454,7 @@ packages/
 │   │   ├── hooks.test.tsx         # Phase D2
 │   │   └── index.ts               # Phase D2
 │   ├── package.json
-│   ├── tsconfig.json
-│   └── vitest.config.ts
+│   └── tsconfig.json
 │
 └── demo/                          # Phase E — Demo
     ├── src/
@@ -1494,11 +1491,9 @@ packages/
 │   │       ├── page-module.ts     # Phase C2
 │   │       ├── page-module.test.ts
 │   │       ├── modal-module.ts    # Phase C2
-│   │       ├── modal-module.test.ts
-│   │       └── index.ts
+│   │       └── modal-module.test.ts
 │   ├── package.json
-│   ├── tsconfig.json
-│   └── vitest.config.ts
+│   └── tsconfig.json
 │
 ├── react/                         # Layer 2 — React 适配层（React Adapter）
 │   ├── src/
@@ -1512,8 +1507,7 @@ packages/
 │   │   ├── hooks.test.tsx         # Phase D2
 │   │   └── index.ts               # Phase D2
 │   ├── package.json
-│   ├── tsconfig.json
-│   └── vitest.config.ts
+│   └── tsconfig.json
 │
 └── demo/                          # Phase E — Demo
     ├── src/

@@ -7,7 +7,7 @@ Each stage builds upon the previous one and introduces new capabilities.
 每个阶段都建立在前一阶段之上，并引入新的能力。
 
 > **Version:** 2.0  
-> **Last Updated:** 2026-02-25
+> **Last Updated:** 2026-03-02
 
 **Core Principle:** Each stage must be **complete before the next begins**. No partial infrastructure, no deferred core logic, no tails. The stage's core deliverables must be fully functional, tested, and documented.
 
@@ -17,20 +17,20 @@ Each stage builds upon the previous one and introduces new capabilities.
 
 ## Stage Overview
 
-| Stage | Name                                                | Status         | Focus                                                                                                          | Tests |
-| ----- | --------------------------------------------------- | -------------- | -------------------------------------------------------------------------------------------------------------- | ----- |
-| 1     | [Runtime Core](./STAGE-001-runtime-core.md)         | 🔄 In Progress | EventBus, Store, Scheduler (Reducer Commit), Module System, Built-in Modules (Page+Modal), React Adapter, Demo | ~107  |
-| 2     | [Governance Layer](./STAGE-002-governance-layer.md) | Planned        | Policy Engine, Audit Trail, Replay, Priority Scheduler                                                         | ~80   |
-| 3     | Semantic Theme                                      | Planned        | Token Layer, Semantic Intent, Behavior Derivation                                                              | ~60   |
-| 4     | Interaction Modules                                 | Planned        | Modal Runtime, Drawer Runtime, Notification Runtime                                                            | TBD   |
-| 5     | Form & Async Runtime                                | Planned        | Form State Runtime, Async State Runtime                                                                        | TBD   |
-| 6     | Page Orchestration                                  | Planned        | Page lifecycle, scheduling, priority, workflow                                                                 | TBD   |
-| 7     | Interaction DSL                                     | Planned        | `ui.modal.open()`, `ui.confirm()`, `ui.workflow.start()`                                                       | TBD   |
-| 8     | DevTools & Automation                               | Planned        | Runtime Inspector, Event Replay UI, AI Agent interface                                                         | TBD   |
+| Stage | Name                                                | Status      | Focus                                                                                                          | Tests |
+| ----- | --------------------------------------------------- | ----------- | -------------------------------------------------------------------------------------------------------------- | ----- |
+| 1     | [Runtime Core](./STAGE-001-runtime-core.md)         | ✅ Complete | EventBus, Store, Scheduler (Reducer Commit), Module System, Built-in Modules (Page+Modal), React Adapter, Demo | 110   |
+| 2     | [Governance Layer](./STAGE-002-governance-layer.md) | Planned     | Policy Engine, Audit Trail, Replay, Priority Scheduler                                                         | ~80   |
+| 3     | Semantic Theme                                      | Planned     | Token Layer, Semantic Intent, Behavior Derivation                                                              | ~60   |
+| 4     | Interaction Modules                                 | Planned     | Modal Runtime, Drawer Runtime, Notification Runtime                                                            | TBD   |
+| 5     | Form & Async Runtime                                | Planned     | Form State Runtime, Async State Runtime                                                                        | TBD   |
+| 6     | Page Orchestration                                  | Planned     | Page lifecycle, scheduling, priority, workflow                                                                 | TBD   |
+| 7     | Interaction DSL                                     | Planned     | `ui.modal.open()`, `ui.confirm()`, `ui.workflow.start()`                                                       | TBD   |
+| 8     | DevTools & Automation                               | Planned     | Runtime Inspector, Event Replay UI, AI Agent interface                                                         | TBD   |
 
 | 阶段 | 名称                                      | 状态      | 重点                                                                                                     | 测试 |
 | ---- | ----------------------------------------- | --------- | -------------------------------------------------------------------------------------------------------- | ---- |
-| 1    | [运行时核心](./STAGE-001-runtime-core.md) | 🔄 进行中 | EventBus、Store、Scheduler（Reducer Commit）、Module System、内建模块（Page+Modal）、React Adapter、Demo | ~107 |
+| 1    | [运行时核心](./STAGE-001-runtime-core.md) | ✅ 已完成 | EventBus、Store、Scheduler（Reducer Commit）、Module System、内建模块（Page+Modal）、React Adapter、Demo | 110  |
 | 2    | [治理层](./STAGE-002-governance-layer.md) | 规划中    | Policy Engine、Audit Trail、Replay、Priority Scheduler                                                   | ~80  |
 | 3    | 语义主题                                  | 规划中    | Token Layer、Semantic Intent、Behavior Derivation                                                        | ~60  |
 | 4    | 交互模块                                  | 规划中    | Modal Runtime、Drawer Runtime、Notification Runtime                                                      | TBD  |
@@ -41,7 +41,7 @@ Each stage builds upon the previous one and introduces new capabilities.
 
 ---
 
-## Stage 1: Runtime Core (In Progress)
+## Stage 1: Runtime Core (Complete)
 
 **Goal:** Build the minimal viable Interaction Runtime — a framework-agnostic event-driven orchestration engine with React adapter and minimal demo.
 

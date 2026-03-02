@@ -1,12 +1,12 @@
 # Runtime API Specification / Runtime API 规范
 
 > **Version:** 2.0  
-> **Last Updated:** 2026-02-25  
-> **Status:** Draft — finalized during STAGE-001 implementation
+> **Last Updated:** 2026-03-02  
+> **Status:** Final — matches STAGE-001 implementation (110 tests pass)
 
 > **版本：** 2.0  
-> **最后更新：** 2026-02-25  
-> **状态：** Draft —— 将在 STAGE-001 实现过程中定稿
+> **最后更新：** 2026-03-02  
+> **状态：** Final —— 与 STAGE-001 实现一致（110 个测试通过）
 
 ---
 
