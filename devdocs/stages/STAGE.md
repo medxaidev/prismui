@@ -7,7 +7,7 @@ Each stage builds upon the previous one and introduces new capabilities.
 每个阶段都建立在前一阶段之上，并引入新的能力。
 
 > **Version:** 2.0  
-> **Last Updated:** 2026-03-02
+> **Last Updated:** 2026-03-06
 
 **Core Principle:** Each stage must be **complete before the next begins**. No partial infrastructure, no deferred core logic, no tails. The stage's core deliverables must be fully functional, tested, and documented.
 
@@ -20,7 +20,7 @@ Each stage builds upon the previous one and introduces new capabilities.
 | Stage | Name                                                | Status      | Focus                                                                                                          | Tests |
 | ----- | --------------------------------------------------- | ----------- | -------------------------------------------------------------------------------------------------------------- | ----- |
 | 1     | [Runtime Core](./STAGE-001-runtime-core.md)         | ✅ Complete | EventBus, Store, Scheduler (Reducer Commit), Module System, Built-in Modules (Page+Modal), React Adapter, Demo | 110   |
-| 2     | [Governance Layer](./STAGE-002-governance-layer.md) | Planned     | Policy Engine, Audit Trail, Replay, Priority Scheduler                                                         | ~80   |
+| 2     | [Governance Layer](./STAGE-002-governance-layer.md) | ✅ Complete | Audit Trail, Replay System, Policy Engine, Priority Scheduler                                                  | 79    |
 | 3     | Semantic Theme                                      | Planned     | Token Layer, Semantic Intent, Behavior Derivation                                                              | ~60   |
 | 4     | Interaction Modules                                 | Planned     | Modal Runtime, Drawer Runtime, Notification Runtime                                                            | TBD   |
 | 5     | Form & Async Runtime                                | Planned     | Form State Runtime, Async State Runtime                                                                        | TBD   |
@@ -31,7 +31,7 @@ Each stage builds upon the previous one and introduces new capabilities.
 | 阶段 | 名称                                      | 状态      | 重点                                                                                                     | 测试 |
 | ---- | ----------------------------------------- | --------- | -------------------------------------------------------------------------------------------------------- | ---- |
 | 1    | [运行时核心](./STAGE-001-runtime-core.md) | ✅ 已完成 | EventBus、Store、Scheduler（Reducer Commit）、Module System、内建模块（Page+Modal）、React Adapter、Demo | 110  |
-| 2    | [治理层](./STAGE-002-governance-layer.md) | 规划中    | Policy Engine、Audit Trail、Replay、Priority Scheduler                                                   | ~80  |
+| 2    | [治理层](./STAGE-002-governance-layer.md) | ✅ 已完成 | Audit Trail、Replay System、Policy Engine、Priority Scheduler                                            | 79   |
 | 3    | 语义主题                                  | 规划中    | Token Layer、Semantic Intent、Behavior Derivation                                                        | ~60  |
 | 4    | 交互模块                                  | 规划中    | Modal Runtime、Drawer Runtime、Notification Runtime                                                      | TBD  |
 | 5    | 表单与异步运行时                          | 规划中    | Form State Runtime、Async State Runtime                                                                  | TBD  |
@@ -77,7 +77,7 @@ Each stage builds upon the previous one and introduces new capabilities.
 
 ---
 
-## Stage 2: Governance Layer (Planned)
+## Stage 2: Governance Layer (Complete)
 
 **Goal:** Add enterprise-grade control capabilities as Scheduler middleware around the Reducer Commit Engine.
 

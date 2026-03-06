@@ -34,3 +34,33 @@ export { createPageModule } from './modules/page-module';
 export type { PageModuleState, PageController } from './modules/page-module';
 export { createModalModule } from './modules/modal-module';
 export type { ModalModuleState, ModalController } from './modules/modal-module';
+
+// Governance Layer (Layer 1 — STAGE-002)
+export {
+  createAuditTrail,
+  createAuditMiddleware,
+  createReplaySystem,
+  computeStateHash,
+  createPolicyEngine,
+  createPolicyMiddleware,
+  createPriorityScheduler,
+  createPriorityMiddleware,
+} from './governance';
+export type {
+  AuditEntry,
+  AuditFilter,
+  AuditTrail,
+  AuditTrailOptions,
+  PolicyResult,
+  PolicyVerdict,
+  PolicyEngine,
+  PolicyRule,
+  ReplaySystem,
+  ReplayOptions,
+  ReplayResult,
+  EventPriority,
+  PriorityScheduler,
+  PriorityConfig,
+  ConflictStrategy,
+  ConflictRule,
+} from './governance';

@@ -5,6 +5,7 @@ import { Dashboard } from './pages/Dashboard';
 import { PatientDetail } from './pages/PatientDetail';
 import { ConfirmModal } from './components/ConfirmModal';
 import { EventLog } from './components/EventLog';
+import { AuditLog } from './components/AuditLog';
 
 function PageRouter() {
   const { currentPage } = usePage();
@@ -63,8 +64,10 @@ export function App() {
           <div style={{ flex: 1, padding: '16px', borderRight: '1px solid #ddd', minHeight: 400 }}>
             <PageRouter />
           </div>
-          <div style={{ width: 320, padding: '16px', background: '#fafafa' }}>
+          <div style={{ width: 320, padding: '16px', background: '#fafafa', display: 'flex', flexDirection: 'column', gap: 16 }}>
             <EventLog />
+            <hr style={{ border: 'none', borderTop: '1px solid #ddd', margin: 0 }} />
+            <AuditLog />
           </div>
         </div>
         <ModalLayer />
