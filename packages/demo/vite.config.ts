@@ -4,6 +4,7 @@ import path from 'node:path';
 
 export default defineConfig({
   plugins: [react()],
+  base: '/prismui/',
   resolve: {
     alias: {
       '@prismui/core': path.resolve(__dirname, '../core/src/index.ts'),

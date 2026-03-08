@@ -291,9 +291,10 @@ MIT © [Fangjun](https://github.com/medxaidev)
 
 ## 🔗 Links
 
+- [🎮 **Live Demo**](https://medxaidev.github.io/prismui/) - Try it now!
 - [GitHub Repository](https://github.com/medxaidev/prismui)
 - [Documentation](https://prismui.dev) (Coming soon)
-- [Demo Application](./packages/demo)
+- [Demo Source Code](./packages/demo)
 
 ---
 
