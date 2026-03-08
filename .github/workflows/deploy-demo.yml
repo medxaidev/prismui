@@ -6,10 +6,10 @@ on:
       - main
       - runtime-v2
     paths:
-      - 'packages/demo/**'
-      - 'packages/core/src/**'
-      - 'packages/react/src/**'
-      - '.github/workflows/deploy-demo.yml'
+      - "packages/demo/**"
+      - "packages/core/src/**"
+      - "packages/react/src/**"
+      - ".github/workflows/deploy-demo.yml"
   workflow_dispatch:
 
 permissions:
@@ -31,8 +31,8 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
-          cache: 'npm'
+          node-version: "20"
+          cache: "npm"
 
       - name: Install dependencies
         run: npm ci
@@ -45,13 +45,10 @@ jobs:
       - name: Build demo
         run: npm run build --workspace=@prismui/demo
 
-      - name: Setup Pages
-        uses: actions/configure-pages@v4
-
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: './packages/demo/dist'
+          path: "./packages/demo/dist"
 
   deploy:
     environment:
