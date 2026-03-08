@@ -1,0 +1,47 @@
+# Source files (only ship dist/)
+src/
+*.ts
+!*.d.ts
+
+# Tests
+*.test.ts
+*.test.tsx
+*.spec.ts
+*.spec.tsx
+__tests__/
+__mocks__/
+coverage/
+
+# Build tools
+tsconfig.json
+tsconfig.*.json
+vite.config.ts
+vitest.config.ts
+esbuild.config.js
+scripts/
+
+# Documentation (keep README.md)
+docs/
+*.md
+!README.md
+
+# Config files
+.eslintrc*
+.prettierrc*
+.editorconfig
+api-extractor.json
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Misc
+.git/
+.github/
+node_modules/
