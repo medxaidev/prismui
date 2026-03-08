@@ -26,6 +26,8 @@ import { useNotification } from './use-notification';
 import { useSelector } from './use-selector';
 import { useForm } from './use-form';
 import { useAsync } from './use-async';
+import { useUI } from './use-ui';
+import { useRuntimeState } from './use-runtime-state';
 
 function createTestRuntime() {
   return createInteractionRuntime({
@@ -1112,6 +1114,122 @@ describe('Convenience Hooks', () => {
     });
   });
 
+  // ── useUI ────────────────────────────────────────────────────────────
+
+  describe('useUI', () => {
+    function createFullRuntime() {
+      return createInteractionRuntime({
+        modules: [
+          createPageModule(),
+          createModalModule(),
+          createDrawerModule(),
+          createNotificationModule({ maxNotifications: 20 }),
+          createFormModule(),
+          createAsyncModule(),
+        ],
+      });
+    }
+
+    it('returns DSL object', () => {
+      const runtime = createFullRuntime();
+
+      function Consumer() {
+        const ui = useUI();
+        return (
+          <div>
+            <span data-testid="has-modal">{String(!!ui.modal)}</span>
+            <span data-testid="has-notify">{String(!!ui.notify)}</span>
+            <span data-testid="has-form">{String(!!ui.form)}</span>
+            <span data-testid="has-async">{String(!!ui.async)}</span>
+          </div>
+        );
+      }
+
+      render(
+        <PrismUIProvider runtime={runtime}>
+          <Consumer />
+        </PrismUIProvider>,
+      );
+
+      expect(screen.getByTestId('has-modal').textContent).toBe('true');
+      expect(screen.getByTestId('has-notify').textContent).toBe('true');
+      expect(screen.getByTestId('has-form').textContent).toBe('true');
+      expect(screen.getByTestId('has-async').textContent).toBe('true');
+    });
+
+    it('ui.modal.open works', () => {
+      const runtime = createFullRuntime();
+      const modal = runtime.modules.modal as ModalController;
+
+      function Consumer() {
+        const ui = useUI();
+        return <button data-testid="btn" onClick={() => ui.modal.open('test')}>Open</button>;
+      }
+
+      render(
+        <PrismUIProvider runtime={runtime}>
+          <Consumer />
+        </PrismUIProvider>,
+      );
+
+      act(() => {
+        screen.getByTestId('btn').click();
+      });
+
+      expect(modal.isOpen('test')).toBe(true);
+    });
+
+    it('ui.notify.info works', () => {
+      const runtime = createFullRuntime();
+      const notif = runtime.modules.notification as NotificationController;
+
+      function Consumer() {
+        const ui = useUI();
+        return <button data-testid="btn" onClick={() => ui.notify.info('Hello')}>Notify</button>;
+      }
+
+      render(
+        <PrismUIProvider runtime={runtime}>
+          <Consumer />
+        </PrismUIProvider>,
+      );
+
+      act(() => {
+        screen.getByTestId('btn').click();
+      });
+
+      expect(notif.count()).toBe(1);
+    });
+
+    it('is stable across renders (memoized)', () => {
+      const runtime = createFullRuntime();
+      const modal = runtime.modules.modal as ModalController;
+      const refs: unknown[] = [];
+
+      function Consumer() {
+        const ui = useUI();
+        const state = useRuntimeState();
+        refs.push(ui);
+        return <span data-testid="v">{state.version}</span>;
+      }
+
+      render(
+        <PrismUIProvider runtime={runtime}>
+          <Consumer />
+        </PrismUIProvider>,
+      );
+
+      // Trigger a re-render via a real state change
+      act(() => {
+        modal.open('temp');
+      });
+
+      // The DSL reference should be stable across re-renders
+      expect(refs.length).toBeGreaterThanOrEqual(2);
+      expect(refs[0]).toBe(refs[1]);
+    });
+  });
+
   // ── isolation ─────────────────────────────────────────────────────────
 
   describe('isolation', () => {
@@ -1119,7 +1237,7 @@ describe('Convenience Hooks', () => {
       const fs = await import('node:fs');
       const path = await import('node:path');
 
-      const files = ['use-page.ts', 'use-modal.ts', 'use-drawer.ts', 'use-notification.ts', 'use-selector.ts', 'use-form.ts', 'use-async.ts'];
+      const files = ['use-page.ts', 'use-modal.ts', 'use-drawer.ts', 'use-notification.ts', 'use-selector.ts', 'use-form.ts', 'use-async.ts', 'use-ui.ts'];
       for (const file of files) {
         const filePath = path.resolve(__dirname, file);
         const source = fs.readFileSync(filePath, 'utf-8');

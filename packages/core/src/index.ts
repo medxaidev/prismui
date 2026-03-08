@@ -81,6 +81,18 @@ export {
   ASYNC_RESET,
 } from './modules/async-module';
 
+// Interaction DSL (STAGE-006)
+export { createInteractionDSL } from './interaction-dsl';
+export type {
+  InteractionDSL,
+  ModalDSL,
+  DrawerDSL,
+  NotifyDSL,
+  FormDSL,
+  AsyncDSL,
+  NotifyOptions,
+} from './interaction-dsl';
+
 // State Selectors (STAGE-004)
 export { selectFromStore, createSelector } from './selector';
 export type { StateSelector } from './selector';

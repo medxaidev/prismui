@@ -25,7 +25,7 @@ Each stage builds upon the previous one and introduces new capabilities.
 | 3     | [Interaction Modules](./STAGE-003-interaction-modules.md)   | ✅ Complete | Drawer Module, Notification Module, React Hooks, Demo                                                          | 58    |
 | 4     | [Lifecycle & Selectors](./STAGE-004-lifecycle-selectors.md) | ✅ Complete | State Selectors, Module Lifecycle (onInit/onDestroy), waitFor, useSelector                                     | 43    |
 | 5     | [Form & Async Runtime](./STAGE-005-form-async-runtime.md)   | ✅ Complete | Form State Module, Async State Module, useForm, useAsync                                                       | 47    |
-| 6     | Interaction DSL                                             | Planned     | `ui.modal.open()`, `ui.confirm()`, `ui.notify()`, `ui.form.create()`                                           | TBD   |
+| 6     | [Interaction DSL](./STAGE-006-interaction-dsl.md)           | ✅ Complete | `ui.modal.open()`, `ui.confirm()`, `ui.notify()`, `ui.form.create()`                                           | 35    |
 | 7     | Semantic Theme                                              | Deferred    | Token Layer, Semantic Intent, Behavior Derivation                                                              | TBD   |
 | 8     | DevTools & Automation                                       | Planned     | Runtime Inspector, Event Replay UI, AI Agent interface                                                         | TBD   |
 
@@ -36,7 +36,7 @@ Each stage builds upon the previous one and introduces new capabilities.
 | 3    | [交互模块](./STAGE-003-interaction-modules.md)           | ✅ 已完成 | Drawer Module、Notification Module、React Hooks、Demo                                                    | 58   |
 | 4    | [生命周期与选择器](./STAGE-004-lifecycle-selectors.md)   | ✅ 已完成 | 状态选择器、模块生命周期（onInit/onDestroy）、waitFor、useSelector                                       | 43   |
 | 5    | [Form & Async 运行时](./STAGE-005-form-async-runtime.md) | ✅ 已完成 | Form State Module、Async State Module、useForm、useAsync                                                 | 47   |
-| 6    | 交互 DSL                                                 | 规划中    | `ui.modal.open()`、`ui.confirm()`、`ui.notify()`、`ui.form.create()`                                     | TBD  |
+| 6    | [交互 DSL](./STAGE-006-interaction-dsl.md)               | ✅ 已完成 | `ui.modal.open()`、`ui.confirm()`、`ui.notify()`、`ui.form.create()`                                     | 35   |
 | 7    | 语义主题                                                 | 已推迟    | Token Layer、Semantic Intent、Behavior Derivation                                                        | TBD  |
 | 8    | DevTools 与自动化                                        | 规划中    | Runtime Inspector、Event Replay UI、AI Agent 接口                                                        | TBD  |
 
@@ -194,7 +194,7 @@ Each stage builds upon the previous one and introduces new capabilities.
 
 ---
 
-## Stage 6: Interaction DSL (Planned)
+## Stage 6: Interaction DSL (Complete)
 
 **Goal:** High-level API for common interaction patterns.
 
@@ -204,23 +204,23 @@ Each stage builds upon the previous one and introduces new capabilities.
 
 **交付物：**
 
-- `ui.modal.open({ ... })` — programmatic modal control
-- `ui.confirm({ ... })` — confirmation dialog with Promise
-- `ui.notify({ ... })` — notification dispatch
-- `ui.form.create({ ... })` — form creation
-- `ui.async.execute({ ... })` — async operation
-- DSL type safety and autocomplete
+1. ✅ `createInteractionDSL(runtime)` — unified DSL factory — 31 tests
+2. ✅ `ui.modal`, `ui.drawer`, `ui.notify`, `ui.form`, `ui.async` namespaces
+3. ✅ `ui.confirm(modalId)` — Promise-based confirmation
+4. ✅ `useUI()` React hook with memoized reference — 4 tests
+5. ✅ Barrel exports updated (core + react)
 
-- `ui.modal.open({ ... })` — 以程序方式控制 modal
-- `ui.confirm({ ... })` — 返回 Promise 的确认对话框
-- `ui.notify({ ... })` — 分发通知
-- `ui.form.create({ ... })` — 创建表单
-- `ui.async.execute({ ... })` — 异步操作
-- DSL 类型安全与自动补全
+6. ✅ `createInteractionDSL(runtime)` — 统一 DSL 工厂 — 31 测试
+7. ✅ `ui.modal`、`ui.drawer`、`ui.notify`、`ui.form`、`ui.async` 命名空间
+8. ✅ `ui.confirm(modalId)` — 基于 Promise 的确认
+9. ✅ `useUI()` React hook，带有记忆化引用 — 4 测试
+10. ✅ Barrel exports 已更新（core + react）
 
-**Dependencies:** Stage 5 complete
+**Dependencies:** Stage 5 complete  
+**Detail:** [STAGE-006-interaction-dsl.md](./STAGE-006-interaction-dsl.md)
 
-**依赖：** Stage 5 完成
+**依赖：** Stage 5 完成  
+**详情：** [STAGE-006-interaction-dsl.md](./STAGE-006-interaction-dsl.md)
 
 ---
 

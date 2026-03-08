@@ -10,6 +10,7 @@ import { DrawerPanel } from './components/DrawerPanel';
 import { NotificationPanel } from './components/NotificationPanel';
 import { ModuleStatusPanel } from './components/ModuleStatusPanel';
 import { FormAsyncPanel } from './components/FormAsyncPanel';
+import { DSLPanel } from './components/DSLPanel';
 
 function PageRouter() {
   const { currentPage } = usePage();
@@ -81,6 +82,8 @@ export function App() {
             <ModuleStatusPanel />
             <hr style={{ border: 'none', borderTop: '1px solid #ddd', margin: 0 }} />
             <FormAsyncPanel />
+            <hr style={{ border: 'none', borderTop: '1px solid #ddd', margin: 0 }} />
+            <DSLPanel />
             <hr style={{ border: 'none', borderTop: '1px solid #ddd', margin: 0 }} />
             <EventLog />
             <hr style={{ border: 'none', borderTop: '1px solid #ddd', margin: 0 }} />

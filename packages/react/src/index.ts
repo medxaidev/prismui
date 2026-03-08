@@ -23,6 +23,7 @@ export type { UseDrawerReturn } from './use-drawer';
 export { useNotification } from './use-notification';
 export type { UseNotificationReturn } from './use-notification';
 export { useSelector } from './use-selector';
+export { useUI } from './use-ui';
 export { useForm } from './use-form';
 export type { UseFormReturn } from './use-form';
 export { useAsync } from './use-async';
