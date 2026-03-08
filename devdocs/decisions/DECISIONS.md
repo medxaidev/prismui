@@ -24,6 +24,7 @@ This directory records key decisions that have long-term impact on the system's 
 | [ADR-004](./ADR-004-semantic-theme-system.md)        | Semantic Theme System               | Accepted | 2026-02-25 | High — three-layer theme derivation                       |
 | [ADR-005](./ADR-005-page-as-runtime-resource.md)     | Page as Runtime Resource            | Accepted | 2026-02-25 | High — pages as managed lifecycle entities                |
 | [ADR-006](./ADR-006-reducer-commit-model.md)         | Reducer Commit Model                | Accepted | 2026-02-25 | Critical — state mutation centralized in Scheduler commit |
+| [ADR-007](./ADR-007-stage-reordering.md)             | Stage Reordering                    | Accepted | 2026-03-08 | High — runtime kernel completeness before presentation    |
 
 | ID                                                   | 标题                                                       | 状态              | 日期       | 影响                                                       |
 | ---------------------------------------------------- | ---------------------------------------------------------- | ----------------- | ---------- | ---------------------------------------------------------- |
@@ -33,6 +34,7 @@ This directory records key decisions that have long-term impact on the system's 
 | [ADR-004](./ADR-004-semantic-theme-system.md)        | Semantic Theme System / 语义主题系统                       | Accepted / 已采纳 | 2026-02-25 | High / 高 —— 三层主题推导体系                              |
 | [ADR-005](./ADR-005-page-as-runtime-resource.md)     | Page as Runtime Resource / 页面作为运行时资源              | Accepted / 已采纳 | 2026-02-25 | High / 高 —— 页面作为被治理的生命周期实体                  |
 | [ADR-006](./ADR-006-reducer-commit-model.md)         | Reducer Commit Model / Reducer Commit 模型                 | Accepted / 已采纳 | 2026-02-25 | Critical / 关键 —— 在 Scheduler commit 集中 state mutation |
+| [ADR-007](./ADR-007-stage-reordering.md)             | Stage Reordering / 阶段重排                                | Accepted / 已采纳 | 2026-03-08 | High / 高 —— 运行时内核完整性优先于表现层                  |
 
 ## Planned ADRs
 
@@ -40,15 +42,15 @@ This directory records key decisions that have long-term impact on the system's 
 
 | ID      | Title                            | Status | Date |
 | ------- | -------------------------------- | ------ | ---- |
-| ADR-007 | Interaction DSL Design           | Draft  | TBD  |
-| ADR-008 | Governance Middleware Pattern    | Draft  | TBD  |
-| ADR-009 | Cross-Framework Adapter Contract | Draft  | TBD  |
+| ADR-008 | Interaction DSL Design           | Draft  | TBD  |
+| ADR-009 | Governance Middleware Pattern    | Draft  | TBD  |
+| ADR-010 | Cross-Framework Adapter Contract | Draft  | TBD  |
 
 | ID      | 标题                                                | 状态         | 日期 |
 | ------- | --------------------------------------------------- | ------------ | ---- |
-| ADR-007 | Interaction DSL Design / 交互 DSL 设计              | Draft / 草案 | TBD  |
-| ADR-008 | Governance Middleware Pattern / 治理中间件模式      | Draft / 草案 | TBD  |
-| ADR-009 | Cross-Framework Adapter Contract / 跨框架适配器契约 | Draft / 草案 | TBD  |
+| ADR-008 | Interaction DSL Design / 交互 DSL 设计              | Draft / 草案 | TBD  |
+| ADR-009 | Governance Middleware Pattern / 治理中间件模式      | Draft / 草案 | TBD  |
+| ADR-010 | Cross-Framework Adapter Contract / 跨框架适配器契约 | Draft / 草案 | TBD  |
 
 ---
 

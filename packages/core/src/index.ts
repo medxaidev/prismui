@@ -34,6 +34,16 @@ export { createPageModule } from './modules/page-module';
 export type { PageModuleState, PageController } from './modules/page-module';
 export { createModalModule } from './modules/modal-module';
 export type { ModalModuleState, ModalController } from './modules/modal-module';
+export { createDrawerModule } from './modules/drawer-module';
+export type { DrawerModuleState, DrawerController, DrawerEntry, DrawerAnchor } from './modules/drawer-module';
+export { createNotificationModule } from './modules/notification-module';
+export type {
+  NotificationModuleState,
+  NotificationController,
+  NotificationEntry,
+  NotificationType,
+  NotificationModuleOptions,
+} from './modules/notification-module';
 
 // Governance Layer (Layer 1 — STAGE-002)
 export {

@@ -5,12 +5,18 @@ import {
   createInteractionRuntime,
   createPageModule,
   createModalModule,
+  createDrawerModule,
+  createNotificationModule,
   type PageController,
   type ModalController,
+  type DrawerController,
+  type NotificationController,
 } from '@prismui/core';
 import { PrismUIProvider } from './provider';
 import { usePage } from './use-page';
 import { useModal } from './use-modal';
+import { useDrawer } from './use-drawer';
+import { useNotification } from './use-notification';
 
 function createTestRuntime() {
   return createInteractionRuntime({
@@ -343,6 +349,382 @@ describe('Convenience Hooks', () => {
     });
   });
 
+  // ── useDrawer ────────────────────────────────────────────────────────
+
+  describe('useDrawer', () => {
+    function createDrawerRuntime() {
+      return createInteractionRuntime({
+        modules: [createDrawerModule()],
+      });
+    }
+
+    it('useDrawer returns empty drawer stack', () => {
+      const runtime = createDrawerRuntime();
+
+      function Consumer() {
+        const { drawerStack } = useDrawer();
+        return <span data-testid="stack">{drawerStack.length}</span>;
+      }
+
+      render(
+        <PrismUIProvider runtime={runtime}>
+          <Consumer />
+        </PrismUIProvider>,
+      );
+
+      expect(screen.getByTestId('stack').textContent).toBe('0');
+    });
+
+    it('useDrawer.open adds to drawerStack', () => {
+      const runtime = createDrawerRuntime();
+
+      function Consumer() {
+        const { drawerStack, open } = useDrawer();
+        return (
+          <div>
+            <span data-testid="count">{drawerStack.length}</span>
+            <button data-testid="open" onClick={() => open('nav')}>Open</button>
+          </div>
+        );
+      }
+
+      render(
+        <PrismUIProvider runtime={runtime}>
+          <Consumer />
+        </PrismUIProvider>,
+      );
+
+      act(() => {
+        screen.getByTestId('open').click();
+      });
+
+      expect(screen.getByTestId('count').textContent).toBe('1');
+    });
+
+    it('useDrawer.open with custom anchor', () => {
+      const runtime = createDrawerRuntime();
+
+      function Consumer() {
+        const { drawerStack, open } = useDrawer();
+        return (
+          <div>
+            <span data-testid="anchor">{drawerStack[0]?.anchor ?? 'none'}</span>
+            <button data-testid="open" onClick={() => open('details', 'right')}>Open</button>
+          </div>
+        );
+      }
+
+      render(
+        <PrismUIProvider runtime={runtime}>
+          <Consumer />
+        </PrismUIProvider>,
+      );
+
+      act(() => {
+        screen.getByTestId('open').click();
+      });
+
+      expect(screen.getByTestId('anchor').textContent).toBe('right');
+    });
+
+    it('useDrawer.close removes from drawerStack', () => {
+      const runtime = createDrawerRuntime();
+      const drawer = runtime.modules.drawer as DrawerController;
+
+      function Consumer() {
+        const { drawerStack, close } = useDrawer();
+        return (
+          <div>
+            <span data-testid="count">{drawerStack.length}</span>
+            <button data-testid="close" onClick={() => close('nav')}>Close</button>
+          </div>
+        );
+      }
+
+      render(
+        <PrismUIProvider runtime={runtime}>
+          <Consumer />
+        </PrismUIProvider>,
+      );
+
+      act(() => {
+        drawer.open('nav');
+        drawer.open('settings', 'right');
+      });
+
+      expect(screen.getByTestId('count').textContent).toBe('2');
+
+      act(() => {
+        screen.getByTestId('close').click();
+      });
+
+      expect(screen.getByTestId('count').textContent).toBe('1');
+    });
+
+    it('useDrawer.closeAll empties drawerStack', () => {
+      const runtime = createDrawerRuntime();
+      const drawer = runtime.modules.drawer as DrawerController;
+
+      function Consumer() {
+        const { drawerStack, closeAll } = useDrawer();
+        return (
+          <div>
+            <span data-testid="count">{drawerStack.length}</span>
+            <button data-testid="closeAll" onClick={closeAll}>Close All</button>
+          </div>
+        );
+      }
+
+      render(
+        <PrismUIProvider runtime={runtime}>
+          <Consumer />
+        </PrismUIProvider>,
+      );
+
+      act(() => {
+        drawer.open('a');
+        drawer.open('b', 'right');
+      });
+
+      expect(screen.getByTestId('count').textContent).toBe('2');
+
+      act(() => {
+        screen.getByTestId('closeAll').click();
+      });
+
+      expect(screen.getByTestId('count').textContent).toBe('0');
+    });
+
+    it('useDrawer.isOpen returns correct status', () => {
+      const runtime = createDrawerRuntime();
+      const drawer = runtime.modules.drawer as DrawerController;
+
+      function Consumer() {
+        const { isOpen } = useDrawer();
+        return (
+          <span data-testid="open">{String(isOpen('nav'))}</span>
+        );
+      }
+
+      render(
+        <PrismUIProvider runtime={runtime}>
+          <Consumer />
+        </PrismUIProvider>,
+      );
+
+      expect(screen.getByTestId('open').textContent).toBe('false');
+
+      act(() => {
+        drawer.open('nav');
+      });
+
+      expect(screen.getByTestId('open').textContent).toBe('true');
+    });
+
+    it('useDrawer.getAnchor returns anchor', () => {
+      const runtime = createDrawerRuntime();
+      const drawer = runtime.modules.drawer as DrawerController;
+
+      function Consumer() {
+        const { getAnchor } = useDrawer();
+        return (
+          <span data-testid="anchor">{getAnchor('nav') ?? 'none'}</span>
+        );
+      }
+
+      render(
+        <PrismUIProvider runtime={runtime}>
+          <Consumer />
+        </PrismUIProvider>,
+      );
+
+      expect(screen.getByTestId('anchor').textContent).toBe('none');
+
+      act(() => {
+        drawer.open('nav', 'right');
+      });
+
+      expect(screen.getByTestId('anchor').textContent).toBe('right');
+    });
+  });
+
+  // ── useNotification ─────────────────────────────────────────────────
+
+  describe('useNotification', () => {
+    function createNotifRuntime() {
+      return createInteractionRuntime({
+        modules: [createNotificationModule()],
+      });
+    }
+
+    it('useNotification returns empty notifications', () => {
+      const runtime = createNotifRuntime();
+
+      function Consumer() {
+        const { count } = useNotification();
+        return <span data-testid="count">{count}</span>;
+      }
+
+      render(
+        <PrismUIProvider runtime={runtime}>
+          <Consumer />
+        </PrismUIProvider>,
+      );
+
+      expect(screen.getByTestId('count').textContent).toBe('0');
+    });
+
+    it('useNotification.show adds notification', () => {
+      const runtime = createNotifRuntime();
+
+      function Consumer() {
+        const { count, show } = useNotification();
+        return (
+          <div>
+            <span data-testid="count">{count}</span>
+            <button data-testid="show" onClick={() => show({ type: 'info', message: 'Hello' })}>Show</button>
+          </div>
+        );
+      }
+
+      render(
+        <PrismUIProvider runtime={runtime}>
+          <Consumer />
+        </PrismUIProvider>,
+      );
+
+      act(() => {
+        screen.getByTestId('show').click();
+      });
+
+      expect(screen.getByTestId('count').textContent).toBe('1');
+    });
+
+    it('useNotification.dismiss removes notification', () => {
+      const runtime = createNotifRuntime();
+      const notif = runtime.modules.notification as NotificationController;
+
+      let dismissId = '';
+
+      function Consumer() {
+        const { count, notifications, dismiss } = useNotification();
+        return (
+          <div>
+            <span data-testid="count">{count}</span>
+            <button data-testid="dismiss" onClick={() => dismiss(dismissId)}>Dismiss</button>
+          </div>
+        );
+      }
+
+      render(
+        <PrismUIProvider runtime={runtime}>
+          <Consumer />
+        </PrismUIProvider>,
+      );
+
+      act(() => {
+        dismissId = notif.show({ type: 'info', message: 'A' });
+        notif.show({ type: 'error', message: 'B' });
+      });
+
+      expect(screen.getByTestId('count').textContent).toBe('2');
+
+      act(() => {
+        screen.getByTestId('dismiss').click();
+      });
+
+      expect(screen.getByTestId('count').textContent).toBe('1');
+    });
+
+    it('useNotification.dismissAll clears all', () => {
+      const runtime = createNotifRuntime();
+      const notif = runtime.modules.notification as NotificationController;
+
+      function Consumer() {
+        const { count, dismissAll } = useNotification();
+        return (
+          <div>
+            <span data-testid="count">{count}</span>
+            <button data-testid="dismissAll" onClick={dismissAll}>Dismiss All</button>
+          </div>
+        );
+      }
+
+      render(
+        <PrismUIProvider runtime={runtime}>
+          <Consumer />
+        </PrismUIProvider>,
+      );
+
+      act(() => {
+        notif.show({ type: 'info', message: 'A' });
+        notif.show({ type: 'error', message: 'B' });
+      });
+
+      expect(screen.getByTestId('count').textContent).toBe('2');
+
+      act(() => {
+        screen.getByTestId('dismissAll').click();
+      });
+
+      expect(screen.getByTestId('count').textContent).toBe('0');
+    });
+
+    it('useNotification.getById finds notification', () => {
+      const runtime = createNotifRuntime();
+      const notif = runtime.modules.notification as NotificationController;
+
+      let targetId = '';
+
+      function Consumer() {
+        const { getById } = useNotification();
+        const found = getById(targetId);
+        return (
+          <span data-testid="msg">{found?.message ?? 'none'}</span>
+        );
+      }
+
+      render(
+        <PrismUIProvider runtime={runtime}>
+          <Consumer />
+        </PrismUIProvider>,
+      );
+
+      expect(screen.getByTestId('msg').textContent).toBe('none');
+
+      act(() => {
+        targetId = notif.show({ type: 'info', message: 'Found me' });
+      });
+
+      expect(screen.getByTestId('msg').textContent).toBe('Found me');
+    });
+
+    it('useNotification.notifications shows message content', () => {
+      const runtime = createNotifRuntime();
+      const notif = runtime.modules.notification as NotificationController;
+
+      function Consumer() {
+        const { notifications } = useNotification();
+        return (
+          <span data-testid="msgs">{notifications.map((n) => n.message).join(',')}</span>
+        );
+      }
+
+      render(
+        <PrismUIProvider runtime={runtime}>
+          <Consumer />
+        </PrismUIProvider>,
+      );
+
+      act(() => {
+        notif.show({ type: 'info', message: 'First' });
+        notif.show({ type: 'error', message: 'Second' });
+      });
+
+      expect(screen.getByTestId('msgs').textContent).toBe('First,Second');
+    });
+  });
+
   // ── isolation ─────────────────────────────────────────────────────────
 
   describe('isolation', () => {
@@ -350,7 +732,7 @@ describe('Convenience Hooks', () => {
       const fs = await import('node:fs');
       const path = await import('node:path');
 
-      const files = ['use-page.ts', 'use-modal.ts'];
+      const files = ['use-page.ts', 'use-modal.ts', 'use-drawer.ts', 'use-notification.ts'];
       for (const file of files) {
         const filePath = path.resolve(__dirname, file);
         const source = fs.readFileSync(filePath, 'utf-8');

@@ -1,11 +1,13 @@
 import { PrismUIProvider } from '@prismui/react';
-import { usePage, useModal, useRuntimeState } from '@prismui/react';
+import { usePage, useModal, useDrawer, useNotification, useRuntimeState } from '@prismui/react';
 import { runtime } from './setup';
 import { Dashboard } from './pages/Dashboard';
 import { PatientDetail } from './pages/PatientDetail';
 import { ConfirmModal } from './components/ConfirmModal';
 import { EventLog } from './components/EventLog';
 import { AuditLog } from './components/AuditLog';
+import { DrawerPanel } from './components/DrawerPanel';
+import { NotificationPanel } from './components/NotificationPanel';
 
 function PageRouter() {
   const { currentPage } = usePage();
@@ -33,6 +35,8 @@ function StatusBar() {
   const state = useRuntimeState();
   const { currentPage, isLocked } = usePage();
   const { modalStack } = useModal();
+  const { drawerStack } = useDrawer();
+  const { count: notifCount } = useNotification();
 
   return (
     <div style={{
@@ -43,11 +47,14 @@ function StatusBar() {
       gap: '16px',
       fontSize: '13px',
       fontFamily: 'monospace',
+      flexWrap: 'wrap',
     }}>
       <span><b>version:</b> {state.version}</span>
       <span><b>page:</b> {currentPage ?? '(none)'}</span>
       <span><b>locked:</b> {isLocked ? '🔒 YES' : 'no'}</span>
       <span><b>modals:</b> {modalStack.length > 0 ? modalStack.join(', ') : '(none)'}</span>
+      <span><b>drawers:</b> {drawerStack.length > 0 ? drawerStack.map(d => d.drawerId).join(', ') : '(none)'}</span>
+      <span><b>notifications:</b> {notifCount}</span>
     </div>
   );
 }
@@ -65,6 +72,10 @@ export function App() {
             <PageRouter />
           </div>
           <div style={{ width: 320, padding: '16px', background: '#fafafa', display: 'flex', flexDirection: 'column', gap: 16 }}>
+            <DrawerPanel />
+            <hr style={{ border: 'none', borderTop: '1px solid #ddd', margin: 0 }} />
+            <NotificationPanel />
+            <hr style={{ border: 'none', borderTop: '1px solid #ddd', margin: 0 }} />
             <EventLog />
             <hr style={{ border: 'none', borderTop: '1px solid #ddd', margin: 0 }} />
             <AuditLog />

@@ -2,6 +2,8 @@ import {
   createInteractionRuntime,
   createPageModule,
   createModalModule,
+  createDrawerModule,
+  createNotificationModule,
   createAuditTrail,
   createAuditMiddleware,
   createPolicyEngine,
@@ -28,7 +30,12 @@ policy.addRule({
 });
 
 export const runtime = createInteractionRuntime({
-  modules: [createPageModule(), createModalModule()],
+  modules: [
+    createPageModule(),
+    createModalModule(),
+    createDrawerModule(),
+    createNotificationModule({ maxNotifications: 20 }),
+  ],
 });
 
 // Wire governance middleware (order: Policy → Audit → Reducer)
