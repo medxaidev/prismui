@@ -45,6 +45,42 @@ export type {
   NotificationModuleOptions,
 } from './modules/notification-module';
 
+// Form Module (STAGE-005)
+export { createFormModule } from './modules/form-module';
+export type {
+  FormModuleState,
+  FormController,
+  FieldState,
+  FormValidator,
+} from './modules/form-module';
+export {
+  FORM_REGISTER_FIELD,
+  FORM_UNREGISTER_FIELD,
+  FORM_SET_VALUE,
+  FORM_SET_ERROR,
+  FORM_SET_TOUCHED,
+  FORM_VALIDATE,
+  FORM_SUBMIT_START,
+  FORM_SUBMIT_SUCCESS,
+  FORM_SUBMIT_ERROR,
+  FORM_RESET,
+} from './modules/form-module';
+
+// Async Module (STAGE-005)
+export { createAsyncModule } from './modules/async-module';
+export type {
+  AsyncModuleState,
+  AsyncController,
+  AsyncOperation,
+  AsyncStatus,
+} from './modules/async-module';
+export {
+  ASYNC_START,
+  ASYNC_SUCCESS,
+  ASYNC_ERROR,
+  ASYNC_RESET,
+} from './modules/async-module';
+
 // State Selectors (STAGE-004)
 export { selectFromStore, createSelector } from './selector';
 export type { StateSelector } from './selector';

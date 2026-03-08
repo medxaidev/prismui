@@ -7,11 +7,15 @@ import {
   createModalModule,
   createDrawerModule,
   createNotificationModule,
+  createFormModule,
+  createAsyncModule,
   createSelector,
   type PageController,
   type ModalController,
   type DrawerController,
   type NotificationController,
+  type FormController,
+  type AsyncController,
   type StateSelector,
 } from '@prismui/core';
 import { PrismUIProvider } from './provider';
@@ -20,6 +24,8 @@ import { useModal } from './use-modal';
 import { useDrawer } from './use-drawer';
 import { useNotification } from './use-notification';
 import { useSelector } from './use-selector';
+import { useForm } from './use-form';
+import { useAsync } from './use-async';
 
 function createTestRuntime() {
   return createInteractionRuntime({
@@ -872,6 +878,240 @@ describe('Convenience Hooks', () => {
     });
   });
 
+  // ── useForm ──────────────────────────────────────────────────────────
+
+  describe('useForm', () => {
+    function createFormRuntime() {
+      return createInteractionRuntime({
+        modules: [createPageModule(), createModalModule(), createFormModule()],
+      });
+    }
+
+    it('returns form state', () => {
+      const runtime = createFormRuntime();
+
+      function Consumer() {
+        const form = useForm();
+        return (
+          <div>
+            <span data-testid="submitting">{String(form.isSubmitting)}</span>
+            <span data-testid="count">{form.submitCount}</span>
+          </div>
+        );
+      }
+
+      render(
+        <PrismUIProvider runtime={runtime}>
+          <Consumer />
+        </PrismUIProvider>,
+      );
+
+      expect(screen.getByTestId('submitting').textContent).toBe('false');
+      expect(screen.getByTestId('count').textContent).toBe('0');
+    });
+
+    it('registerField adds field reactively', () => {
+      const runtime = createFormRuntime();
+      const form = runtime.modules.form as FormController;
+
+      function Consumer() {
+        const { fields } = useForm();
+        const fieldNames = Object.keys(fields);
+        return <span data-testid="fields">{fieldNames.join(',') || 'empty'}</span>;
+      }
+
+      render(
+        <PrismUIProvider runtime={runtime}>
+          <Consumer />
+        </PrismUIProvider>,
+      );
+
+      expect(screen.getByTestId('fields').textContent).toBe('empty');
+
+      act(() => {
+        form.registerField('email', 'test@example.com');
+      });
+
+      expect(screen.getByTestId('fields').textContent).toBe('email');
+    });
+
+    it('setValue updates field value', () => {
+      const runtime = createFormRuntime();
+      const form = runtime.modules.form as FormController;
+
+      function Consumer() {
+        const { fields } = useForm();
+        const emailValue = fields.email?.value ?? 'none';
+        return <span data-testid="email">{String(emailValue)}</span>;
+      }
+
+      render(
+        <PrismUIProvider runtime={runtime}>
+          <Consumer />
+        </PrismUIProvider>,
+      );
+
+      act(() => {
+        form.registerField('email', '');
+      });
+
+      act(() => {
+        form.setValue('email', 'updated@test.com');
+      });
+
+      expect(screen.getByTestId('email').textContent).toBe('updated@test.com');
+    });
+
+    it('submitStart/submitSuccess flow', () => {
+      const runtime = createFormRuntime();
+      const form = runtime.modules.form as FormController;
+
+      function Consumer() {
+        const { isSubmitting, submitCount } = useForm();
+        return (
+          <div>
+            <span data-testid="submitting">{String(isSubmitting)}</span>
+            <span data-testid="count">{submitCount}</span>
+          </div>
+        );
+      }
+
+      render(
+        <PrismUIProvider runtime={runtime}>
+          <Consumer />
+        </PrismUIProvider>,
+      );
+
+      act(() => {
+        form.submitStart();
+      });
+
+      expect(screen.getByTestId('submitting').textContent).toBe('true');
+
+      act(() => {
+        form.submitSuccess();
+      });
+
+      expect(screen.getByTestId('submitting').textContent).toBe('false');
+      expect(screen.getByTestId('count').textContent).toBe('1');
+    });
+  });
+
+  // ── useAsync ─────────────────────────────────────────────────────────
+
+  describe('useAsync', () => {
+    function createAsyncRuntime() {
+      return createInteractionRuntime({
+        modules: [createPageModule(), createModalModule(), createAsyncModule()],
+      });
+    }
+
+    it('returns operations state', () => {
+      const runtime = createAsyncRuntime();
+
+      function Consumer() {
+        const { operations } = useAsync();
+        return <span data-testid="ops">{Object.keys(operations).length}</span>;
+      }
+
+      render(
+        <PrismUIProvider runtime={runtime}>
+          <Consumer />
+        </PrismUIProvider>,
+      );
+
+      expect(screen.getByTestId('ops').textContent).toBe('0');
+    });
+
+    it('start/success updates status', () => {
+      const runtime = createAsyncRuntime();
+      const async = runtime.modules.async as AsyncController;
+
+      function Consumer() {
+        const { operations } = useAsync();
+        const status = operations.fetchUsers?.status ?? 'idle';
+        return <span data-testid="status">{status}</span>;
+      }
+
+      render(
+        <PrismUIProvider runtime={runtime}>
+          <Consumer />
+        </PrismUIProvider>,
+      );
+
+      expect(screen.getByTestId('status').textContent).toBe('idle');
+
+      act(() => {
+        async.start('fetchUsers');
+      });
+
+      expect(screen.getByTestId('status').textContent).toBe('loading');
+
+      act(() => {
+        async.success('fetchUsers', [1, 2, 3]);
+      });
+
+      expect(screen.getByTestId('status').textContent).toBe('success');
+    });
+
+    it('error sets error message', () => {
+      const runtime = createAsyncRuntime();
+      const async = runtime.modules.async as AsyncController;
+
+      function Consumer() {
+        const { operations } = useAsync();
+        const error = operations.op1?.error ?? 'none';
+        return <span data-testid="error">{error}</span>;
+      }
+
+      render(
+        <PrismUIProvider runtime={runtime}>
+          <Consumer />
+        </PrismUIProvider>,
+      );
+
+      act(() => {
+        async.start('op1');
+      });
+
+      act(() => {
+        async.error('op1', 'Network failed');
+      });
+
+      expect(screen.getByTestId('error').textContent).toBe('Network failed');
+    });
+
+    it('isLoading reflects status', () => {
+      const runtime = createAsyncRuntime();
+      const asyncCtrl = runtime.modules.async as AsyncController;
+
+      function Consumer() {
+        const { isAnyLoading } = useAsync();
+        return <span data-testid="loading">{String(isAnyLoading())}</span>;
+      }
+
+      render(
+        <PrismUIProvider runtime={runtime}>
+          <Consumer />
+        </PrismUIProvider>,
+      );
+
+      expect(screen.getByTestId('loading').textContent).toBe('false');
+
+      act(() => {
+        asyncCtrl.start('op1');
+      });
+
+      expect(screen.getByTestId('loading').textContent).toBe('true');
+
+      act(() => {
+        asyncCtrl.success('op1');
+      });
+
+      expect(screen.getByTestId('loading').textContent).toBe('false');
+    });
+  });
+
   // ── isolation ─────────────────────────────────────────────────────────
 
   describe('isolation', () => {
@@ -879,7 +1119,7 @@ describe('Convenience Hooks', () => {
       const fs = await import('node:fs');
       const path = await import('node:path');
 
-      const files = ['use-page.ts', 'use-modal.ts', 'use-drawer.ts', 'use-notification.ts', 'use-selector.ts'];
+      const files = ['use-page.ts', 'use-modal.ts', 'use-drawer.ts', 'use-notification.ts', 'use-selector.ts', 'use-form.ts', 'use-async.ts'];
       for (const file of files) {
         const filePath = path.resolve(__dirname, file);
         const source = fs.readFileSync(filePath, 'utf-8');

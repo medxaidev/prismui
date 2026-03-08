@@ -24,19 +24,21 @@ Each stage builds upon the previous one and introduces new capabilities.
 | 2     | [Governance Layer](./STAGE-002-governance-layer.md)         | ✅ Complete | Audit Trail, Replay System, Policy Engine, Priority Scheduler                                                  | 79    |
 | 3     | [Interaction Modules](./STAGE-003-interaction-modules.md)   | ✅ Complete | Drawer Module, Notification Module, React Hooks, Demo                                                          | 58    |
 | 4     | [Lifecycle & Selectors](./STAGE-004-lifecycle-selectors.md) | ✅ Complete | State Selectors, Module Lifecycle (onInit/onDestroy), waitFor, useSelector                                     | 43    |
-| 5     | Semantic Theme                                              | Planned     | Token Layer, Semantic Intent, Behavior Derivation                                                              | TBD   |
-| 6     | Interaction DSL                                             | Planned     | `ui.modal.open()`, `ui.confirm()`, `ui.notify()`                                                               | TBD   |
-| 7     | DevTools & Automation                                       | Planned     | Runtime Inspector, Event Replay UI, AI Agent interface                                                         | TBD   |
+| 5     | [Form & Async Runtime](./STAGE-005-form-async-runtime.md)   | ✅ Complete | Form State Module, Async State Module, useForm, useAsync                                                       | 47    |
+| 6     | Interaction DSL                                             | Planned     | `ui.modal.open()`, `ui.confirm()`, `ui.notify()`, `ui.form.create()`                                           | TBD   |
+| 7     | Semantic Theme                                              | Deferred    | Token Layer, Semantic Intent, Behavior Derivation                                                              | TBD   |
+| 8     | DevTools & Automation                                       | Planned     | Runtime Inspector, Event Replay UI, AI Agent interface                                                         | TBD   |
 
-| 阶段 | 名称                                                   | 状态      | 重点                                                                                                     | 测试 |
-| ---- | ------------------------------------------------------ | --------- | -------------------------------------------------------------------------------------------------------- | ---- |
-| 1    | [运行时核心](./STAGE-001-runtime-core.md)              | ✅ 已完成 | EventBus、Store、Scheduler（Reducer Commit）、Module System、内建模块（Page+Modal）、React Adapter、Demo | 110  |
-| 2    | [治理层](./STAGE-002-governance-layer.md)              | ✅ 已完成 | Audit Trail、Replay System、Policy Engine、Priority Scheduler                                            | 79   |
-| 3    | [交互模块](./STAGE-003-interaction-modules.md)         | ✅ 已完成 | Drawer Module、Notification Module、React Hooks、Demo                                                    | 58   |
-| 4    | [生命周期与选择器](./STAGE-004-lifecycle-selectors.md) | ✅ 已完成 | 状态选择器、模块生命周期（onInit/onDestroy）、waitFor、useSelector                                       | 43   |
-| 5    | 语义主题                                               | 规划中    | Token Layer、Semantic Intent、Behavior Derivation                                                        | TBD  |
-| 6    | 交互 DSL                                               | 规划中    | `ui.modal.open()`、`ui.confirm()`、`ui.notify()`                                                         | TBD  |
-| 7    | DevTools 与自动化                                      | 规划中    | Runtime Inspector、Event Replay UI、AI Agent 接口                                                        | TBD  |
+| 阶段 | 名称                                                     | 状态      | 重点                                                                                                     | 测试 |
+| ---- | -------------------------------------------------------- | --------- | -------------------------------------------------------------------------------------------------------- | ---- |
+| 1    | [运行时核心](./STAGE-001-runtime-core.md)                | ✅ 已完成 | EventBus、Store、Scheduler（Reducer Commit）、Module System、内建模块（Page+Modal）、React Adapter、Demo | 110  |
+| 2    | [治理层](./STAGE-002-governance-layer.md)                | ✅ 已完成 | Audit Trail、Replay System、Policy Engine、Priority Scheduler                                            | 79   |
+| 3    | [交互模块](./STAGE-003-interaction-modules.md)           | ✅ 已完成 | Drawer Module、Notification Module、React Hooks、Demo                                                    | 58   |
+| 4    | [生命周期与选择器](./STAGE-004-lifecycle-selectors.md)   | ✅ 已完成 | 状态选择器、模块生命周期（onInit/onDestroy）、waitFor、useSelector                                       | 43   |
+| 5    | [Form & Async 运行时](./STAGE-005-form-async-runtime.md) | ✅ 已完成 | Form State Module、Async State Module、useForm、useAsync                                                 | 47   |
+| 6    | 交互 DSL                                                 | 规划中    | `ui.modal.open()`、`ui.confirm()`、`ui.notify()`、`ui.form.create()`                                     | TBD  |
+| 7    | 语义主题                                                 | 已推迟    | Token Layer、Semantic Intent、Behavior Derivation                                                        | TBD  |
+| 8    | DevTools 与自动化                                        | 规划中    | Runtime Inspector、Event Replay UI、AI Agent 接口                                                        | TBD  |
 
 ---
 
@@ -164,11 +166,69 @@ Each stage builds upon the previous one and introduces new capabilities.
 
 ---
 
-## Stage 5: Semantic Theme (Planned)
+## Stage 5: Form & Async Runtime (Complete)
 
-**Goal:** Implement the three-layer theme derivation system. By this stage the full runtime exists, enabling Behavior Derivation to integrate with Policy Engine and all interaction modules.
+**Goal:** Add Form State and Async State runtime modules — the two foundational data management patterns every application needs.
 
-**目标：** 实现三层主题推导系统。在此阶段完整运行时已存在，Behavior Derivation 可与 Policy Engine 及所有交互模块集成。
+**目标：** 新增 Form State 和 Async State 运行时模块 —— 每个应用程序都需要的两大基础数据管理模式。
+
+**Deliverables:**
+
+**交付物：**
+
+1. ✅ Form State Module (field tracking, validation, submission lifecycle) — 25 tests
+2. ✅ Async State Module (loading/success/error lifecycle) — 14 tests
+3. ✅ React Hooks (`useForm`, `useAsync`) — 8 tests
+4. ✅ Barrel exports updated (core + react)
+
+5. ✅ Form State Module（字段追踪、校验、提交生命周期）— 25 测试
+6. ✅ Async State Module（loading/success/error 生命周期）— 14 测试
+7. ✅ React Hooks（`useForm`、`useAsync`）— 8 测试
+8. ✅ Barrel exports 已更新（core + react）
+
+**Dependencies:** Stage 4 complete  
+**Detail:** [STAGE-005-form-async-runtime.md](./STAGE-005-form-async-runtime.md)
+
+**依赖：** Stage 4 完成  
+**详情：** [STAGE-005-form-async-runtime.md](./STAGE-005-form-async-runtime.md)
+
+---
+
+## Stage 6: Interaction DSL (Planned)
+
+**Goal:** High-level API for common interaction patterns.
+
+**目标：** 为常见交互模式提供更高层 API。
+
+**Deliverables:**
+
+**交付物：**
+
+- `ui.modal.open({ ... })` — programmatic modal control
+- `ui.confirm({ ... })` — confirmation dialog with Promise
+- `ui.notify({ ... })` — notification dispatch
+- `ui.form.create({ ... })` — form creation
+- `ui.async.execute({ ... })` — async operation
+- DSL type safety and autocomplete
+
+- `ui.modal.open({ ... })` — 以程序方式控制 modal
+- `ui.confirm({ ... })` — 返回 Promise 的确认对话框
+- `ui.notify({ ... })` — 分发通知
+- `ui.form.create({ ... })` — 创建表单
+- `ui.async.execute({ ... })` — 异步操作
+- DSL 类型安全与自动补全
+
+**Dependencies:** Stage 5 complete
+
+**依赖：** Stage 5 完成
+
+---
+
+## Stage 7: Semantic Theme (Deferred)
+
+**Goal:** Implement the three-layer theme derivation system. Deferred per [ADR-008](../decisions/ADR-008-stage-reordering-2.md) until runtime kernel is fully complete.
+
+**目标：** 实现三层主题推导系统。根据 [ADR-008](../decisions/ADR-008-stage-reordering-2.md) 推迟至运行时内核完全完成后。
 
 **Deliverables:**
 
@@ -186,41 +246,13 @@ Each stage builds upon the previous one and introduces new capabilities.
 - Theme override APIs（token、semantic、behavior）
 - React adapter 的 `useTheme()` hook
 
-**Dependencies:** Stage 4 complete
+**Dependencies:** Stage 6 complete
 
-**依赖：** Stage 4 完成
-
----
-
-## Stage 6: Interaction DSL (Planned)
-
-**Goal:** High-level API for common interaction patterns.
-
-**目标：** 为常见交互模式提供更高层 API。
-
-**Deliverables:**
-
-**交付物：**
-
-- `ui.modal.open({ ... })` — programmatic modal control
-- `ui.confirm({ ... })` — confirmation dialog with Promise
-- `ui.notify({ ... })` — notification dispatch
-- `ui.workflow.start({ ... })` — workflow initiation
-- DSL type safety and autocomplete
-
-- `ui.modal.open({ ... })` — 以程序方式控制 modal
-- `ui.confirm({ ... })` — 返回 Promise 的确认对话框
-- `ui.notify({ ... })` — 分发通知
-- `ui.workflow.start({ ... })` — 启动工作流
-- DSL 类型安全与自动补全
-
-**Dependencies:** Stage 5 complete
-
-**依赖：** Stage 5 完成
+**依赖：** Stage 6 完成
 
 ---
 
-## Stage 7: DevTools & Automation (Planned)
+## Stage 8: DevTools & Automation (Planned)
 
 **Goal:** Developer tooling and automation interfaces.
 
@@ -240,9 +272,9 @@ Each stage builds upon the previous one and introduces new capabilities.
 - AI Agent 接口（为自动化系统提供 event dispatch API）
 - 性能监控
 
-**Dependencies:** Stage 6 complete
+**Dependencies:** Stage 7 complete
 
-**依赖：** Stage 6 完成
+**依赖：** Stage 7 完成
 
 ---
 
