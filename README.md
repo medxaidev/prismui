@@ -5,8 +5,11 @@
 [![Version](https://img.shields.io/badge/version-0.1.0-blue.svg)](https://github.com/medxaidev/prismui)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![Tests](https://img.shields.io/badge/tests-372%20passing-brightgreen.svg)](https://github.com/medxaidev/prismui)
+[![Live Demo](https://img.shields.io/badge/demo-live-success.svg)](https://medxaidev.github.io/prismui/)
 
 PrismUI is a framework-agnostic event-driven runtime kernel that provides comprehensive state management, governance, and interaction capabilities for modern web applications.
+
+**[🎮 Try the Live Demo →](https://medxaidev.github.io/prismui/)**
 
 ## 🎯 What is PrismUI?
 
