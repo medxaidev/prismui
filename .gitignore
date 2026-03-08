@@ -11,13 +11,11 @@ dist/
 coverage/
 .vitest/
 
-# IDE
-.vscode/
-.idea/
 
 # OS
 .DS_Store
 Thumbs.db
+
 
 devdocs/
 
