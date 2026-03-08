@@ -22,3 +22,4 @@ export { useDrawer } from './use-drawer';
 export type { UseDrawerReturn } from './use-drawer';
 export { useNotification } from './use-notification';
 export type { UseNotificationReturn } from './use-notification';
+export { useSelector } from './use-selector';

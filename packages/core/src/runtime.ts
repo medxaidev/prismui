@@ -8,6 +8,7 @@ import { createEventBus, type RuntimeEvent, type EventBus } from './event-bus';
 import { createRuntimeStore, type RuntimeState, type RuntimeStore } from './store';
 import { createScheduler, type SchedulerMiddleware, type Scheduler } from './scheduler';
 import type { RuntimeModule } from './module';
+import { MODULE_INIT, MODULE_DESTROY, type ModuleStatus } from './lifecycle';
 
 /**
  * The assembled Interaction Runtime.
@@ -32,6 +33,9 @@ export interface InteractionRuntime {
 
   /** Clean up all subscriptions, reducers, and history. */
   destroy(): void;
+
+  /** Get status of all registered modules. */
+  getModuleStatus(): Record<string, ModuleStatus>;
 }
 
 /** Options for createInteractionRuntime(). */
@@ -50,6 +54,7 @@ export interface RuntimeOptions {
  * 2. Create EventBus → RuntimeStore (merged state) → Scheduler
  * 3. Register module reducers, middleware, controllers
  * 4. Add options.middleware (after module middleware)
+ * 5. Call onInit lifecycle hooks + dispatch MODULE_INIT events
  */
 export function createInteractionRuntime(options?: RuntimeOptions): InteractionRuntime {
   const modules = options?.modules ?? [];
@@ -102,6 +107,12 @@ export function createInteractionRuntime(options?: RuntimeOptions): InteractionR
     scheduler.use(mw);
   }
 
+  // Module status tracking
+  const moduleStatusMap: Record<string, ModuleStatus> = {};
+  for (const mod of modules) {
+    moduleStatusMap[mod.name] = 'registered';
+  }
+
   // Track store subscriptions for destroy
   const storeUnsubs: (() => void)[] = [];
 
@@ -126,6 +137,24 @@ export function createInteractionRuntime(options?: RuntimeOptions): InteractionR
     },
 
     destroy(): void {
+      // Call onDestroy in reverse order (LIFO)
+      for (let i = modules.length - 1; i >= 0; i--) {
+        const mod = modules[i];
+        if (mod.onDestroy) {
+          try {
+            mod.onDestroy();
+          } catch (err) {
+            console.error(`[Runtime] onDestroy error in module '${mod.name}':`, err);
+          }
+        }
+        moduleStatusMap[mod.name] = 'destroyed';
+      }
+
+      // Dispatch MODULE_DESTROY events (before clearing bus)
+      for (let i = modules.length - 1; i >= 0; i--) {
+        bus.dispatch({ type: MODULE_DESTROY, payload: { moduleName: modules[i].name } });
+      }
+
       // Unregister all reducers
       for (const unreg of unregisterFns) {
         unreg();
@@ -141,7 +170,20 @@ export function createInteractionRuntime(options?: RuntimeOptions): InteractionR
       // Clear bus (removes all subscribers + history)
       bus.clear();
     },
+
+    getModuleStatus(): Record<string, ModuleStatus> {
+      return { ...moduleStatusMap };
+    },
   };
+
+  // 5. Call onInit lifecycle hooks + dispatch MODULE_INIT events
+  for (const mod of modules) {
+    if (mod.onInit) {
+      mod.onInit({ bus, scheduler, store });
+    }
+    moduleStatusMap[mod.name] = 'active';
+    bus.dispatch({ type: MODULE_INIT, payload: { moduleName: mod.name } });
+  }
 
   return runtime;
 }

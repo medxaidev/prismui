@@ -7,16 +7,19 @@ import {
   createModalModule,
   createDrawerModule,
   createNotificationModule,
+  createSelector,
   type PageController,
   type ModalController,
   type DrawerController,
   type NotificationController,
+  type StateSelector,
 } from '@prismui/core';
 import { PrismUIProvider } from './provider';
 import { usePage } from './use-page';
 import { useModal } from './use-modal';
 import { useDrawer } from './use-drawer';
 import { useNotification } from './use-notification';
+import { useSelector } from './use-selector';
 
 function createTestRuntime() {
   return createInteractionRuntime({
@@ -725,6 +728,150 @@ describe('Convenience Hooks', () => {
     });
   });
 
+  // ── useSelector ─────────────────────────────────────────────────────
+
+  describe('useSelector', () => {
+    it('returns selected slice', () => {
+      const runtime = createInteractionRuntime({
+        modules: [createPageModule(), createModalModule()],
+      });
+
+      function Consumer() {
+        const version = useSelector((s) => s.version);
+        return <span data-testid="version">{version}</span>;
+      }
+
+      render(
+        <PrismUIProvider runtime={runtime}>
+          <Consumer />
+        </PrismUIProvider>,
+      );
+
+      expect(screen.getByTestId('version').textContent).toBe('0');
+    });
+
+    it('re-renders on relevant change', () => {
+      const runtime = createInteractionRuntime({
+        modules: [createPageModule(), createModalModule()],
+      });
+      const modal = runtime.modules.modal as ModalController;
+
+      function Consumer() {
+        const stack = useSelector((s) => s.modalStack as string[]);
+        return <span data-testid="count">{stack.length}</span>;
+      }
+
+      render(
+        <PrismUIProvider runtime={runtime}>
+          <Consumer />
+        </PrismUIProvider>,
+      );
+
+      expect(screen.getByTestId('count').textContent).toBe('0');
+
+      act(() => {
+        modal.open('test');
+      });
+
+      expect(screen.getByTestId('count').textContent).toBe('1');
+    });
+
+    it('skips re-render on irrelevant change', () => {
+      const runtime = createInteractionRuntime({
+        modules: [createPageModule(), createModalModule()],
+      });
+      const page = runtime.modules.page as PageController;
+      let renderCount = 0;
+
+      function Consumer() {
+        const stack = useSelector((s) => s.modalStack as string[]);
+        renderCount++;
+        return <span data-testid="count">{stack.length}</span>;
+      }
+
+      render(
+        <PrismUIProvider runtime={runtime}>
+          <Consumer />
+        </PrismUIProvider>,
+      );
+
+      const initialRenders = renderCount;
+
+      // Change page state — should not trigger re-render in modal selector
+      act(() => {
+        page.mount('Dashboard');
+      });
+
+      expect(renderCount).toBe(initialRenders);
+    });
+
+    it('works with createSelector', () => {
+      const runtime = createInteractionRuntime({
+        modules: [createPageModule(), createModalModule()],
+      });
+      const modal = runtime.modules.modal as ModalController;
+
+      const selectModalCount: StateSelector<number> = createSelector(
+        [(s) => s.modalStack as string[]],
+        (stack) => stack.length,
+      );
+
+      function Consumer() {
+        const count = useSelector(selectModalCount);
+        return <span data-testid="count">{count}</span>;
+      }
+
+      render(
+        <PrismUIProvider runtime={runtime}>
+          <Consumer />
+        </PrismUIProvider>,
+      );
+
+      expect(screen.getByTestId('count').textContent).toBe('0');
+
+      act(() => {
+        modal.open('a');
+        modal.open('b');
+      });
+
+      expect(screen.getByTestId('count').textContent).toBe('2');
+    });
+
+    it('multiple useSelector hooks independent', () => {
+      const runtime = createInteractionRuntime({
+        modules: [createPageModule(), createModalModule()],
+      });
+      const modal = runtime.modules.modal as ModalController;
+      const page = runtime.modules.page as PageController;
+
+      function Consumer() {
+        const modalCount = useSelector((s) => (s.modalStack as string[]).length);
+        const currentPage = useSelector((s) => s.currentPage as string | null);
+        return (
+          <div>
+            <span data-testid="modals">{modalCount}</span>
+            <span data-testid="page">{String(currentPage)}</span>
+          </div>
+        );
+      }
+
+      render(
+        <PrismUIProvider runtime={runtime}>
+          <Consumer />
+        </PrismUIProvider>,
+      );
+
+      act(() => {
+        modal.open('test');
+        page.mount('Home');
+        page.transition('Home');
+      });
+
+      expect(screen.getByTestId('modals').textContent).toBe('1');
+      expect(screen.getByTestId('page').textContent).toBe('Home');
+    });
+  });
+
   // ── isolation ─────────────────────────────────────────────────────────
 
   describe('isolation', () => {
@@ -732,7 +879,7 @@ describe('Convenience Hooks', () => {
       const fs = await import('node:fs');
       const path = await import('node:path');
 
-      const files = ['use-page.ts', 'use-modal.ts', 'use-drawer.ts', 'use-notification.ts'];
+      const files = ['use-page.ts', 'use-modal.ts', 'use-drawer.ts', 'use-notification.ts', 'use-selector.ts'];
       for (const file of files) {
         const filePath = path.resolve(__dirname, file);
         const source = fs.readFileSync(filePath, 'utf-8');

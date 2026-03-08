@@ -8,7 +8,7 @@ Each stage builds upon the previous one and introduces new capabilities.
 
 > **Version:** 2.0  
 > **Last Updated:** 2026-03-08  
-> **Total Tests:** 247
+> **Total Tests:** 290
 
 **Core Principle:** Each stage must be **complete before the next begins**. No partial infrastructure, no deferred core logic, no tails. The stage's core deliverables must be fully functional, tested, and documented.
 
@@ -18,25 +18,25 @@ Each stage builds upon the previous one and introduces new capabilities.
 
 ## Stage Overview
 
-| Stage | Name                                                      | Status      | Focus                                                                                                          | Tests |
-| ----- | --------------------------------------------------------- | ----------- | -------------------------------------------------------------------------------------------------------------- | ----- |
-| 1     | [Runtime Core](./STAGE-001-runtime-core.md)               | ✅ Complete | EventBus, Store, Scheduler (Reducer Commit), Module System, Built-in Modules (Page+Modal), React Adapter, Demo | 110   |
-| 2     | [Governance Layer](./STAGE-002-governance-layer.md)       | ✅ Complete | Audit Trail, Replay System, Policy Engine, Priority Scheduler                                                  | 79    |
-| 3     | [Interaction Modules](./STAGE-003-interaction-modules.md) | ✅ Complete | Drawer Module, Notification Module, React Hooks, Demo                                                          | 58    |
-| 4     | Lifecycle & Hooks                                         | Planned     | Module lifecycle events, state selectors, inter-module communication                                           | TBD   |
-| 5     | Semantic Theme                                            | Planned     | Token Layer, Semantic Intent, Behavior Derivation                                                              | TBD   |
-| 6     | Interaction DSL                                           | Planned     | `ui.modal.open()`, `ui.confirm()`, `ui.notify()`                                                               | TBD   |
-| 7     | DevTools & Automation                                     | Planned     | Runtime Inspector, Event Replay UI, AI Agent interface                                                         | TBD   |
+| Stage | Name                                                        | Status      | Focus                                                                                                          | Tests |
+| ----- | ----------------------------------------------------------- | ----------- | -------------------------------------------------------------------------------------------------------------- | ----- |
+| 1     | [Runtime Core](./STAGE-001-runtime-core.md)                 | ✅ Complete | EventBus, Store, Scheduler (Reducer Commit), Module System, Built-in Modules (Page+Modal), React Adapter, Demo | 110   |
+| 2     | [Governance Layer](./STAGE-002-governance-layer.md)         | ✅ Complete | Audit Trail, Replay System, Policy Engine, Priority Scheduler                                                  | 79    |
+| 3     | [Interaction Modules](./STAGE-003-interaction-modules.md)   | ✅ Complete | Drawer Module, Notification Module, React Hooks, Demo                                                          | 58    |
+| 4     | [Lifecycle & Selectors](./STAGE-004-lifecycle-selectors.md) | ✅ Complete | State Selectors, Module Lifecycle (onInit/onDestroy), waitFor, useSelector                                     | 43    |
+| 5     | Semantic Theme                                              | Planned     | Token Layer, Semantic Intent, Behavior Derivation                                                              | TBD   |
+| 6     | Interaction DSL                                             | Planned     | `ui.modal.open()`, `ui.confirm()`, `ui.notify()`                                                               | TBD   |
+| 7     | DevTools & Automation                                       | Planned     | Runtime Inspector, Event Replay UI, AI Agent interface                                                         | TBD   |
 
-| 阶段 | 名称                                           | 状态      | 重点                                                                                                     | 测试 |
-| ---- | ---------------------------------------------- | --------- | -------------------------------------------------------------------------------------------------------- | ---- |
-| 1    | [运行时核心](./STAGE-001-runtime-core.md)      | ✅ 已完成 | EventBus、Store、Scheduler（Reducer Commit）、Module System、内建模块（Page+Modal）、React Adapter、Demo | 110  |
-| 2    | [治理层](./STAGE-002-governance-layer.md)      | ✅ 已完成 | Audit Trail、Replay System、Policy Engine、Priority Scheduler                                            | 79   |
-| 3    | [交互模块](./STAGE-003-interaction-modules.md) | ✅ 已完成 | Drawer Module、Notification Module、React Hooks、Demo                                                    | 58   |
-| 4    | 生命周期与 Hooks                               | 规划中    | 模块生命周期事件、状态选择器、模块间通信                                                                 | TBD  |
-| 5    | 语义主题                                       | 规划中    | Token Layer、Semantic Intent、Behavior Derivation                                                        | TBD  |
-| 6    | 交互 DSL                                       | 规划中    | `ui.modal.open()`、`ui.confirm()`、`ui.notify()`                                                         | TBD  |
-| 7    | DevTools 与自动化                              | 规划中    | Runtime Inspector、Event Replay UI、AI Agent 接口                                                        | TBD  |
+| 阶段 | 名称                                                   | 状态      | 重点                                                                                                     | 测试 |
+| ---- | ------------------------------------------------------ | --------- | -------------------------------------------------------------------------------------------------------- | ---- |
+| 1    | [运行时核心](./STAGE-001-runtime-core.md)              | ✅ 已完成 | EventBus、Store、Scheduler（Reducer Commit）、Module System、内建模块（Page+Modal）、React Adapter、Demo | 110  |
+| 2    | [治理层](./STAGE-002-governance-layer.md)              | ✅ 已完成 | Audit Trail、Replay System、Policy Engine、Priority Scheduler                                            | 79   |
+| 3    | [交互模块](./STAGE-003-interaction-modules.md)         | ✅ 已完成 | Drawer Module、Notification Module、React Hooks、Demo                                                    | 58   |
+| 4    | [生命周期与选择器](./STAGE-004-lifecycle-selectors.md) | ✅ 已完成 | 状态选择器、模块生命周期（onInit/onDestroy）、waitFor、useSelector                                       | 43   |
+| 5    | 语义主题                                               | 规划中    | Token Layer、Semantic Intent、Behavior Derivation                                                        | TBD  |
+| 6    | 交互 DSL                                               | 规划中    | `ui.modal.open()`、`ui.confirm()`、`ui.notify()`                                                         | TBD  |
+| 7    | DevTools 与自动化                                      | 规划中    | Runtime Inspector、Event Replay UI、AI Agent 接口                                                        | TBD  |
 
 ---
 
@@ -134,29 +134,33 @@ Each stage builds upon the previous one and introduces new capabilities.
 
 ---
 
-## Stage 4: Lifecycle & Hooks (Planned)
+## Stage 4: Lifecycle & Selectors (Complete)
 
-**Goal:** Enrich the Module System with advanced lifecycle events, state selectors, and inter-module communication.
+**Goal:** Enrich the runtime platform with state selectors, module lifecycle hooks, and inter-module communication.
 
-**目标：** 丰富 Module System，增加高级生命周期事件、状态选择器与模块间通信。
+**目标：** 丰富运行时平台，增加状态选择器、模块生命周期钩子与模块间通信。
 
 **Deliverables:**
 
 **交付物：**
 
-- State selectors (efficient partial state subscription)
-- Inter-module event communication patterns
-- Form State Module (validation, submission, field tracking)
-- Async State Module (loading, success, error lifecycle)
+1. ✅ State Selectors (`selectFromStore`, `createSelector`) — 13 tests
+2. ✅ Module Lifecycle (`onInit`/`onDestroy`, `getModuleStatus`, `MODULE_INIT`/`MODULE_DESTROY` events) — 15 tests
+3. ✅ Inter-module Communication (`waitFor` with predicate + timeout) — 10 tests
+4. ✅ React adapter hook (`useSelector` with `useSyncExternalStore`) — 5 tests
+5. ✅ Barrel exports updated (core + react)
 
-- 状态选择器（高效部分状态订阅）
-- 模块间事件通信模式
-- Form State Module（校验、提交、字段追踪）
-- Async State Module（loading / success / error 生命周期）
+6. ✅ 状态选择器（`selectFromStore`、`createSelector`）— 13 测试
+7. ✅ 模块生命周期（`onInit`/`onDestroy`、`getModuleStatus`、`MODULE_INIT`/`MODULE_DESTROY` 事件）— 15 测试
+8. ✅ 模块间通信（`waitFor`，支持 predicate + timeout）— 10 测试
+9. ✅ React adapter hook（`useSelector`，使用 `useSyncExternalStore`）— 5 测试
+10. ✅ Barrel exports 已更新（core + react）
 
-**Dependencies:** Stage 3 complete
+**Dependencies:** Stage 3 complete  
+**Detail:** [STAGE-004-lifecycle-selectors.md](./STAGE-004-lifecycle-selectors.md)
 
-**依赖：** Stage 3 完成
+**依赖：** Stage 3 完成  
+**详情：** [STAGE-004-lifecycle-selectors.md](./STAGE-004-lifecycle-selectors.md)
 
 ---
 

@@ -35,4 +35,14 @@ export interface RuntimeModule<TController = unknown> {
     scheduler: Scheduler;
     store: RuntimeStore;
   }) => TController;
+
+  /** Called after module is fully wired into runtime. Receives Core subsystems. */
+  onInit?: (core: {
+    bus: EventBus;
+    scheduler: Scheduler;
+    store: RuntimeStore;
+  }) => void;
+
+  /** Called when runtime.destroy() is invoked. Cleanup opportunity. */
+  onDestroy?: () => void;
 }

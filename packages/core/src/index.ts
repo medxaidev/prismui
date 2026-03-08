@@ -45,6 +45,18 @@ export type {
   NotificationModuleOptions,
 } from './modules/notification-module';
 
+// State Selectors (STAGE-004)
+export { selectFromStore, createSelector } from './selector';
+export type { StateSelector } from './selector';
+
+// Module Lifecycle (STAGE-004)
+export { MODULE_INIT, MODULE_DESTROY } from './lifecycle';
+export type { ModuleStatus } from './lifecycle';
+
+// Inter-module Communication (STAGE-004)
+export { waitFor, WaitForTimeoutError } from './wait-for';
+export type { WaitForOptions } from './wait-for';
+
 // Governance Layer (Layer 1 — STAGE-002)
 export {
   createAuditTrail,

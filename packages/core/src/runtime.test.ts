@@ -143,6 +143,9 @@ describe('InteractionRuntime', () => {
         return { nextState: s };
       });
 
+      // Clear any entries from MODULE_INIT lifecycle events during creation
+      order.length = 0;
+
       runtime.dispatch({ type: 'TEST' });
       // Module middleware runs before extra middleware, both before reducer
       expect(order).toEqual(['module-mw', 'extra-mw', 'reducer']);

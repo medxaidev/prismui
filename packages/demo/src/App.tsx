@@ -8,6 +8,7 @@ import { EventLog } from './components/EventLog';
 import { AuditLog } from './components/AuditLog';
 import { DrawerPanel } from './components/DrawerPanel';
 import { NotificationPanel } from './components/NotificationPanel';
+import { ModuleStatusPanel } from './components/ModuleStatusPanel';
 
 function PageRouter() {
   const { currentPage } = usePage();
@@ -75,6 +76,8 @@ export function App() {
             <DrawerPanel />
             <hr style={{ border: 'none', borderTop: '1px solid #ddd', margin: 0 }} />
             <NotificationPanel />
+            <hr style={{ border: 'none', borderTop: '1px solid #ddd', margin: 0 }} />
+            <ModuleStatusPanel />
             <hr style={{ border: 'none', borderTop: '1px solid #ddd', margin: 0 }} />
             <EventLog />
             <hr style={{ border: 'none', borderTop: '1px solid #ddd', margin: 0 }} />
