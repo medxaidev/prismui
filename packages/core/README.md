@@ -20,18 +20,21 @@ npm install @prismui/core
 ## Features
 
 ### Core Runtime
+
 - **EventBus**: Event-driven communication with history tracking
 - **RuntimeStore**: Immutable state management with snapshots
 - **Scheduler**: Reducer-based event processing with middleware pipeline
 - **Module System**: Pluggable architecture with lifecycle hooks
 
 ### Governance Layer
+
 - **Audit Trail**: Complete event and state change tracking
 - **Replay System**: Time-travel debugging
 - **Policy Engine**: Rule-based event validation
 - **Priority Scheduler**: Event prioritization with conflict resolution
 
 ### Built-in Modules
+
 - **Page Module**: Page navigation and transition management
 - **Modal Module**: Modal stack management
 - **Drawer Module**: Drawer positioning and stack management
@@ -40,19 +43,28 @@ npm install @prismui/core
 - **Async Module**: Async operation tracking with loading/success/error states
 
 ### Interaction DSL
+
 - **Unified API**: `ui.*` namespace wrapping all module controllers
 - **Promise-based**: `ui.confirm()` returns `Promise<boolean>`
 - **Type-safe**: Full TypeScript autocomplete
 
+### DevTools & Automation
+
+- **DevTools Module**: Optional instrumentation for runtime inspection
+- **Event Timeline**: Middleware-based event timing with filtering
+- **Performance Monitor**: Throughput, latency, per-type stats
+- **State Snapshots**: Capture, compare (diff), and export
+- **AI Agent Interface**: Programmatic dispatch, sequence execution, state waiting
+
 ## Quick Start
 
 ```typescript
-import { 
+import {
   createInteractionRuntime,
   createPageModule,
   createModalModule,
-  createNotificationModule
-} from '@prismui/core';
+  createNotificationModule,
+} from "@prismui/core";
 
 // Create runtime with modules
 const runtime = createInteractionRuntime({
@@ -64,25 +76,25 @@ const runtime = createInteractionRuntime({
 });
 
 // Use module controllers
-runtime.modules.page?.transition('dashboard');
-runtime.modules.modal?.open('confirm');
+runtime.modules.page?.transition("dashboard");
+runtime.modules.modal?.open("confirm");
 runtime.modules.notification?.notify({
-  type: 'success',
-  message: 'Operation completed!',
+  type: "success",
+  message: "Operation completed!",
 });
 
 // Or use the unified DSL
-import { createInteractionDSL } from '@prismui/core';
+import { createInteractionDSL } from "@prismui/core";
 
 const ui = createInteractionDSL(runtime);
-ui.page.go('dashboard');
-ui.modal.open('confirm');
-ui.notify.success('Operation completed!');
+ui.page.go("dashboard");
+ui.modal.open("confirm");
+ui.notify.success("Operation completed!");
 
 // Promise-based confirmation
-const confirmed = await ui.confirm('deleteDialog');
+const confirmed = await ui.confirm("deleteDialog");
 if (confirmed) {
-  console.log('User confirmed');
+  console.log("User confirmed");
 }
 ```
 
@@ -91,38 +103,38 @@ if (confirmed) {
 Create custom modules to extend the runtime:
 
 ```typescript
-import { RuntimeModule } from '@prismui/core';
+import { RuntimeModule } from "@prismui/core";
 
 interface MyModuleState {
   myData: string;
 }
 
 const createMyModule = (): RuntimeModule<MyModuleState, any> => ({
-  name: 'myModule',
-  
+  name: "myModule",
+
   initialState: {
-    myData: 'initial',
+    myData: "initial",
   },
-  
+
   reducers: {
     MY_EVENT: (state, event) => ({
       ...state,
       myData: event.payload,
     }),
   },
-  
+
   controller: (runtime) => ({
     updateData: (data: string) => {
-      runtime.dispatch({ type: 'MY_EVENT', payload: data });
+      runtime.dispatch({ type: "MY_EVENT", payload: data });
     },
   }),
-  
+
   onInit: (runtime) => {
-    console.log('Module initialized');
+    console.log("Module initialized");
   },
-  
+
   onDestroy: () => {
-    console.log('Module destroyed');
+    console.log("Module destroyed");
   },
 });
 ```
@@ -169,16 +181,16 @@ const runtime = createInteractionRuntime({
 Efficiently subscribe to partial state:
 
 ```typescript
-import { createSelector } from '@prismui/core';
+import { createSelector } from "@prismui/core";
 
 const selectModalStack = createSelector(
   (state) => state.modalStack,
-  (modalStack) => modalStack.length
+  (modalStack) => modalStack.length,
 );
 
 const unsubscribe = runtime.store.subscribe((state) => {
   const count = selectModalStack(state);
-  console.log('Modal count:', count);
+  console.log("Modal count:", count);
 });
 ```
 
@@ -196,7 +208,7 @@ import type {
   RuntimeStore,
   Scheduler,
   InteractionDSL,
-} from '@prismui/core';
+} from "@prismui/core";
 ```
 
 ## React Integration
@@ -237,9 +249,16 @@ See [@prismui/react](https://www.npmjs.com/package/@prismui/react) for React-spe
 - `createSelector(selector, transform?)` - Memoized state selector
 - `waitFor(runtime, condition, options?)` - Wait for state condition
 
+### DevTools
+
+- `createDevToolsModule(options?)` - DevTools instrumentation module
+- `createRuntimeInspector(runtime)` - Standalone runtime inspector
+- `buildStateTree(key, value)` - Build structured state tree
+- `diffSnapshots(a, b)` - Compare two snapshots
+
 ## Package Info
 
-- **Version**: 0.1.0
+- **Version**: 0.2.0
 - **License**: MIT
 - **Repository**: [github.com/medxaidev/prismui](https://github.com/medxaidev/prismui)
 - **Author**: Fangjun <fangjun20208@gmail.com>

@@ -18,24 +18,26 @@ npm install @prismui/react @prismui/core
 ```
 
 **Peer Dependencies:**
+
 - `react >= 18.0.0`
 - `react-dom >= 18.0.0`
-- `@prismui/core >= 0.1.0`
+- `@prismui/core >= 0.2.0`
 
 ## Quick Start
 
 ### 1. Setup Runtime and Provider
 
 ```tsx
-import { createInteractionRuntime, createPageModule, createModalModule } from '@prismui/core';
-import { PrismUIProvider } from '@prismui/react';
+import {
+  createInteractionRuntime,
+  createPageModule,
+  createModalModule,
+} from "@prismui/core";
+import { PrismUIProvider } from "@prismui/react";
 
 // Create runtime
 const runtime = createInteractionRuntime({
-  modules: [
-    createPageModule(),
-    createModalModule(),
-  ],
+  modules: [createPageModule(), createModalModule()],
 });
 
 // Wrap your app
@@ -51,22 +53,18 @@ function App() {
 ### 2. Use Hooks in Components
 
 ```tsx
-import { usePage, useModal, useUI } from '@prismui/react';
+import { usePage, useModal, useUI } from "@prismui/react";
 
 function MyComponent() {
   const { currentPage, transition } = usePage();
   const { stack, open, close } = useModal();
   const ui = useUI();
-  
+
   return (
     <div>
       <h1>Current Page: {currentPage}</h1>
-      <button onClick={() => transition('dashboard')}>
-        Go to Dashboard
-      </button>
-      <button onClick={() => ui.modal.open('confirm')}>
-        Open Modal
-      </button>
+      <button onClick={() => transition("dashboard")}>Go to Dashboard</button>
+      <button onClick={() => ui.modal.open("confirm")}>Open Modal</button>
     </div>
   );
 }
@@ -77,43 +75,46 @@ function MyComponent() {
 ### Core Hooks
 
 #### `useRuntime()`
+
 Access the runtime instance directly.
 
 ```tsx
-import { useRuntime } from '@prismui/react';
+import { useRuntime } from "@prismui/react";
 
 function MyComponent() {
   const runtime = useRuntime();
-  
+
   // Access runtime methods
-  runtime.dispatch({ type: 'MY_EVENT', payload: 'data' });
-  
+  runtime.dispatch({ type: "MY_EVENT", payload: "data" });
+
   return <div>...</div>;
 }
 ```
 
 #### `useRuntimeState()`
+
 Subscribe to the entire runtime state.
 
 ```tsx
-import { useRuntimeState } from '@prismui/react';
+import { useRuntimeState } from "@prismui/react";
 
 function MyComponent() {
   const state = useRuntimeState();
-  
+
   return <div>Current Page: {state.currentPage}</div>;
 }
 ```
 
 #### `useSelector(selector)`
+
 Subscribe to partial state with memoization.
 
 ```tsx
-import { useSelector } from '@prismui/react';
+import { useSelector } from "@prismui/react";
 
 function MyComponent() {
   const modalCount = useSelector((state) => state.modalStack.length);
-  
+
   return <div>Open Modals: {modalCount}</div>;
 }
 ```
@@ -121,18 +122,19 @@ function MyComponent() {
 ### Module Hooks
 
 #### `usePage()`
+
 Page navigation and state.
 
 ```tsx
-import { usePage } from '@prismui/react';
+import { usePage } from "@prismui/react";
 
 function Navigation() {
   const { currentPage, transition, history } = usePage();
-  
+
   return (
     <nav>
-      <button onClick={() => transition('home')}>Home</button>
-      <button onClick={() => transition('about')}>About</button>
+      <button onClick={() => transition("home")}>Home</button>
+      <button onClick={() => transition("about")}>About</button>
       <p>Current: {currentPage}</p>
     </nav>
   );
@@ -140,18 +142,19 @@ function Navigation() {
 ```
 
 #### `useModal()`
+
 Modal management.
 
 ```tsx
-import { useModal } from '@prismui/react';
+import { useModal } from "@prismui/react";
 
 function ModalControls() {
   const { stack, open, close, closeAll, isOpen } = useModal();
-  
+
   return (
     <div>
-      <button onClick={() => open('dialog')}>Open Dialog</button>
-      <button onClick={() => close('dialog')}>Close Dialog</button>
+      <button onClick={() => open("dialog")}>Open Dialog</button>
+      <button onClick={() => close("dialog")}>Close Dialog</button>
       <p>Open modals: {stack.length}</p>
     </div>
   );
@@ -159,39 +162,37 @@ function ModalControls() {
 ```
 
 #### `useDrawer()`
+
 Drawer management.
 
 ```tsx
-import { useDrawer } from '@prismui/react';
+import { useDrawer } from "@prismui/react";
 
 function DrawerControls() {
   const { stack, open, close, isOpen } = useDrawer();
-  
-  return (
-    <button onClick={() => open('menu', 'left')}>
-      Open Menu
-    </button>
-  );
+
+  return <button onClick={() => open("menu", "left")}>Open Menu</button>;
 }
 ```
 
 #### `useNotification()`
+
 Notification system.
 
 ```tsx
-import { useNotification } from '@prismui/react';
+import { useNotification } from "@prismui/react";
 
 function NotificationDemo() {
   const { items, notify, dismiss, dismissAll } = useNotification();
-  
+
   const showSuccess = () => {
     notify({
-      type: 'success',
-      message: 'Operation completed!',
+      type: "success",
+      message: "Operation completed!",
       autoDismissMs: 3000,
     });
   };
-  
+
   return (
     <div>
       <button onClick={showSuccess}>Show Success</button>
@@ -202,28 +203,29 @@ function NotificationDemo() {
 ```
 
 #### `useForm()`
+
 Form state management.
 
 ```tsx
-import { useForm } from '@prismui/react';
-import { useEffect } from 'react';
+import { useForm } from "@prismui/react";
+import { useEffect } from "react";
 
 function LoginForm() {
   const form = useForm();
-  
+
   useEffect(() => {
-    form.register('email', '');
-    form.register('password', '');
+    form.register("email", "");
+    form.register("password", "");
   }, []);
-  
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     const isValid = form.validate((fields) => ({
-      email: !fields.email?.value ? 'Email is required' : null,
-      password: !fields.password?.value ? 'Password is required' : null,
+      email: !fields.email?.value ? "Email is required" : null,
+      password: !fields.password?.value ? "Password is required" : null,
     }));
-    
+
     if (isValid) {
       form.submit();
       try {
@@ -234,29 +236,29 @@ function LoginForm() {
       }
     }
   };
-  
+
   return (
     <form onSubmit={handleSubmit}>
       <input
         type="email"
-        value={form.fields.email?.value || ''}
-        onChange={(e) => form.set('email', e.target.value)}
-        onBlur={() => form.touch('email')}
+        value={form.fields.email?.value || ""}
+        onChange={(e) => form.set("email", e.target.value)}
+        onBlur={() => form.touch("email")}
       />
       {form.fields.email?.error && (
         <span className="error">{form.fields.email.error}</span>
       )}
-      
+
       <input
         type="password"
-        value={form.fields.password?.value || ''}
-        onChange={(e) => form.set('password', e.target.value)}
+        value={form.fields.password?.value || ""}
+        onChange={(e) => form.set("password", e.target.value)}
       />
-      
+
       <button type="submit" disabled={form.isSubmitting}>
-        {form.isSubmitting ? 'Logging in...' : 'Login'}
+        {form.isSubmitting ? "Logging in..." : "Login"}
       </button>
-      
+
       {form.formSubmitError && (
         <div className="error">{form.formSubmitError}</div>
       )}
@@ -266,40 +268,41 @@ function LoginForm() {
 ```
 
 #### `useAsync()`
+
 Async operation tracking.
 
 ```tsx
-import { useAsync } from '@prismui/react';
+import { useAsync } from "@prismui/react";
 
 function DataLoader() {
   const async = useAsync();
-  
+
   const loadUsers = async () => {
-    async.start('fetchUsers');
+    async.start("fetchUsers");
     try {
-      const response = await fetch('/api/users');
+      const response = await fetch("/api/users");
       const data = await response.json();
-      async.done('fetchUsers', data);
+      async.done("fetchUsers", data);
     } catch (error) {
-      async.fail('fetchUsers', error.message);
+      async.fail("fetchUsers", error.message);
     }
   };
-  
-  const operation = async.getOperation('fetchUsers');
-  
+
+  const operation = async.getOperation("fetchUsers");
+
   return (
     <div>
-      <button onClick={loadUsers} disabled={async.isLoading('fetchUsers')}>
+      <button onClick={loadUsers} disabled={async.isLoading("fetchUsers")}>
         Load Users
       </button>
-      
-      {async.isLoading('fetchUsers') && <Spinner />}
-      
-      {operation?.status === 'success' && (
+
+      {async.isLoading("fetchUsers") && <Spinner />}
+
+      {operation?.status === "success" && (
         <div>Data: {JSON.stringify(operation.data)}</div>
       )}
-      
-      {operation?.status === 'error' && (
+
+      {operation?.status === "error" && (
         <div className="error">{operation.error}</div>
       )}
     </div>
@@ -310,28 +313,74 @@ function DataLoader() {
 ### Unified DSL Hook
 
 #### `useUI()`
+
 Access the unified Interaction DSL with a stable memoized reference.
 
 ```tsx
-import { useUI } from '@prismui/react';
+import { useUI } from "@prismui/react";
 
 function MyComponent() {
   const ui = useUI();
-  
+
   const handleDelete = async () => {
-    const confirmed = await ui.confirm('deleteDialog');
+    const confirmed = await ui.confirm("deleteDialog");
     if (confirmed) {
-      ui.notify.success('Item deleted!');
+      ui.notify.success("Item deleted!");
     } else {
-      ui.notify.info('Cancelled');
+      ui.notify.info("Cancelled");
     }
   };
-  
+
   return (
     <div>
       <button onClick={handleDelete}>Delete</button>
-      <button onClick={() => ui.drawer.open('menu', 'left')}>
-        Open Menu
+      <button onClick={() => ui.drawer.open("menu", "left")}>Open Menu</button>
+    </div>
+  );
+}
+```
+
+### DevTools Hook
+
+#### `useDevTools()`
+
+Access runtime DevTools for inspection, timeline, metrics, and snapshots.
+
+```tsx
+import { useDevTools } from "@prismui/react";
+
+function DevToolsPanel() {
+  const { available, stateTree, timeline, metrics, snapshots, controller } =
+    useDevTools();
+
+  if (!available) return <p>DevTools module not registered</p>;
+
+  return (
+    <div>
+      <h3>Performance</h3>
+      <p>Total events: {metrics.totalEvents}</p>
+      <p>Avg duration: {metrics.averageDuration.toFixed(2)}ms</p>
+
+      <h3>Timeline ({timeline.length} entries)</h3>
+      {timeline.map((entry, i) => (
+        <div key={i}>
+          {entry.event.type} — {entry.duration}ms
+        </div>
+      ))}
+
+      <button onClick={() => controller.captureSnapshot("manual")}>
+        Capture Snapshot
+      </button>
+
+      <button
+        onClick={() => {
+          controller.agent.dispatch({
+            type: "PAGE_MOUNT",
+            payload: { pageId: "test" },
+          });
+        }}
+      >
+        Agent: Dispatch Event
       </button>
     </div>
   );
@@ -350,12 +399,14 @@ import type {
   UseNotification,
   UseFormReturn,
   UseAsyncReturn,
-} from '@prismui/react';
+  UseDevToolsReturn,
+} from "@prismui/react";
 ```
 
 ## Architecture
 
 `@prismui/react` is a **thin adapter layer** with zero business logic:
+
 - All hooks are simple wrappers around runtime controllers
 - State updates trigger React re-renders via `useState` + `useEffect`
 - No React-specific logic in `@prismui/core`
@@ -374,7 +425,7 @@ import type {
 
 ## Package Info
 
-- **Version**: 0.1.0
+- **Version**: 0.2.0
 - **License**: MIT
 - **Repository**: [github.com/medxaidev/prismui](https://github.com/medxaidev/prismui)
 - **Author**: Fangjun <fangjun20208@gmail.com>

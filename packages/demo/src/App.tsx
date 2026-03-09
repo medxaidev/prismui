@@ -17,6 +17,7 @@ import { GovernancePage } from './pages/GovernancePage';
 // Shared components
 import { ConfirmModal } from './components/ConfirmModal';
 import { RuntimeStatePanel } from './components/RuntimeStatePanel';
+import { DevToolsPanel } from './components/DevToolsPanel';
 
 // ── Route definitions ──────────────────────────
 interface NavItem {
@@ -99,7 +100,7 @@ function Header() {
   return (
     <header className="demo-header">
       <span className="demo-header__title">PrismUI Runtime</span>
-      <span className="demo-header__version">v0.1.0</span>
+      <span className="demo-header__version">v0.2.0</span>
       <span className="demo-header__separator" />
       <div className="demo-header__status">
         <span>state v{state.version}</span>
@@ -141,6 +142,7 @@ export function App() {
         </main>
         <RuntimeStatePanel />
         <ModalLayer />
+        <DevToolsPanel />
       </div>
     </PrismUIProvider>
   );

@@ -105,6 +105,28 @@ export type { ModuleStatus } from './lifecycle';
 export { waitFor, WaitForTimeoutError } from './wait-for';
 export type { WaitForOptions } from './wait-for';
 
+// DevTools & Automation (STAGE-007)
+export { createDevToolsModule, buildStateTree, diffSnapshots } from './devtools';
+export type { DevToolsModuleState } from './devtools';
+export {
+  DEVTOOLS_SNAPSHOT_CAPTURED,
+  DEVTOOLS_TIMELINE_CLEARED,
+  DEVTOOLS_METRICS_RESET,
+} from './devtools';
+export { createRuntimeInspector } from './devtools';
+export type {
+  RuntimeInspector,
+  DevToolsOptions,
+  DevToolsController,
+  TimelineEntry,
+  TimelineFilter,
+  PerformanceMetrics,
+  DevToolsSnapshot,
+  StateDiff,
+  StateTreeNode,
+  AgentInterface,
+} from './devtools';
+
 // Governance Layer (Layer 1 — STAGE-002)
 export {
   createAuditTrail,

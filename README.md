@@ -2,9 +2,9 @@
 
 **Event-Driven Runtime Kernel for Modern Web Applications**
 
-[![Version](https://img.shields.io/badge/version-0.1.0-blue.svg)](https://github.com/medxaidev/prismui)
+[![Version](https://img.shields.io/badge/version-0.2.0-blue.svg)](https://github.com/medxaidev/prismui)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
-[![Tests](https://img.shields.io/badge/tests-372%20passing-brightgreen.svg)](https://github.com/medxaidev/prismui)
+[![Tests](https://img.shields.io/badge/tests-425%20passing-brightgreen.svg)](https://github.com/medxaidev/prismui)
 [![Live Demo](https://img.shields.io/badge/demo-live-success.svg)](https://medxaidev.github.io/prismui/)
 
 PrismUI is a framework-agnostic event-driven runtime kernel that provides comprehensive state management, governance, and interaction capabilities for modern web applications.
@@ -13,16 +13,17 @@ PrismUI is a framework-agnostic event-driven runtime kernel that provides compre
 
 ## 🎯 What is PrismUI?
 
-PrismUI Runtime Kernel (v0.1.0) is a **pure runtime layer** that provides:
+PrismUI Runtime Kernel (v0.2.0) is a **pure runtime layer** that provides:
 
 - **Event-Driven Architecture**: EventBus with history tracking and middleware pipeline
 - **Modular State Management**: Pluggable module system with lifecycle hooks
 - **Governance Layer**: Audit trails, replay system, and policy engine
 - **Interaction Modules**: Built-in modules for common UI patterns (modals, drawers, notifications, forms, async operations)
 - **Unified DSL**: High-level API (`ui.*`) wrapping all runtime capabilities
+- **DevTools & Automation**: Runtime inspector, event timeline, performance monitor, AI Agent interface
 - **React Adapter**: Hooks-based integration for React applications
 
-**Zero UI components** — PrismUI v0.1.0 focuses entirely on the runtime kernel. UI components will come in v0.2.0+.
+**Zero UI components** — PrismUI v0.2.0 focuses entirely on the runtime kernel. UI components will come in future versions.
 
 ## 📦 Packages
 
@@ -41,6 +42,7 @@ npm install @prismui/core
 - Governance layer (Audit, Replay, Policy)
 - Built-in modules (Page, Modal, Drawer, Notification, Form, Async)
 - Interaction DSL
+- DevTools module (inspector, timeline, performance, snapshots, AI agent)
 - Full TypeScript support
 
 ### @prismui/react
@@ -59,6 +61,7 @@ npm install @prismui/react @prismui/core
 - `useForm`, `useAsync` state management hooks
 - `useSelector` for fine-grained subscriptions
 - `useUI` unified DSL hook
+- `useDevTools` DevTools inspector hook
 
 ## 🚀 Quick Start
 
@@ -159,6 +162,41 @@ function LoginForm() {
 }
 ```
 
+### DevTools & Automation
+
+```tsx
+import { createDevToolsModule } from "@prismui/core";
+import { useDevTools } from "@prismui/react";
+
+// Add DevTools to runtime (optional — zero overhead when not registered)
+const runtime = createInteractionRuntime({
+  modules: [
+    createPageModule(),
+    createDevToolsModule(), // ← opt-in
+  ],
+});
+
+// Use in components
+function Inspector() {
+  const { timeline, metrics, controller } = useDevTools();
+
+  // Capture state snapshot
+  const snapId = controller.captureSnapshot("before-action");
+
+  // AI Agent: dispatch events programmatically
+  await controller.agent.executeSequence([
+    { type: "PAGE_MOUNT", payload: { pageId: "test" } },
+    { type: "PAGE_TRANSITION", payload: { pageId: "test" } },
+  ]);
+
+  // Wait for specific state
+  const state = await controller.agent.waitForState(
+    (s) => s.currentPage === "test",
+    5000,
+  );
+}
+```
+
 ### Async Operation Tracking
 
 ```tsx
@@ -239,7 +277,7 @@ Unified `ui.*` API providing a fluent interface to all runtime capabilities.
 
 PrismUI has comprehensive test coverage:
 
-- **372 tests** across 20 test files
+- **425 tests** across 21 test files
 - **0 failures**, 100% passing
 - Full isolation tests ensuring architectural boundaries
 - TypeScript strict mode enabled
@@ -263,7 +301,7 @@ npm run test:coverage
 
 ## 🛣️ Roadmap
 
-### v0.1.0 (Current) - Runtime Kernel ✅
+### v0.2.0 (Current) - Runtime Kernel + DevTools ✅
 
 - Event-driven architecture
 - Module system
@@ -271,18 +309,13 @@ npm run test:coverage
 - Interaction modules
 - Form & Async state
 - Unified DSL
+- **DevTools & Automation** (Runtime Inspector, Event Timeline, Performance Monitor, AI Agent)
 
-### v0.2.0 (Planned) - UI Layer
+### v0.3.0 (Planned)
 
-- Semantic Theme System
-- Component Library
-- Theme Provider
-
-### v0.3.0 (Planned) - DevTools
-
-- Runtime Inspector
-- Event Replay UI
-- AI Agent Interface
+- Component Library integration patterns
+- Advanced governance features
+- Cross-framework adapter improvements
 
 ## 🤝 Contributing
 
@@ -301,4 +334,4 @@ MIT © [Fangjun](https://github.com/medxaidev)
 
 ---
 
-**Note**: This is v0.1.0 - Runtime Kernel only. UI components will be available in v0.2.0+.
+**Note**: This is v0.2.0 - Runtime Kernel with DevTools. PrismUI focuses on the runtime layer — use any component library (Ant Design, MUI, Mantine) for UI.
