@@ -1,95 +1,145 @@
+import { useEffect } from 'react';
 import { PrismUIProvider } from '@prismui/react';
-import { usePage, useModal, useDrawer, useNotification, useRuntimeState } from '@prismui/react';
+import { usePage, useModal, useRuntimeState } from '@prismui/react';
 import { runtime } from './setup';
-import { Dashboard } from './pages/Dashboard';
-import { PatientDetail } from './pages/PatientDetail';
+import './styles.css';
+
+// Feature pages
+import { OverviewPage } from './pages/OverviewPage';
+import { PageModulePage } from './pages/PageModulePage';
+import { ModalModulePage } from './pages/ModalModulePage';
+import { DrawerModulePage } from './pages/DrawerModulePage';
+import { NotificationPage } from './pages/NotificationPage';
+import { FormAsyncPage } from './pages/FormAsyncPage';
+import { DSLPage } from './pages/DSLPage';
+import { GovernancePage } from './pages/GovernancePage';
+
+// Shared components
 import { ConfirmModal } from './components/ConfirmModal';
-import { EventLog } from './components/EventLog';
-import { AuditLog } from './components/AuditLog';
-import { DrawerPanel } from './components/DrawerPanel';
-import { NotificationPanel } from './components/NotificationPanel';
-import { ModuleStatusPanel } from './components/ModuleStatusPanel';
-import { FormAsyncPanel } from './components/FormAsyncPanel';
-import { DSLPanel } from './components/DSLPanel';
+import { RuntimeStatePanel } from './components/RuntimeStatePanel';
 
-function PageRouter() {
-  const { currentPage } = usePage();
-
-  switch (currentPage) {
-    case 'PatientDetail':
-      return <PatientDetail />;
-    case 'Dashboard':
-    default:
-      return <Dashboard />;
-  }
+// ── Route definitions ──────────────────────────
+interface NavItem {
+  id: string;
+  label: string;
+  icon: string;
+  section: string;
 }
 
+const NAV_ITEMS: NavItem[] = [
+  { id: 'Overview', label: 'Overview', icon: '◎', section: 'General' },
+  { id: 'PageModule', label: 'Page Module', icon: '▤', section: 'Modules' },
+  { id: 'ModalModule', label: 'Modal Module', icon: '◻', section: 'Modules' },
+  { id: 'DrawerModule', label: 'Drawer Module', icon: '◨', section: 'Modules' },
+  { id: 'Notifications', label: 'Notifications', icon: '◉', section: 'Modules' },
+  { id: 'FormAsync', label: 'Form & Async', icon: '◈', section: 'Modules' },
+  { id: 'DSL', label: 'Interaction DSL', icon: '⟡', section: 'API' },
+  { id: 'Governance', label: 'Governance', icon: '⛊', section: 'API' },
+];
+
+const PAGE_MAP: Record<string, React.ComponentType> = {
+  Overview: OverviewPage,
+  PageModule: PageModulePage,
+  ModalModule: ModalModulePage,
+  DrawerModule: DrawerModulePage,
+  Notifications: NotificationPage,
+  FormAsync: FormAsyncPage,
+  DSL: DSLPage,
+  Governance: GovernancePage,
+};
+
+// ── Content Router ─────────────────────────────
+function ContentRouter() {
+  const { currentPage } = usePage();
+  const Component = PAGE_MAP[currentPage ?? 'Overview'] ?? OverviewPage;
+  return <Component />;
+}
+
+// ── Left Navigation ────────────────────────────
+function Navigation() {
+  const { currentPage, mount, transition } = usePage();
+
+  const handleNav = (pageId: string) => {
+    mount(pageId);
+    transition(pageId);
+  };
+
+  // Group nav items by section
+  const sections = NAV_ITEMS.reduce<Record<string, NavItem[]>>((acc, item) => {
+    if (!acc[item.section]) acc[item.section] = [];
+    acc[item.section].push(item);
+    return acc;
+  }, {});
+
+  return (
+    <nav className="demo-nav">
+      {Object.entries(sections).map(([section, items]) => (
+        <div key={section} className="demo-nav__section">
+          <div className="demo-nav__section-title">{section}</div>
+          {items.map((item) => (
+            <button
+              key={item.id}
+              className={`demo-nav__item ${currentPage === item.id ? 'demo-nav__item--active' : ''}`}
+              onClick={() => handleNav(item.id)}
+            >
+              <span className="demo-nav__icon">{item.icon}</span>
+              {item.label}
+            </button>
+          ))}
+        </div>
+      ))}
+    </nav>
+  );
+}
+
+// ── Header ─────────────────────────────────────
+function Header() {
+  const state = useRuntimeState();
+
+  return (
+    <header className="demo-header">
+      <span className="demo-header__title">PrismUI Runtime</span>
+      <span className="demo-header__version">v0.1.0</span>
+      <span className="demo-header__separator" />
+      <div className="demo-header__status">
+        <span>state v{state.version}</span>
+      </div>
+    </header>
+  );
+}
+
+// ── Modal Layer ────────────────────────────────
 function ModalLayer() {
   const { isOpen } = useModal();
-
-  return (
-    <>
-      {isOpen('confirm') && <ConfirmModal />}
-    </>
-  );
+  return <>{isOpen('confirm') && <ConfirmModal />}</>;
 }
 
-function StatusBar() {
-  const state = useRuntimeState();
-  const { currentPage, isLocked } = usePage();
-  const { modalStack } = useModal();
-  const { drawerStack } = useDrawer();
-  const { count: notifCount } = useNotification();
+// ── Init: mount Overview as default page ───────
+function InitPage() {
+  const { mount, transition, currentPage } = usePage();
 
-  return (
-    <div style={{
-      padding: '8px 16px',
-      background: '#f0f0f0',
-      borderBottom: '1px solid #ddd',
-      display: 'flex',
-      gap: '16px',
-      fontSize: '13px',
-      fontFamily: 'monospace',
-      flexWrap: 'wrap',
-    }}>
-      <span><b>version:</b> {state.version}</span>
-      <span><b>page:</b> {currentPage ?? '(none)'}</span>
-      <span><b>locked:</b> {isLocked ? '🔒 YES' : 'no'}</span>
-      <span><b>modals:</b> {modalStack.length > 0 ? modalStack.join(', ') : '(none)'}</span>
-      <span><b>drawers:</b> {drawerStack.length > 0 ? drawerStack.map(d => d.drawerId).join(', ') : '(none)'}</span>
-      <span><b>notifications:</b> {notifCount}</span>
-    </div>
-  );
+  useEffect(() => {
+    if (!currentPage) {
+      mount('Overview');
+      transition('Overview');
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  return null;
 }
 
+// ── App ────────────────────────────────────────
 export function App() {
   return (
     <PrismUIProvider runtime={runtime}>
-      <div style={{ fontFamily: 'system-ui, sans-serif', maxWidth: 900, margin: '0 auto' }}>
-        <h1 style={{ padding: '16px', margin: 0, borderBottom: '2px solid #333' }}>
-          PrismUI Runtime Demo
-        </h1>
-        <StatusBar />
-        <div style={{ display: 'flex', gap: 0 }}>
-          <div style={{ flex: 1, padding: '16px', borderRight: '1px solid #ddd', minHeight: 400 }}>
-            <PageRouter />
-          </div>
-          <div style={{ width: 320, padding: '16px', background: '#fafafa', display: 'flex', flexDirection: 'column', gap: 16 }}>
-            <DrawerPanel />
-            <hr style={{ border: 'none', borderTop: '1px solid #ddd', margin: 0 }} />
-            <NotificationPanel />
-            <hr style={{ border: 'none', borderTop: '1px solid #ddd', margin: 0 }} />
-            <ModuleStatusPanel />
-            <hr style={{ border: 'none', borderTop: '1px solid #ddd', margin: 0 }} />
-            <FormAsyncPanel />
-            <hr style={{ border: 'none', borderTop: '1px solid #ddd', margin: 0 }} />
-            <DSLPanel />
-            <hr style={{ border: 'none', borderTop: '1px solid #ddd', margin: 0 }} />
-            <EventLog />
-            <hr style={{ border: 'none', borderTop: '1px solid #ddd', margin: 0 }} />
-            <AuditLog />
-          </div>
-        </div>
+      <InitPage />
+      <div className="demo-layout">
+        <Header />
+        <Navigation />
+        <main className="demo-content">
+          <ContentRouter />
+        </main>
+        <RuntimeStatePanel />
         <ModalLayer />
       </div>
     </PrismUIProvider>
