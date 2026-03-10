@@ -6,10 +6,11 @@
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![Tests](https://img.shields.io/badge/tests-425%20passing-brightgreen.svg)](https://github.com/medxaidev/prismui)
 [![Live Demo](https://img.shields.io/badge/demo-live-success.svg)](https://medxaidev.github.io/prismui/)
+[![Dashboard](https://img.shields.io/badge/dashboard-live-blue.svg)](https://medxaidev.github.io/prismui/dashboard/)
 
 PrismUI is a framework-agnostic event-driven runtime kernel that provides comprehensive state management, governance, and interaction capabilities for modern web applications.
 
-**[🎮 Try the Live Demo →](https://medxaidev.github.io/prismui/)**
+**[🎮 Try the Live Demo →](https://medxaidev.github.io/prismui/)** · **[📊 Dashboard Reference App →](https://medxaidev.github.io/prismui/dashboard/)**
 
 ## 🎯 What is PrismUI?
 
@@ -62,6 +63,16 @@ npm install @prismui/react @prismui/core
 - `useSelector` for fine-grained subscriptions
 - `useUI` unified DSL hook
 - `useDevTools` DevTools inspector hook
+
+## 🌐 Live Apps
+
+| App              | URL                                                                                      | Description                                                                                                                                                                                                     |
+| ---------------- | ---------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Runtime Demo** | [medxaidev.github.io/prismui/](https://medxaidev.github.io/prismui/)                     | Interactive showcase of individual PrismUI modules — Page, Modal, Drawer, Notification, Form, Async, DSL, Governance, DevTools                                                                                  |
+| **Dashboard**    | [medxaidev.github.io/prismui/dashboard/](https://medxaidev.github.io/prismui/dashboard/) | Reference app demonstrating real-world combinations of PrismUI capabilities — runtime playground, interaction scenarios, form workflows, governance policies, DevTools automation, and a full approval workflow |
+
+- **Demo** (`packages/demo`) — module-by-module exploration, one feature per page
+- **Dashboard** (`apps/dashboard`) — integration-focused, shows how multiple runtime capabilities work together in realistic scenarios
 
 ## 🚀 Quick Start
 
@@ -327,10 +338,12 @@ MIT © [Fangjun](https://github.com/medxaidev)
 
 ## 🔗 Links
 
-- [🎮 **Live Demo**](https://medxaidev.github.io/prismui/) - Try it now!
+- [🎮 **Live Demo**](https://medxaidev.github.io/prismui/) — Module-by-module runtime exploration
+- [📊 **Dashboard**](https://medxaidev.github.io/prismui/dashboard/) — Reference app with real-world scenarios
 - [GitHub Repository](https://github.com/medxaidev/prismui)
 - [Documentation](https://prismui.dev) (Coming soon)
 - [Demo Source Code](./packages/demo)
+- [Dashboard Source Code](./apps/dashboard)
 
 ---
 

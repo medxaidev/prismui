@@ -1,4 +1,4 @@
-name: Deploy Demo to GitHub Pages
+name: Deploy Demo & Dashboard to GitHub Pages
 
 on:
   push:
@@ -9,6 +9,7 @@ on:
       - "packages/demo/**"
       - "packages/core/src/**"
       - "packages/react/src/**"
+      - "apps/dashboard/**"
       - ".github/workflows/deploy-demo.yml"
   workflow_dispatch:
 
@@ -37,6 +38,10 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Install dashboard dependencies
+        run: npm ci
+        working-directory: apps/dashboard
+
       - name: Build packages
         run: |
           npm run build --workspace=@prismui/core
@@ -45,10 +50,21 @@ jobs:
       - name: Build demo
         run: npm run build --workspace=@prismui/demo
 
+      - name: Build dashboard
+        run: npm run build
+        working-directory: apps/dashboard
+
+      - name: Merge artifacts
+        run: |
+          mkdir -p _site
+          cp -r packages/demo/dist/* _site/
+          mkdir -p _site/dashboard
+          cp -r apps/dashboard/dist/* _site/dashboard/
+
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: "./packages/demo/dist"
+          path: "./_site"
 
   deploy:
     environment:
