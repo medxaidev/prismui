@@ -2,9 +2,9 @@
 
 **Event-Driven Runtime Kernel for Modern Web Applications**
 
-[![Version](https://img.shields.io/badge/version-0.2.0-blue.svg)](https://github.com/medxaidev/prismui)
+[![Version](https://img.shields.io/badge/version-0.3.0-blue.svg)](https://github.com/medxaidev/prismui)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
-[![Tests](https://img.shields.io/badge/tests-425%20passing-brightgreen.svg)](https://github.com/medxaidev/prismui)
+[![Tests](https://img.shields.io/badge/tests-473%20passing-brightgreen.svg)](https://github.com/medxaidev/prismui)
 [![Live Demo](https://img.shields.io/badge/demo-live-success.svg)](https://medxaidev.github.io/prismui/)
 [![Dashboard](https://img.shields.io/badge/dashboard-live-blue.svg)](https://medxaidev.github.io/prismui/dashboard/)
 
@@ -14,7 +14,7 @@ PrismUI is a framework-agnostic event-driven runtime kernel that provides compre
 
 ## 🎯 What is PrismUI?
 
-PrismUI Runtime Kernel (v0.2.0) is a **pure runtime layer** that provides:
+PrismUI Runtime Kernel (v0.3.0) is an **event-driven runtime platform** that provides:
 
 - **Event-Driven Architecture**: EventBus with history tracking and middleware pipeline
 - **Modular State Management**: Pluggable module system with lifecycle hooks
@@ -23,8 +23,7 @@ PrismUI Runtime Kernel (v0.2.0) is a **pure runtime layer** that provides:
 - **Unified DSL**: High-level API (`ui.*`) wrapping all runtime capabilities
 - **DevTools & Automation**: Runtime inspector, event timeline, performance monitor, AI Agent interface
 - **React Adapter**: Hooks-based integration for React applications
-
-**Zero UI components** — PrismUI v0.2.0 focuses entirely on the runtime kernel. UI components will come in future versions.
+- **Rendering Layer**: Built-in renderers for Modal, Drawer, and Notification — portal-based, render-prop pattern
 
 ## 📦 Packages
 
@@ -63,6 +62,8 @@ npm install @prismui/react @prismui/core
 - `useSelector` for fine-grained subscriptions
 - `useUI` unified DSL hook
 - `useDevTools` DevTools inspector hook
+- `ModalRenderer`, `DrawerRenderer`, `NotificationRenderer` rendering components
+- `PrismUIRootRenderer` convenience wrapper
 
 ## 🌐 Live Apps
 
@@ -288,7 +289,7 @@ Unified `ui.*` API providing a fluent interface to all runtime capabilities.
 
 PrismUI has comprehensive test coverage:
 
-- **425 tests** across 21 test files
+- **473 tests** across 25 test files
 - **0 failures**, 100% passing
 - Full isolation tests ensuring architectural boundaries
 - TypeScript strict mode enabled
@@ -312,7 +313,15 @@ npm run test:coverage
 
 ## 🛣️ Roadmap
 
-### v0.2.0 (Current) - Runtime Kernel + DevTools ✅
+### v0.3.0 (Current) - Rendering Layer ✅
+
+- **ModalRenderer**: Portal-based modal overlays with backdrop, Escape, z-index stacking
+- **DrawerRenderer**: Anchor-positioned drawers (left/right/top/bottom) with backdrop
+- **NotificationRenderer**: Toast notifications with type styling, auto-dismiss, 4 positions
+- **PrismUIRootRenderer**: Convenience wrapper for all renderers
+- 48 new tests (473 total)
+
+### v0.2.0 - Runtime Kernel + DevTools ✅
 
 - Event-driven architecture
 - Module system
@@ -320,13 +329,12 @@ npm run test:coverage
 - Interaction modules
 - Form & Async state
 - Unified DSL
-- **DevTools & Automation** (Runtime Inspector, Event Timeline, Performance Monitor, AI Agent)
+- DevTools & Automation
 
-### v0.3.0 (Planned)
+### v0.4.0 (Planned)
 
-- Component Library integration patterns
-- Advanced governance features
-- Cross-framework adapter improvements
+- Workflow Runtime — multi-step flow orchestration
+- State persistence layer
 
 ## 🤝 Contributing
 
@@ -347,4 +355,4 @@ MIT © [Fangjun](https://github.com/medxaidev)
 
 ---
 
-**Note**: This is v0.2.0 - Runtime Kernel with DevTools. PrismUI focuses on the runtime layer — use any component library (Ant Design, MUI, Mantine) for UI.
+**Note**: This is v0.3.0 - Runtime Kernel with Rendering Layer. PrismUI provides built-in renderers for Modal, Drawer, and Notification, or use any component library (Ant Design, MUI, Mantine) with the hooks API.

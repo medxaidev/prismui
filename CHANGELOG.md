@@ -5,6 +5,64 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.0] - 2026-03-17
+
+### Added - Rendering Layer (STAGE-008)
+
+Layer 3 rendering components for PrismUI's built-in interaction modules. These React components subscribe to runtime state and render the corresponding UI using portals, completing the four-layer architecture from runtime kernel to visible UI.
+
+#### ModalRenderer
+
+- **Portal-based rendering**: Renders modals into `document.body` via React portals
+- **Render-prop pattern**: `(modalId, close) => JSX` for full customization
+- **Backdrop click**: Configurable backdrop click to close (`backdropClose` prop)
+- **Escape key**: Configurable Escape key to close top modal (`escapeClose` prop)
+- **Z-index stacking**: Automatic z-index management for stacked modals
+- **Accessibility**: `role="dialog"` and `aria-modal="true"`
+- **12 tests** covering rendering, backdrop, escape, stacking, and portal behavior
+
+#### DrawerRenderer
+
+- **Anchor positioning**: Renders drawers at left/right/top/bottom positions
+- **Portal-based rendering**: Renders into `document.body`
+- **Render-prop pattern**: `(drawerId, anchor, close) => JSX`
+- **Backdrop + Escape**: Same close behavior options as ModalRenderer
+- **Accessibility**: `role="complementary"` on drawer panel
+- **15 tests** covering rendering, anchors, backdrop, escape, and portal behavior
+
+#### NotificationRenderer
+
+- **Toast notifications**: Renders active notifications as toast messages
+- **Type-based styling**: Info (blue), success (green), warning (orange), error (red) with icons
+- **Auto-dismiss**: Reads `autoDismissMs` from each notification entry for automatic removal
+- **4 positions**: `top-right` (default), `top-left`, `bottom-right`, `bottom-left`
+- **Custom rendering**: `renderNotification` prop for fully custom toast UI
+- **Dismiss button**: Built-in dismiss button on each toast
+- **16 tests** covering rendering, types, auto-dismiss, positions, and custom rendering
+
+#### PrismUIRootRenderer
+
+- **Convenience wrapper**: Single component rendering all three renderers
+- **Props passthrough**: Forward individual renderer props
+- **5 tests** covering composition and simultaneous rendering
+
+#### Demo
+
+- New "Rendering Layer" page showcasing all renderers with live examples
+
+### Package Updates
+
+- **@prismui/core** bumped to 0.3.0
+- **@prismui/react** bumped to 0.3.0
+
+### Testing & Quality
+
+- **473 tests** across 25 test files (48 new)
+- **0 failures**, 100% passing
+- Zero regressions from previous stages
+
+---
+
 ## [0.2.0] - 2026-03-09
 
 ### Added - DevTools & Automation (STAGE-007)
@@ -154,11 +212,11 @@ Not applicable - this is the initial release.
 
 ## Future Releases
 
-### [0.3.0] - Planned
+### [0.4.0] - Planned
 
-- Component Library integration patterns
-- Advanced governance features
-- Cross-framework adapter improvements
+- Workflow Runtime — multi-step flow orchestration
+- State persistence layer (IndexedDB/LocalStorage)
 
+[0.3.0]: https://github.com/medxaidev/prismui/releases/tag/v0.3.0
 [0.2.0]: https://github.com/medxaidev/prismui/releases/tag/v0.2.0
 [0.1.0]: https://github.com/medxaidev/prismui/releases/tag/v0.1.0

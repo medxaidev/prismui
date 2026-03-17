@@ -258,7 +258,7 @@ See [@prismui/react](https://www.npmjs.com/package/@prismui/react) for React-spe
 
 ## Package Info
 
-- **Version**: 0.2.0
+- **Version**: 0.3.0
 - **License**: MIT
 - **Repository**: [github.com/medxaidev/prismui](https://github.com/medxaidev/prismui)
 - **Author**: Fangjun <fangjun20208@gmail.com>

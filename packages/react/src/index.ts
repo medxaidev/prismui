@@ -30,3 +30,13 @@ export { useAsync } from './use-async';
 export type { UseAsyncReturn } from './use-async';
 export { useDevTools } from './use-devtools';
 export type { UseDevToolsReturn } from './use-devtools';
+
+// Renderers — Layer 3 (STAGE-008)
+export { ModalRenderer } from './renderers';
+export type { ModalRendererProps } from './renderers';
+export { DrawerRenderer } from './renderers';
+export type { DrawerRendererProps } from './renderers';
+export { NotificationRenderer } from './renderers';
+export type { NotificationRendererProps, NotificationPosition } from './renderers';
+export { PrismUIRootRenderer } from './renderers';
+export type { PrismUIRootRendererProps } from './renderers';
