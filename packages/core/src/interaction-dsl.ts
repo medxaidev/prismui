@@ -10,6 +10,12 @@ import type { DrawerController, DrawerAnchor } from './modules/drawer-module';
 import type { NotificationController, NotificationEntry } from './modules/notification-module';
 import type { FormController, FormValidator } from './modules/form-module';
 import type { AsyncController } from './modules/async-module';
+import type {
+  WorkflowController,
+  WorkflowDefinition,
+  WorkflowResult,
+  WorkflowInstance,
+} from './modules/workflow-module';
 
 // ── Types ─────────────────────────────────────────────────────────────
 
@@ -71,6 +77,15 @@ export interface AsyncDSL {
   isAnyLoading(): boolean;
 }
 
+/** Workflow DSL namespace. */
+export interface WorkflowDSL {
+  define(definition: WorkflowDefinition): void;
+  start(workflowId: string, payload?: Record<string, unknown>): Promise<WorkflowResult>;
+  abort(instanceId: string): void;
+  getInstances(): WorkflowInstance[];
+  getInstance(instanceId: string): WorkflowInstance | undefined;
+}
+
 /** The unified Interaction DSL. */
 export interface InteractionDSL {
   readonly modal: ModalDSL;
@@ -79,6 +94,7 @@ export interface InteractionDSL {
   readonly notify: NotifyDSL;
   readonly form: FormDSL;
   readonly async: AsyncDSL;
+  readonly workflow: WorkflowDSL;
 }
 
 // ── Factory ───────────────────────────────────────────────────────────
@@ -93,6 +109,7 @@ export function createInteractionDSL(runtime: InteractionRuntime): InteractionDS
   const notifCtrl = runtime.modules.notification as NotificationController | undefined;
   const formCtrl = runtime.modules.form as FormController | undefined;
   const asyncCtrl = runtime.modules.async as AsyncController | undefined;
+  const workflowCtrl = runtime.modules.workflow as WorkflowController | undefined;
 
   // ── Modal DSL ───────────────────────────────────────────────────────
 
@@ -255,6 +272,27 @@ export function createInteractionDSL(runtime: InteractionRuntime): InteractionDS
     },
   };
 
+  // ── Workflow DSL ─────────────────────────────────────────────────────
+
+  const workflow: WorkflowDSL = {
+    define(definition: WorkflowDefinition): void {
+      workflowCtrl?.define(definition);
+    },
+    start(workflowId: string, payload?: Record<string, unknown>): Promise<WorkflowResult> {
+      if (!workflowCtrl) return Promise.reject(new Error('Workflow module not registered'));
+      return workflowCtrl.start(workflowId, payload);
+    },
+    abort(instanceId: string): void {
+      workflowCtrl?.abort(instanceId);
+    },
+    getInstances(): WorkflowInstance[] {
+      return workflowCtrl?.getInstances() ?? [];
+    },
+    getInstance(instanceId: string): WorkflowInstance | undefined {
+      return workflowCtrl?.getInstance(instanceId);
+    },
+  };
+
   return {
     modal,
     confirm,
@@ -262,5 +300,6 @@ export function createInteractionDSL(runtime: InteractionRuntime): InteractionDS
     notify,
     form,
     async: asyncDSL,
+    workflow,
   };
 }

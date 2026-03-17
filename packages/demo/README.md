@@ -8,17 +8,18 @@ This is the interactive demo showcasing all PrismUI runtime capabilities. Each p
 
 ## Pages
 
-| Page | Description |
-|------|-------------|
-| **Overview** | Architecture overview and quick links |
-| **Page Module** | Page navigation and transitions |
-| **Modal Module** | Modal stack management |
-| **Drawer Module** | Drawer positioning and stack |
-| **Notifications** | Toast notification system |
-| **Form & Async** | Form state and async operations |
-| **Interaction DSL** | Unified `ui.*` API |
-| **Governance** | Audit trail, policy engine, replay |
-| **Rendering Layer** | ModalRenderer, DrawerRenderer, NotificationRenderer |
+| Page                 | Description                                                       |
+| -------------------- | ----------------------------------------------------------------- |
+| **Overview**         | Architecture overview and quick links                             |
+| **Page Module**      | Page navigation and transitions                                   |
+| **Modal Module**     | Modal stack management                                            |
+| **Drawer Module**    | Drawer positioning and stack                                      |
+| **Notifications**    | Toast notification system                                         |
+| **Form & Async**     | Form state and async operations                                   |
+| **Interaction DSL**  | Unified `ui.*` API                                                |
+| **Governance**       | Audit trail, policy engine, replay                                |
+| **Rendering Layer**  | ModalRenderer, DrawerRenderer, NotificationRenderer               |
+| **Workflow Runtime** | Multi-step workflow orchestration with confirm/notify/async steps |
 
 ## Development
 

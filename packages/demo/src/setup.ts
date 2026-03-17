@@ -7,6 +7,7 @@ import {
   createFormModule,
   createAsyncModule,
   createDevToolsModule,
+  createWorkflowModule,
   createAuditTrail,
   createAuditMiddleware,
   createPolicyEngine,
@@ -40,6 +41,7 @@ export const runtime = createInteractionRuntime({
     createNotificationModule({ maxNotifications: 20 }),
     createFormModule(),
     createAsyncModule(),
+    createWorkflowModule(),
     createDevToolsModule({ maxTimelineEntries: 200 }),
   ],
 });

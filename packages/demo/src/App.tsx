@@ -14,6 +14,7 @@ import { FormAsyncPage } from './pages/FormAsyncPage';
 import { DSLPage } from './pages/DSLPage';
 import { GovernancePage } from './pages/GovernancePage';
 import { RenderingPage } from './pages/RenderingPage';
+import { WorkflowPage } from './pages/WorkflowPage';
 
 // Shared components
 import { ConfirmModal } from './components/ConfirmModal';
@@ -38,6 +39,7 @@ const NAV_ITEMS: NavItem[] = [
   { id: 'DSL', label: 'Interaction DSL', icon: '⟡', section: 'API' },
   { id: 'Governance', label: 'Governance', icon: '⛊', section: 'API' },
   { id: 'Rendering', label: 'Rendering Layer', icon: '◧', section: 'Rendering' },
+  { id: 'Workflow', label: 'Workflow Runtime', icon: '⟳', section: 'Orchestration' },
 ];
 
 const PAGE_MAP: Record<string, React.ComponentType> = {
@@ -50,6 +52,7 @@ const PAGE_MAP: Record<string, React.ComponentType> = {
   DSL: DSLPage,
   Governance: GovernancePage,
   Rendering: RenderingPage,
+  Workflow: WorkflowPage,
 };
 
 // ── Content Router ─────────────────────────────
@@ -103,7 +106,7 @@ function Header() {
   return (
     <header className="demo-header">
       <span className="demo-header__title">PrismUI Runtime</span>
-      <span className="demo-header__version">v0.3.0</span>
+      <span className="demo-header__version">v0.4.0</span>
       <span className="demo-header__separator" />
       <div className="demo-header__status">
         <span>state v{state.version}</span>

@@ -5,6 +5,48 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.0] - 2026-03-17
+
+### Added - Workflow Runtime (STAGE-009)
+
+Declarative multi-step workflow orchestration engine for PrismUI. Inspired by XState's core concepts (finite states, context passing, guards) but implemented as a lightweight step-sequence executor integrated natively with PrismUI's existing modules.
+
+#### WorkflowModule (`createWorkflowModule`)
+
+- **Workflow definition registry**: Define reusable workflows by ID with typed step sequences
+- **4 step types**: `async` (Promise-based), `confirm` (modal-based), `notify` (notification), `custom` (user-provided)
+- **WorkflowContext**: Accumulated payload + step results passed through the pipeline
+- **Guard conditions**: Skip steps conditionally based on context (XState-inspired guards)
+- **Error actions**: Per-step error handling — `abort`, `skip`, or `continue` with optional notification
+- **Lifecycle hooks**: `onEnter` / `onExit` per step
+- **Workflow lifecycle**: `idle → running → completed / failed / aborted`
+- **Step lifecycle**: `pending → running → completed / skipped / failed`
+- **Concurrent instances**: Multiple workflows can run simultaneously
+- **Abort support**: Cancel running workflows (including those waiting on confirm steps)
+- **28 tests** covering definition, execution, all step types, guards, hooks, abort, and concurrency
+
+#### React Integration
+
+- **useWorkflow hook**: Reactive workflow state + controller actions
+- **DSL extension**: `ui.workflow.define()`, `ui.workflow.start()`, `ui.workflow.abort()`
+
+#### Demo
+
+- New "Workflow Runtime" page with live Save Resource workflow and Simple Pipeline demos
+
+### Package Updates
+
+- **@prismui/core** bumped to 0.4.0
+- **@prismui/react** bumped to 0.4.0
+
+### Testing & Quality
+
+- **501 tests** across 26 test files (28 new)
+- **0 failures**, 100% passing
+- Zero regressions from previous stages
+
+---
+
 ## [0.3.0] - 2026-03-17
 
 ### Added - Rendering Layer (STAGE-008)
@@ -212,11 +254,12 @@ Not applicable - this is the initial release.
 
 ## Future Releases
 
-### [0.4.0] - Planned
+### [0.5.0] - Planned
 
-- Workflow Runtime — multi-step flow orchestration
-- State persistence layer (IndexedDB/LocalStorage)
+- Persistence Layer — LocalStorage/IndexedDB/SessionStorage adapters
+- State persistence with version migration
 
+[0.4.0]: https://github.com/medxaidev/prismui/releases/tag/v0.4.0
 [0.3.0]: https://github.com/medxaidev/prismui/releases/tag/v0.3.0
 [0.2.0]: https://github.com/medxaidev/prismui/releases/tag/v0.2.0
 [0.1.0]: https://github.com/medxaidev/prismui/releases/tag/v0.1.0

@@ -31,6 +31,10 @@ export type { UseAsyncReturn } from './use-async';
 export { useDevTools } from './use-devtools';
 export type { UseDevToolsReturn } from './use-devtools';
 
+// Workflow Hook (STAGE-009)
+export { useWorkflow } from './use-workflow';
+export type { UseWorkflowReturn } from './use-workflow';
+
 // Renderers — Layer 3 (STAGE-008)
 export { ModalRenderer } from './renderers';
 export type { ModalRendererProps } from './renderers';

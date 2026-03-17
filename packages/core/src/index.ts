@@ -81,6 +81,37 @@ export {
   ASYNC_RESET,
 } from './modules/async-module';
 
+// Workflow Module (STAGE-009)
+export { createWorkflowModule } from './modules/workflow-module';
+export type {
+  WorkflowModuleState,
+  WorkflowController,
+  WorkflowDefinition,
+  WorkflowStep,
+  AsyncStep,
+  ConfirmStep,
+  NotifyStep,
+  CustomStep,
+  StepBase,
+  WorkflowContext,
+  WorkflowInstance,
+  WorkflowResult,
+  WorkflowStatus,
+  StepStatus,
+  StepState,
+  ErrorAction,
+} from './modules/workflow-module';
+export {
+  WORKFLOW_START,
+  WORKFLOW_STEP_START,
+  WORKFLOW_STEP_COMPLETE,
+  WORKFLOW_STEP_SKIP,
+  WORKFLOW_STEP_FAIL,
+  WORKFLOW_COMPLETE,
+  WORKFLOW_FAIL,
+  WORKFLOW_ABORT,
+} from './modules/workflow-module';
+
 // Interaction DSL (STAGE-006)
 export { createInteractionDSL } from './interaction-dsl';
 export type {
@@ -90,6 +121,7 @@ export type {
   NotifyDSL,
   FormDSL,
   AsyncDSL,
+  WorkflowDSL,
   NotifyOptions,
 } from './interaction-dsl';
 

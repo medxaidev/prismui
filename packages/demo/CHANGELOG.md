@@ -1,5 +1,21 @@
 # @prismui/demo Changelog
 
+## [0.4.0] - 2026-03-17
+
+### Added
+
+- **Workflow Runtime page**: Interactive demo with Save Resource workflow (validate → confirm → save → notify) and Simple Pipeline
+- Workflow instance tracking with step status visualization
+- Live abort support for running workflows
+
+### Changed
+
+- Updated header version display to v0.4.0
+- Added "Orchestration" section to navigation sidebar
+- Added `createWorkflowModule()` to runtime setup
+
+---
+
 ## [0.3.0] - 2026-03-17
 
 ### Added

@@ -236,6 +236,7 @@ See [@prismui/react](https://www.npmjs.com/package/@prismui/react) for React-spe
 - `createNotificationModule()` - Notification module
 - `createFormModule()` - Form state module
 - `createAsyncModule()` - Async operation module
+- `createWorkflowModule()` - Workflow orchestration module
 
 ### Governance
 
@@ -258,7 +259,7 @@ See [@prismui/react](https://www.npmjs.com/package/@prismui/react) for React-spe
 
 ## Package Info
 
-- **Version**: 0.3.0
+- **Version**: 0.4.0
 - **License**: MIT
 - **Repository**: [github.com/medxaidev/prismui](https://github.com/medxaidev/prismui)
 - **Author**: Fangjun <fangjun20208@gmail.com>

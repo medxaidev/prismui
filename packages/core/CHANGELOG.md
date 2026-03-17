@@ -1,5 +1,20 @@
 # @prismui/core Changelog
 
+## [0.4.0] - 2026-03-17
+
+### Added
+
+- **WorkflowModule** (`createWorkflowModule`): Declarative multi-step workflow orchestration
+- 4 step types: `async`, `confirm`, `notify`, `custom`
+- WorkflowContext with accumulated payload + step results
+- Guard conditions, error actions, lifecycle hooks (onEnter/onExit)
+- Workflow lifecycle: idle → running → completed / failed / aborted
+- Concurrent workflow instances with abort support
+- DSL extension: `ui.workflow.define()`, `ui.workflow.start()`, `ui.workflow.abort()`
+- 28 new tests (501 total)
+
+---
+
 ## [0.3.0] - 2026-03-17
 
 ### Changed

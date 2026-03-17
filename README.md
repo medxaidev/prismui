@@ -2,9 +2,9 @@
 
 **Event-Driven Runtime Kernel for Modern Web Applications**
 
-[![Version](https://img.shields.io/badge/version-0.3.0-blue.svg)](https://github.com/medxaidev/prismui)
+[![Version](https://img.shields.io/badge/version-0.4.0-blue.svg)](https://github.com/medxaidev/prismui)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
-[![Tests](https://img.shields.io/badge/tests-473%20passing-brightgreen.svg)](https://github.com/medxaidev/prismui)
+[![Tests](https://img.shields.io/badge/tests-501%20passing-brightgreen.svg)](https://github.com/medxaidev/prismui)
 [![Live Demo](https://img.shields.io/badge/demo-live-success.svg)](https://medxaidev.github.io/prismui/)
 [![Dashboard](https://img.shields.io/badge/dashboard-live-blue.svg)](https://medxaidev.github.io/prismui/dashboard/)
 
@@ -14,7 +14,7 @@ PrismUI is a framework-agnostic event-driven runtime kernel that provides compre
 
 ## 🎯 What is PrismUI?
 
-PrismUI Runtime Kernel (v0.3.0) is an **event-driven runtime platform** that provides:
+PrismUI Runtime Kernel (v0.4.0) is an **event-driven runtime platform** that provides:
 
 - **Event-Driven Architecture**: EventBus with history tracking and middleware pipeline
 - **Modular State Management**: Pluggable module system with lifecycle hooks
@@ -24,6 +24,7 @@ PrismUI Runtime Kernel (v0.3.0) is an **event-driven runtime platform** that pro
 - **DevTools & Automation**: Runtime inspector, event timeline, performance monitor, AI Agent interface
 - **React Adapter**: Hooks-based integration for React applications
 - **Rendering Layer**: Built-in renderers for Modal, Drawer, and Notification — portal-based, render-prop pattern
+- **Workflow Runtime**: Declarative multi-step workflow orchestration with context passing, guards, and error handling
 
 ## 📦 Packages
 
@@ -64,6 +65,7 @@ npm install @prismui/react @prismui/core
 - `useDevTools` DevTools inspector hook
 - `ModalRenderer`, `DrawerRenderer`, `NotificationRenderer` rendering components
 - `PrismUIRootRenderer` convenience wrapper
+- `useWorkflow` workflow orchestration hook
 
 ## 🌐 Live Apps
 
@@ -289,7 +291,7 @@ Unified `ui.*` API providing a fluent interface to all runtime capabilities.
 
 PrismUI has comprehensive test coverage:
 
-- **473 tests** across 25 test files
+- **501 tests** across 26 test files
 - **0 failures**, 100% passing
 - Full isolation tests ensuring architectural boundaries
 - TypeScript strict mode enabled
@@ -313,12 +315,18 @@ npm run test:coverage
 
 ## 🛣️ Roadmap
 
-### v0.3.0 (Current) - Rendering Layer ✅
+### v0.4.0 (Current) - Workflow Runtime ✅
 
-- **ModalRenderer**: Portal-based modal overlays with backdrop, Escape, z-index stacking
-- **DrawerRenderer**: Anchor-positioned drawers (left/right/top/bottom) with backdrop
-- **NotificationRenderer**: Toast notifications with type styling, auto-dismiss, 4 positions
-- **PrismUIRootRenderer**: Convenience wrapper for all renderers
+- **WorkflowModule**: Declarative multi-step workflow orchestration engine
+- **4 step types**: async, confirm, notify, custom — with context passing
+- **XState-inspired**: Guards (conditions), error actions, lifecycle hooks (onEnter/onExit)
+- **DSL integration**: `ui.workflow.define()` / `ui.workflow.start()`
+- **useWorkflow** React hook for reactive workflow state
+- 28 new tests (501 total)
+
+### v0.3.0 - Rendering Layer ✅
+
+- ModalRenderer, DrawerRenderer, NotificationRenderer, PrismUIRootRenderer
 - 48 new tests (473 total)
 
 ### v0.2.0 - Runtime Kernel + DevTools ✅
@@ -331,10 +339,10 @@ npm run test:coverage
 - Unified DSL
 - DevTools & Automation
 
-### v0.4.0 (Planned)
+### v0.5.0 (Planned)
 
-- Workflow Runtime — multi-step flow orchestration
-- State persistence layer
+- Persistence Layer — LocalStorage/IndexedDB/SessionStorage adapters
+- State persistence with version migration
 
 ## 🤝 Contributing
 
@@ -355,4 +363,4 @@ MIT © [Fangjun](https://github.com/medxaidev)
 
 ---
 
-**Note**: This is v0.3.0 - Runtime Kernel with Rendering Layer. PrismUI provides built-in renderers for Modal, Drawer, and Notification, or use any component library (Ant Design, MUI, Mantine) with the hooks API.
+**Note**: This is v0.4.0 - Runtime Platform with Workflow Orchestration. PrismUI provides built-in renderers, workflow engine, and a complete runtime kernel. Use any component library (Ant Design, MUI, Mantine) with the hooks API.
