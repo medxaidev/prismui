@@ -1,6 +1,5 @@
-import { useEffect } from 'react';
 import { PrismUIProvider } from '@prismui/react';
-import { usePage, useModal, useRuntimeState } from '@prismui/react';
+import { useRouter, useModal, useRuntimeState } from '@prismui/react';
 import { runtime } from './setup';
 import './styles.css';
 
@@ -15,6 +14,7 @@ import { DSLPage } from './pages/DSLPage';
 import { GovernancePage } from './pages/GovernancePage';
 import { RenderingPage } from './pages/RenderingPage';
 import { WorkflowPage } from './pages/WorkflowPage';
+import { RouterPage } from './pages/RouterPage';
 
 // Shared components
 import { ConfirmModal } from './components/ConfirmModal';
@@ -40,6 +40,7 @@ const NAV_ITEMS: NavItem[] = [
   { id: 'Governance', label: 'Governance', icon: '⛊', section: 'API' },
   { id: 'Rendering', label: 'Rendering Layer', icon: '◧', section: 'Rendering' },
   { id: 'Workflow', label: 'Workflow Runtime', icon: '⟳', section: 'Orchestration' },
+  { id: 'Router', label: 'Router & Persistence', icon: '⇄', section: 'Navigation' },
 ];
 
 const PAGE_MAP: Record<string, React.ComponentType> = {
@@ -53,22 +54,26 @@ const PAGE_MAP: Record<string, React.ComponentType> = {
   Governance: GovernancePage,
   Rendering: RenderingPage,
   Workflow: WorkflowPage,
+  Router: RouterPage,
 };
 
 // ── Content Router ─────────────────────────────
 function ContentRouter() {
-  const { currentPage } = usePage();
-  const Component = PAGE_MAP[currentPage ?? 'Overview'] ?? OverviewPage;
+  const { path } = useRouter();
+  // Extract page ID from path: /PageModule → PageModule, / → Overview
+  const pageId = path === '/' ? 'Overview' : path.replace(/^\//, '');
+  const Component = PAGE_MAP[pageId] ?? OverviewPage;
   return <Component />;
 }
 
 // ── Left Navigation ────────────────────────────
 function Navigation() {
-  const { currentPage, mount, transition } = usePage();
+  const { path, push } = useRouter();
+  const currentPageId = path === '/' ? 'Overview' : path.replace(/^\//, '');
 
   const handleNav = (pageId: string) => {
-    mount(pageId);
-    transition(pageId);
+    const routePath = pageId === 'Overview' ? '/' : `/${pageId}`;
+    push(routePath);
   };
 
   // Group nav items by section
@@ -86,7 +91,7 @@ function Navigation() {
           {items.map((item) => (
             <button
               key={item.id}
-              className={`demo-nav__item ${currentPage === item.id ? 'demo-nav__item--active' : ''}`}
+              className={`demo-nav__item ${currentPageId === item.id ? 'demo-nav__item--active' : ''}`}
               onClick={() => handleNav(item.id)}
             >
               <span className="demo-nav__icon">{item.icon}</span>
@@ -106,7 +111,7 @@ function Header() {
   return (
     <header className="demo-header">
       <span className="demo-header__title">PrismUI Runtime</span>
-      <span className="demo-header__version">v0.4.0</span>
+      <span className="demo-header__version">v0.5.0</span>
       <span className="demo-header__separator" />
       <div className="demo-header__status">
         <span>state v{state.version}</span>
@@ -121,25 +126,10 @@ function ModalLayer() {
   return <>{isOpen('confirm') && <ConfirmModal />}</>;
 }
 
-// ── Init: mount Overview as default page ───────
-function InitPage() {
-  const { mount, transition, currentPage } = usePage();
-
-  useEffect(() => {
-    if (!currentPage) {
-      mount('Overview');
-      transition('Overview');
-    }
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
-
-  return null;
-}
-
 // ── App ────────────────────────────────────────
 export function App() {
   return (
     <PrismUIProvider runtime={runtime}>
-      <InitPage />
       <div className="demo-layout">
         <Header />
         <Navigation />

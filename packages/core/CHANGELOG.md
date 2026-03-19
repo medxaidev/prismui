@@ -1,5 +1,34 @@
 # @prismui/core Changelog
 
+## [0.5.0] - 2026-03-19
+
+### Added
+
+- **Router Module** (`createRouterModule`): URL-driven navigation with pluggable adapter pattern
+  - `RouterAdapter` interface — pluggable URL management
+  - `createBrowserRouterAdapter()` — wraps browser History API, SSR-safe
+  - `createMemoryRouterAdapter(initialPath?)` — in-memory for testing/SSR
+  - `RouterController`: push, replace, back, forward, go, getLocation, getPath, getQuery, getHash
+  - History stack with configurable max size
+  - Events: ROUTER_LOCATION_CHANGED, ROUTER_REPLACE
+  - `parseQueryString()` / `buildQueryString()` utility functions
+- **Persistence Module** (`createPersistenceModule`): State persistence to storage
+  - `PersistenceAdapter` interface — pluggable storage
+  - `createLocalStorageAdapter()` — localStorage wrapper, SSR-safe
+  - Key whitelist (`include` option) — only persist selected state keys
+  - Debounced auto-save on state change
+  - Auto-restore on module init
+  - `PersistenceController`: save, restore, clear, hasSavedState, getSavedState
+  - Events: PERSISTENCE_SAVE, PERSISTENCE_RESTORE, PERSISTENCE_CLEAR
+- **DSL extension**: `ui.router.*` and `ui.persistence.*` namespaces
+- 53 new tests (554 total)
+
+### Architecture Decision
+
+- **[ADR-010](../devdocs/decisions/ADR-010-router-adapter-architecture.md)**: Router Adapter Architecture — lightweight adapter pattern over full custom router or React Router dependency
+
+---
+
 ## [0.4.0] - 2026-03-17
 
 ### Added

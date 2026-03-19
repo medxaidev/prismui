@@ -31,6 +31,14 @@ export type { UseAsyncReturn } from './use-async';
 export { useDevTools } from './use-devtools';
 export type { UseDevToolsReturn } from './use-devtools';
 
+// Router & Persistence Hooks (STAGE-010)
+export { useRouter } from './use-router';
+export type { UseRouterReturn } from './use-router';
+export { useLocation } from './use-location';
+export { useSearchParams } from './use-search-params';
+export { Link } from './link';
+export type { LinkProps } from './link';
+
 // Workflow Hook (STAGE-009)
 export { useWorkflow } from './use-workflow';
 export type { UseWorkflowReturn } from './use-workflow';

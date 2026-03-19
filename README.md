@@ -2,9 +2,9 @@
 
 **Event-Driven Runtime Kernel for Modern Web Applications**
 
-[![Version](https://img.shields.io/badge/version-0.4.0-blue.svg)](https://github.com/medxaidev/prismui)
+[![Version](https://img.shields.io/badge/version-0.5.0-blue.svg)](https://github.com/medxaidev/prismui)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
-[![Tests](https://img.shields.io/badge/tests-501%20passing-brightgreen.svg)](https://github.com/medxaidev/prismui)
+[![Tests](https://img.shields.io/badge/tests-554%20passing-brightgreen.svg)](https://github.com/medxaidev/prismui)
 [![Live Demo](https://img.shields.io/badge/demo-live-success.svg)](https://medxaidev.github.io/prismui/)
 [![Dashboard](https://img.shields.io/badge/dashboard-live-blue.svg)](https://medxaidev.github.io/prismui/dashboard/)
 
@@ -14,7 +14,7 @@ PrismUI is a framework-agnostic event-driven runtime kernel that provides compre
 
 ## 🎯 What is PrismUI?
 
-PrismUI Runtime Kernel (v0.4.0) is an **event-driven runtime platform** that provides:
+PrismUI Runtime Kernel (v0.5.0) is an **event-driven runtime platform** that provides:
 
 - **Event-Driven Architecture**: EventBus with history tracking and middleware pipeline
 - **Modular State Management**: Pluggable module system with lifecycle hooks
@@ -25,6 +25,8 @@ PrismUI Runtime Kernel (v0.4.0) is an **event-driven runtime platform** that pro
 - **React Adapter**: Hooks-based integration for React applications
 - **Rendering Layer**: Built-in renderers for Modal, Drawer, and Notification — portal-based, render-prop pattern
 - **Workflow Runtime**: Declarative multi-step workflow orchestration with context passing, guards, and error handling
+- **Router Module**: URL-driven navigation with pluggable adapter pattern, browser history, and deep linking
+- **Persistence Layer**: State persistence to localStorage with key selection and auto-save/restore
 
 ## 📦 Packages
 
@@ -41,7 +43,7 @@ npm install @prismui/core
 - EventBus, Store, Scheduler
 - Module system with lifecycle hooks
 - Governance layer (Audit, Replay, Policy)
-- Built-in modules (Page, Modal, Drawer, Notification, Form, Async)
+- Built-in modules (Page, Modal, Drawer, Notification, Form, Async, Router, Persistence)
 - Interaction DSL
 - DevTools module (inspector, timeline, performance, snapshots, AI agent)
 - Full TypeScript support

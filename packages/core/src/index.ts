@@ -81,6 +81,37 @@ export {
   ASYNC_RESET,
 } from './modules/async-module';
 
+// Router Module (STAGE-010)
+export { createRouterModule, createMemoryRouterAdapter, createBrowserRouterAdapter, parseQueryString, buildQueryString } from './modules/router-module';
+export type {
+  RouterLocation,
+  RouterAdapter,
+  RouterModuleState,
+  RouterController,
+  RouterModuleOptions,
+} from './modules/router-module';
+export {
+  ROUTER_NAVIGATE,
+  ROUTER_REPLACE,
+  ROUTER_BACK,
+  ROUTER_FORWARD,
+  ROUTER_GO,
+  ROUTER_LOCATION_CHANGED,
+} from './modules/router-module';
+
+// Persistence Module (STAGE-010)
+export { createPersistenceModule, createLocalStorageAdapter } from './modules/persistence-module';
+export type {
+  PersistenceAdapter,
+  PersistenceModuleOptions,
+  PersistenceController,
+} from './modules/persistence-module';
+export {
+  PERSISTENCE_SAVE,
+  PERSISTENCE_RESTORE,
+  PERSISTENCE_CLEAR,
+} from './modules/persistence-module';
+
 // Workflow Module (STAGE-009)
 export { createWorkflowModule } from './modules/workflow-module';
 export type {
@@ -122,6 +153,8 @@ export type {
   FormDSL,
   AsyncDSL,
   WorkflowDSL,
+  RouterDSL,
+  PersistenceDSL,
   NotifyOptions,
 } from './interaction-dsl';
 

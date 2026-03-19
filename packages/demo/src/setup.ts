@@ -8,6 +8,9 @@ import {
   createAsyncModule,
   createDevToolsModule,
   createWorkflowModule,
+  createRouterModule,
+  createBrowserRouterAdapter,
+  createPersistenceModule,
   createAuditTrail,
   createAuditMiddleware,
   createPolicyEngine,
@@ -42,6 +45,11 @@ export const runtime = createInteractionRuntime({
     createFormModule(),
     createAsyncModule(),
     createWorkflowModule(),
+    createRouterModule({ adapter: createBrowserRouterAdapter() }),
+    createPersistenceModule({
+      include: ['routerLocation', 'routerHistory', 'routerHistoryIndex'],
+      debounceMs: 500,
+    }),
     createDevToolsModule({ maxTimelineEntries: 200 }),
   ],
 });

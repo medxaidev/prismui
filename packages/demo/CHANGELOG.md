@@ -1,5 +1,22 @@
 # @prismui/demo Changelog
 
+## [0.5.0] - 2026-03-19
+
+### Added
+
+- **Router & Persistence page**: Navigation controls, location display, history stack visualization, persistence info
+- Demo navigation now uses RouterModule (URL-driven) instead of PageModule
+- State persists across page refresh via PersistenceModule
+
+### Changed
+
+- Updated header version display to v0.5.0
+- Added "Navigation" section to navigation sidebar
+- Added `createRouterModule()` and `createPersistenceModule()` to runtime setup
+- Navigation uses `useRouter()` with `push()` instead of `usePage()` with `mount()`/`transition()`
+
+---
+
 ## [0.4.0] - 2026-03-17
 
 ### Added

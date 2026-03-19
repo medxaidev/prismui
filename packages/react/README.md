@@ -21,7 +21,7 @@ npm install @prismui/react @prismui/core
 
 - `react >= 18.0.0`
 - `react-dom >= 18.0.0`
-- `@prismui/core >= 0.2.0`
+- `@prismui/core >= 0.5.0`
 
 ## Quick Start
 
@@ -340,6 +340,85 @@ function MyComponent() {
 }
 ```
 
+### Router Hooks
+
+#### `useRouter()`
+
+URL-driven navigation with browser history.
+
+```tsx
+import { useRouter } from "@prismui/react";
+
+function Navigation() {
+  const { path, push, back, forward, query } = useRouter();
+
+  return (
+    <nav>
+      <button onClick={() => push("/dashboard")}>Dashboard</button>
+      <button onClick={() => push("/settings?tab=profile")}>Settings</button>
+      <button onClick={() => back()}>← Back</button>
+      <p>Current path: {path}</p>
+    </nav>
+  );
+}
+```
+
+#### `useLocation()`
+
+Reactive router location.
+
+```tsx
+import { useLocation } from "@prismui/react";
+
+function LocationInfo() {
+  const { pathname, search, hash } = useLocation();
+  return (
+    <p>
+      {pathname}
+      {search}
+      {hash}
+    </p>
+  );
+}
+```
+
+#### `useSearchParams()`
+
+Reactive query string with setter.
+
+```tsx
+import { useSearchParams } from "@prismui/react";
+
+function SearchFilter() {
+  const [params, setParams] = useSearchParams();
+  return (
+    <input
+      value={params.q || ""}
+      onChange={(e) => setParams({ q: e.target.value })}
+    />
+  );
+}
+```
+
+#### `Link`
+
+Anchor element that navigates via the Router Module.
+
+```tsx
+import { Link } from "@prismui/react";
+
+function NavLinks() {
+  return (
+    <nav>
+      <Link to="/dashboard">Dashboard</Link>
+      <Link to="/settings" replace>
+        Settings
+      </Link>
+    </nav>
+  );
+}
+```
+
 ### DevTools Hook
 
 #### `useDevTools()`
@@ -425,7 +504,7 @@ import type {
 
 ## Package Info
 
-- **Version**: 0.2.0
+- **Version**: 0.5.0
 - **License**: MIT
 - **Repository**: [github.com/medxaidev/prismui](https://github.com/medxaidev/prismui)
 - **Author**: Fangjun <fangjun20208@gmail.com>

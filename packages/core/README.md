@@ -41,6 +41,8 @@ npm install @prismui/core
 - **Notification Module**: Toast notification system
 - **Form Module**: Form state with validation and submission lifecycle
 - **Async Module**: Async operation tracking with loading/success/error states
+- **Router Module**: URL-driven navigation with pluggable adapter pattern, browser history integration
+- **Persistence Module**: State persistence to localStorage with key selection and debounce
 
 ### Interaction DSL
 
@@ -237,6 +239,14 @@ See [@prismui/react](https://www.npmjs.com/package/@prismui/react) for React-spe
 - `createFormModule()` - Form state module
 - `createAsyncModule()` - Async operation module
 - `createWorkflowModule()` - Workflow orchestration module
+- `createRouterModule(options?)` - URL router with adapter pattern
+- `createPersistenceModule(options?)` - State persistence module
+
+### Adapters
+
+- `createBrowserRouterAdapter()` - Browser History API adapter
+- `createMemoryRouterAdapter(initialPath?)` - In-memory adapter for testing/SSR
+- `createLocalStorageAdapter()` - localStorage persistence adapter
 
 ### Governance
 
@@ -259,7 +269,7 @@ See [@prismui/react](https://www.npmjs.com/package/@prismui/react) for React-spe
 
 ## Package Info
 
-- **Version**: 0.4.0
+- **Version**: 0.5.0
 - **License**: MIT
 - **Repository**: [github.com/medxaidev/prismui](https://github.com/medxaidev/prismui)
 - **Author**: Fangjun <fangjun20208@gmail.com>

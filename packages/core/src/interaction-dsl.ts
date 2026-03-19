@@ -16,6 +16,8 @@ import type {
   WorkflowResult,
   WorkflowInstance,
 } from './modules/workflow-module';
+import type { RouterController, RouterLocation } from './modules/router-module';
+import type { PersistenceController } from './modules/persistence-module';
 
 // ── Types ─────────────────────────────────────────────────────────────
 
@@ -86,6 +88,26 @@ export interface WorkflowDSL {
   getInstance(instanceId: string): WorkflowInstance | undefined;
 }
 
+/** Router DSL namespace. */
+export interface RouterDSL {
+  push(path: string, state?: unknown): void;
+  replace(path: string, state?: unknown): void;
+  back(): void;
+  forward(): void;
+  go(delta: number): void;
+  getPath(): string;
+  getQuery(): Record<string, string>;
+  getLocation(): RouterLocation;
+}
+
+/** Persistence DSL namespace. */
+export interface PersistenceDSL {
+  save(): void;
+  restore(): void;
+  clear(): void;
+  hasSavedState(): boolean;
+}
+
 /** The unified Interaction DSL. */
 export interface InteractionDSL {
   readonly modal: ModalDSL;
@@ -95,6 +117,8 @@ export interface InteractionDSL {
   readonly form: FormDSL;
   readonly async: AsyncDSL;
   readonly workflow: WorkflowDSL;
+  readonly router: RouterDSL;
+  readonly persistence: PersistenceDSL;
 }
 
 // ── Factory ───────────────────────────────────────────────────────────
@@ -110,6 +134,8 @@ export function createInteractionDSL(runtime: InteractionRuntime): InteractionDS
   const formCtrl = runtime.modules.form as FormController | undefined;
   const asyncCtrl = runtime.modules.async as AsyncController | undefined;
   const workflowCtrl = runtime.modules.workflow as WorkflowController | undefined;
+  const routerCtrl = runtime.modules.router as RouterController | undefined;
+  const persistCtrl = runtime.modules.persistence as PersistenceController | undefined;
 
   // ── Modal DSL ───────────────────────────────────────────────────────
 
@@ -293,6 +319,52 @@ export function createInteractionDSL(runtime: InteractionRuntime): InteractionDS
     },
   };
 
+  // ── Router DSL ──────────────────────────────────────────────────────
+
+  const router: RouterDSL = {
+    push(path: string, state?: unknown): void {
+      routerCtrl?.push(path, state);
+    },
+    replace(path: string, state?: unknown): void {
+      routerCtrl?.replace(path, state);
+    },
+    back(): void {
+      routerCtrl?.back();
+    },
+    forward(): void {
+      routerCtrl?.forward();
+    },
+    go(delta: number): void {
+      routerCtrl?.go(delta);
+    },
+    getPath(): string {
+      return routerCtrl?.getPath() ?? '/';
+    },
+    getQuery(): Record<string, string> {
+      return routerCtrl?.getQuery() ?? {};
+    },
+    getLocation(): RouterLocation {
+      return routerCtrl?.getLocation() ?? { pathname: '/', search: '', hash: '', state: null };
+    },
+  };
+
+  // ── Persistence DSL ────────────────────────────────────────────────
+
+  const persistence: PersistenceDSL = {
+    save(): void {
+      persistCtrl?.save();
+    },
+    restore(): void {
+      persistCtrl?.restore();
+    },
+    clear(): void {
+      persistCtrl?.clear();
+    },
+    hasSavedState(): boolean {
+      return persistCtrl?.hasSavedState() ?? false;
+    },
+  };
+
   return {
     modal,
     confirm,
@@ -301,5 +373,7 @@ export function createInteractionDSL(runtime: InteractionRuntime): InteractionDS
     form,
     async: asyncDSL,
     workflow,
+    router,
+    persistence,
   };
 }

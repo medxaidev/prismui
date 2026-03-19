@@ -5,6 +5,64 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.0] - 2026-03-19
+
+### Added - Router & Persistence Layer (STAGE-010)
+
+URL-driven navigation with pluggable adapter pattern and state persistence for PrismUI. Solves four critical production issues: no browser back/forward, no direct URL navigation, no route parameters, and no state persistence across refresh.
+
+#### Router Module (`createRouterModule`)
+
+- **Adapter pattern**: Pluggable `RouterAdapter` interface for URL management
+- **Browser adapter** (`createBrowserRouterAdapter`): Wraps History API, SSR-safe
+- **Memory adapter** (`createMemoryRouterAdapter`): In-memory for testing/SSR
+- **RouterController**: push, replace, back, forward, go, getLocation, getPath, getQuery, getHash
+- **History stack**: Configurable max size, truncates forward history on new navigation
+- **Query utilities**: `parseQueryString()` / `buildQueryString()`
+- **Events**: ROUTER_LOCATION_CHANGED, ROUTER_REPLACE, ROUTER_BACK, ROUTER_FORWARD, ROUTER_GO
+
+#### Persistence Module (`createPersistenceModule`)
+
+- **Adapter pattern**: Pluggable `PersistenceAdapter` interface for storage
+- **LocalStorage adapter** (`createLocalStorageAdapter`): SSR-safe localStorage wrapper
+- **Key whitelist**: `include` option — only persist selected state keys
+- **Debounced auto-save**: Configurable debounce interval on state change
+- **Auto-restore**: Restores persisted state on module initialization
+- **PersistenceController**: save, restore, clear, hasSavedState, getSavedState
+- **Events**: PERSISTENCE_SAVE, PERSISTENCE_RESTORE, PERSISTENCE_CLEAR
+
+#### React Integration
+
+- **useRouter hook**: Reactive location + push/replace/back/forward/go
+- **useLocation hook**: Reactive RouterLocation
+- **useSearchParams hook**: Reactive query string with setter
+- **Link component**: `<a>` that navigates via Router Module (modifier key aware)
+- **DSL extension**: `ui.router.*` and `ui.persistence.*` namespaces
+
+#### Demo
+
+- New "Router & Persistence" page with navigation controls, location display, history stack visualization
+- Demo navigation now uses RouterModule (URL-driven) instead of PageModule
+- State persists across page refresh
+
+### Package Updates
+
+- **@prismui/core** bumped to 0.5.0
+- **@prismui/react** bumped to 0.5.0
+- **@prismui/demo** bumped to 0.5.0
+
+### Testing & Quality
+
+- **554 tests** across 28 test files (53 new)
+- **0 failures**, 100% passing
+- Zero regressions from previous stages
+
+### Architecture Decision
+
+- **[ADR-010](devdocs/decisions/ADR-010-router-adapter-architecture.md)**: Router Adapter Architecture — lightweight adapter pattern
+
+---
+
 ## [0.4.0] - 2026-03-17
 
 ### Added - Workflow Runtime (STAGE-009)
