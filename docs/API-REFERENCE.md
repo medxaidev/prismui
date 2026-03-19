@@ -1,7 +1,7 @@
 # PrismUI API Reference
 
-> **Version**: 0.4.0  
-> **Last Updated**: 2026-03-17
+> **Version**: 0.5.0  
+> **Last Updated**: 2026-03-19
 
 ---
 
@@ -25,15 +25,15 @@
 创建 PrismUI 运行时实例。
 
 ```typescript
-function createInteractionRuntime(options?: RuntimeOptions): InteractionRuntime
+function createInteractionRuntime(options?: RuntimeOptions): InteractionRuntime;
 ```
 
 **Options**:
 
 ```typescript
 interface RuntimeOptions {
-  modules?: RuntimeModule[];        // 要注册的模块列表
-  historySize?: number;             // 事件历史大小（默认：100）
+  modules?: RuntimeModule[]; // 要注册的模块列表
+  historySize?: number; // 事件历史大小（默认：100）
   initialState?: Partial<RuntimeState>; // 初始状态
   middleware?: SchedulerMiddleware[]; // 中间件
 }
@@ -44,7 +44,7 @@ interface RuntimeOptions {
 **Example**:
 
 ```typescript
-import { createInteractionRuntime, createModalModule } from '@prismui/core';
+import { createInteractionRuntime, createModalModule } from "@prismui/core";
 
 const runtime = createInteractionRuntime({
   modules: [createModalModule()],
@@ -61,10 +61,11 @@ const runtime = createInteractionRuntime({
 页面路由管理模块。
 
 ```typescript
-function createPageModule(): RuntimeModule<PageController>
+function createPageModule(): RuntimeModule<PageController>;
 ```
 
 **State**:
+
 - `currentPage: string | null` - 当前页面 ID
 - `mountedPages: Set<string>` - 已挂载的页面
 - `locked: boolean` - 是否锁定路由
@@ -83,6 +84,7 @@ interface PageController {
 ```
 
 **Events**:
+
 - `PAGE_MOUNT` - 页面挂载
 - `PAGE_UNMOUNT` - 页面卸载
 - `PAGE_TRANSITION` - 页面切换
@@ -96,10 +98,11 @@ interface PageController {
 Modal 状态管理模块。
 
 ```typescript
-function createModalModule(): RuntimeModule<ModalController>
+function createModalModule(): RuntimeModule<ModalController>;
 ```
 
 **State**:
+
 - `modalStack: string[]` - Modal ID 栈
 
 **Controller API**:
@@ -107,7 +110,7 @@ function createModalModule(): RuntimeModule<ModalController>
 ```typescript
 interface ModalController {
   open(modalId: string): void;
-  close(modalId?: string): void;  // 不传 ID 则关闭栈顶
+  close(modalId?: string): void; // 不传 ID 则关闭栈顶
   closeAll(): void;
   isOpen(modalId: string): boolean;
   getStack(): string[];
@@ -115,6 +118,7 @@ interface ModalController {
 ```
 
 **Events**:
+
 - `MODAL_OPEN` - Modal 打开
 - `MODAL_CLOSE` - Modal 关闭
 - `MODAL_CLOSE_ALL` - 关闭所有 Modal
@@ -126,10 +130,11 @@ interface ModalController {
 Drawer 状态管理模块。
 
 ```typescript
-function createDrawerModule(): RuntimeModule<DrawerController>
+function createDrawerModule(): RuntimeModule<DrawerController>;
 ```
 
 **State**:
+
 - `drawerStack: DrawerEntry[]` - Drawer 栈
 
 **Types**:
@@ -137,7 +142,7 @@ function createDrawerModule(): RuntimeModule<DrawerController>
 ```typescript
 interface DrawerEntry {
   drawerId: string;
-  anchor: 'left' | 'right' | 'top' | 'bottom';
+  anchor: "left" | "right" | "top" | "bottom";
 }
 ```
 
@@ -155,6 +160,7 @@ interface DrawerController {
 ```
 
 **Events**:
+
 - `DRAWER_OPEN` - Drawer 打开
 - `DRAWER_CLOSE` - Drawer 关闭
 - `DRAWER_CLOSE_ALL` - 关闭所有 Drawer
@@ -167,19 +173,20 @@ interface DrawerController {
 
 ```typescript
 function createNotificationModule(
-  options?: NotificationModuleOptions
-): RuntimeModule<NotificationController>
+  options?: NotificationModuleOptions,
+): RuntimeModule<NotificationController>;
 ```
 
 **Options**:
 
 ```typescript
 interface NotificationModuleOptions {
-  maxNotifications?: number;  // 最大通知数（默认：50）
+  maxNotifications?: number; // 最大通知数（默认：50）
 }
 ```
 
 **State**:
+
 - `notifications: NotificationEntry[]` - 通知列表
 
 **Types**:
@@ -187,7 +194,7 @@ interface NotificationModuleOptions {
 ```typescript
 interface NotificationEntry {
   id: string;
-  type: 'info' | 'success' | 'warning' | 'error';
+  type: "info" | "success" | "warning" | "error";
   message: string;
   autoDismissMs?: number;
   timestamp: number;
@@ -198,7 +205,7 @@ interface NotificationEntry {
 
 ```typescript
 interface NotificationController {
-  show(notification: Omit<NotificationEntry, 'id' | 'timestamp'>): string;
+  show(notification: Omit<NotificationEntry, "id" | "timestamp">): string;
   dismiss(id: string): void;
   dismissAll(): void;
   getAll(): NotificationEntry[];
@@ -208,6 +215,7 @@ interface NotificationController {
 ```
 
 **Events**:
+
 - `NOTIFICATION_SHOW` - 显示通知
 - `NOTIFICATION_DISMISS` - 关闭通知
 - `NOTIFICATION_DISMISS_ALL` - 关闭所有通知
@@ -219,10 +227,11 @@ interface NotificationController {
 表单状态管理模块。
 
 ```typescript
-function createFormModule(): RuntimeModule<FormController>
+function createFormModule(): RuntimeModule<FormController>;
 ```
 
 **State**:
+
 - `formFields: Record<string, FieldState>` - 表单字段
 - `formIsSubmitting: boolean` - 是否提交中
 - `formSubmitCount: number` - 提交次数
@@ -238,7 +247,9 @@ interface FieldState {
   dirty: boolean;
 }
 
-type FormValidator = (fields: Record<string, FieldState>) => Record<string, string | null>;
+type FormValidator = (
+  fields: Record<string, FieldState>,
+) => Record<string, string | null>;
 ```
 
 **Controller API**:
@@ -265,6 +276,7 @@ interface FormController {
 ```
 
 **Events**:
+
 - `FORM_REGISTER_FIELD` - 注册字段
 - `FORM_UNREGISTER_FIELD` - 注销字段
 - `FORM_SET_VALUE` - 设置值
@@ -283,16 +295,17 @@ interface FormController {
 异步操作跟踪模块。
 
 ```typescript
-function createAsyncModule(): RuntimeModule<AsyncController>
+function createAsyncModule(): RuntimeModule<AsyncController>;
 ```
 
 **State**:
+
 - `asyncOperations: Record<string, AsyncOperation>` - 异步操作
 
 **Types**:
 
 ```typescript
-type AsyncStatus = 'idle' | 'loading' | 'success' | 'error';
+type AsyncStatus = "idle" | "loading" | "success" | "error";
 
 interface AsyncOperation {
   status: AsyncStatus;
@@ -319,10 +332,132 @@ interface AsyncController {
 ```
 
 **Events**:
+
 - `ASYNC_START` - 开始异步操作
 - `ASYNC_SUCCESS` - 异步操作成功
 - `ASYNC_ERROR` - 异步操作失败
 - `ASYNC_RESET` - 重置异步操作
+
+---
+
+#### createRouterModule
+
+URL 路由管理模块（推荐用于生产）。
+
+```typescript
+function createRouterModule(
+  options?: RouterModuleOptions,
+): RuntimeModule<RouterController>;
+```
+
+**Options**:
+
+```typescript
+interface RouterModuleOptions {
+  adapter?: RouterAdapter; // 路由适配器（默认：MemoryRouterAdapter）
+  maxHistorySize?: number; // 历史栈最大大小（默认：50）
+}
+```
+
+**State**:
+
+- `routerLocation: RouterLocation` - 当前路由位置
+- `routerHistory: string[]` - 历史栈
+- `routerHistoryIndex: number` - 当前历史索引
+
+**Types**:
+
+```typescript
+interface RouterLocation {
+  pathname: string;
+  search: string;
+  hash: string;
+  state: unknown;
+}
+```
+
+**Controller API**:
+
+```typescript
+interface RouterController {
+  push(path: string, state?: unknown): void;
+  replace(path: string, state?: unknown): void;
+  back(): void;
+  forward(): void;
+  go(delta: number): void;
+  getLocation(): RouterLocation;
+  getPath(): string;
+  getQuery(): Record<string, string>;
+  getHash(): string;
+  getState(): unknown;
+  createHref(path: string): string;
+}
+```
+
+**Events**:
+
+- `ROUTER_LOCATION_CHANGED` - 路由位置变化
+- `ROUTER_REPLACE` - 替换路由
+- `ROUTER_BACK` - 后退
+- `ROUTER_FORWARD` - 前进
+- `ROUTER_GO` - 跳转
+
+**Adapters**:
+
+```typescript
+// Browser History API adapter (推荐用于生产)
+const adapter = createBrowserRouterAdapter();
+
+// Memory adapter (用于测试/SSR)
+const adapter = createMemoryRouterAdapter("/initial-path");
+```
+
+---
+
+#### createPersistenceModule
+
+状态持久化模块。
+
+```typescript
+function createPersistenceModule(
+  options?: PersistenceModuleOptions,
+): RuntimeModule<PersistenceController>;
+```
+
+**Options**:
+
+```typescript
+interface PersistenceModuleOptions {
+  adapter?: PersistenceAdapter; // 存储适配器（默认：LocalStorageAdapter）
+  include?: string[]; // 要持久化的状态键白名单
+  debounceMs?: number; // 防抖延迟（默认：300ms）
+}
+```
+
+**Controller API**:
+
+```typescript
+interface PersistenceController {
+  save(): void;
+  restore(): void;
+  clear(): void;
+  hasSavedState(): boolean;
+  getSavedState(): Record<string, unknown> | null;
+}
+```
+
+**Events**:
+
+- `PERSISTENCE_SAVE` - 保存状态
+- `PERSISTENCE_RESTORE` - 恢复状态
+- `PERSISTENCE_CLEAR` - 清除状态
+
+**Adapters**:
+
+```typescript
+// LocalStorage adapter (默认)
+const adapter = createLocalStorageAdapter();
+```
 
 ---
 
@@ -331,10 +466,11 @@ interface AsyncController {
 工作流编排模块。
 
 ```typescript
-function createWorkflowModule(): RuntimeModule<WorkflowController>
+function createWorkflowModule(): RuntimeModule<WorkflowController>;
 ```
 
 **State**:
+
 - `workflowDefinitions: Record<string, WorkflowDefinition>` - 工作流定义
 - `workflowInstances: Record<string, WorkflowInstance>` - 工作流实例
 
@@ -356,26 +492,28 @@ interface StepBase {
 }
 
 interface AsyncStep extends StepBase {
-  type: 'async';
+  type: "async";
   execute: (ctx: WorkflowContext) => Promise<unknown>;
-  onError?: { action: 'abort' | 'continue'; notify?: string };
+  onError?: { action: "abort" | "continue"; notify?: string };
 }
 
 interface ConfirmStep extends StepBase {
-  type: 'confirm';
+  type: "confirm";
   modalId: string;
-  onReject?: 'abort' | 'skip';
+  onReject?: "abort" | "skip";
 }
 
 interface NotifyStep extends StepBase {
-  type: 'notify';
-  notification: { type: NotificationType; message: string } | ((ctx: WorkflowContext) => { type: NotificationType; message: string });
+  type: "notify";
+  notification:
+    | { type: NotificationType; message: string }
+    | ((ctx: WorkflowContext) => { type: NotificationType; message: string });
 }
 
 interface CustomStep extends StepBase {
-  type: 'custom';
+  type: "custom";
   execute: (ctx: WorkflowContext) => unknown | Promise<unknown>;
-  onError?: { action: 'abort' | 'continue'; notify?: string };
+  onError?: { action: "abort" | "continue"; notify?: string };
 }
 
 interface WorkflowContext {
@@ -386,7 +524,7 @@ interface WorkflowContext {
   currentStepIndex: number;
 }
 
-type WorkflowStatus = 'idle' | 'running' | 'completed' | 'failed' | 'aborted';
+type WorkflowStatus = "idle" | "running" | "completed" | "failed" | "aborted";
 
 interface WorkflowInstance {
   instanceId: string;
@@ -403,7 +541,7 @@ interface WorkflowInstance {
 
 interface WorkflowResult {
   instanceId: string;
-  status: 'completed' | 'failed' | 'aborted';
+  status: "completed" | "failed" | "aborted";
   results: Record<string, unknown>;
   error?: string;
 }
@@ -414,7 +552,10 @@ interface WorkflowResult {
 ```typescript
 interface WorkflowController {
   define(definition: WorkflowDefinition): void;
-  start(workflowId: string, payload?: Record<string, unknown>): Promise<WorkflowResult>;
+  start(
+    workflowId: string,
+    payload?: Record<string, unknown>,
+  ): Promise<WorkflowResult>;
   abort(instanceId: string): void;
   getInstances(): WorkflowInstance[];
   getInstance(instanceId: string): WorkflowInstance | undefined;
@@ -422,6 +563,7 @@ interface WorkflowController {
 ```
 
 **Events**:
+
 - `WORKFLOW_DEFINE` - 定义工作流
 - `WORKFLOW_START` - 启动工作流
 - `WORKFLOW_STEP_START` - 步骤开始
@@ -439,7 +581,7 @@ interface WorkflowController {
 统一的 DSL API，包装所有模块能力。
 
 ```typescript
-function createInteractionDSL(runtime: InteractionRuntime): InteractionDSL
+function createInteractionDSL(runtime: InteractionRuntime): InteractionDSL;
 ```
 
 **API**:
@@ -454,7 +596,7 @@ interface InteractionDSL {
     isOpen(modalId: string): boolean;
     getStack(): string[];
   };
-  
+
   // Drawer
   drawer: {
     open(drawerId: string, anchor?: DrawerAnchor): void;
@@ -463,18 +605,18 @@ interface InteractionDSL {
     isOpen(drawerId: string): boolean;
     getStack(): DrawerEntry[];
   };
-  
+
   // Notification
   notify: {
     info(message: string, options?: NotifyOptions): string;
     success(message: string, options?: NotifyOptions): string;
     warning(message: string, options?: NotifyOptions): string;
     error(message: string, options?: NotifyOptions): string;
-    show(notification: Omit<NotificationEntry, 'id' | 'timestamp'>): string;
+    show(notification: Omit<NotificationEntry, "id" | "timestamp">): string;
     dismiss(id: string): void;
     dismissAll(): void;
   };
-  
+
   // Form
   form: {
     register(fieldId: string, initialValue: unknown): void;
@@ -491,7 +633,7 @@ interface InteractionDSL {
     isValid(): boolean;
     isDirty(): boolean;
   };
-  
+
   // Async
   async: {
     start(operationId: string): void;
@@ -501,14 +643,38 @@ interface InteractionDSL {
     isLoading(operationId: string): boolean;
     isAnyLoading(): boolean;
   };
-  
+
   // Workflow
   workflow: {
     define(definition: WorkflowDefinition): void;
-    start(workflowId: string, payload?: Record<string, unknown>): Promise<WorkflowResult>;
+    start(
+      workflowId: string,
+      payload?: Record<string, unknown>,
+    ): Promise<WorkflowResult>;
     abort(instanceId: string): void;
   };
-  
+
+  // Router
+  router: {
+    push(path: string, state?: unknown): void;
+    replace(path: string, state?: unknown): void;
+    back(): void;
+    forward(): void;
+    go(delta: number): void;
+    getPath(): string;
+    getQuery(): Record<string, string>;
+    getHash(): string;
+    createHref(path: string): string;
+  };
+
+  // Persistence
+  persistence: {
+    save(): void;
+    restore(): void;
+    clear(): void;
+    hasSavedState(): boolean;
+  };
+
   // Convenience
   confirm(modalId: string): Promise<boolean>;
 }
@@ -534,7 +700,7 @@ interface RuntimeEvent {
 ```typescript
 interface RuntimeState {
   version: number;
-  [key: string]: unknown;  // 模块贡献的状态
+  [key: string]: unknown; // 模块贡献的状态
 }
 ```
 
@@ -563,7 +729,7 @@ interface RuntimeModule<TController = unknown> {
 根 Provider，包装整个应用。
 
 ```typescript
-function PrismUIProvider(props: PrismUIProviderProps): JSX.Element
+function PrismUIProvider(props: PrismUIProviderProps): JSX.Element;
 ```
 
 **Props**:
@@ -599,20 +765,20 @@ function App() {
 获取 Runtime 实例。
 
 ```typescript
-function useRuntime(): InteractionRuntime
+function useRuntime(): InteractionRuntime;
 ```
 
 **Example**:
 
 ```typescript
-import { useRuntime } from '@prismui/react';
+import { useRuntime } from "@prismui/react";
 
 function MyComponent() {
   const runtime = useRuntime();
-  
+
   useEffect(() => {
     const unsubscribe = runtime.subscribe((event) => {
-      console.log('Event:', event);
+      console.log("Event:", event);
     });
     return unsubscribe;
   }, []);
@@ -626,17 +792,17 @@ function MyComponent() {
 订阅整个 Runtime State。
 
 ```typescript
-function useRuntimeState(): RuntimeState
+function useRuntimeState(): RuntimeState;
 ```
 
 **Example**:
 
 ```typescript
-import { useRuntimeState } from '@prismui/react';
+import { useRuntimeState } from "@prismui/react";
 
 function MyComponent() {
   const state = useRuntimeState();
-  console.log('Current page:', state.currentPage);
+  console.log("Current page:", state.currentPage);
 }
 ```
 
@@ -647,13 +813,13 @@ function MyComponent() {
 订阅 State 的部分切片（性能优化）。
 
 ```typescript
-function useSelector<T>(selector: (state: RuntimeState) => T): T
+function useSelector<T>(selector: (state: RuntimeState) => T): T;
 ```
 
 **Example**:
 
 ```typescript
-import { useSelector } from '@prismui/react';
+import { useSelector } from "@prismui/react";
 
 function MyComponent() {
   const currentPage = useSelector((state) => state.currentPage);
@@ -668,7 +834,7 @@ function MyComponent() {
 使用 PageModule。
 
 ```typescript
-function usePage(): UsePageReturn
+function usePage(): UsePageReturn;
 ```
 
 **Returns**:
@@ -694,7 +860,7 @@ interface UsePageReturn {
 使用 ModalModule。
 
 ```typescript
-function useModal(): UseModalReturn
+function useModal(): UseModalReturn;
 ```
 
 **Returns**:
@@ -717,7 +883,7 @@ interface UseModalReturn {
 使用 DrawerModule。
 
 ```typescript
-function useDrawer(): UseDrawerReturn
+function useDrawer(): UseDrawerReturn;
 ```
 
 **Returns**:
@@ -741,7 +907,7 @@ interface UseDrawerReturn {
 使用 NotificationModule。
 
 ```typescript
-function useNotification(): UseNotificationReturn
+function useNotification(): UseNotificationReturn;
 ```
 
 **Returns**:
@@ -750,7 +916,7 @@ function useNotification(): UseNotificationReturn
 interface UseNotificationReturn {
   notifications: NotificationEntry[];
   count: number;
-  show(notification: Omit<NotificationEntry, 'id' | 'timestamp'>): string;
+  show(notification: Omit<NotificationEntry, "id" | "timestamp">): string;
   dismiss(id: string): void;
   dismissAll(): void;
   getById(id: string): NotificationEntry | undefined;
@@ -764,7 +930,7 @@ interface UseNotificationReturn {
 使用 FormModule。
 
 ```typescript
-function useForm(): UseFormReturn
+function useForm(): UseFormReturn;
 ```
 
 **Returns**:
@@ -799,7 +965,7 @@ interface UseFormReturn {
 使用 AsyncModule。
 
 ```typescript
-function useAsync(): UseAsyncReturn
+function useAsync(): UseAsyncReturn;
 ```
 
 **Returns**:
@@ -825,7 +991,7 @@ interface UseAsyncReturn {
 使用 WorkflowModule。
 
 ```typescript
-function useWorkflow(): UseWorkflowReturn
+function useWorkflow(): UseWorkflowReturn;
 ```
 
 **Returns**:
@@ -835,9 +1001,152 @@ interface UseWorkflowReturn {
   definitions: Record<string, WorkflowDefinition>;
   instances: WorkflowInstance[];
   define(definition: WorkflowDefinition): void;
-  start(workflowId: string, payload?: Record<string, unknown>): Promise<WorkflowResult>;
+  start(
+    workflowId: string,
+    payload?: Record<string, unknown>,
+  ): Promise<WorkflowResult>;
   abort(instanceId: string): void;
   getInstance(instanceId: string): WorkflowInstance | undefined;
+}
+```
+
+---
+
+#### useRouter
+
+使用 RouterModule（推荐用于生产）。
+
+```typescript
+function useRouter(): UseRouterReturn;
+```
+
+**Returns**:
+
+```typescript
+interface UseRouterReturn {
+  location: RouterLocation;
+  path: string;
+  query: Record<string, string>;
+  hash: string;
+  state: unknown;
+  push(path: string, state?: unknown): void;
+  replace(path: string, state?: unknown): void;
+  back(): void;
+  forward(): void;
+  go(delta: number): void;
+  createHref(path: string): string;
+}
+```
+
+**Example**:
+
+```typescript
+import { useRouter } from '@prismui/react';
+
+function Navigation() {
+  const { path, push, back, query } = useRouter();
+
+  return (
+    <div>
+      <button onClick={() => push('/dashboard')}>Dashboard</button>
+      <button onClick={() => push('/settings?tab=profile')}>Settings</button>
+      <button onClick={() => back()}>← Back</button>
+      <p>Current: {path}</p>
+      <p>Query: {JSON.stringify(query)}</p>
+    </div>
+  );
+}
+```
+
+---
+
+#### useLocation
+
+获取当前路由位置（响应式）。
+
+```typescript
+function useLocation(): RouterLocation;
+```
+
+**Returns**: `RouterLocation`
+
+**Example**:
+
+```typescript
+import { useLocation } from '@prismui/react';
+
+function LocationInfo() {
+  const { pathname, search, hash } = useLocation();
+  return <p>{pathname}{search}{hash}</p>;
+}
+```
+
+---
+
+#### useSearchParams
+
+获取和设置 URL 查询参数（响应式）。
+
+```typescript
+function useSearchParams(): [
+  Record<string, string>,
+  (params: Record<string, string>) => void,
+];
+```
+
+**Returns**: `[params, setParams]`
+
+**Example**:
+
+```typescript
+import { useSearchParams } from '@prismui/react';
+
+function SearchFilter() {
+  const [params, setParams] = useSearchParams();
+
+  return (
+    <input
+      value={params.q || ''}
+      onChange={(e) => setParams({ q: e.target.value })}
+      placeholder="Search..."
+    />
+  );
+}
+```
+
+---
+
+#### Link
+
+导航链接组件（使用 RouterModule）。
+
+```typescript
+function Link(props: LinkProps): JSX.Element;
+```
+
+**Props**:
+
+```typescript
+interface LinkProps extends React.AnchorHTMLAttributes<HTMLAnchorElement> {
+  to: string; // 目标路径
+  replace?: boolean; // 是否使用 replace 而非 push
+  state?: unknown; // 路由状态
+}
+```
+
+**Example**:
+
+```typescript
+import { Link } from '@prismui/react';
+
+function NavLinks() {
+  return (
+    <nav>
+      <Link to="/dashboard">Dashboard</Link>
+      <Link to="/settings" replace>Settings</Link>
+      <Link to="/profile" state={{ from: 'nav' }}>Profile</Link>
+    </nav>
+  );
 }
 ```
 
@@ -848,21 +1157,21 @@ interface UseWorkflowReturn {
 使用统一的 DSL API（推荐）。
 
 ```typescript
-function useUI(): InteractionDSL
+function useUI(): InteractionDSL;
 ```
 
 **Example**:
 
 ```typescript
-import { useUI } from '@prismui/react';
+import { useUI } from "@prismui/react";
 
 function MyComponent() {
   const ui = useUI();
-  
+
   const handleAction = async () => {
-    const confirmed = await ui.confirm('delete-modal');
+    const confirmed = await ui.confirm("delete-modal");
     if (confirmed) {
-      ui.notify.success('Deleted!');
+      ui.notify.success("Deleted!");
     }
   };
 }
@@ -873,6 +1182,7 @@ function MyComponent() {
 ## Event Types Reference
 
 ### Page Events
+
 - `PAGE_MOUNT`
 - `PAGE_UNMOUNT`
 - `PAGE_TRANSITION`
@@ -880,21 +1190,25 @@ function MyComponent() {
 - `PAGE_UNLOCK`
 
 ### Modal Events
+
 - `MODAL_OPEN`
 - `MODAL_CLOSE`
 - `MODAL_CLOSE_ALL`
 
 ### Drawer Events
+
 - `DRAWER_OPEN`
 - `DRAWER_CLOSE`
 - `DRAWER_CLOSE_ALL`
 
 ### Notification Events
+
 - `NOTIFICATION_SHOW`
 - `NOTIFICATION_DISMISS`
 - `NOTIFICATION_DISMISS_ALL`
 
 ### Form Events
+
 - `FORM_REGISTER_FIELD`
 - `FORM_UNREGISTER_FIELD`
 - `FORM_SET_VALUE`
@@ -907,12 +1221,14 @@ function MyComponent() {
 - `FORM_RESET`
 
 ### Async Events
+
 - `ASYNC_START`
 - `ASYNC_SUCCESS`
 - `ASYNC_ERROR`
 - `ASYNC_RESET`
 
 ### Workflow Events
+
 - `WORKFLOW_DEFINE`
 - `WORKFLOW_START`
 - `WORKFLOW_STEP_START`
@@ -922,6 +1238,20 @@ function MyComponent() {
 - `WORKFLOW_COMPLETE`
 - `WORKFLOW_FAIL`
 - `WORKFLOW_ABORT`
+
+### Router Events
+
+- `ROUTER_LOCATION_CHANGED`
+- `ROUTER_REPLACE`
+- `ROUTER_BACK`
+- `ROUTER_FORWARD`
+- `ROUTER_GO`
+
+### Persistence Events
+
+- `PERSISTENCE_SAVE`
+- `PERSISTENCE_RESTORE`
+- `PERSISTENCE_CLEAR`
 
 ---
 

@@ -1,24 +1,24 @@
 # PrismUI Documentation for fhir-studio Team
 
-> **Version**: 0.4.0  
-> **Last Updated**: 2026-03-17  
+> **Version**: 0.5.0  
+> **Last Updated**: 2026-03-19  
 > **Status**: Ready for Integration
 
 ---
 
 ## 📦 What's Included
 
-This documentation package contains everything the fhir-studio team needs to integrate PrismUI v0.4.0.
+This documentation package contains everything the fhir-studio team needs to integrate PrismUI v0.5.0.
 
 ### Core Documents
 
-| Document | Purpose | Priority |
-|----------|---------|----------|
-| **[INTEGRATION-GUIDE.md](./INTEGRATION-GUIDE.md)** | Step-by-step integration instructions with code examples | ⭐⭐⭐⭐⭐ |
-| **[API-REFERENCE.md](./API-REFERENCE.md)** | Complete API documentation for all modules and hooks | ⭐⭐⭐⭐⭐ |
-| **[ARCHITECTURE-OVERVIEW.md](./ARCHITECTURE-OVERVIEW.md)** | High-level architecture explanation (simplified) | ⭐⭐⭐⭐ |
-| **[TROUBLESHOOTING.md](./TROUBLESHOOTING.md)** | Common issues and solutions | ⭐⭐⭐⭐ |
-| **[BLOCKING-ISSUES.md](./BLOCKING-ISSUES.md)** | Template for reporting blocking issues | ⭐⭐⭐ |
+| Document                                                   | Purpose                                                  | Priority   |
+| ---------------------------------------------------------- | -------------------------------------------------------- | ---------- |
+| **[INTEGRATION-GUIDE.md](./INTEGRATION-GUIDE.md)**         | Step-by-step integration instructions with code examples | ⭐⭐⭐⭐⭐ |
+| **[API-REFERENCE.md](./API-REFERENCE.md)**                 | Complete API documentation for all modules and hooks     | ⭐⭐⭐⭐⭐ |
+| **[ARCHITECTURE-OVERVIEW.md](./ARCHITECTURE-OVERVIEW.md)** | High-level architecture explanation (simplified)         | ⭐⭐⭐⭐   |
+| **[TROUBLESHOOTING.md](./TROUBLESHOOTING.md)**             | Common issues and solutions                              | ⭐⭐⭐⭐   |
+| **[BLOCKING-ISSUES.md](./BLOCKING-ISSUES.md)**             | Template for reporting blocking issues                   | ⭐⭐⭐     |
 
 ### Additional Resources
 
@@ -34,7 +34,7 @@ This documentation package contains everything the fhir-studio team needs to int
 ### 1. Install Packages
 
 ```bash
-npm install @prismui/core@0.4.0 @prismui/react@0.4.0
+npm install @prismui/core@0.5.0 @prismui/react@0.5.0
 ```
 
 ### 2. Create Runtime Setup
@@ -47,7 +47,10 @@ import {
   createModalModule,
   createNotificationModule,
   createWorkflowModule,
-} from '@prismui/core';
+  createRouterModule,
+  createBrowserRouterAdapter,
+  createPersistenceModule,
+} from "@prismui/core";
 
 export const runtime = createInteractionRuntime({
   modules: [
@@ -55,6 +58,11 @@ export const runtime = createInteractionRuntime({
     createModalModule(),
     createNotificationModule({ maxNotifications: 50 }),
     createWorkflowModule(),
+    createRouterModule({ adapter: createBrowserRouterAdapter() }),
+    createPersistenceModule({
+      include: ["routerLocation", "routerHistory"],
+      debounceMs: 500,
+    }),
   ],
 });
 ```
@@ -78,16 +86,16 @@ function App() {
 ### 4. Use in Components
 
 ```typescript
-import { useUI } from '@prismui/react';
+import { useUI } from "@prismui/react";
 
 function ResourceList() {
   const ui = useUI();
 
   const handleDelete = async () => {
-    const confirmed = await ui.confirm('delete-resource');
+    const confirmed = await ui.confirm("delete-resource");
     if (confirmed) {
       await deleteResource(resourceId);
-      ui.notify.success('Resource deleted!');
+      ui.notify.success("Resource deleted!");
     }
   };
 }
@@ -134,24 +142,25 @@ function ResourceList() {
 
 ### ✅ What PrismUI Provides
 
-| Capability | Status | Use Case |
-|------------|--------|----------|
-| **Modal Management** | ✅ v0.3.0 | Resource deletion confirmation, edit dialogs |
-| **Notification System** | ✅ v0.3.0 | Save success/failure, validation errors |
-| **Drawer Management** | ✅ v0.3.0 | Sidebars, panels |
-| **Workflow Orchestration** | ✅ v0.4.0 | Edit → Validate → Save flows |
-| **Cross-Page Communication** | ✅ v0.2.0 | Refresh lists when resources change |
-| **Audit Trail** | ✅ v0.2.0 | Compliance logging |
-| **Form State Management** | ✅ v0.2.0 | Complex forms with validation |
-| **Async Operation Tracking** | ✅ v0.2.0 | Loading states, error handling |
+| Capability                   | Status    | Use Case                                         |
+| ---------------------------- | --------- | ------------------------------------------------ |
+| **Modal Management**         | ✅ v0.3.0 | Resource deletion confirmation, edit dialogs     |
+| **Notification System**      | ✅ v0.3.0 | Save success/failure, validation errors          |
+| **Drawer Management**        | ✅ v0.3.0 | Sidebars, panels                                 |
+| **Workflow Orchestration**   | ✅ v0.4.0 | Edit → Validate → Save flows                     |
+| **URL Routing**              | ✅ v0.5.0 | Browser back/forward, deep linking, query params |
+| **State Persistence**        | ✅ v0.5.0 | Auto-save to localStorage, restore on refresh    |
+| **Cross-Page Communication** | ✅ v0.2.0 | Refresh lists when resources change              |
+| **Audit Trail**              | ✅ v0.2.0 | Compliance logging                               |
+| **Form State Management**    | ✅ v0.2.0 | Complex forms with validation                    |
+| **Async Operation Tracking** | ✅ v0.2.0 | Loading states, error handling                   |
 
 ### ⏳ Coming Soon (Not Blocking)
 
-| Capability | Planned | Workaround |
-|------------|---------|------------|
-| **State Persistence** | v0.5.0 (STAGE-10) | Manual localStorage |
+| Capability                 | Planned           | Workaround            |
+| -------------------------- | ----------------- | --------------------- |
 | **Plugin State Isolation** | v0.6.0 (STAGE-11) | Namespace conventions |
-| **WebSocket Integration** | v0.7.0 (STAGE-12) | Manual integration |
+| **WebSocket Integration**  | v0.7.0 (STAGE-12) | Manual integration    |
 
 ---
 
@@ -160,6 +169,7 @@ function ResourceList() {
 ### Non-Blocking Issues
 
 For issues that **don't block development**:
+
 1. Document in `fhir-studio/docs/prismui-feedback.md`
 2. Continue with workaround
 3. Report after MVP is complete
@@ -167,12 +177,14 @@ For issues that **don't block development**:
 ### Blocking Issues
 
 For issues that **block fhir-studio development**:
+
 1. Use template: [BLOCKING-ISSUES.md](./BLOCKING-ISSUES.md)
 2. Open GitHub Issue with label `blocking` + `fhir-studio`
 3. Notify PrismUI team immediately
 4. PrismUI development will be paused until resolved
 
 **Response Time Commitment**:
+
 - P0 (blocks development): 24 hours
 - P1 (blocks major feature): 48 hours
 - P2 (blocks minor feature): 1 week
@@ -181,11 +193,12 @@ For issues that **block fhir-studio development**:
 
 ## 📊 Version Compatibility
 
-| PrismUI | React | Node | TypeScript |
-|---------|-------|------|------------|
-| 0.4.0 | ≥18.0.0 | ≥18.0.0 | ≥4.9.0 |
+| PrismUI | React   | Node    | TypeScript |
+| ------- | ------- | ------- | ---------- |
+| 0.5.0   | ≥18.0.0 | ≥18.0.0 | ≥4.9.0     |
 
 **Peer Dependencies**:
+
 - `react`: ^18.0.0
 - `react-dom`: ^18.0.0
 
@@ -246,7 +259,7 @@ For issues that **block fhir-studio development**:
 ```json
 {
   "name": "@prismui/core",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "description": "Event-driven runtime kernel for modern web applications",
   "main": "./dist/cjs/index.cjs",
   "module": "./dist/esm/index.mjs",
@@ -268,7 +281,7 @@ For issues that **block fhir-studio development**:
 ```json
 {
   "name": "@prismui/react",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "description": "React adapter for PrismUI runtime",
   "main": "./dist/cjs/index.cjs",
   "module": "./dist/esm/index.mjs",
@@ -276,7 +289,7 @@ For issues that **block fhir-studio development**:
   "peerDependencies": {
     "react": "^18.0.0",
     "react-dom": "^18.0.0",
-    "@prismui/core": "^0.4.0"
+    "@prismui/core": "^0.5.0"
   }
 }
 ```
@@ -293,12 +306,14 @@ Copy this checklist to your project documentation:
 ## PrismUI Integration Checklist
 
 ### Setup
-- [ ] Installed @prismui/core@0.4.0
-- [ ] Installed @prismui/react@0.4.0
+
+- [ ] Installed @prismui/core@0.5.0
+- [ ] Installed @prismui/react@0.5.0
 - [ ] Created runtime setup file
 - [ ] Wrapped App with PrismUIProvider
 
 ### Core Features
+
 - [ ] Modal management working (delete confirmation)
 - [ ] Notifications working (success/error messages)
 - [ ] Workflow working (edit → validate → save)
@@ -306,12 +321,14 @@ Copy this checklist to your project documentation:
 - [ ] Audit trail configured
 
 ### Documentation
+
 - [ ] Team read INTEGRATION-GUIDE.md
 - [ ] API-REFERENCE.md bookmarked
 - [ ] TROUBLESHOOTING.md reviewed
 - [ ] BLOCKING-ISSUES.md template saved
 
 ### Testing
+
 - [ ] Modal opens and closes correctly
 - [ ] Notifications appear and dismiss
 - [ ] Workflow steps execute in order
@@ -319,6 +336,7 @@ Copy this checklist to your project documentation:
 - [ ] Audit log captures events
 
 ### Feedback
+
 - [ ] Created prismui-feedback.md in fhir-studio
 - [ ] Documented workarounds used
 - [ ] Listed missing features (non-blocking)
@@ -334,7 +352,6 @@ Copy this checklist to your project documentation:
 - **Live Demo**: https://medxaidev.github.io/prismui/
   - Interactive examples of all features
   - Copy-paste code snippets
-  
 - **Dashboard Reference App**: https://medxaidev.github.io/prismui/dashboard/
   - Real-world integration patterns
   - Complex scenarios
@@ -345,7 +362,7 @@ All examples in INTEGRATION-GUIDE.md are tested and production-ready. Copy them 
 
 ### Video Tutorials
 
-*Coming soon* - Will be added after fhir-studio MVP feedback.
+_Coming soon_ - Will be added after fhir-studio MVP feedback.
 
 ---
 
@@ -368,8 +385,8 @@ When new versions are released:
 3. Test in development environment
 4. Update production after validation
 
-**Current stable**: 0.4.0  
-**Next planned**: 0.5.0 (Persistence Layer)
+**Current stable**: 0.5.0  
+**Next planned**: 0.6.0 (Scoped Runtime)
 
 ---
 
@@ -384,6 +401,7 @@ MIT License - See [LICENSE](../LICENSE) file.
 PrismUI is built for fhir-studio and the broader medical informatics community. Your feedback shapes the roadmap.
 
 **Contributors**:
+
 - Fangjun (Architecture & Implementation)
 - fhir-studio team (Requirements & Testing)
 
