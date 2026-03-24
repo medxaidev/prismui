@@ -7,6 +7,7 @@
 import type { RuntimeModule } from '../module';
 import type { EventBus } from '../event-bus';
 import type { RuntimeStore } from '../store';
+import { createModuleActions } from '../action-types';
 
 /** Notification severity type. */
 export type NotificationType = 'info' | 'success' | 'warning' | 'error';
@@ -40,10 +41,14 @@ export interface NotificationController {
   count(): number;
 }
 
-// Event type constants
-const NOTIFICATION_SHOW = 'NOTIFICATION_SHOW';
-const NOTIFICATION_DISMISS = 'NOTIFICATION_DISMISS';
-const NOTIFICATION_DISMISS_ALL = 'NOTIFICATION_DISMISS_ALL';
+// Event type constants (namespaced)
+const NotificationActions = createModuleActions('notification', {
+  SHOW: 'show',
+  DISMISS: 'dismiss',
+  DISMISS_ALL: 'dismissAll',
+});
+
+export { NotificationActions };
 
 // Simple incrementing counter for unique IDs
 let idCounter = 0;
@@ -70,7 +75,7 @@ export function createNotificationModule(
     },
 
     reducers: {
-      [NOTIFICATION_SHOW]: (event, prevState) => {
+      [NotificationActions.SHOW]: (event, prevState) => {
         const entry = event.payload as NotificationEntry;
         let queue = [...(prevState.notifications as NotificationEntry[]), entry];
 
@@ -87,7 +92,7 @@ export function createNotificationModule(
         };
       },
 
-      [NOTIFICATION_DISMISS]: (event, prevState) => {
+      [NotificationActions.DISMISS]: (event, prevState) => {
         const { id } = event.payload as { id: string };
         const queue = prevState.notifications as NotificationEntry[];
 
@@ -99,7 +104,7 @@ export function createNotificationModule(
         };
       },
 
-      [NOTIFICATION_DISMISS_ALL]: (_event, prevState) => {
+      [NotificationActions.DISMISS_ALL]: (_event, prevState) => {
         return {
           nextState: { ...prevState, notifications: [] },
         };
@@ -114,16 +119,16 @@ export function createNotificationModule(
           id,
           timestamp: Date.now(),
         };
-        bus.dispatch({ type: NOTIFICATION_SHOW, payload: entry });
+        bus.dispatch({ type: NotificationActions.SHOW, payload: entry });
         return id;
       },
 
       dismiss(id: string): void {
-        bus.dispatch({ type: NOTIFICATION_DISMISS, payload: { id } });
+        bus.dispatch({ type: NotificationActions.DISMISS, payload: { id } });
       },
 
       dismissAll(): void {
-        bus.dispatch({ type: NOTIFICATION_DISMISS_ALL });
+        bus.dispatch({ type: NotificationActions.DISMISS_ALL });
       },
 
       getAll(): NotificationEntry[] {

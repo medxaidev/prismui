@@ -10,6 +10,9 @@ import type { RuntimeModule } from '../module';
 import type { EventBus } from '../event-bus';
 import type { RuntimeStore } from '../store';
 import type { NotificationType } from './notification-module';
+import { createModuleActions } from '../action-types';
+import { ModalActions } from './modal-module';
+import { NotificationActions } from './notification-module';
 
 // ── Types ─────────────────────────────────────────────────────────────
 
@@ -132,14 +135,36 @@ export interface WorkflowController {
 
 // ── Events ────────────────────────────────────────────────────────────
 
-export const WORKFLOW_START = 'WORKFLOW_START';
-export const WORKFLOW_STEP_START = 'WORKFLOW_STEP_START';
-export const WORKFLOW_STEP_COMPLETE = 'WORKFLOW_STEP_COMPLETE';
-export const WORKFLOW_STEP_SKIP = 'WORKFLOW_STEP_SKIP';
-export const WORKFLOW_STEP_FAIL = 'WORKFLOW_STEP_FAIL';
-export const WORKFLOW_COMPLETE = 'WORKFLOW_COMPLETE';
-export const WORKFLOW_FAIL = 'WORKFLOW_FAIL';
-export const WORKFLOW_ABORT = 'WORKFLOW_ABORT';
+// Event type constants (namespaced)
+const WorkflowActions = createModuleActions('workflow', {
+  START: 'start',
+  STEP_START: 'stepStart',
+  STEP_COMPLETE: 'stepComplete',
+  STEP_SKIP: 'stepSkip',
+  STEP_FAIL: 'stepFail',
+  COMPLETE: 'complete',
+  FAIL: 'fail',
+  ABORT: 'abort',
+});
+
+export { WorkflowActions };
+
+/** @deprecated Use WorkflowActions — kept for backward compatibility */
+export const WORKFLOW_START = WorkflowActions.START;
+/** @deprecated Use WorkflowActions — kept for backward compatibility */
+export const WORKFLOW_STEP_START = WorkflowActions.STEP_START;
+/** @deprecated Use WorkflowActions — kept for backward compatibility */
+export const WORKFLOW_STEP_COMPLETE = WorkflowActions.STEP_COMPLETE;
+/** @deprecated Use WorkflowActions — kept for backward compatibility */
+export const WORKFLOW_STEP_SKIP = WorkflowActions.STEP_SKIP;
+/** @deprecated Use WorkflowActions — kept for backward compatibility */
+export const WORKFLOW_STEP_FAIL = WorkflowActions.STEP_FAIL;
+/** @deprecated Use WorkflowActions — kept for backward compatibility */
+export const WORKFLOW_COMPLETE = WorkflowActions.COMPLETE;
+/** @deprecated Use WorkflowActions — kept for backward compatibility */
+export const WORKFLOW_FAIL = WorkflowActions.FAIL;
+/** @deprecated Use WorkflowActions — kept for backward compatibility */
+export const WORKFLOW_ABORT = WorkflowActions.ABORT;
 
 // ── Helpers ───────────────────────────────────────────────────────────
 
@@ -169,7 +194,7 @@ export function createWorkflowModule(): RuntimeModule<WorkflowController> {
     },
 
     reducers: {
-      [WORKFLOW_START]: (event, prevState) => {
+      [WorkflowActions.START]: (event, prevState) => {
         const instance = event.payload as WorkflowInstance;
         const instances = prevState.workflowInstances as Record<string, WorkflowInstance>;
         return {
@@ -180,7 +205,7 @@ export function createWorkflowModule(): RuntimeModule<WorkflowController> {
         };
       },
 
-      [WORKFLOW_STEP_START]: (event, prevState) => {
+      [WorkflowActions.STEP_START]: (event, prevState) => {
         const { instanceId, stepIndex } = event.payload as {
           instanceId: string;
           stepIndex: number;
@@ -203,7 +228,7 @@ export function createWorkflowModule(): RuntimeModule<WorkflowController> {
         };
       },
 
-      [WORKFLOW_STEP_COMPLETE]: (event, prevState) => {
+      [WorkflowActions.STEP_COMPLETE]: (event, prevState) => {
         const { instanceId, stepIndex, result } = event.payload as {
           instanceId: string;
           stepIndex: number;
@@ -230,7 +255,7 @@ export function createWorkflowModule(): RuntimeModule<WorkflowController> {
         };
       },
 
-      [WORKFLOW_STEP_SKIP]: (event, prevState) => {
+      [WorkflowActions.STEP_SKIP]: (event, prevState) => {
         const { instanceId, stepIndex } = event.payload as {
           instanceId: string;
           stepIndex: number;
@@ -253,7 +278,7 @@ export function createWorkflowModule(): RuntimeModule<WorkflowController> {
         };
       },
 
-      [WORKFLOW_STEP_FAIL]: (event, prevState) => {
+      [WorkflowActions.STEP_FAIL]: (event, prevState) => {
         const { instanceId, stepIndex, error } = event.payload as {
           instanceId: string;
           stepIndex: number;
@@ -277,7 +302,7 @@ export function createWorkflowModule(): RuntimeModule<WorkflowController> {
         };
       },
 
-      [WORKFLOW_COMPLETE]: (event, prevState) => {
+      [WorkflowActions.COMPLETE]: (event, prevState) => {
         const { instanceId } = event.payload as { instanceId: string };
         const instances = prevState.workflowInstances as Record<string, WorkflowInstance>;
         const instance = instances[instanceId];
@@ -298,7 +323,7 @@ export function createWorkflowModule(): RuntimeModule<WorkflowController> {
         };
       },
 
-      [WORKFLOW_FAIL]: (event, prevState) => {
+      [WorkflowActions.FAIL]: (event, prevState) => {
         const { instanceId: iid, error: err } = event.payload as {
           instanceId: string;
           error: string;
@@ -323,7 +348,7 @@ export function createWorkflowModule(): RuntimeModule<WorkflowController> {
         };
       },
 
-      [WORKFLOW_ABORT]: (event, prevState) => {
+      [WorkflowActions.ABORT]: (event, prevState) => {
         const { instanceId } = event.payload as { instanceId: string };
         const instances = prevState.workflowInstances as Record<string, WorkflowInstance>;
         const instance = instances[instanceId];
@@ -369,23 +394,23 @@ export function createWorkflowModule(): RuntimeModule<WorkflowController> {
       ): Promise<{ confirmed: boolean }> {
         return new Promise<{ confirmed: boolean }>((resolve) => {
           // Open modal
-          bus.dispatch({ type: 'MODAL_OPEN', payload: { modalId: step.modalId } });
+          bus.dispatch({ type: ModalActions.OPEN, payload: { modalId: step.modalId } });
 
           const unsubscribe = bus.subscribe((event) => {
-            if (event.type === 'MODAL_CLOSE') {
+            if (event.type === ModalActions.CLOSE) {
               const payload = event.payload as { modalId?: string } | undefined;
               if (!payload?.modalId || payload.modalId === step.modalId) {
                 unsubscribe();
                 resolve({ confirmed: true });
               }
-            } else if (event.type === 'MODAL_CLOSE_ALL') {
+            } else if (event.type === ModalActions.CLOSE_ALL) {
               unsubscribe();
               resolve({ confirmed: false });
-            } else if (event.type === WORKFLOW_ABORT) {
+            } else if (event.type === WorkflowActions.ABORT) {
               const p = event.payload as { instanceId: string };
               if (p.instanceId === instanceId) {
                 // Close the modal if workflow is aborted
-                bus.dispatch({ type: 'MODAL_CLOSE', payload: { modalId: step.modalId } });
+                bus.dispatch({ type: ModalActions.CLOSE, payload: { modalId: step.modalId } });
                 unsubscribe();
                 resolve({ confirmed: false });
               }
@@ -401,7 +426,7 @@ export function createWorkflowModule(): RuntimeModule<WorkflowController> {
             ? step.notification(ctx)
             : step.notification;
         bus.dispatch({
-          type: 'NOTIFICATION_SHOW',
+          type: NotificationActions.SHOW,
           payload: { type: notif.type, message: notif.message },
         });
       }
@@ -433,7 +458,7 @@ export function createWorkflowModule(): RuntimeModule<WorkflowController> {
               ? { type: 'error' as NotificationType, message: errorAction.notify }
               : errorAction.notify;
           bus.dispatch({
-            type: 'NOTIFICATION_SHOW',
+            type: NotificationActions.SHOW,
             payload: { type: notif.type, message: notif.message },
           });
         }
@@ -459,7 +484,7 @@ export function createWorkflowModule(): RuntimeModule<WorkflowController> {
         for (let i = 0; i < definition.steps.length; i++) {
           // Check abort signal
           if (abortSignals.get(instanceId)) {
-            bus.dispatch({ type: WORKFLOW_ABORT, payload: { instanceId } });
+            bus.dispatch({ type: WorkflowActions.ABORT, payload: { instanceId } });
             abortSignals.delete(instanceId);
             return { instanceId, status: 'aborted', results: ctx.results };
           }
@@ -470,7 +495,7 @@ export function createWorkflowModule(): RuntimeModule<WorkflowController> {
           // Guard: check condition
           if (step.condition && !step.condition(ctx)) {
             bus.dispatch({
-              type: WORKFLOW_STEP_SKIP,
+              type: WorkflowActions.STEP_SKIP,
               payload: { instanceId, stepIndex: i },
             });
             continue;
@@ -478,7 +503,7 @@ export function createWorkflowModule(): RuntimeModule<WorkflowController> {
 
           // Mark step as running
           bus.dispatch({
-            type: WORKFLOW_STEP_START,
+            type: WorkflowActions.STEP_START,
             payload: { instanceId, stepIndex: i },
           });
 
@@ -500,17 +525,17 @@ export function createWorkflowModule(): RuntimeModule<WorkflowController> {
                 const action = handleErrorAction(step.onError, stepError);
                 if (action === 'abort') {
                   bus.dispatch({
-                    type: WORKFLOW_STEP_FAIL,
+                    type: WorkflowActions.STEP_FAIL,
                     payload: { instanceId, stepIndex: i, error: stepError },
                   });
                   bus.dispatch({
-                    type: WORKFLOW_FAIL,
+                    type: WorkflowActions.FAIL,
                     payload: { instanceId, error: stepError },
                   });
                   return { instanceId, status: 'failed', results: ctx.results, error: stepError };
                 } else if (action === 'skip') {
                   bus.dispatch({
-                    type: WORKFLOW_STEP_SKIP,
+                    type: WorkflowActions.STEP_SKIP,
                     payload: { instanceId, stepIndex: i },
                   });
                   continue;
@@ -527,18 +552,18 @@ export function createWorkflowModule(): RuntimeModule<WorkflowController> {
                 const rejectAction = step.onReject ?? 'abort';
                 if (rejectAction === 'abort') {
                   bus.dispatch({
-                    type: WORKFLOW_STEP_FAIL,
+                    type: WorkflowActions.STEP_FAIL,
                     payload: { instanceId, stepIndex: i, error: 'User rejected confirmation' },
                   });
                   bus.dispatch({
-                    type: WORKFLOW_ABORT,
+                    type: WorkflowActions.ABORT,
                     payload: { instanceId },
                   });
                   return { instanceId, status: 'aborted', results: ctx.results };
                 } else {
                   // skip
                   bus.dispatch({
-                    type: WORKFLOW_STEP_SKIP,
+                    type: WorkflowActions.STEP_SKIP,
                     payload: { instanceId, stepIndex: i },
                   });
                   continue;
@@ -561,17 +586,17 @@ export function createWorkflowModule(): RuntimeModule<WorkflowController> {
                 const action = handleErrorAction(step.onError, stepError);
                 if (action === 'abort') {
                   bus.dispatch({
-                    type: WORKFLOW_STEP_FAIL,
+                    type: WorkflowActions.STEP_FAIL,
                     payload: { instanceId, stepIndex: i, error: stepError },
                   });
                   bus.dispatch({
-                    type: WORKFLOW_FAIL,
+                    type: WorkflowActions.FAIL,
                     payload: { instanceId, error: stepError },
                   });
                   return { instanceId, status: 'failed', results: ctx.results, error: stepError };
                 } else if (action === 'skip') {
                   bus.dispatch({
-                    type: WORKFLOW_STEP_SKIP,
+                    type: WorkflowActions.STEP_SKIP,
                     payload: { instanceId, stepIndex: i },
                   });
                   continue;
@@ -585,7 +610,7 @@ export function createWorkflowModule(): RuntimeModule<WorkflowController> {
           // Mark step complete
           ctx.results[step.id] = stepResult;
           bus.dispatch({
-            type: WORKFLOW_STEP_COMPLETE,
+            type: WorkflowActions.STEP_COMPLETE,
             payload: { instanceId, stepIndex: i, result: stepResult },
           });
 
@@ -597,13 +622,13 @@ export function createWorkflowModule(): RuntimeModule<WorkflowController> {
 
         // Check abort one more time after all steps
         if (abortSignals.get(instanceId)) {
-          bus.dispatch({ type: WORKFLOW_ABORT, payload: { instanceId } });
+          bus.dispatch({ type: WorkflowActions.ABORT, payload: { instanceId } });
           abortSignals.delete(instanceId);
           return { instanceId, status: 'aborted', results: ctx.results };
         }
 
         // All steps completed
-        bus.dispatch({ type: WORKFLOW_COMPLETE, payload: { instanceId } });
+        bus.dispatch({ type: WorkflowActions.COMPLETE, payload: { instanceId } });
         return { instanceId, status: 'completed', results: ctx.results };
       }
 
@@ -645,7 +670,7 @@ export function createWorkflowModule(): RuntimeModule<WorkflowController> {
           };
 
           // Dispatch start event (sets state in store)
-          bus.dispatch({ type: WORKFLOW_START, payload: instance });
+          bus.dispatch({ type: WorkflowActions.START, payload: instance });
 
           // Run the workflow
           return runWorkflow(definition, instanceId, initialPayload);
@@ -659,7 +684,7 @@ export function createWorkflowModule(): RuntimeModule<WorkflowController> {
           // Set abort signal — the running loop will pick it up
           abortSignals.set(instanceId, true);
           // Also dispatch immediately for confirm steps that are waiting
-          bus.dispatch({ type: WORKFLOW_ABORT, payload: { instanceId } });
+          bus.dispatch({ type: WorkflowActions.ABORT, payload: { instanceId } });
         },
 
         getInstances(): WorkflowInstance[] {

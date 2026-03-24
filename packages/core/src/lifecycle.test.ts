@@ -247,7 +247,7 @@ describe('Module Lifecycle', () => {
       runtime.scheduler.use(createAuditMiddleware(audit, runtime.store));
 
       // Dispatch a regular event to trigger audit
-      runtime.dispatch({ type: 'PAGE_MOUNT', payload: { pageId: 'test' } });
+      runtime.dispatch({ type: 'page/mount', payload: { pageId: 'test' } });
 
       const entries = audit.getEntries();
       expect(entries.length).toBeGreaterThan(0);

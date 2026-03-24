@@ -4,12 +4,12 @@ import { audit, eventEntries } from '../setup';
 import type { AuditEntry } from '@prismui/core';
 
 function getEventTypeClass(type: string): string {
-  if (type.startsWith('PAGE_')) return 'event-item__type--page';
-  if (type.startsWith('MODAL_')) return 'event-item__type--modal';
-  if (type.startsWith('DRAWER_')) return 'event-item__type--drawer';
-  if (type.startsWith('NOTIFICATION_')) return 'event-item__type--notification';
-  if (type.startsWith('FORM_')) return 'event-item__type--form';
-  if (type.startsWith('ASYNC_')) return 'event-item__type--async';
+  if (type.startsWith('page/')) return 'event-item__type--page';
+  if (type.startsWith('modal/')) return 'event-item__type--modal';
+  if (type.startsWith('drawer/')) return 'event-item__type--drawer';
+  if (type.startsWith('notification/')) return 'event-item__type--notification';
+  if (type.startsWith('form/')) return 'event-item__type--form';
+  if (type.startsWith('async/')) return 'event-item__type--async';
   if (type.startsWith('MODULE_')) return 'event-item__type--governance';
   return '';
 }
@@ -114,12 +114,11 @@ export function RuntimeStatePanel() {
           {asyncOps.map(([id, op]) => (
             <div key={id} className="state-panel__row">
               <span className="state-panel__label">{id}</span>
-              <span className={`status-tag ${
-                op.status === 'loading' ? 'status-tag--loading'
+              <span className={`status-tag ${op.status === 'loading' ? 'status-tag--loading'
                   : op.status === 'success' ? 'status-tag--active'
-                  : op.status === 'error' ? 'status-tag--error'
-                  : 'status-tag--idle'
-              }`}>
+                    : op.status === 'error' ? 'status-tag--error'
+                      : 'status-tag--idle'
+                }`}>
                 {op.status}
               </span>
             </div>

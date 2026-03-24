@@ -264,15 +264,15 @@ function AgentTab({ dt }: { dt: DevToolsController }) {
         <div className="devtools-section-label">Quick Actions</div>
         <div className="devtools-agent-actions">
           <button className="devtools-toolbar__btn" onClick={() => {
-            dt.agent.dispatch({ type: 'PAGE_MOUNT', payload: { pageId: 'agent-test' } });
-            dt.agent.dispatch({ type: 'PAGE_TRANSITION', payload: { pageId: 'agent-test' } });
+            dt.agent.dispatch({ type: 'page/mount', payload: { pageId: 'agent-test' } });
+            dt.agent.dispatch({ type: 'page/transition', payload: { pageId: 'agent-test' } });
           }}>
             Navigate → "agent-test"
           </button>
           <button className="devtools-toolbar__btn" onClick={async () => {
             await dt.agent.executeSequence([
-              { type: 'PAGE_MOUNT', payload: { pageId: 'Overview' } },
-              { type: 'PAGE_TRANSITION', payload: { pageId: 'Overview' } },
+              { type: 'page/mount', payload: { pageId: 'Overview' } },
+              { type: 'page/transition', payload: { pageId: 'Overview' } },
             ], 50);
           }}>
             Sequence → Overview
@@ -280,16 +280,16 @@ function AgentTab({ dt }: { dt: DevToolsController }) {
         </div>
         <div className="devtools-section-label">API Reference</div>
         <div className="devtools-code">
-{`// Dispatch single event
+          {`// Dispatch single event
 dt.agent.dispatch({
-  type: 'PAGE_TRANSITION',
+  type: 'page/transition',
   payload: { pageId: 'dashboard' }
 });
 
 // Execute a sequence (with delay)
 await dt.agent.executeSequence([
-  { type: 'PAGE_MOUNT', payload: { pageId: 'x' } },
-  { type: 'PAGE_TRANSITION', payload: { pageId: 'x' } },
+  { type: 'page/mount', payload: { pageId: 'x' } },
+  { type: 'page/transition', payload: { pageId: 'x' } },
 ], 100);
 
 // Wait for state condition

@@ -209,8 +209,8 @@ describe('Drawer Module', () => {
 
       const entries = audit.getEntries();
       expect(entries.length).toBeGreaterThanOrEqual(2);
-      expect(entries.some((e) => e.event.type === 'DRAWER_OPEN')).toBe(true);
-      expect(entries.some((e) => e.event.type === 'DRAWER_CLOSE')).toBe(true);
+      expect(entries.some((e) => e.event.type === 'drawer/open')).toBe(true);
+      expect(entries.some((e) => e.event.type === 'drawer/close')).toBe(true);
     });
 
     it('drawer events subject to policy', () => {
@@ -224,7 +224,7 @@ describe('Drawer Module', () => {
       // Block all drawer opens
       policy.addRule({
         name: 'block-drawer',
-        eventTypes: ['DRAWER_OPEN'],
+        eventTypes: ['drawer/open'],
         evaluate: () => ({ verdict: 'deny' as const, reason: 'Drawers disabled' }),
       });
 

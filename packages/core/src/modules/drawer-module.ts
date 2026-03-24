@@ -7,6 +7,7 @@
 import type { RuntimeModule } from '../module';
 import type { EventBus } from '../event-bus';
 import type { RuntimeStore } from '../store';
+import { createModuleActions } from '../action-types';
 
 /** Anchor position for a drawer. */
 export type DrawerAnchor = 'left' | 'right' | 'top' | 'bottom';
@@ -32,10 +33,14 @@ export interface DrawerController {
   getAnchor(drawerId: string): DrawerAnchor | undefined;
 }
 
-// Event type constants
-const DRAWER_OPEN = 'DRAWER_OPEN';
-const DRAWER_CLOSE = 'DRAWER_CLOSE';
-const DRAWER_CLOSE_ALL = 'DRAWER_CLOSE_ALL';
+// Event type constants (namespaced)
+const DrawerActions = createModuleActions('drawer', {
+  OPEN: 'open',
+  CLOSE: 'close',
+  CLOSE_ALL: 'closeAll',
+});
+
+export { DrawerActions };
 
 /**
  * Create the Drawer Module.
@@ -52,7 +57,7 @@ export function createDrawerModule(): RuntimeModule<DrawerController> {
     },
 
     reducers: {
-      [DRAWER_OPEN]: (event, prevState) => {
+      [DrawerActions.OPEN]: (event, prevState) => {
         const { drawerId, anchor = 'left' } = event.payload as {
           drawerId: string;
           anchor?: DrawerAnchor;
@@ -72,7 +77,7 @@ export function createDrawerModule(): RuntimeModule<DrawerController> {
         };
       },
 
-      [DRAWER_CLOSE]: (event, prevState) => {
+      [DrawerActions.CLOSE]: (event, prevState) => {
         const payload = event.payload as { drawerId?: string } | undefined;
         const stack = prevState.drawerStack as DrawerEntry[];
 
@@ -99,7 +104,7 @@ export function createDrawerModule(): RuntimeModule<DrawerController> {
         };
       },
 
-      [DRAWER_CLOSE_ALL]: (_event, prevState) => {
+      [DrawerActions.CLOSE_ALL]: (_event, prevState) => {
         return {
           nextState: { ...prevState, drawerStack: [] },
         };
@@ -108,13 +113,13 @@ export function createDrawerModule(): RuntimeModule<DrawerController> {
 
     createController: ({ bus, store }: { bus: EventBus; store: RuntimeStore }) => ({
       open(drawerId: string, anchor?: DrawerAnchor): void {
-        bus.dispatch({ type: DRAWER_OPEN, payload: { drawerId, anchor } });
+        bus.dispatch({ type: DrawerActions.OPEN, payload: { drawerId, anchor } });
       },
       close(drawerId?: string): void {
-        bus.dispatch({ type: DRAWER_CLOSE, payload: { drawerId } });
+        bus.dispatch({ type: DrawerActions.CLOSE, payload: { drawerId } });
       },
       closeAll(): void {
-        bus.dispatch({ type: DRAWER_CLOSE_ALL });
+        bus.dispatch({ type: DrawerActions.CLOSE_ALL });
       },
       isOpen(drawerId: string): boolean {
         return (store.getState().drawerStack as DrawerEntry[]).some(

@@ -7,6 +7,7 @@
 import type { RuntimeModule } from '../module';
 import type { EventBus } from '../event-bus';
 import type { RuntimeStore } from '../store';
+import { createModuleActions } from '../action-types';
 
 // ── Types ─────────────────────────────────────────────────────────────
 
@@ -41,10 +42,24 @@ export interface AsyncController {
 
 // ── Events ────────────────────────────────────────────────────────────
 
-export const ASYNC_START = 'ASYNC_START';
-export const ASYNC_SUCCESS = 'ASYNC_SUCCESS';
-export const ASYNC_ERROR = 'ASYNC_ERROR';
-export const ASYNC_RESET = 'ASYNC_RESET';
+// Event type constants (namespaced)
+const AsyncActions = createModuleActions('async', {
+  START: 'start',
+  SUCCESS: 'success',
+  ERROR: 'error',
+  RESET: 'reset',
+});
+
+export { AsyncActions };
+
+/** @deprecated Use AsyncActions — kept for backward compatibility */
+export const ASYNC_START = AsyncActions.START;
+/** @deprecated Use AsyncActions — kept for backward compatibility */
+export const ASYNC_SUCCESS = AsyncActions.SUCCESS;
+/** @deprecated Use AsyncActions — kept for backward compatibility */
+export const ASYNC_ERROR = AsyncActions.ERROR;
+/** @deprecated Use AsyncActions — kept for backward compatibility */
+export const ASYNC_RESET = AsyncActions.RESET;
 
 // ── Module Factory ────────────────────────────────────────────────────
 
@@ -57,7 +72,7 @@ export function createAsyncModule(): RuntimeModule<AsyncController> {
     },
 
     reducers: {
-      [ASYNC_START]: (event, prevState) => {
+      [AsyncActions.START]: (event, prevState) => {
         const { operationId } = event.payload as { operationId: string };
         const ops = prevState.asyncOperations as Record<string, AsyncOperation>;
 
@@ -78,7 +93,7 @@ export function createAsyncModule(): RuntimeModule<AsyncController> {
         };
       },
 
-      [ASYNC_SUCCESS]: (event, prevState) => {
+      [AsyncActions.SUCCESS]: (event, prevState) => {
         const { operationId, data } = event.payload as {
           operationId: string;
           data?: unknown;
@@ -104,7 +119,7 @@ export function createAsyncModule(): RuntimeModule<AsyncController> {
         };
       },
 
-      [ASYNC_ERROR]: (event, prevState) => {
+      [AsyncActions.ERROR]: (event, prevState) => {
         const { operationId, error } = event.payload as {
           operationId: string;
           error: string;
@@ -129,7 +144,7 @@ export function createAsyncModule(): RuntimeModule<AsyncController> {
         };
       },
 
-      [ASYNC_RESET]: (event, prevState) => {
+      [AsyncActions.RESET]: (event, prevState) => {
         const { operationId } = event.payload as { operationId: string };
         const ops = { ...(prevState.asyncOperations as Record<string, AsyncOperation>) };
         delete ops[operationId];
@@ -145,19 +160,19 @@ export function createAsyncModule(): RuntimeModule<AsyncController> {
 
     createController: ({ bus, store }: { bus: EventBus; store: RuntimeStore }) => ({
       start(operationId: string): void {
-        bus.dispatch({ type: ASYNC_START, payload: { operationId } });
+        bus.dispatch({ type: AsyncActions.START, payload: { operationId } });
       },
 
       success(operationId: string, data?: unknown): void {
-        bus.dispatch({ type: ASYNC_SUCCESS, payload: { operationId, data } });
+        bus.dispatch({ type: AsyncActions.SUCCESS, payload: { operationId, data } });
       },
 
       error(operationId: string, error: string): void {
-        bus.dispatch({ type: ASYNC_ERROR, payload: { operationId, error } });
+        bus.dispatch({ type: AsyncActions.ERROR, payload: { operationId, error } });
       },
 
       reset(operationId: string): void {
-        bus.dispatch({ type: ASYNC_RESET, payload: { operationId } });
+        bus.dispatch({ type: AsyncActions.RESET, payload: { operationId } });
       },
 
       getOperation(operationId: string): AsyncOperation | undefined {

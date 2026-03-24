@@ -44,11 +44,11 @@ describe('Page Module', () => {
       expect(page.getCurrent()).toBe('Dashboard');
     });
 
-    it('mount dispatches PAGE_MOUNT event', () => {
+    it('mount dispatches page/mount event', () => {
       const { runtime, page } = setup();
       page.mount('Dashboard');
       const history = runtime.bus.getHistory();
-      const mountEvent = history.find((e) => e.type === 'PAGE_MOUNT');
+      const mountEvent = history.find((e) => e.type === 'page/mount');
       expect(mountEvent).toBeDefined();
       expect((mountEvent!.payload as { pageId: string }).pageId).toBe('Dashboard');
     });

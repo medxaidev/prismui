@@ -66,15 +66,15 @@ describe('waitFor', () => {
     it('filters events with predicate', async () => {
       const bus = createEventBus();
 
-      const promise = waitFor(bus, 'NOTIFICATION_SHOW', {
+      const promise = waitFor(bus, 'notification/show', {
         predicate: (e) => (e.payload as { type: string }).type === 'error',
       });
 
       // Info notification — should be skipped
-      bus.dispatch({ type: 'NOTIFICATION_SHOW', payload: { type: 'info', message: 'Hello' } });
+      bus.dispatch({ type: 'notification/show', payload: { type: 'info', message: 'Hello' } });
 
       // Error notification — should match
-      bus.dispatch({ type: 'NOTIFICATION_SHOW', payload: { type: 'error', message: 'Oops' } });
+      bus.dispatch({ type: 'notification/show', payload: { type: 'error', message: 'Oops' } });
 
       const event = await promise;
       expect((event.payload as { type: string }).type).toBe('error');

@@ -6,6 +6,7 @@
 
 import type { InteractionRuntime } from './runtime';
 import type { ModalController } from './modules/modal-module';
+import { ModalActions } from './modules/modal-module';
 import type { DrawerController, DrawerAnchor } from './modules/drawer-module';
 import type { NotificationController, NotificationEntry } from './modules/notification-module';
 import type { FormController, FormValidator } from './modules/form-module';
@@ -161,16 +162,16 @@ export function createInteractionDSL(runtime: InteractionRuntime): InteractionDS
       modalCtrl?.open(modalId);
 
       const unsubscribe = runtime.bus.subscribe((event) => {
-        if (event.type === 'MODAL_CLOSE') {
+        if (event.type === ModalActions.CLOSE) {
           const payload = event.payload as { modalId?: string } | undefined;
-          // MODAL_CLOSE with no modalId closes top — check if our modal was closed
+          // modal/close with no modalId closes top — check if our modal was closed
           if (!payload?.modalId || payload.modalId === modalId) {
             if (!modalCtrl?.isOpen(modalId)) {
               unsubscribe();
               resolve(true);
             }
           }
-        } else if (event.type === 'MODAL_CLOSE_ALL') {
+        } else if (event.type === ModalActions.CLOSE_ALL) {
           unsubscribe();
           resolve(false);
         }

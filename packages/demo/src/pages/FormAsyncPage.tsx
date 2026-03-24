@@ -66,10 +66,10 @@ export function FormAsyncPage() {
       <div className="feature-section">
         <h3 className="feature-section__title">Form API</h3>
         <div className="code-block">
-{`const form = useForm();
+          {`const form = useForm();
 
 form.registerField('email', '');        // Register with initial value
-form.setValue('email', 'user@test.com'); // Set value (dispatches FORM_SET_VALUE)
+form.setValue('email', 'user@test.com'); // Set value (dispatches form/setValue)
 form.setTouched('email');               // Mark as touched
 form.validate(validatorFn);             // Run validation
 form.submitStart();                     // Start submission
@@ -125,7 +125,7 @@ form.reset();                           // Reset all fields`}
       <div className="feature-section">
         <h3 className="feature-section__title">Async Operations</h3>
         <div className="code-block">
-{`const async_ = useAsync();
+          {`const async_ = useAsync();
 
 async_.start('fetchData');                       // Mark as loading
 async_.success('fetchData', { patients: [...] }); // Mark success with data
@@ -143,12 +143,11 @@ async_.isAnyLoading();                            // Any op loading?`}
             {opEntries.map(([id, op]) => (
               <div key={id} className="data-row">
                 <span className="data-row__label">{id}</span>
-                <span className={`status-tag ${
-                  op.status === 'loading' ? 'status-tag--loading'
+                <span className={`status-tag ${op.status === 'loading' ? 'status-tag--loading'
                     : op.status === 'success' ? 'status-tag--active'
-                    : op.status === 'error' ? 'status-tag--error'
-                    : 'status-tag--idle'
-                }`}>
+                      : op.status === 'error' ? 'status-tag--error'
+                        : 'status-tag--idle'
+                  }`}>
                   {op.status}
                   {op.error && ` — ${op.error}`}
                 </span>

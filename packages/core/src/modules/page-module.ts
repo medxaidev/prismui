@@ -7,6 +7,7 @@
 import type { RuntimeModule } from '../module';
 import type { EventBus } from '../event-bus';
 import type { RuntimeState, RuntimeStore } from '../store';
+import { createModuleActions } from '../action-types';
 
 /** State slice contributed by the Page Module. */
 export interface PageModuleState {
@@ -27,12 +28,16 @@ export interface PageController {
   isLocked(): boolean;
 }
 
-// Event type constants
-const PAGE_MOUNT = 'PAGE_MOUNT';
-const PAGE_UNMOUNT = 'PAGE_UNMOUNT';
-const PAGE_TRANSITION = 'PAGE_TRANSITION';
-const PAGE_LOCK = 'PAGE_LOCK';
-const PAGE_UNLOCK = 'PAGE_UNLOCK';
+// Event type constants (namespaced)
+const PageActions = createModuleActions('page', {
+  MOUNT: 'mount',
+  UNMOUNT: 'unmount',
+  TRANSITION: 'transition',
+  LOCK: 'lock',
+  UNLOCK: 'unlock',
+});
+
+export { PageActions };
 
 /** Helper to read page state from RuntimeState. */
 function getPageState(state: Readonly<RuntimeState>): PageModuleState {
@@ -60,7 +65,7 @@ export function createPageModule(): RuntimeModule<PageController> {
     },
 
     reducers: {
-      [PAGE_MOUNT]: (event, prevState) => {
+      [PageActions.MOUNT]: (event, prevState) => {
         const { pageId } = event.payload as { pageId: string };
         const ps = getPageState(prevState);
 
@@ -80,7 +85,7 @@ export function createPageModule(): RuntimeModule<PageController> {
         };
       },
 
-      [PAGE_UNMOUNT]: (event, prevState) => {
+      [PageActions.UNMOUNT]: (event, prevState) => {
         const { pageId } = event.payload as { pageId: string };
         const ps = getPageState(prevState);
 
@@ -96,7 +101,7 @@ export function createPageModule(): RuntimeModule<PageController> {
         };
       },
 
-      [PAGE_TRANSITION]: (event, prevState) => {
+      [PageActions.TRANSITION]: (event, prevState) => {
         const { pageId } = event.payload as { pageId: string };
         const ps = getPageState(prevState);
 
@@ -115,13 +120,13 @@ export function createPageModule(): RuntimeModule<PageController> {
         };
       },
 
-      [PAGE_LOCK]: (_event, prevState) => {
+      [PageActions.LOCK]: (_event, prevState) => {
         return {
           nextState: { ...prevState, locked: true },
         };
       },
 
-      [PAGE_UNLOCK]: (_event, prevState) => {
+      [PageActions.UNLOCK]: (_event, prevState) => {
         return {
           nextState: { ...prevState, locked: false },
         };
@@ -130,19 +135,19 @@ export function createPageModule(): RuntimeModule<PageController> {
 
     createController: ({ bus, store }: { bus: EventBus; store: RuntimeStore }) => ({
       mount(pageId: string): void {
-        bus.dispatch({ type: PAGE_MOUNT, payload: { pageId } });
+        bus.dispatch({ type: PageActions.MOUNT, payload: { pageId } });
       },
       unmount(pageId: string): void {
-        bus.dispatch({ type: PAGE_UNMOUNT, payload: { pageId } });
+        bus.dispatch({ type: PageActions.UNMOUNT, payload: { pageId } });
       },
       transition(pageId: string): void {
-        bus.dispatch({ type: PAGE_TRANSITION, payload: { pageId } });
+        bus.dispatch({ type: PageActions.TRANSITION, payload: { pageId } });
       },
       lock(): void {
-        bus.dispatch({ type: PAGE_LOCK });
+        bus.dispatch({ type: PageActions.LOCK });
       },
       unlock(): void {
-        bus.dispatch({ type: PAGE_UNLOCK });
+        bus.dispatch({ type: PageActions.UNLOCK });
       },
       getCurrent(): string | null {
         return store.getState().currentPage as string | null;

@@ -451,7 +451,7 @@ describe('WorkflowModule', () => {
       const { workflow, runtime } = setup();
       const events: string[] = [];
       runtime.bus.subscribe((e) => {
-        if (e.type === 'NOTIFICATION_SHOW') events.push(e.type);
+        if (e.type === 'notification/show') events.push(e.type);
       });
 
       workflow.define({
@@ -466,7 +466,7 @@ describe('WorkflowModule', () => {
         ],
       });
       await workflow.start('error-notify');
-      expect(events).toContain('NOTIFICATION_SHOW');
+      expect(events).toContain('notification/show');
     });
   });
 

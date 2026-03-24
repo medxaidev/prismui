@@ -195,7 +195,7 @@ describe('Persistence Module', () => {
       page.mount('Dashboard');
       persistence.save();
       const history = runtime.bus.getHistory();
-      expect(history.some((e) => e.type === 'PERSISTENCE_SAVE')).toBe(true);
+      expect(history.some((e) => e.type === 'persistence/save')).toBe(true);
     });
 
     it('restore dispatches PERSISTENCE_RESTORE event', () => {
@@ -203,14 +203,14 @@ describe('Persistence Module', () => {
       adapter.setItem('prismui-state', JSON.stringify({ currentPage: 'X' }));
       persistence.restore();
       const history = runtime.bus.getHistory();
-      expect(history.some((e) => e.type === 'PERSISTENCE_RESTORE')).toBe(true);
+      expect(history.some((e) => e.type === 'persistence/restore')).toBe(true);
     });
 
     it('clear dispatches PERSISTENCE_CLEAR event', () => {
       const { runtime, persistence } = setup();
       persistence.clear();
       const history = runtime.bus.getHistory();
-      expect(history.some((e) => e.type === 'PERSISTENCE_CLEAR')).toBe(true);
+      expect(history.some((e) => e.type === 'persistence/clear')).toBe(true);
     });
   });
 });

@@ -164,16 +164,16 @@ describe('PolicyEngine', () => {
       const spy = vi.fn(() => ({ verdict: 'deny' as const, reason: 'blocked' }));
       engine.addRule({
         name: 'page-only',
-        eventTypes: ['PAGE_MOUNT', 'PAGE_TRANSITION'],
+        eventTypes: ['page/mount', 'page/transition'],
         evaluate: spy,
       });
 
       // Should not match
-      engine.evaluate({ type: 'MODAL_OPEN', timestamp: 100 }, { version: 0 });
+      engine.evaluate({ type: 'modal/open', timestamp: 100 }, { version: 0 });
       expect(spy).not.toHaveBeenCalled();
 
       // Should match
-      engine.evaluate({ type: 'PAGE_MOUNT', timestamp: 100 }, { version: 0 });
+      engine.evaluate({ type: 'page/mount', timestamp: 100 }, { version: 0 });
       expect(spy).toHaveBeenCalledTimes(1);
     });
 

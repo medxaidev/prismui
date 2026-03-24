@@ -70,7 +70,7 @@ describe('Router Module', () => {
       const { runtime, router } = setup();
       router.push('/about');
       const history = runtime.bus.getHistory();
-      const navEvent = history.find((e) => e.type === 'ROUTER_LOCATION_CHANGED');
+      const navEvent = history.find((e) => e.type === 'router/locationChanged');
       expect(navEvent).toBeDefined();
     });
 
@@ -98,7 +98,7 @@ describe('Router Module', () => {
       const { runtime, router } = setup();
       router.replace('/replaced');
       const history = runtime.bus.getHistory();
-      const replaceEvent = history.find((e) => e.type === 'ROUTER_REPLACE');
+      const replaceEvent = history.find((e) => e.type === 'router/replace');
       expect(replaceEvent).toBeDefined();
     });
   });

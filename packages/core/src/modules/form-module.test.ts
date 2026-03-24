@@ -268,13 +268,13 @@ describe('Form Module', () => {
       const history = runtime.bus.getHistory();
       const types = history.map((e) => e.type);
 
-      expect(types).toContain('FORM_REGISTER_FIELD');
-      expect(types).toContain('FORM_SET_VALUE');
-      expect(types).toContain('FORM_SET_TOUCHED');
-      expect(types).toContain('FORM_SET_ERROR');
-      expect(types).toContain('FORM_SUBMIT_START');
-      expect(types).toContain('FORM_SUBMIT_SUCCESS');
-      expect(types).toContain('FORM_RESET');
+      expect(types).toContain('form/registerField');
+      expect(types).toContain('form/setValue');
+      expect(types).toContain('form/setTouched');
+      expect(types).toContain('form/setError');
+      expect(types).toContain('form/submitStart');
+      expect(types).toContain('form/submitSuccess');
+      expect(types).toContain('form/reset');
     });
   });
 

@@ -8,6 +8,14 @@ export { createRuntimeStore } from './store';
 export { createScheduler } from './scheduler';
 export { createInteractionRuntime } from './runtime';
 
+// Action Type Utilities (STAGE-011)
+export {
+  createActionType,
+  createModuleActions,
+  parseActionType,
+  isNamespacedActionType,
+} from './action-types';
+
 // Constants
 export { SYSTEM_ERROR } from './scheduler';
 
@@ -30,13 +38,13 @@ export type {
 } from './types';
 
 // Built-in Modules (Layer 0.5)
-export { createPageModule } from './modules/page-module';
+export { createPageModule, PageActions } from './modules/page-module';
 export type { PageModuleState, PageController } from './modules/page-module';
-export { createModalModule } from './modules/modal-module';
+export { createModalModule, ModalActions, MODAL_OPEN, MODAL_CLOSE, MODAL_CLOSE_ALL } from './modules/modal-module';
 export type { ModalModuleState, ModalController } from './modules/modal-module';
-export { createDrawerModule } from './modules/drawer-module';
+export { createDrawerModule, DrawerActions } from './modules/drawer-module';
 export type { DrawerModuleState, DrawerController, DrawerEntry, DrawerAnchor } from './modules/drawer-module';
-export { createNotificationModule } from './modules/notification-module';
+export { createNotificationModule, NotificationActions } from './modules/notification-module';
 export type {
   NotificationModuleState,
   NotificationController,
@@ -46,7 +54,7 @@ export type {
 } from './modules/notification-module';
 
 // Form Module (STAGE-005)
-export { createFormModule } from './modules/form-module';
+export { createFormModule, FormActions } from './modules/form-module';
 export type {
   FormModuleState,
   FormController,
@@ -67,7 +75,7 @@ export {
 } from './modules/form-module';
 
 // Async Module (STAGE-005)
-export { createAsyncModule } from './modules/async-module';
+export { createAsyncModule, AsyncActions } from './modules/async-module';
 export type {
   AsyncModuleState,
   AsyncController,
@@ -82,7 +90,7 @@ export {
 } from './modules/async-module';
 
 // Router Module (STAGE-010)
-export { createRouterModule, createMemoryRouterAdapter, createBrowserRouterAdapter, parseQueryString, buildQueryString } from './modules/router-module';
+export { createRouterModule, createMemoryRouterAdapter, createBrowserRouterAdapter, parseQueryString, buildQueryString, RouterActions } from './modules/router-module';
 export type {
   RouterLocation,
   RouterAdapter,
@@ -100,7 +108,7 @@ export {
 } from './modules/router-module';
 
 // Persistence Module (STAGE-010)
-export { createPersistenceModule, createLocalStorageAdapter } from './modules/persistence-module';
+export { createPersistenceModule, createLocalStorageAdapter, PersistenceActions } from './modules/persistence-module';
 export type {
   PersistenceAdapter,
   PersistenceModuleOptions,
@@ -113,7 +121,7 @@ export {
 } from './modules/persistence-module';
 
 // Workflow Module (STAGE-009)
-export { createWorkflowModule } from './modules/workflow-module';
+export { createWorkflowModule, WorkflowActions } from './modules/workflow-module';
 export type {
   WorkflowModuleState,
   WorkflowController,

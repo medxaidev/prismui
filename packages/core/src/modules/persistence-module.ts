@@ -7,6 +7,7 @@
 import type { RuntimeModule } from '../module';
 import type { EventBus } from '../event-bus';
 import type { RuntimeState, RuntimeStore } from '../store';
+import { createModuleActions } from '../action-types';
 
 // ── Types ─────────────────────────────────────────────────────────────
 
@@ -45,9 +46,21 @@ export interface PersistenceController {
 
 // ── Event Constants ───────────────────────────────────────────────────
 
-export const PERSISTENCE_SAVE = 'PERSISTENCE_SAVE';
-export const PERSISTENCE_RESTORE = 'PERSISTENCE_RESTORE';
-export const PERSISTENCE_CLEAR = 'PERSISTENCE_CLEAR';
+// Event type constants (namespaced)
+const PersistenceActions = createModuleActions('persistence', {
+  SAVE: 'save',
+  RESTORE: 'restore',
+  CLEAR: 'clear',
+});
+
+export { PersistenceActions };
+
+/** @deprecated Use PersistenceActions — kept for backward compatibility */
+export const PERSISTENCE_SAVE = PersistenceActions.SAVE;
+/** @deprecated Use PersistenceActions — kept for backward compatibility */
+export const PERSISTENCE_RESTORE = PersistenceActions.RESTORE;
+/** @deprecated Use PersistenceActions — kept for backward compatibility */
+export const PERSISTENCE_CLEAR = PersistenceActions.CLEAR;
 
 // ── LocalStorage Adapter ──────────────────────────────────────────────
 
@@ -142,7 +155,7 @@ export function createPersistenceModule(
     initialState: {},
 
     reducers: {
-      [PERSISTENCE_RESTORE]: (event, prevState) => {
+      [PersistenceActions.RESTORE]: (event, prevState) => {
         const { data } = event.payload as { data: Record<string, unknown> };
         // Merge persisted data into state (only whitelisted keys)
         const merged = { ...prevState };
@@ -154,7 +167,7 @@ export function createPersistenceModule(
         return { nextState: merged };
       },
 
-      [PERSISTENCE_CLEAR]: (_event, prevState) => {
+      [PersistenceActions.CLEAR]: (_event, prevState) => {
         return { nextState: prevState };
       },
     },
@@ -164,7 +177,7 @@ export function createPersistenceModule(
       const saved = loadFromStorage();
       if (saved) {
         bus.dispatch({
-          type: PERSISTENCE_RESTORE,
+          type: PersistenceActions.RESTORE,
           payload: { data: saved },
         });
       }
@@ -187,14 +200,14 @@ export function createPersistenceModule(
       save(): void {
         if (debounceTimer) clearTimeout(debounceTimer);
         saveToStorage(store.getState());
-        bus.dispatch({ type: PERSISTENCE_SAVE });
+        bus.dispatch({ type: PersistenceActions.SAVE });
       },
 
       restore(): void {
         const data = loadFromStorage();
         if (data) {
           bus.dispatch({
-            type: PERSISTENCE_RESTORE,
+            type: PersistenceActions.RESTORE,
             payload: { data },
           });
         }
@@ -202,7 +215,7 @@ export function createPersistenceModule(
 
       clear(): void {
         adapter.removeItem(storageKey);
-        bus.dispatch({ type: PERSISTENCE_CLEAR });
+        bus.dispatch({ type: PersistenceActions.CLEAR });
       },
 
       hasSavedState(): boolean {

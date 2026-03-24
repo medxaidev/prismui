@@ -36,12 +36,12 @@ describe('DevTools Module', () => {
 
   describe('Timeline', () => {
     it('records events in timeline', () => {
-      runtime.dispatch({ type: 'PAGE_MOUNT', payload: { pageId: 'dashboard' } });
+      runtime.dispatch({ type: 'page/mount', payload: { pageId: 'dashboard' } });
       const timeline = devtools.getTimeline();
       // MODULE_INIT events + our dispatch
       expect(timeline.length).toBeGreaterThanOrEqual(1);
 
-      const pageMount = timeline.find((e) => e.event.type === 'PAGE_MOUNT');
+      const pageMount = timeline.find((e) => e.event.type === 'page/mount');
       expect(pageMount).toBeDefined();
       expect(pageMount!.stateVersionBefore).toBeDefined();
       expect(pageMount!.stateVersionAfter).toBeDefined();
@@ -49,9 +49,9 @@ describe('DevTools Module', () => {
     });
 
     it('tracks reducer hit correctly', () => {
-      runtime.dispatch({ type: 'PAGE_MOUNT', payload: { pageId: 'dashboard' } });
+      runtime.dispatch({ type: 'page/mount', payload: { pageId: 'dashboard' } });
       const timeline = devtools.getTimeline();
-      const pageMount = timeline.find((e) => e.event.type === 'PAGE_MOUNT');
+      const pageMount = timeline.find((e) => e.event.type === 'page/mount');
       expect(pageMount).toBeDefined();
       expect(pageMount!.reducerHit).toBe(true);
       expect(pageMount!.stateVersionAfter).toBeGreaterThan(pageMount!.stateVersionBefore);
@@ -66,17 +66,17 @@ describe('DevTools Module', () => {
     });
 
     it('filters timeline by event type', () => {
-      runtime.dispatch({ type: 'PAGE_MOUNT', payload: { pageId: 'a' } });
-      runtime.dispatch({ type: 'MODAL_OPEN', payload: { modalId: 'b' } });
-      runtime.dispatch({ type: 'PAGE_MOUNT', payload: { pageId: 'c' } });
+      runtime.dispatch({ type: 'page/mount', payload: { pageId: 'a' } });
+      runtime.dispatch({ type: 'modal/open', payload: { modalId: 'b' } });
+      runtime.dispatch({ type: 'page/mount', payload: { pageId: 'c' } });
 
-      const pageEvents = devtools.getTimeline({ eventType: 'PAGE_MOUNT' });
-      expect(pageEvents.every((e) => e.event.type === 'PAGE_MOUNT')).toBe(true);
+      const pageEvents = devtools.getTimeline({ eventType: 'page/mount' });
+      expect(pageEvents.every((e) => e.event.type === 'page/mount')).toBe(true);
       expect(pageEvents.length).toBe(2);
     });
 
     it('filters timeline by minDuration', () => {
-      runtime.dispatch({ type: 'PAGE_MOUNT', payload: { pageId: 'a' } });
+      runtime.dispatch({ type: 'page/mount', payload: { pageId: 'a' } });
       // All events should be fast (<1ms typically)
       const slow = devtools.getTimeline({ minDuration: 10000 });
       expect(slow.length).toBe(0);
@@ -84,14 +84,14 @@ describe('DevTools Module', () => {
 
     it('filters timeline with limit', () => {
       for (let i = 0; i < 10; i++) {
-        runtime.dispatch({ type: 'PAGE_MOUNT', payload: { pageId: `p${i}` } });
+        runtime.dispatch({ type: 'page/mount', payload: { pageId: `p${i}` } });
       }
       const limited = devtools.getTimeline({ limit: 3 });
       expect(limited.length).toBe(3);
     });
 
     it('getSlowEvents returns events above threshold', () => {
-      runtime.dispatch({ type: 'PAGE_MOUNT', payload: { pageId: 'a' } });
+      runtime.dispatch({ type: 'page/mount', payload: { pageId: 'a' } });
       // Threshold 0 should catch all events
       const all = devtools.getSlowEvents(0);
       expect(all.length).toBeGreaterThan(0);
@@ -101,7 +101,7 @@ describe('DevTools Module', () => {
     });
 
     it('clearTimeline removes all entries', () => {
-      runtime.dispatch({ type: 'PAGE_MOUNT', payload: { pageId: 'a' } });
+      runtime.dispatch({ type: 'page/mount', payload: { pageId: 'a' } });
       expect(devtools.getTimeline().length).toBeGreaterThan(0);
       devtools.clearTimeline();
       // After clear, only the DEVTOOLS_TIMELINE_CLEARED event should be there
@@ -119,7 +119,7 @@ describe('DevTools Module', () => {
       const dt = smallRuntime.modules.devtools as DevToolsController;
 
       for (let i = 0; i < 20; i++) {
-        smallRuntime.dispatch({ type: 'PAGE_MOUNT', payload: { pageId: `p${i}` } });
+        smallRuntime.dispatch({ type: 'page/mount', payload: { pageId: `p${i}` } });
       }
       expect(dt.getTimeline().length).toBeLessThanOrEqual(5);
     });
@@ -131,35 +131,35 @@ describe('DevTools Module', () => {
     it('tracks totalEvents', () => {
       const initialMetrics = devtools.getMetrics();
       const initialTotal = initialMetrics.totalEvents;
-      runtime.dispatch({ type: 'PAGE_MOUNT', payload: { pageId: 'a' } });
-      runtime.dispatch({ type: 'PAGE_MOUNT', payload: { pageId: 'b' } });
+      runtime.dispatch({ type: 'page/mount', payload: { pageId: 'a' } });
+      runtime.dispatch({ type: 'page/mount', payload: { pageId: 'b' } });
       const metrics = devtools.getMetrics();
       expect(metrics.totalEvents).toBe(initialTotal + 2);
     });
 
     it('tracks averageDuration', () => {
-      runtime.dispatch({ type: 'PAGE_MOUNT', payload: { pageId: 'a' } });
+      runtime.dispatch({ type: 'page/mount', payload: { pageId: 'a' } });
       const metrics = devtools.getMetrics();
       expect(metrics.averageDuration).toBeGreaterThanOrEqual(0);
     });
 
     it('tracks maxDuration', () => {
-      runtime.dispatch({ type: 'PAGE_MOUNT', payload: { pageId: 'a' } });
+      runtime.dispatch({ type: 'page/mount', payload: { pageId: 'a' } });
       const metrics = devtools.getMetrics();
       expect(metrics.maxDuration).toBeGreaterThanOrEqual(0);
     });
 
     it('tracks eventsByType', () => {
-      runtime.dispatch({ type: 'PAGE_MOUNT', payload: { pageId: 'a' } });
-      runtime.dispatch({ type: 'MODAL_OPEN', payload: { modalId: 'b' } });
+      runtime.dispatch({ type: 'page/mount', payload: { pageId: 'a' } });
+      runtime.dispatch({ type: 'modal/open', payload: { modalId: 'b' } });
       const metrics = devtools.getMetrics();
-      expect(metrics.eventsByType['PAGE_MOUNT']).toBeDefined();
-      expect(metrics.eventsByType['MODAL_OPEN']).toBeDefined();
-      expect(metrics.eventsByType['PAGE_MOUNT'].count).toBeGreaterThanOrEqual(1);
+      expect(metrics.eventsByType['page/mount']).toBeDefined();
+      expect(metrics.eventsByType['modal/open']).toBeDefined();
+      expect(metrics.eventsByType['page/mount'].count).toBeGreaterThanOrEqual(1);
     });
 
     it('tracks eventsPerSecond', () => {
-      runtime.dispatch({ type: 'PAGE_MOUNT', payload: { pageId: 'a' } });
+      runtime.dispatch({ type: 'page/mount', payload: { pageId: 'a' } });
       const metrics = devtools.getMetrics();
       expect(metrics.eventsPerSecond).toBeGreaterThanOrEqual(0);
     });
@@ -171,7 +171,7 @@ describe('DevTools Module', () => {
     });
 
     it('resetMetrics clears all counters', () => {
-      runtime.dispatch({ type: 'PAGE_MOUNT', payload: { pageId: 'a' } });
+      runtime.dispatch({ type: 'page/mount', payload: { pageId: 'a' } });
       devtools.resetMetrics();
       const metrics = devtools.getMetrics();
       expect(metrics.totalEvents).toBeLessThanOrEqual(1); // reset event itself
@@ -186,7 +186,7 @@ describe('DevTools Module', () => {
         ],
       });
       const dt = rt.modules.devtools as DevToolsController;
-      rt.dispatch({ type: 'PAGE_MOUNT', payload: { pageId: 'a' } });
+      rt.dispatch({ type: 'page/mount', payload: { pageId: 'a' } });
       const metrics = dt.getMetrics();
       expect(metrics.totalEvents).toBe(0);
     });
@@ -220,8 +220,8 @@ describe('DevTools Module', () => {
 
     it('compareSnapshots detects state changes', () => {
       const idA = devtools.captureSnapshot('before');
-      runtime.dispatch({ type: 'PAGE_MOUNT', payload: { pageId: 'dashboard' } });
-      runtime.dispatch({ type: 'PAGE_TRANSITION', payload: { pageId: 'dashboard' } });
+      runtime.dispatch({ type: 'page/mount', payload: { pageId: 'dashboard' } });
+      runtime.dispatch({ type: 'page/transition', payload: { pageId: 'dashboard' } });
       const idB = devtools.captureSnapshot('after');
 
       const diff = devtools.compareSnapshots(idA, idB);
@@ -300,7 +300,7 @@ describe('DevTools Module', () => {
 
   describe('Agent Interface', () => {
     it('agent.dispatch dispatches events', () => {
-      devtools.agent.dispatch({ type: 'PAGE_MOUNT', payload: { pageId: 'test' } });
+      devtools.agent.dispatch({ type: 'page/mount', payload: { pageId: 'test' } });
       const state = runtime.getState();
       expect((state as Record<string, unknown>).mountedPages).toBeDefined();
     });
@@ -313,16 +313,16 @@ describe('DevTools Module', () => {
     it('agent.subscribe receives state updates', () => {
       const listener = vi.fn();
       const unsub = devtools.agent.subscribe(listener);
-      runtime.dispatch({ type: 'PAGE_MOUNT', payload: { pageId: 'x' } });
+      runtime.dispatch({ type: 'page/mount', payload: { pageId: 'x' } });
       expect(listener).toHaveBeenCalled();
       unsub();
     });
 
     it('agent.executeSequence dispatches multiple events', async () => {
       await devtools.agent.executeSequence([
-        { type: 'PAGE_MOUNT', payload: { pageId: 'a' } },
-        { type: 'PAGE_MOUNT', payload: { pageId: 'b' } },
-        { type: 'PAGE_TRANSITION', payload: { pageId: 'b' } },
+        { type: 'page/mount', payload: { pageId: 'a' } },
+        { type: 'page/mount', payload: { pageId: 'b' } },
+        { type: 'page/transition', payload: { pageId: 'b' } },
       ]);
       const state = runtime.getState() as Record<string, unknown>;
       expect(state.currentPage).toBe('b');
@@ -332,8 +332,8 @@ describe('DevTools Module', () => {
       const start = Date.now();
       await devtools.agent.executeSequence(
         [
-          { type: 'PAGE_MOUNT', payload: { pageId: 'a' } },
-          { type: 'PAGE_MOUNT', payload: { pageId: 'b' } },
+          { type: 'page/mount', payload: { pageId: 'a' } },
+          { type: 'page/mount', payload: { pageId: 'b' } },
         ],
         10,
       );
@@ -342,8 +342,8 @@ describe('DevTools Module', () => {
     });
 
     it('agent.waitForState resolves immediately if predicate matches', async () => {
-      runtime.dispatch({ type: 'PAGE_MOUNT', payload: { pageId: 'x' } });
-      runtime.dispatch({ type: 'PAGE_TRANSITION', payload: { pageId: 'x' } });
+      runtime.dispatch({ type: 'page/mount', payload: { pageId: 'x' } });
+      runtime.dispatch({ type: 'page/transition', payload: { pageId: 'x' } });
 
       const state = await devtools.agent.waitForState(
         (s) => (s as Record<string, unknown>).currentPage === 'x',
@@ -359,8 +359,8 @@ describe('DevTools Module', () => {
 
       // Dispatch after a small delay
       setTimeout(() => {
-        runtime.dispatch({ type: 'PAGE_MOUNT', payload: { pageId: 'future' } });
-        runtime.dispatch({ type: 'PAGE_TRANSITION', payload: { pageId: 'future' } });
+        runtime.dispatch({ type: 'page/mount', payload: { pageId: 'future' } });
+        runtime.dispatch({ type: 'page/transition', payload: { pageId: 'future' } });
       }, 10);
 
       const state = await promise;
@@ -509,23 +509,23 @@ describe('RuntimeInspector', () => {
 
   it('getEventHistory returns all events', () => {
     const inspector = createRuntimeInspector(runtime);
-    runtime.dispatch({ type: 'PAGE_MOUNT', payload: { pageId: 'a' } });
+    runtime.dispatch({ type: 'page/mount', payload: { pageId: 'a' } });
     const history = inspector.getEventHistory();
     expect(history.length).toBeGreaterThan(0);
   });
 
   it('getEventHistory filters by type', () => {
     const inspector = createRuntimeInspector(runtime);
-    runtime.dispatch({ type: 'PAGE_MOUNT', payload: { pageId: 'a' } });
-    runtime.dispatch({ type: 'MODAL_OPEN', payload: { modalId: 'b' } });
-    const pageEvents = inspector.getEventHistory({ type: 'PAGE_MOUNT' });
-    expect(pageEvents.every((e) => e.type === 'PAGE_MOUNT')).toBe(true);
+    runtime.dispatch({ type: 'page/mount', payload: { pageId: 'a' } });
+    runtime.dispatch({ type: 'modal/open', payload: { modalId: 'b' } });
+    const pageEvents = inspector.getEventHistory({ type: 'page/mount' });
+    expect(pageEvents.every((e) => e.type === 'page/mount')).toBe(true);
   });
 
   it('getEventHistory filters with limit', () => {
     const inspector = createRuntimeInspector(runtime);
     for (let i = 0; i < 10; i++) {
-      runtime.dispatch({ type: 'PAGE_MOUNT', payload: { pageId: `p${i}` } });
+      runtime.dispatch({ type: 'page/mount', payload: { pageId: `p${i}` } });
     }
     const limited = inspector.getEventHistory({ limit: 3 });
     expect(limited.length).toBe(3);
@@ -533,7 +533,7 @@ describe('RuntimeInspector', () => {
 
   it('exportSnapshot produces valid snapshot', () => {
     const inspector = createRuntimeInspector(runtime);
-    runtime.dispatch({ type: 'PAGE_MOUNT', payload: { pageId: 'a' } });
+    runtime.dispatch({ type: 'page/mount', payload: { pageId: 'a' } });
     const snap = inspector.exportSnapshot();
     expect(snap.id).toBeTruthy();
     expect(snap.state).toBeDefined();

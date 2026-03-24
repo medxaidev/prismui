@@ -24,7 +24,7 @@ export function DrawerModulePage() {
       <div className="feature-section">
         <h3 className="feature-section__title">Drawer API</h3>
         <div className="code-block">
-{`const { open, close, closeAll, drawerStack } = useDrawer();
+          {`const { open, close, closeAll, drawerStack } = useDrawer();
 
 open('patient-info', 'right');    // Open drawer on right side
 open('nav-menu', 'left');         // Open drawer on left side
@@ -86,9 +86,9 @@ drawerStack;                      // [{ drawerId, anchor }, ...]`}
       <div className="feature-section">
         <h3 className="feature-section__title">Event Flow</h3>
         <div className="code-block">
-{`open('patient-info', 'right')
+          {`open('patient-info', 'right')
   → dispatch({
-      type: "DRAWER_OPEN",
+      type: "drawer/open",
       payload: { drawerId: "patient-info", anchor: "right" }
     })
   → Scheduler → Reducer: push onto drawerStack

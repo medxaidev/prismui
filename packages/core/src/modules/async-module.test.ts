@@ -160,10 +160,10 @@ describe('Async Module', () => {
       const history = runtime.bus.getHistory();
       const types = history.map((e) => e.type);
 
-      expect(types).toContain('ASYNC_START');
-      expect(types).toContain('ASYNC_SUCCESS');
-      expect(types).toContain('ASYNC_ERROR');
-      expect(types).toContain('ASYNC_RESET');
+      expect(types).toContain('async/start');
+      expect(types).toContain('async/success');
+      expect(types).toContain('async/error');
+      expect(types).toContain('async/reset');
     });
   });
 

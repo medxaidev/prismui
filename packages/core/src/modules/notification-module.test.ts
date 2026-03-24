@@ -260,8 +260,8 @@ describe('Notification Module', () => {
       notification.dismiss(id);
 
       const entries = audit.getEntries();
-      expect(entries.some((e) => e.event.type === 'NOTIFICATION_SHOW')).toBe(true);
-      expect(entries.some((e) => e.event.type === 'NOTIFICATION_DISMISS')).toBe(true);
+      expect(entries.some((e) => e.event.type === 'notification/show')).toBe(true);
+      expect(entries.some((e) => e.event.type === 'notification/dismiss')).toBe(true);
     });
 
     it('notification events subject to policy', () => {
@@ -275,7 +275,7 @@ describe('Notification Module', () => {
       // Block error notifications
       policy.addRule({
         name: 'block-errors',
-        eventTypes: ['NOTIFICATION_SHOW'],
+        eventTypes: ['notification/show'],
         evaluate: (event) => {
           const payload = event.payload as { type?: string };
           if (payload?.type === 'error') {

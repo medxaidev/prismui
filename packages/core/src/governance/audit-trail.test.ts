@@ -91,7 +91,7 @@ describe('AuditTrail', () => {
   describe('query', () => {
     beforeEach(() => {
       // Record 5 entries with different types and timestamps
-      const types = ['PAGE_MOUNT', 'PAGE_TRANSITION', 'MODAL_OPEN', 'PAGE_LOCK', 'MODAL_CLOSE'];
+      const types = ['page/mount', 'page/transition', 'modal/open', 'page/lock', 'modal/close'];
       for (let i = 0; i < 5; i++) {
         audit.record({
           event: { type: types[i], timestamp: 1000 + i * 100 },
@@ -106,9 +106,9 @@ describe('AuditTrail', () => {
     });
 
     it('getEntries filters by eventType', () => {
-      const pageEntries = audit.getEntries({ eventType: 'PAGE_MOUNT' });
+      const pageEntries = audit.getEntries({ eventType: 'page/mount' });
       expect(pageEntries).toHaveLength(1);
-      expect(pageEntries[0].event.type).toBe('PAGE_MOUNT');
+      expect(pageEntries[0].event.type).toBe('page/mount');
     });
 
     it('getEntries filters by time range', () => {
@@ -132,8 +132,8 @@ describe('AuditTrail', () => {
     it('getLatest returns N most recent', () => {
       const latest = audit.getLatest(2);
       expect(latest).toHaveLength(2);
-      expect(latest[0].event.type).toBe('PAGE_LOCK');
-      expect(latest[1].event.type).toBe('MODAL_CLOSE');
+      expect(latest[0].event.type).toBe('page/lock');
+      expect(latest[1].event.type).toBe('modal/close');
     });
   });
 

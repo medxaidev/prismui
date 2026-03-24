@@ -6,6 +6,7 @@
 
 import type { RuntimeEvent, EventBus } from './event-bus';
 import type { RuntimeState, RuntimeStore } from './store';
+import { isNamespacedActionType } from './action-types';
 
 /**
  * Reducer return type. Supports declarative side-effect events.
@@ -119,6 +120,20 @@ export function createScheduler(store: RuntimeStore, bus: EventBus): Scheduler {
     process,
 
     registerReducer(type: string, reducer: EventReducer): () => void {
+      if (!isNamespacedActionType(type) && type !== SYSTEM_ERROR) {
+        console.warn(
+          `[Scheduler] Action type "${type}" does not follow namespaced format (module/action). ` +
+          `Consider using createModuleActions().`,
+        );
+      }
+
+      if (reducers.has(type)) {
+        console.warn(
+          `[Scheduler] Reducer conflict: type "${type}" is already registered. ` +
+          `The new reducer will overwrite the existing one.`,
+        );
+      }
+
       reducers.set(type, reducer);
       return () => {
         reducers.delete(type);

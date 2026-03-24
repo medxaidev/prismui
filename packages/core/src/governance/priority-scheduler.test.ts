@@ -81,7 +81,7 @@ describe('PriorityScheduler', () => {
     it('addConflictRule adds a rule', () => {
       ps.addConflictRule({
         name: 'page-nav',
-        eventTypes: ['PAGE_TRANSITION', 'PAGE_LOCK'],
+        eventTypes: ['page/transition', 'page/lock'],
       });
       expect(ps.getConflictRules()).toHaveLength(1);
     });

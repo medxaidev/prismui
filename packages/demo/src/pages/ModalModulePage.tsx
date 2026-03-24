@@ -76,12 +76,12 @@ modalStack;                   // ['confirm', 'alert', ...] — full stack`}
         <h3 className="feature-section__title">Event Flow</h3>
         <div className="code-block">
           {`open('confirm')
-  → dispatch({ type: "MODAL_OPEN", payload: { modalId: "confirm" } })
+  → dispatch({ type: "modal/open", payload: { modalId: "confirm" } })
   → Scheduler → Reducer: push "confirm" onto modalStack
   → Store commits → React re-renders
 
 close('confirm')
-  → dispatch({ type: "MODAL_CLOSE", payload: { modalId: "confirm" } })
+  → dispatch({ type: "modal/close", payload: { modalId: "confirm" } })
   → Scheduler → Reducer: remove "confirm" from modalStack
   → Store commits → React re-renders`}
         </div>

@@ -7,6 +7,7 @@
 import type { RuntimeModule } from '../module';
 import type { EventBus } from '../event-bus';
 import type { RuntimeStore } from '../store';
+import { createModuleActions } from '../action-types';
 
 /** State slice contributed by the Modal Module. */
 export interface ModalModuleState {
@@ -22,10 +23,21 @@ export interface ModalController {
   getStack(): string[];
 }
 
-// Event type constants
-const MODAL_OPEN = 'MODAL_OPEN';
-const MODAL_CLOSE = 'MODAL_CLOSE';
-const MODAL_CLOSE_ALL = 'MODAL_CLOSE_ALL';
+// Event type constants (namespaced)
+const ModalActions = createModuleActions('modal', {
+  OPEN: 'open',
+  CLOSE: 'close',
+  CLOSE_ALL: 'closeAll',
+});
+
+/** @deprecated Use ModalActions — kept for backward compatibility */
+export const MODAL_OPEN = ModalActions.OPEN;
+/** @deprecated Use ModalActions — kept for backward compatibility */
+export const MODAL_CLOSE = ModalActions.CLOSE;
+/** @deprecated Use ModalActions — kept for backward compatibility */
+export const MODAL_CLOSE_ALL = ModalActions.CLOSE_ALL;
+
+export { ModalActions };
 
 /**
  * Create the Modal Module.
@@ -42,7 +54,7 @@ export function createModalModule(): RuntimeModule<ModalController> {
     },
 
     reducers: {
-      [MODAL_OPEN]: (event, prevState) => {
+      [ModalActions.OPEN]: (event, prevState) => {
         const { modalId } = event.payload as { modalId: string };
         const stack = prevState.modalStack as string[];
 
@@ -59,7 +71,7 @@ export function createModalModule(): RuntimeModule<ModalController> {
         };
       },
 
-      [MODAL_CLOSE]: (event, prevState) => {
+      [ModalActions.CLOSE]: (event, prevState) => {
         const payload = event.payload as { modalId?: string } | undefined;
         const stack = prevState.modalStack as string[];
 
@@ -86,7 +98,7 @@ export function createModalModule(): RuntimeModule<ModalController> {
         };
       },
 
-      [MODAL_CLOSE_ALL]: (_event, prevState) => {
+      [ModalActions.CLOSE_ALL]: (_event, prevState) => {
         return {
           nextState: { ...prevState, modalStack: [] },
         };
@@ -95,13 +107,13 @@ export function createModalModule(): RuntimeModule<ModalController> {
 
     createController: ({ bus, store }: { bus: EventBus; store: RuntimeStore }) => ({
       open(modalId: string): void {
-        bus.dispatch({ type: MODAL_OPEN, payload: { modalId } });
+        bus.dispatch({ type: ModalActions.OPEN, payload: { modalId } });
       },
       close(modalId?: string): void {
-        bus.dispatch({ type: MODAL_CLOSE, payload: { modalId } });
+        bus.dispatch({ type: ModalActions.CLOSE, payload: { modalId } });
       },
       closeAll(): void {
-        bus.dispatch({ type: MODAL_CLOSE_ALL });
+        bus.dispatch({ type: ModalActions.CLOSE_ALL });
       },
       isOpen(modalId: string): boolean {
         return (store.getState().modalStack as string[]).includes(modalId);

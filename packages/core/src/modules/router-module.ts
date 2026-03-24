@@ -7,6 +7,7 @@
 import type { RuntimeModule } from '../module';
 import type { EventBus } from '../event-bus';
 import type { RuntimeState, RuntimeStore } from '../store';
+import { createModuleActions } from '../action-types';
 
 // ── Types ─────────────────────────────────────────────────────────────
 
@@ -60,12 +61,30 @@ export interface RouterModuleOptions {
 
 // ── Event Constants ───────────────────────────────────────────────────
 
-export const ROUTER_NAVIGATE = 'ROUTER_NAVIGATE';
-export const ROUTER_REPLACE = 'ROUTER_REPLACE';
-export const ROUTER_BACK = 'ROUTER_BACK';
-export const ROUTER_FORWARD = 'ROUTER_FORWARD';
-export const ROUTER_GO = 'ROUTER_GO';
-export const ROUTER_LOCATION_CHANGED = 'ROUTER_LOCATION_CHANGED';
+// Event type constants (namespaced)
+const RouterActions = createModuleActions('router', {
+  NAVIGATE: 'navigate',
+  REPLACE: 'replace',
+  BACK: 'back',
+  FORWARD: 'forward',
+  GO: 'go',
+  LOCATION_CHANGED: 'locationChanged',
+});
+
+export { RouterActions };
+
+/** @deprecated Use RouterActions — kept for backward compatibility */
+export const ROUTER_NAVIGATE = RouterActions.NAVIGATE;
+/** @deprecated Use RouterActions — kept for backward compatibility */
+export const ROUTER_REPLACE = RouterActions.REPLACE;
+/** @deprecated Use RouterActions — kept for backward compatibility */
+export const ROUTER_BACK = RouterActions.BACK;
+/** @deprecated Use RouterActions — kept for backward compatibility */
+export const ROUTER_FORWARD = RouterActions.FORWARD;
+/** @deprecated Use RouterActions — kept for backward compatibility */
+export const ROUTER_GO = RouterActions.GO;
+/** @deprecated Use RouterActions — kept for backward compatibility */
+export const ROUTER_LOCATION_CHANGED = RouterActions.LOCATION_CHANGED;
 
 // ── Utilities ─────────────────────────────────────────────────────────
 
@@ -313,7 +332,7 @@ export function createRouterModule(options?: RouterModuleOptions): RuntimeModule
     },
 
     reducers: {
-      [ROUTER_LOCATION_CHANGED]: (event, prevState) => {
+      [RouterActions.LOCATION_CHANGED]: (event, prevState) => {
         const { location } = event.payload as { location: RouterLocation };
         const rs = getRouterState(prevState);
 
@@ -355,7 +374,7 @@ export function createRouterModule(options?: RouterModuleOptions): RuntimeModule
         };
       },
 
-      [ROUTER_REPLACE]: (event, prevState) => {
+      [RouterActions.REPLACE]: (event, prevState) => {
         const { location } = event.payload as { location: RouterLocation };
         const rs = getRouterState(prevState);
 
@@ -380,7 +399,7 @@ export function createRouterModule(options?: RouterModuleOptions): RuntimeModule
       adapterUnsubscribe = a.subscribe((location) => {
         if (suppressNotify) return;
         bus.dispatch({
-          type: ROUTER_LOCATION_CHANGED,
+          type: RouterActions.LOCATION_CHANGED,
           payload: { location },
         });
       });
@@ -408,7 +427,7 @@ export function createRouterModule(options?: RouterModuleOptions): RuntimeModule
         suppressNotify = false;
         // Dispatch replace event for the store
         bus.dispatch({
-          type: ROUTER_REPLACE,
+          type: RouterActions.REPLACE,
           payload: { location: a.getLocation() },
         });
       },

@@ -7,6 +7,7 @@
 import type { RuntimeModule } from '../module';
 import type { EventBus } from '../event-bus';
 import type { RuntimeStore } from '../store';
+import { createModuleActions } from '../action-types';
 
 // ── Types ─────────────────────────────────────────────────────────────
 
@@ -53,16 +54,42 @@ export interface FormController {
 
 // ── Events ────────────────────────────────────────────────────────────
 
-export const FORM_REGISTER_FIELD = 'FORM_REGISTER_FIELD';
-export const FORM_UNREGISTER_FIELD = 'FORM_UNREGISTER_FIELD';
-export const FORM_SET_VALUE = 'FORM_SET_VALUE';
-export const FORM_SET_ERROR = 'FORM_SET_ERROR';
-export const FORM_SET_TOUCHED = 'FORM_SET_TOUCHED';
-export const FORM_VALIDATE = 'FORM_VALIDATE';
-export const FORM_SUBMIT_START = 'FORM_SUBMIT_START';
-export const FORM_SUBMIT_SUCCESS = 'FORM_SUBMIT_SUCCESS';
-export const FORM_SUBMIT_ERROR = 'FORM_SUBMIT_ERROR';
-export const FORM_RESET = 'FORM_RESET';
+// Event type constants (namespaced)
+const FormActions = createModuleActions('form', {
+  REGISTER_FIELD: 'registerField',
+  UNREGISTER_FIELD: 'unregisterField',
+  SET_VALUE: 'setValue',
+  SET_ERROR: 'setError',
+  SET_TOUCHED: 'setTouched',
+  VALIDATE: 'validate',
+  SUBMIT_START: 'submitStart',
+  SUBMIT_SUCCESS: 'submitSuccess',
+  SUBMIT_ERROR: 'submitError',
+  RESET: 'reset',
+});
+
+export { FormActions };
+
+/** @deprecated Use FormActions — kept for backward compatibility */
+export const FORM_REGISTER_FIELD = FormActions.REGISTER_FIELD;
+/** @deprecated Use FormActions — kept for backward compatibility */
+export const FORM_UNREGISTER_FIELD = FormActions.UNREGISTER_FIELD;
+/** @deprecated Use FormActions — kept for backward compatibility */
+export const FORM_SET_VALUE = FormActions.SET_VALUE;
+/** @deprecated Use FormActions — kept for backward compatibility */
+export const FORM_SET_ERROR = FormActions.SET_ERROR;
+/** @deprecated Use FormActions — kept for backward compatibility */
+export const FORM_SET_TOUCHED = FormActions.SET_TOUCHED;
+/** @deprecated Use FormActions — kept for backward compatibility */
+export const FORM_VALIDATE = FormActions.VALIDATE;
+/** @deprecated Use FormActions — kept for backward compatibility */
+export const FORM_SUBMIT_START = FormActions.SUBMIT_START;
+/** @deprecated Use FormActions — kept for backward compatibility */
+export const FORM_SUBMIT_SUCCESS = FormActions.SUBMIT_SUCCESS;
+/** @deprecated Use FormActions — kept for backward compatibility */
+export const FORM_SUBMIT_ERROR = FormActions.SUBMIT_ERROR;
+/** @deprecated Use FormActions — kept for backward compatibility */
+export const FORM_RESET = FormActions.RESET;
 
 // ── Module Factory ────────────────────────────────────────────────────
 
@@ -81,7 +108,7 @@ export function createFormModule(): RuntimeModule<FormController> {
     },
 
     reducers: {
-      [FORM_REGISTER_FIELD]: (event, prevState) => {
+      [FormActions.REGISTER_FIELD]: (event, prevState) => {
         const { name, initialValue } = event.payload as {
           name: string;
           initialValue?: unknown;
@@ -104,7 +131,7 @@ export function createFormModule(): RuntimeModule<FormController> {
         };
       },
 
-      [FORM_UNREGISTER_FIELD]: (event, prevState) => {
+      [FormActions.UNREGISTER_FIELD]: (event, prevState) => {
         const { name } = event.payload as { name: string };
         const fields = { ...(prevState.formFields as Record<string, FieldState>) };
         delete fields[name];
@@ -117,7 +144,7 @@ export function createFormModule(): RuntimeModule<FormController> {
         };
       },
 
-      [FORM_SET_VALUE]: (event, prevState) => {
+      [FormActions.SET_VALUE]: (event, prevState) => {
         const { name, value } = event.payload as { name: string; value: unknown };
         const fields = prevState.formFields as Record<string, FieldState>;
         const field = fields[name];
@@ -134,7 +161,7 @@ export function createFormModule(): RuntimeModule<FormController> {
         };
       },
 
-      [FORM_SET_ERROR]: (event, prevState) => {
+      [FormActions.SET_ERROR]: (event, prevState) => {
         const { name, error } = event.payload as { name: string; error: string | null };
         const fields = prevState.formFields as Record<string, FieldState>;
         const field = fields[name];
@@ -151,7 +178,7 @@ export function createFormModule(): RuntimeModule<FormController> {
         };
       },
 
-      [FORM_SET_TOUCHED]: (event, prevState) => {
+      [FormActions.SET_TOUCHED]: (event, prevState) => {
         const { name } = event.payload as { name: string };
         const fields = prevState.formFields as Record<string, FieldState>;
         const field = fields[name];
@@ -168,7 +195,7 @@ export function createFormModule(): RuntimeModule<FormController> {
         };
       },
 
-      [FORM_VALIDATE]: (event, prevState) => {
+      [FormActions.VALIDATE]: (event, prevState) => {
         const { errors } = event.payload as { errors: Record<string, string | null> };
         const fields = prevState.formFields as Record<string, FieldState>;
         const updatedFields = { ...fields };
@@ -187,7 +214,7 @@ export function createFormModule(): RuntimeModule<FormController> {
         };
       },
 
-      [FORM_SUBMIT_START]: (_event, prevState) => {
+      [FormActions.SUBMIT_START]: (_event, prevState) => {
         return {
           nextState: {
             ...prevState,
@@ -197,7 +224,7 @@ export function createFormModule(): RuntimeModule<FormController> {
         };
       },
 
-      [FORM_SUBMIT_SUCCESS]: (_event, prevState) => {
+      [FormActions.SUBMIT_SUCCESS]: (_event, prevState) => {
         return {
           nextState: {
             ...prevState,
@@ -207,7 +234,7 @@ export function createFormModule(): RuntimeModule<FormController> {
         };
       },
 
-      [FORM_SUBMIT_ERROR]: (event, prevState) => {
+      [FormActions.SUBMIT_ERROR]: (event, prevState) => {
         const { error } = event.payload as { error: string };
         return {
           nextState: {
@@ -219,7 +246,7 @@ export function createFormModule(): RuntimeModule<FormController> {
         };
       },
 
-      [FORM_RESET]: (_event, prevState) => {
+      [FormActions.RESET]: (_event, prevState) => {
         const fields = prevState.formFields as Record<string, FieldState>;
         const resetFields: Record<string, FieldState> = {};
 
@@ -248,49 +275,49 @@ export function createFormModule(): RuntimeModule<FormController> {
       registerField(name: string, initialValue?: unknown): void {
         const val = initialValue ?? '';
         initialValues[name] = val;
-        bus.dispatch({ type: FORM_REGISTER_FIELD, payload: { name, initialValue: val } });
+        bus.dispatch({ type: FormActions.REGISTER_FIELD, payload: { name, initialValue: val } });
       },
 
       unregisterField(name: string): void {
         delete initialValues[name];
-        bus.dispatch({ type: FORM_UNREGISTER_FIELD, payload: { name } });
+        bus.dispatch({ type: FormActions.UNREGISTER_FIELD, payload: { name } });
       },
 
       setValue(name: string, value: unknown): void {
-        bus.dispatch({ type: FORM_SET_VALUE, payload: { name, value } });
+        bus.dispatch({ type: FormActions.SET_VALUE, payload: { name, value } });
       },
 
       setError(name: string, error: string | null): void {
-        bus.dispatch({ type: FORM_SET_ERROR, payload: { name, error } });
+        bus.dispatch({ type: FormActions.SET_ERROR, payload: { name, error } });
       },
 
       setTouched(name: string): void {
-        bus.dispatch({ type: FORM_SET_TOUCHED, payload: { name } });
+        bus.dispatch({ type: FormActions.SET_TOUCHED, payload: { name } });
       },
 
       validate(validator: FormValidator): boolean {
         const fields = store.getState().formFields as Record<string, FieldState>;
         const errors = validator(fields);
-        bus.dispatch({ type: FORM_VALIDATE, payload: { errors } });
+        bus.dispatch({ type: FormActions.VALIDATE, payload: { errors } });
 
         // Check if any errors are non-null
         return Object.values(errors).every((e) => e === null);
       },
 
       submitStart(): void {
-        bus.dispatch({ type: FORM_SUBMIT_START });
+        bus.dispatch({ type: FormActions.SUBMIT_START });
       },
 
       submitSuccess(): void {
-        bus.dispatch({ type: FORM_SUBMIT_SUCCESS });
+        bus.dispatch({ type: FormActions.SUBMIT_SUCCESS });
       },
 
       submitError(error: string): void {
-        bus.dispatch({ type: FORM_SUBMIT_ERROR, payload: { error } });
+        bus.dispatch({ type: FormActions.SUBMIT_ERROR, payload: { error } });
       },
 
       reset(): void {
-        bus.dispatch({ type: FORM_RESET });
+        bus.dispatch({ type: FormActions.RESET });
       },
 
       getField(name: string): FieldState | undefined {
