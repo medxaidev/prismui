@@ -1,22 +1,23 @@
 /**
- * Styling Unit type definitions for PrismUI.
+ * Styling Unit exports.
  *
- * This module exports the core StylesNames type — the minimal addressable
- * unit in PrismUI's styling system.
+ * This module provides the core types for PrismUI's styling system.
  *
- * Components define their own StylesNames in their component files.
+ * ## What is exported
+ *
+ * - `StylesNames`: Base type for component style names
+ * - `CssVariable`: CSS variable name type (must start with --)
+ * - `CssVariables`: CSS variables object type (supports generic constraint)
+ * - `VarsResolver`: Function type for props → CSS variables transformation
+ *
+ * ## What is NOT exported
+ *
+ * - Component-specific StylesNames (e.g., `ButtonStylesNames`) are defined
+ *   in their respective component files, not here.
+ * - Component-specific CssVariable types (e.g., `ButtonCssVariable`) are
+ *   defined in their respective component files (optional, for strict mode).
  *
  * @module styles
- *
- * @example
- * ```ts
- * import type { StylesNames } from '@prismui/core/styles';
- *
- * // In your component file:
- * export type ButtonStylesNames = 'root' | 'inner' | 'label';
- *
- * // Generic function that works with any component's StylesNames
- * function highlight<T extends StylesNames>(name: T): void { ... }
  *
  * // Component-specific type safety
  * const name: ButtonStylesNames = 'root'; // ✅
@@ -24,4 +25,14 @@
  * ```
  */
 
+// =============================================================================
+// Core Types
+// =============================================================================
+
 export type { StylesNames } from './types';
+
+// =============================================================================
+// CSS Variables Types (Step 2.2: Styling Data Flow)
+// =============================================================================
+
+export type { CssVariable, CssVariables, VarsResolver } from './types';

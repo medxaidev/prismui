@@ -143,3 +143,168 @@ describe('StylesNames — Styling Unit types', () => {
     expect(isRoot<ExampleCardStylesNames>('footer')).toBe(false);
   });
 });
+
+// =============================================================================
+// CSS Variables Types (Step 2.2: Styling Data Flow)
+// =============================================================================
+
+describe('CssVariable, CssVariables, VarsResolver — CSS Variables types', () => {
+  // ===========================================================================
+  // 1. CssVariable type
+  // ===========================================================================
+
+  it('CssVariable accepts valid CSS variable names', () => {
+    const valid1: import('./types').CssVariable = '--button-height';
+    const valid2: import('./types').CssVariable = '--my-custom-var';
+    const valid3: import('./types').CssVariable = '--x';
+    expect(valid1).toBe('--button-height');
+    expect(valid2).toBe('--my-custom-var');
+    expect(valid3).toBe('--x');
+  });
+
+  it('CssVariable rejects invalid names at compile time', () => {
+    // @ts-expect-error - must start with --
+    const invalid1: import('./types').CssVariable = 'button-height';
+    // @ts-expect-error - must start with --
+    const invalid2: import('./types').CssVariable = 'height';
+    void invalid1;
+    void invalid2;
+  });
+
+  // ===========================================================================
+  // 2. CssVariables type (loose mode)
+  // ===========================================================================
+
+  it('CssVariables (loose mode) accepts any CSS variable', () => {
+    const vars: import('./types').CssVariables = {
+      '--button-height': '48px',
+      '--button-bg': 'blue',
+      '--any-variable': 'value',
+    };
+    expect(vars['--button-height']).toBe('48px');
+    expect(vars['--button-bg']).toBe('blue');
+    expect(vars['--any-variable']).toBe('value');
+  });
+
+  it('CssVariables (loose mode) allows undefined values', () => {
+    const vars: import('./types').CssVariables = {
+      '--button-height': '48px',
+      '--button-bg': undefined,
+    };
+    expect(vars['--button-height']).toBe('48px');
+    expect(vars['--button-bg']).toBeUndefined();
+  });
+
+  it('CssVariables (loose mode) is partial (all keys optional)', () => {
+    const emptyVars: import('./types').CssVariables = {};
+    const partialVars: import('./types').CssVariables = {
+      '--button-height': '48px',
+    };
+    expect(emptyVars).toEqual({});
+    expect(partialVars).toEqual({ '--button-height': '48px' });
+  });
+
+  // ===========================================================================
+  // 3. CssVariables type (strict mode)
+  // ===========================================================================
+
+  it('CssVariables (strict mode) constrains to specific variables', () => {
+    type ButtonCssVariable = '--button-height' | '--button-bg';
+    const vars: import('./types').CssVariables<ButtonCssVariable> = {
+      '--button-height': '48px',
+      '--button-bg': 'blue',
+    };
+    expect(vars['--button-height']).toBe('48px');
+    expect(vars['--button-bg']).toBe('blue');
+  });
+
+  it('CssVariables (strict mode) rejects invalid variables at compile time', () => {
+    type ButtonCssVariable = '--button-height' | '--button-bg';
+    const vars: import('./types').CssVariables<ButtonCssVariable> = {
+      '--button-height': '48px',
+      // @ts-expect-error - '--invalid' is not in ButtonCssVariable
+      '--invalid': 'red',
+    };
+    void vars;
+  });
+
+  // ===========================================================================
+  // 4. VarsResolver type (loose mode)
+  // ===========================================================================
+
+  it('VarsResolver (loose mode) accepts props and returns CssVariables', () => {
+    const resolver: import('./types').VarsResolver = (props) => ({
+      '--button-height': props.size === 'lg' ? '48px' : '36px',
+      '--button-bg': 'blue',
+    });
+
+    const vars1 = resolver({ size: 'lg' });
+    const vars2 = resolver({ size: 'sm' });
+    expect(vars1['--button-height']).toBe('48px');
+    expect(vars2['--button-height']).toBe('36px');
+  });
+
+  it('VarsResolver (loose mode) accepts optional theme parameter', () => {
+    const resolver: import('./types').VarsResolver = (props, theme) => ({
+      '--button-height': theme?.spacing?.(2) ?? '8px',
+    });
+
+    const vars1 = resolver({}, { spacing: (n: number) => `${n * 4}px` });
+    const vars2 = resolver({}, undefined);
+    expect(vars1['--button-height']).toBe('8px');
+    expect(vars2['--button-height']).toBe('8px');
+  });
+
+  // ===========================================================================
+  // 5. VarsResolver type (strict mode)
+  // ===========================================================================
+
+  it('VarsResolver (strict mode) constrains return type', () => {
+    type ButtonCssVariable = '--button-height' | '--button-bg';
+    const resolver: import('./types').VarsResolver<ButtonCssVariable> = (props) => ({
+      '--button-height': '48px',
+      '--button-bg': 'blue',
+    });
+
+    const vars = resolver({});
+    expect(vars['--button-height']).toBe('48px');
+    expect(vars['--button-bg']).toBe('blue');
+  });
+
+  it('VarsResolver (strict mode) only accepts declared variables', () => {
+    type ButtonCssVariable = '--button-height' | '--button-bg';
+    const resolver: import('./types').VarsResolver<ButtonCssVariable> = (props) => ({
+      '--button-height': '48px',
+      '--button-bg': 'blue',
+    });
+
+    const vars = resolver({});
+    // Verify only declared variables are present
+    expect(vars['--button-height']).toBe('48px');
+    expect(vars['--button-bg']).toBe('blue');
+  });
+
+  // ===========================================================================
+  // 6. Integration: VarsResolver with component props
+  // ===========================================================================
+
+  it('VarsResolver integrates with typed component props', () => {
+    type ButtonProps = {
+      size?: 'sm' | 'md' | 'lg';
+      color?: string;
+      variant?: 'solid' | 'outlined';
+    };
+
+    const resolver: import('./types').VarsResolver = (props: ButtonProps) => ({
+      '--button-height': props.size === 'sm' ? '36px' : props.size === 'lg' ? '48px' : '42px',
+      '--button-bg': props.variant === 'solid' ? props.color ?? 'blue' : 'transparent',
+    });
+
+    const vars1 = resolver({ size: 'sm', color: 'red', variant: 'solid' });
+    const vars2 = resolver({ size: 'lg', variant: 'outlined' });
+    expect(vars1['--button-height']).toBe('36px');
+    expect(vars1['--button-bg']).toBe('red');
+    expect(vars2['--button-height']).toBe('48px');
+    expect(vars2['--button-bg']).toBe('transparent');
+  });
+});

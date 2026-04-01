@@ -60,3 +60,85 @@
  * ```
  */
 export type StylesNames = string;
+
+// =============================================================================
+// CSS Variables Types (Step 2.2: Styling Data Flow)
+// =============================================================================
+
+/**
+ * CSS Variable name type.
+ *
+ * All CSS variable names must start with `--`.
+ *
+ * @example
+ * ```ts
+ * const varName: CssVariable = '--button-height';  // ✅
+ * const invalid: CssVariable = 'button-height';    // ❌ Type error
+ * ```
+ */
+export type CssVariable = `--${string}`;
+
+/**
+ * CSS Variables object type.
+ *
+ * A flat record of CSS variable names to their values.
+ * Supports both loose mode (default) and strict mode (with generic constraint).
+ *
+ * @template Variable - The CSS variable names (default: any CSS variable)
+ *
+ * @example
+ * ```ts
+ * // Loose mode (default, recommended)
+ * const vars: CssVariables = {
+ *   '--button-height': '48px',
+ *   '--button-bg': 'blue',
+ * };
+ *
+ * // Strict mode (component-specific)
+ * type ButtonCssVariable = '--button-height' | '--button-bg';
+ * const buttonVars: CssVariables<ButtonCssVariable> = {
+ *   '--button-height': '48px',
+ *   '--button-bg': 'blue',
+ *   // '--invalid': 'red',  // ❌ Type error
+ * };
+ * ```
+ */
+export type CssVariables<Variable extends string = CssVariable> = Partial<
+  Record<Variable, string>
+>;
+
+/**
+ * VarsResolver function type.
+ *
+ * Converts component props (and optionally theme) to CSS Variables.
+ *
+ * This is pure Data Flow: props → variables. How these variables are applied
+ * to DOM elements is handled by the Styling Engine (Step 2.4).
+ *
+ * @template Variable - The CSS variable names (default: any CSS variable)
+ *
+ * @example
+ * ```ts
+ * // Loose mode (recommended)
+ * const resolver: VarsResolver = (props) => ({
+ *   '--button-height': props.size === 'lg' ? '48px' : '36px',
+ *   '--button-bg': 'blue',
+ * });
+ *
+ * // Strict mode (optional)
+ * type ButtonCssVariable = '--button-height' | '--button-bg';
+ * const strictResolver: VarsResolver<ButtonCssVariable> = (props) => ({
+ *   '--button-height': '48px',
+ *   '--button-bg': 'blue',
+ * });
+ *
+ * // With theme
+ * const resolverWithTheme: VarsResolver = (props, theme) => ({
+ *   '--button-height': theme?.spacing?.(2) ?? '8px',
+ * });
+ * ```
+ */
+export type VarsResolver<Variable extends string = CssVariable> = (
+  props: Record<string, any>,
+  theme?: any // Theme type TBD in future stage
+) => CssVariables<Variable>;
