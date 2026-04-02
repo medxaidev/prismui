@@ -13,7 +13,6 @@
       "react"
     ],
     "jsx": "react-jsx",
-    "baseUrl": ".",
     "outDir": "./dist/lib",
     "rootDir": "src",
     "strict": true,

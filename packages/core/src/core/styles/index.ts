@@ -49,3 +49,17 @@ export type {
 // =============================================================================
 
 export type { StylesOverride } from './types';
+
+// =============================================================================
+// Styling Engine (Step 2.4: Styling Engine)
+// =============================================================================
+
+export { cx } from './cx';
+export { splitStyle } from './split-style';
+export { createGetStyles } from './get-styles';
+export type {
+  Classes,
+  GetStylesInput,
+  GetStylesOutput,
+  GetStylesFn,
+} from './types';
