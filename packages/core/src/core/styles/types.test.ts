@@ -308,3 +308,193 @@ describe('CssVariable, CssVariables, VarsResolver — CSS Variables types', () =
     expect(vars2['--button-bg']).toBe('transparent');
   });
 });
+
+// =============================================================================
+// Styling Override Types (Step 2.3: Styling Override)
+// =============================================================================
+
+describe('StylesOverride — Styling Override types', () => {
+  // ===========================================================================
+  // 1. className prop
+  // ===========================================================================
+
+  it('accepts className', () => {
+    const override: import('./types').StylesOverride = {
+      className: 'my-button',
+    };
+    expect(override.className).toBe('my-button');
+  });
+
+  it('className is optional', () => {
+    const override: import('./types').StylesOverride = {};
+    expect(override.className).toBeUndefined();
+  });
+
+  // ===========================================================================
+  // 2. style prop (dual semantics)
+  // ===========================================================================
+
+  it('accepts style with CSS Variables', () => {
+    const override: import('./types').StylesOverride = {
+      style: {
+        '--button-height': '60px',
+        '--button-bg': 'red',
+      } as React.CSSProperties,
+    };
+    expect((override.style as any)?.['--button-height']).toBe('60px');
+    expect((override.style as any)?.['--button-bg']).toBe('red');
+  });
+
+  it('accepts style with inline styles', () => {
+    const override: import('./types').StylesOverride = {
+      style: {
+        padding: 0,
+        borderRadius: 0,
+      },
+    };
+    expect(override.style?.padding).toBe(0);
+    expect(override.style?.borderRadius).toBe(0);
+  });
+
+  it('accepts style with mixed CSS Variables and inline styles', () => {
+    const override: import('./types').StylesOverride = {
+      style: {
+        '--button-height': '60px',  // CSS Variable
+        padding: 0,                  // Inline style
+      } as React.CSSProperties,
+    };
+    expect((override.style as any)?.['--button-height']).toBe('60px');
+    expect(override.style?.padding).toBe(0);
+  });
+
+  it('style is optional', () => {
+    const override: import('./types').StylesOverride = {};
+    expect(override.style).toBeUndefined();
+  });
+
+  // ===========================================================================
+  // 3. classNames prop (loose mode)
+  // ===========================================================================
+
+  it('accepts classNames with any string keys (loose mode)', () => {
+    const override: import('./types').StylesOverride = {
+      classNames: {
+        root: 'my-root',
+        label: 'my-label',
+        icon: 'my-icon',
+      },
+    };
+    expect(override.classNames?.root).toBe('my-root');
+    expect(override.classNames?.label).toBe('my-label');
+    expect(override.classNames?.icon).toBe('my-icon');
+  });
+
+  it('classNames is optional', () => {
+    const override: import('./types').StylesOverride = {};
+    expect(override.classNames).toBeUndefined();
+  });
+
+  it('classNames values are optional (Partial)', () => {
+    const override: import('./types').StylesOverride = {
+      classNames: {
+        root: 'my-root',
+        // label is omitted
+      },
+    };
+    expect(override.classNames?.root).toBe('my-root');
+    expect(override.classNames?.label).toBeUndefined();
+  });
+
+  // ===========================================================================
+  // 4. classNames prop (strict mode)
+  // ===========================================================================
+
+  it('accepts classNames with specific StylesNames (strict mode)', () => {
+    type ButtonStylesNames = 'root' | 'inner' | 'label';
+    const override: import('./types').StylesOverride<ButtonStylesNames> = {
+      classNames: {
+        root: 'my-root',
+        inner: 'my-inner',
+        label: 'my-label',
+      },
+    };
+    expect(override.classNames?.root).toBe('my-root');
+    expect(override.classNames?.inner).toBe('my-inner');
+    expect(override.classNames?.label).toBe('my-label');
+  });
+
+  it('rejects invalid StylesNames at compile time (strict mode)', () => {
+    type ButtonStylesNames = 'root' | 'inner' | 'label';
+    const override: import('./types').StylesOverride<ButtonStylesNames> = {
+      classNames: {
+        root: 'my-root',
+        // @ts-expect-error - 'invalid' is not a valid StylesName
+        invalid: 'my-invalid',
+      },
+    };
+    void override;
+  });
+
+  // ===========================================================================
+  // 5. Combined usage
+  // ===========================================================================
+
+  it('accepts all three props together', () => {
+    type ButtonStylesNames = 'root' | 'label';
+    const override: import('./types').StylesOverride<ButtonStylesNames> = {
+      className: 'user-button',
+      classNames: {
+        root: 'user-root',
+        label: 'user-label',
+      },
+      style: {
+        '--button-height': '60px',
+        padding: 0,
+      } as React.CSSProperties,
+    };
+    expect(override.className).toBe('user-button');
+    expect(override.classNames?.root).toBe('user-root');
+    expect(override.classNames?.label).toBe('user-label');
+    expect((override.style as any)?.['--button-height']).toBe('60px');
+    expect(override.style?.padding).toBe(0);
+  });
+
+  it('all props are optional', () => {
+    const override: import('./types').StylesOverride = {};
+    expect(override.className).toBeUndefined();
+    expect(override.classNames).toBeUndefined();
+    expect(override.style).toBeUndefined();
+  });
+
+  // ===========================================================================
+  // 6. Integration with component props
+  // ===========================================================================
+
+  it('integrates with component props type', () => {
+    type ButtonStylesNames = 'root' | 'inner' | 'label';
+    type ButtonProps = {
+      size?: 'sm' | 'md' | 'lg';
+      variant?: 'solid' | 'outlined';
+    } & import('./types').StylesOverride<ButtonStylesNames>;
+
+    const props: ButtonProps = {
+      size: 'lg',
+      variant: 'solid',
+      className: 'my-button',
+      classNames: {
+        root: 'my-root',
+        label: 'my-label',
+      },
+      style: {
+        '--button-height': '60px',
+        padding: 0,
+      } as React.CSSProperties,
+    };
+
+    expect(props.size).toBe('lg');
+    expect(props.variant).toBe('solid');
+    expect(props.className).toBe('my-button');
+    expect(props.classNames?.root).toBe('my-root');
+    expect((props.style as any)?.['--button-height']).toBe('60px');
+  });
+});

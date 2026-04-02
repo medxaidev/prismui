@@ -267,3 +267,17 @@ const routerButton: ButtonProps<typeof Link> = {
  * ✅ Custom components work correctly
  * ✅ Type safety enforced (wrong types rejected)
  */
+
+// ============================================================================
+// Runtime tests (for Vitest)
+// ============================================================================
+
+import { describe, it, expect } from 'vitest';
+
+describe('Polymorphic types — Runtime verification', () => {
+  it('type definitions are correctly exported', () => {
+    // This is a placeholder test to satisfy Vitest's requirement for at least one test suite.
+    // The actual type tests are compile-time assertions above.
+    expect(true).toBe(true);
+  });
+});

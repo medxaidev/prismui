@@ -36,3 +36,9 @@ export type { StylesNames } from './types';
 // =============================================================================
 
 export type { CssVariable, CssVariables, VarsResolver } from './types';
+
+// =============================================================================
+// Styling Override Types (Step 2.3: Styling Override)
+// =============================================================================
+
+export type { StylesOverride } from './types';

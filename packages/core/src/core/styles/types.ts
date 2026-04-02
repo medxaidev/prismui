@@ -142,3 +142,99 @@ export type VarsResolver<Variable extends string = CssVariable> = (
   props: Record<string, any>,
   theme?: any // Theme type TBD in future stage
 ) => CssVariables<Variable>;
+
+// =============================================================================
+// Styling Override Types (Step 2.3: Styling Override)
+// =============================================================================
+
+/**
+ * Styling override props for components.
+ *
+ * Allows users to override component styles at three levels:
+ * 1. CSS Variables (via `style`) - recommended, system-controlled
+ * 2. StylesNames-level classNames (via `classNames`) - structural override
+ * 3. Inline styles (via `style`) - fallback, non-controlled
+ *
+ * ## Important: `style` has dual semantics
+ *
+ * The `style` prop contains two sub-layers:
+ * - Layer A: CSS Variables (system-controlled, participates in system inference)
+ * - Layer B: Inline styles (non-controlled fallback, escape hatch)
+ *
+ * Step 2.4 must distinguish between these two types of styles when merging.
+ *
+ * @template Names - The component's StylesNames type
+ *
+ * @example
+ * ```tsx
+ * // Layer 1: CSS Variables override (recommended)
+ * <Button style={{ "--button-height": "60px" }} />
+ *
+ * // Layer 2: StylesNames-level className override
+ * <Button classNames={{ root: "my-root" }} />
+ *
+ * // Layer 3: Inline style override (fallback)
+ * <Button style={{ padding: 0 }} />
+ *
+ * // Combined usage
+ * <Button
+ *   className="user-button"
+ *   classNames={{ root: "user-root" }}
+ *   style={{
+ *     "--button-height": "60px",  // CSS Variable (controlled)
+ *     padding: 0,                  // Inline style (non-controlled)
+ *   }}
+ * />
+ * ```
+ */
+export type StylesOverride<Names extends string = string> = {
+  /**
+   * Additional className for the root element.
+   *
+   * Merge order (Step 2.4 must follow):
+   *   system classes → classNames.root → className
+   *
+   * @example
+   * ```tsx
+   * <Button className="user-button" />
+   * // Final: "prismui-Button-root user-button"
+   * ```
+   */
+  className?: string;
+
+  /**
+   * Inline styles for the root element.
+   *
+   * Contains two sub-layers:
+   * - CSS Variables (--*): system-controlled, recommended
+   * - Inline styles: non-controlled fallback
+   *
+   * @example
+   * ```tsx
+   * <Button
+   *   style={{
+   *     "--button-height": "60px",  // CSS Variable (recommended)
+   *     padding: 0,                  // Inline style (fallback)
+   *   }}
+   * />
+   * ```
+   */
+  style?: React.CSSProperties;
+
+  /**
+   * StylesNames-level className overrides.
+   *
+   * Each key corresponds to a StylesName, and the value is the className to add.
+   *
+   * Merge order (Step 2.4 must follow):
+   *   system classes → classNames[name] → className (for root only)
+   *
+   * @example
+   * ```tsx
+   * <Button classNames={{ root: "my-root", label: "my-label" }} />
+   * // root: "prismui-Button-root my-root"
+   * // label: "prismui-Button-label my-label"
+   * ```
+   */
+  classNames?: Partial<Record<Names, string>>;
+};
