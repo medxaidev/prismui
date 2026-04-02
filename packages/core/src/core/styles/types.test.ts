@@ -204,6 +204,32 @@ describe('CssVariable, CssVariables, VarsResolver — CSS Variables types', () =
     expect(partialVars).toEqual({ '--button-height': '48px' });
   });
 
+  it('CssVariables accepts number values', () => {
+    const vars: import('./types').CssVariables = {
+      '--opacity': 0.5,
+      '--z-index': 10,
+      '--line-height': 1.5,
+      '--scale': 2,
+    };
+    expect(vars['--opacity']).toBe(0.5);
+    expect(vars['--z-index']).toBe(10);
+    expect(vars['--line-height']).toBe(1.5);
+    expect(vars['--scale']).toBe(2);
+  });
+
+  it('CssVariables accepts mixed string and number values', () => {
+    const vars: import('./types').CssVariables = {
+      '--button-height': '48px',
+      '--opacity': 0.5,
+      '--button-bg': 'blue',
+      '--z-index': 10,
+    };
+    expect(vars['--button-height']).toBe('48px');
+    expect(vars['--opacity']).toBe(0.5);
+    expect(vars['--button-bg']).toBe('blue');
+    expect(vars['--z-index']).toBe(10);
+  });
+
   // ===========================================================================
   // 3. CssVariables type (strict mode)
   // ===========================================================================
@@ -229,11 +255,58 @@ describe('CssVariable, CssVariables, VarsResolver — CSS Variables types', () =
   });
 
   // ===========================================================================
-  // 4. VarsResolver type (loose mode)
+  // 4. CSSVariablesObject, InlineStyleObject, StyleProp types
   // ===========================================================================
 
-  it('VarsResolver (loose mode) accepts props and returns CssVariables', () => {
-    const resolver: import('./types').VarsResolver = (props) => ({
+  it('CSSVariablesObject only accepts CSS variable keys', () => {
+    const vars: import('./types').CSSVariablesObject = {
+      '--button-height': '48px',
+      '--opacity': 0.5,
+      '--z-index': 10,
+    };
+    expect(vars['--button-height']).toBe('48px');
+    expect(vars['--opacity']).toBe(0.5);
+    expect(vars['--z-index']).toBe(10);
+  });
+
+  it('InlineStyleObject only accepts regular CSS properties', () => {
+    const styles: import('./types').InlineStyleObject = {
+      padding: 0,
+      margin: '8px',
+      borderRadius: 4,
+    };
+    expect(styles.padding).toBe(0);
+    expect(styles.margin).toBe('8px');
+    expect(styles.borderRadius).toBe(4);
+  });
+
+  it('StyleProp accepts both CSS Variables and inline styles', () => {
+    // Note: CSS Variables are not part of React.CSSProperties type definition,
+    // but they work at runtime. We use 'as any' for the CSS variable keys.
+    const style: import('./types').StyleProp = {
+      '--button-height': '60px',
+      '--opacity': 0.5,
+      padding: 0,
+      margin: '8px',
+    } as any;
+    expect((style as any)?.['--button-height']).toBe('60px');
+    expect((style as any)?.['--opacity']).toBe(0.5);
+    expect(style?.padding).toBe(0);
+    expect(style?.margin).toBe('8px');
+  });
+
+  it('StyleProp can be undefined', () => {
+    const style: import('./types').StyleProp = undefined;
+    expect(style).toBeUndefined();
+  });
+
+  // ===========================================================================
+  // 5. VarsResolver type (loose mode - manual annotation)
+  // ===========================================================================
+
+  it('VarsResolver (loose mode) requires manual props type annotation', () => {
+    type ButtonProps = { size?: 'sm' | 'lg' };
+    const resolver: import('./types').VarsResolver = (props: ButtonProps) => ({
       '--button-height': props.size === 'lg' ? '48px' : '36px',
       '--button-bg': 'blue',
     });
@@ -245,7 +318,7 @@ describe('CssVariable, CssVariables, VarsResolver — CSS Variables types', () =
   });
 
   it('VarsResolver (loose mode) accepts optional theme parameter', () => {
-    const resolver: import('./types').VarsResolver = (props, theme) => ({
+    const resolver: import('./types').VarsResolver = (props: Record<string, any>, theme) => ({
       '--button-height': theme?.spacing?.(2) ?? '8px',
     });
 
@@ -256,46 +329,53 @@ describe('CssVariable, CssVariables, VarsResolver — CSS Variables types', () =
   });
 
   // ===========================================================================
-  // 5. VarsResolver type (strict mode)
+  // 5. VarsResolver type (strict mode with Props type)
   // ===========================================================================
 
-  it('VarsResolver (strict mode) constrains return type', () => {
-    type ButtonCssVariable = '--button-height' | '--button-bg';
-    const resolver: import('./types').VarsResolver<ButtonCssVariable> = (props) => ({
-      '--button-height': '48px',
-      '--button-bg': 'blue',
+  it('VarsResolver (strict mode) provides automatic props type inference', () => {
+    type ButtonProps = { size?: 'sm' | 'lg'; color?: string };
+    const resolver: import('./types').VarsResolver<ButtonProps> = (props) => ({
+      // props.size and props.color are automatically typed
+      '--button-height': props.size === 'lg' ? '48px' : '36px',
+      '--button-bg': props.color ?? 'blue',
     });
 
-    const vars = resolver({});
+    const vars1 = resolver({ size: 'lg', color: 'red' });
+    const vars2 = resolver({ size: 'sm' });
+    expect(vars1['--button-height']).toBe('48px');
+    expect(vars1['--button-bg']).toBe('red');
+    expect(vars2['--button-height']).toBe('36px');
+    expect(vars2['--button-bg']).toBe('blue');
+  });
+
+  it('VarsResolver (strict mode) constrains both Props and Variable types', () => {
+    type ButtonProps = { size?: 'sm' | 'lg' };
+    type ButtonCssVariable = '--button-height' | '--button-bg';
+    const resolver: import('./types').VarsResolver<ButtonProps, ButtonCssVariable> = (props) => ({
+      '--button-height': props.size === 'lg' ? '48px' : '36px',
+      '--button-bg': 'blue',
+      // '--invalid': 'red',  // ❌ Would be a type error
+    });
+
+    const vars = resolver({ size: 'lg' });
     expect(vars['--button-height']).toBe('48px');
     expect(vars['--button-bg']).toBe('blue');
   });
 
-  it('VarsResolver (strict mode) only accepts declared variables', () => {
-    type ButtonCssVariable = '--button-height' | '--button-bg';
-    const resolver: import('./types').VarsResolver<ButtonCssVariable> = (props) => ({
-      '--button-height': '48px',
-      '--button-bg': 'blue',
-    });
-
-    const vars = resolver({});
-    // Verify only declared variables are present
-    expect(vars['--button-height']).toBe('48px');
-    expect(vars['--button-bg']).toBe('blue');
-  });
-
   // ===========================================================================
-  // 6. Integration: VarsResolver with component props
+  // 6. Integration: VarsResolver with component props (recommended pattern)
   // ===========================================================================
 
-  it('VarsResolver integrates with typed component props', () => {
+  it('VarsResolver with Props generic provides full type safety (recommended)', () => {
     type ButtonProps = {
       size?: 'sm' | 'md' | 'lg';
       color?: string;
       variant?: 'solid' | 'outlined';
     };
 
-    const resolver: import('./types').VarsResolver = (props: ButtonProps) => ({
+    // Recommended: Use Props generic for automatic type inference
+    const resolver: import('./types').VarsResolver<ButtonProps> = (props) => ({
+      // All props are fully typed without manual annotation
       '--button-height': props.size === 'sm' ? '36px' : props.size === 'lg' ? '48px' : '42px',
       '--button-bg': props.variant === 'solid' ? props.color ?? 'blue' : 'transparent',
     });
@@ -306,6 +386,18 @@ describe('CssVariable, CssVariables, VarsResolver — CSS Variables types', () =
     expect(vars1['--button-bg']).toBe('red');
     expect(vars2['--button-height']).toBe('48px');
     expect(vars2['--button-bg']).toBe('transparent');
+  });
+
+  it('VarsResolver with theme parameter maintains Props type inference', () => {
+    type ButtonProps = { size?: 'sm' | 'lg' };
+    const resolver: import('./types').VarsResolver<ButtonProps> = (props, theme) => ({
+      '--button-height': props.size === 'lg' ? '48px' : '36px',
+      '--button-spacing': theme?.spacing?.(2) ?? '8px',
+    });
+
+    const vars = resolver({ size: 'lg' }, { spacing: (n: number) => `${n * 4}px` });
+    expect(vars['--button-height']).toBe('48px');
+    expect(vars['--button-spacing']).toBe('8px');
   });
 });
 
@@ -334,18 +426,16 @@ describe('StylesOverride — Styling Override types', () => {
   // 2. style prop (dual semantics)
   // ===========================================================================
 
-  it('accepts style with CSS Variables', () => {
+  it('style prop supports CSS Variables (type-level)', () => {
     const override: import('./types').StylesOverride = {
       style: {
         '--button-height': '60px',
-        '--button-bg': 'red',
-      } as React.CSSProperties,
+      } as any,
     };
     expect((override.style as any)?.['--button-height']).toBe('60px');
-    expect((override.style as any)?.['--button-bg']).toBe('red');
   });
 
-  it('accepts style with inline styles', () => {
+  it('style prop supports inline styles (type-level)', () => {
     const override: import('./types').StylesOverride = {
       style: {
         padding: 0,
@@ -361,7 +451,7 @@ describe('StylesOverride — Styling Override types', () => {
       style: {
         '--button-height': '60px',  // CSS Variable
         padding: 0,                  // Inline style
-      } as React.CSSProperties,
+      } as any,
     };
     expect((override.style as any)?.['--button-height']).toBe('60px');
     expect(override.style?.padding).toBe(0);

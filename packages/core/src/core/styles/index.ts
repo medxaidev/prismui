@@ -35,7 +35,14 @@ export type { StylesNames } from './types';
 // CSS Variables Types (Step 2.2: Styling Data Flow)
 // =============================================================================
 
-export type { CssVariable, CssVariables, VarsResolver } from './types';
+export type {
+  CssVariable,
+  CssVariables,
+  CSSVariablesObject,
+  InlineStyleObject,
+  StyleProp,
+  VarsResolver,
+} from './types';
 
 // =============================================================================
 // Styling Override Types (Step 2.3: Styling Override)

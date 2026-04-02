@@ -84,6 +84,9 @@ export type CssVariable = `--${string}`;
  * A flat record of CSS variable names to their values.
  * Supports both loose mode (default) and strict mode (with generic constraint).
  *
+ * Values can be `string` or `number`. Numbers are automatically converted to strings
+ * when applied to the DOM (e.g., `{ '--opacity': 0.5 }` becomes `--opacity: 0.5`).
+ *
  * @template Variable - The CSS variable names (default: any CSS variable)
  *
  * @example
@@ -92,20 +95,99 @@ export type CssVariable = `--${string}`;
  * const vars: CssVariables = {
  *   '--button-height': '48px',
  *   '--button-bg': 'blue',
+ *   '--opacity': 0.5,        // ✅ number is allowed
+ *   '--z-index': 10,         // ✅ number is allowed
  * };
  *
  * // Strict mode (component-specific)
- * type ButtonCssVariable = '--button-height' | '--button-bg';
+ * type ButtonCssVariable = '--button-height' | '--button-bg' | '--opacity';
  * const buttonVars: CssVariables<ButtonCssVariable> = {
  *   '--button-height': '48px',
  *   '--button-bg': 'blue',
+ *   '--opacity': 0.5,
  *   // '--invalid': 'red',  // ❌ Type error
  * };
  * ```
  */
 export type CssVariables<Variable extends string = CssVariable> = Partial<
-  Record<Variable, string>
+  Record<Variable, string | number>
 >;
+
+/**
+ * CSS Variables object type for inline usage.
+ *
+ * This type only accepts CSS variable keys (starting with `--`).
+ * Used to represent pure CSS Variables without inline styles.
+ *
+ * @example
+ * ```ts
+ * const vars: CSSVariablesObject = {
+ *   '--button-height': '48px',
+ *   '--opacity': 0.5,
+ * };
+ * ```
+ */
+export type CSSVariablesObject = {
+  [key: `--${string}`]: string | number;
+};
+
+/**
+ * Inline style object type (standard React CSS properties).
+ *
+ * This is just React.CSSProperties, representing standard CSS properties.
+ *
+ * @example
+ * ```ts
+ * const inlineStyles: InlineStyleObject = {
+ *   padding: 0,
+ *   margin: '8px',
+ * };
+ * ```
+ */
+export type InlineStyleObject = React.CSSProperties;
+
+/**
+ * Style prop type that combines CSS Variables and inline styles.
+ *
+ * This type accepts both CSS Variables and inline styles in the same object.
+ * At runtime, the object can contain both types of properties.
+ *
+ * **Type-level semantics** (for Step 2.4):
+ * - CSS Variables (`--*`): system-controlled, participates in styling system
+ * - Inline styles: non-controlled fallback, escape hatch
+ *
+ * **Runtime separation** (Step 2.4 implementation):
+ * ```ts
+ * function splitStyle(style: StyleProp) {
+ *   const vars: CSSVariablesObject = {};
+ *   const inline: InlineStyleObject = {};
+ *   for (const key in style) {
+ *     if (key.startsWith('--')) {
+ *       vars[key] = style[key];
+ *     } else {
+ *       inline[key] = style[key];
+ *     }
+ *   }
+ *   return { vars, inline };
+ * }
+ * ```
+ *
+ * The helper types `CSSVariablesObject` and `InlineStyleObject` are provided
+ * for type annotations in Step 2.4's splitting logic.
+ *
+ * @example
+ * ```tsx
+ * <Button
+ *   style={{
+ *     '--button-height': '60px',  // ✅ CSS Variable
+ *     '--opacity': 0.5,           // ✅ CSS Variable (number)
+ *     padding: 0,                 // ✅ Inline style
+ *     margin: '8px',              // ✅ Inline style
+ *   }}
+ * />
+ * ```
+ */
+export type StyleProp = React.CSSProperties | undefined;
 
 /**
  * VarsResolver function type.
@@ -115,31 +197,44 @@ export type CssVariables<Variable extends string = CssVariable> = Partial<
  * This is pure Data Flow: props → variables. How these variables are applied
  * to DOM elements is handled by the Styling Engine (Step 2.4).
  *
+ * @template Props - Component props type (default: Record<string, any> for loose mode)
  * @template Variable - The CSS variable names (default: any CSS variable)
  *
  * @example
  * ```ts
- * // Loose mode (recommended)
- * const resolver: VarsResolver = (props) => ({
+ * // Loose mode (no type inference, manual annotation required)
+ * const resolver: VarsResolver = (props: ButtonProps) => ({
  *   '--button-height': props.size === 'lg' ? '48px' : '36px',
  *   '--button-bg': 'blue',
  * });
  *
- * // Strict mode (optional)
+ * // Strict mode with Props type (recommended, automatic type inference)
+ * type ButtonProps = { size?: 'sm' | 'lg'; color?: string };
+ * const strictResolver: VarsResolver<ButtonProps> = (props) => ({
+ *   //                                                ^^^^^ props.size is typed
+ *   '--button-height': props.size === 'lg' ? '48px' : '36px',
+ *   '--button-bg': props.color ?? 'blue',
+ * });
+ *
+ * // Strict mode with Props + Variable constraints
  * type ButtonCssVariable = '--button-height' | '--button-bg';
- * const strictResolver: VarsResolver<ButtonCssVariable> = (props) => ({
- *   '--button-height': '48px',
- *   '--button-bg': 'blue',
+ * const fullStrictResolver: VarsResolver<ButtonProps, ButtonCssVariable> = (props) => ({
+ *   '--button-height': props.size === 'lg' ? '48px' : '36px',
+ *   '--button-bg': props.color ?? 'blue',
+ *   // '--invalid': 'red',  // ❌ Type error
  * });
  *
  * // With theme
- * const resolverWithTheme: VarsResolver = (props, theme) => ({
+ * const resolverWithTheme: VarsResolver<ButtonProps> = (props, theme) => ({
  *   '--button-height': theme?.spacing?.(2) ?? '8px',
  * });
  * ```
  */
-export type VarsResolver<Variable extends string = CssVariable> = (
-  props: Record<string, any>,
+export type VarsResolver<
+  Props = Record<string, any>,
+  Variable extends string = CssVariable
+> = (
+  props: Props,
   theme?: any // Theme type TBD in future stage
 ) => CssVariables<Variable>;
 
@@ -205,9 +300,12 @@ export type StylesOverride<Names extends string = string> = {
   /**
    * Inline styles for the root element.
    *
-   * Contains two sub-layers:
+   * Contains two sub-layers (type-distinguished):
    * - CSS Variables (--*): system-controlled, recommended
    * - Inline styles: non-controlled fallback
+   *
+   * The type system distinguishes between CSS Variables and inline styles,
+   * enabling Step 2.4 to split and merge them correctly.
    *
    * @example
    * ```tsx
@@ -219,7 +317,7 @@ export type StylesOverride<Names extends string = string> = {
    * />
    * ```
    */
-  style?: React.CSSProperties;
+  style?: StyleProp;
 
   /**
    * StylesNames-level className overrides.
@@ -228,6 +326,11 @@ export type StylesOverride<Names extends string = string> = {
    *
    * Merge order (Step 2.4 must follow):
    *   system classes → classNames[name] → className (for root only)
+   *
+   * **Known limitation (Step 2.3)**:
+   * - `Names` is a string-based constraint (loose mode)
+   * - Not bound to component structure at this stage
+   * - Step 2.5 will tighten this via `ComponentPayload.stylesNames`
    *
    * @example
    * ```tsx
