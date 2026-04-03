@@ -12,38 +12,42 @@ import type * as React from 'react';
 export type ElementType = keyof React.JSX.IntrinsicElements | React.JSXElementConstructor<any>;
 
 /**
- * Extracts props from an element type, excluding ref.
+ * Extracts props from an element type, including ref.
  * Uses LibraryManagedAttributes to handle defaultProps and other React internals.
+ * Ref is handled natively by React to ensure proper variance.
  *
  * @template C - The element type to extract props from
  *
  * @example
  * ```ts
- * type ButtonProps = PropsOf<'button'>; // HTMLButtonElement props without ref
- * type AnchorProps = PropsOf<'a'>; // HTMLAnchorElement props without ref
+ * type ButtonProps = PropsOf<'button'>; // HTMLButtonElement props with ref
+ * type AnchorProps = PropsOf<'a'>; // HTMLAnchorElement props with ref
  * ```
  */
 export type PropsOf<C extends ElementType> = React.JSX.LibraryManagedAttributes<
   C,
-  React.ComponentPropsWithoutRef<C>
+  React.ComponentPropsWithRef<C>
 >;
 
 /**
- * Merges two prop types, with OverrideProps taking precedence.
- * Properties in OverrideProps will override those in BaseProps.
+ * Merges two prop types, with BaseProps taking precedence.
+ * Properties in BaseProps will override those in OverrideProps.
+ * This ensures Element props (BaseProps) have higher priority than Component props (OverrideProps).
  *
- * @template BaseProps - The base props type
- * @template OverrideProps - The overriding props type
+ * @template BaseProps - The base props type (higher priority)
+ * @template OverrideProps - The additional props type (lower priority)
  *
  * @example
  * ```ts
- * type Base = { a: string; b: number };
- * type Override = { b: string; c: boolean };
- * type Merged = MergeProps<Base, Override>; // { a: string; b: string; c: boolean }
+ * type ElementProps = { href: string; onClick: () => void };
+ * type ComponentProps = { href?: number; variant?: 'primary' };
+ * type Merged = MergeProps<ElementProps, ComponentProps>;
+ * // Result: { href: string; onClick: () => void; variant?: 'primary' }
+ * // Note: href is string (from ElementProps), not number (from ComponentProps)
  * ```
  */
-export type MergeProps<BaseProps, OverrideProps> = OverrideProps &
-  Omit<BaseProps, keyof OverrideProps>;
+export type MergeProps<BaseProps, OverrideProps> = BaseProps &
+  Omit<OverrideProps, keyof BaseProps>;
 
 /**
  * Props for the component prop that allows polymorphic rendering.
@@ -61,6 +65,8 @@ export type ComponentProp<C extends ElementType> = {
 
 /**
  * Extracts the correct ref type for a given element type.
+ * Note: With the current implementation, ref is already included in PropsOf,
+ * so this type is primarily for explicit ref typing when needed.
  *
  * @template C - The element type
  *
@@ -74,10 +80,12 @@ export type PolymorphicRef<C extends ElementType> = React.ComponentPropsWithRef<
 
 /**
  * Complete polymorphic props type that combines:
- * - Element-specific props (from PropsOf)
+ * - Element-specific props (from PropsOf, including ref)
  * - Custom component props
  * - Component prop for polymorphic rendering
- * - Correctly typed ref
+ *
+ * Note: ref is handled natively by React through PropsOf (ComponentPropsWithRef),
+ * ensuring proper variance and avoiding manual override conflicts.
  *
  * @template C - The element type (defaults to the component's default element)
  * @template Props - Additional props specific to the component
@@ -98,6 +106,4 @@ export type PolymorphicRef<C extends ElementType> = React.ComponentPropsWithRef<
 export type PolymorphicProps<C extends ElementType, Props = {}> = MergeProps<
   PropsOf<C>,
   Props & ComponentProp<C>
-> & {
-  ref?: PolymorphicRef<C>;
-};
+>;
