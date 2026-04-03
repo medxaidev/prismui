@@ -30,24 +30,27 @@ export type PropsOf<C extends ElementType> = React.JSX.LibraryManagedAttributes<
 >;
 
 /**
- * Merges two prop types, with BaseProps taking precedence.
- * Properties in BaseProps will override those in OverrideProps.
- * This ensures Element props (BaseProps) have higher priority than Component props (OverrideProps).
+ * Merges two prop types, with OverrideProps taking precedence.
+ * Properties in OverrideProps will override those in BaseProps.
  *
- * @template BaseProps - The base props type (higher priority)
- * @template OverrideProps - The additional props type (lower priority)
+ * At the TYPE LEVEL (Step 1):
+ * Component Props (OverrideProps) > Element Props (BaseProps)
+ * This ensures component-defined APIs are not overridden by intrinsic element attributes.
+ *
+ * @template BaseProps - The base props type (Element props, lower priority)
+ * @template OverrideProps - The overriding props type (Component props, higher priority)
  *
  * @example
  * ```ts
- * type ElementProps = { href: string; onClick: () => void };
- * type ComponentProps = { href?: number; variant?: 'primary' };
+ * type ElementProps = { type: 'button' | 'submit' };
+ * type ComponentProps = { type?: 'primary' | 'secondary'; variant?: 'solid' };
  * type Merged = MergeProps<ElementProps, ComponentProps>;
- * // Result: { href: string; onClick: () => void; variant?: 'primary' }
- * // Note: href is string (from ElementProps), not number (from ComponentProps)
+ * // Result: { type?: 'primary' | 'secondary'; variant?: 'solid' }
+ * // Note: Component's 'type' overrides Element's 'type' to allow component API design
  * ```
  */
-export type MergeProps<BaseProps, OverrideProps> = BaseProps &
-  Omit<OverrideProps, keyof BaseProps>;
+export type MergeProps<BaseProps, OverrideProps> = OverrideProps &
+  Omit<BaseProps, keyof OverrideProps>;
 
 /**
  * Props for the component prop that allows polymorphic rendering.
