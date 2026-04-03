@@ -58,6 +58,7 @@ export { cx } from './cx';
 export { splitStyle } from './split-style';
 export { createGetStyles } from './get-styles';
 export type {
+  WithRoot,
   Classes,
   GetStylesInput,
   GetStylesOutput,

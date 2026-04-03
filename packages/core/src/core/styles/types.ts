@@ -351,6 +351,22 @@ export type StylesOverride<Names extends string = string> = {
 // =============================================================================
 
 /**
+ * Type helper to enforce that Names must include 'root'.
+ *
+ * This ensures compile-time guarantee that the StylesNames type always includes 'root',
+ * preventing runtime errors and aligning type system with runtime semantics.
+ *
+ * @template Names - The component's StylesNames type
+ *
+ * @example
+ * ```ts
+ * type Good = WithRoot<'root' | 'label'>;  // ✅ 'root' | 'label'
+ * type Bad = WithRoot<'label' | 'icon'>;   // ❌ never (compile error)
+ * ```
+ */
+export type WithRoot<Names extends string> = 'root' extends Names ? Names : never;
+
+/**
  * CSS class names record type.
  *
  * Maps StylesNames to their corresponding CSS class names.
@@ -360,7 +376,7 @@ export type StylesOverride<Names extends string = string> = {
  * This ensures type-level guarantee that `classes.root` is always a string,
  * eliminating the need for runtime type assertions.
  *
- * @template Names - The component's StylesNames type
+ * @template Names - The component's StylesNames type (must include 'root')
  *
  * @example
  * ```ts
@@ -382,7 +398,10 @@ export type Classes<Names extends string> = {
  * Contains all the necessary data to compute the final className and style
  * for each slot (StylesName) in a component.
  *
- * @template Names - The component's StylesNames type
+ * **Type constraint**: Names MUST include 'root'. This is enforced at compile time
+ * via the WithRoot helper type in createGetStyles.
+ *
+ * @template Names - The component's StylesNames type (must include 'root')
  *
  * @example
  * ```ts
@@ -405,8 +424,11 @@ export type GetStylesInput<Names extends string> = {
   /**
    * System CSS Variables (from VarsResolver).
    * Applied only to the root slot.
+   *
+   * MUST be an object (never undefined).
+   * VarsResolver MUST always return an object (even if empty).
    */
-  vars?: CssVariables;
+  vars: StyleProp;
 
   /**
    * User-provided className for the root element.
@@ -435,21 +457,17 @@ export type GetStylesInput<Names extends string> = {
  *
  * Contains the final className and style for a slot.
  *
- * **Critical behavior**: For root slot, `style` is ALWAYS present (even if empty `{}`).
- * This ensures deterministic behavior and avoids conditional branching.
+ * **Styling Engine → React DOM Boundary Contract**:
+ * - `className` is ALWAYS a string (empty string if no classes)
+ * - `style` is optional and only exists on root slot
  *
  * @example
- * ```ts
- * // Root slot - style always exists
- * const rootOutput: GetStylesOutput = {
- *   className: 'btn-root user-root user-button',
- *   style: { '--button-height': '48px', padding: 0 },
- * };
+ * ```tsx
+ * const output = getStyles('root');
+ * // → { className: 'btn-root user-root user-button', style: { ... } }
  *
- * // Non-root slot - no style
- * const labelOutput: GetStylesOutput = {
- *   className: 'btn-label',
- * };
+ * const output2 = getStyles('label');
+ * // → { className: 'btn-label' }
  * ```
  */
 export type GetStylesOutput = {
@@ -467,30 +485,24 @@ export type GetStylesOutput = {
    *
    * Merged from: system vars → user vars → inline styles
    */
-  style?: React.CSSProperties;
+  style?: StyleProp;
 };
 
 /**
  * getStyles function type.
  *
- * A function that takes a StylesName and returns the final className and style.
+ * Returns the final className and style for a given slot name.
  *
- * @template Names - The component's StylesNames type
+ * **Type constraint**: Names MUST include 'root'. This is enforced at compile time
+ * via the WithRoot helper type in createGetStyles.
+ *
+ * @template Names - The component's StylesNames type (must include 'root')
  *
  * @example
  * ```ts
- * const getStyles: GetStylesFn<'root' | 'label'> = createGetStyles({
- *   classes: { root: 'btn-root', label: 'btn-label' },
- *   vars: { '--button-height': '48px' },
- * });
- *
- * getStyles('root');
- * // → { className: 'btn-root', style: { '--button-height': '48px' } }
- *
- * getStyles('label');
- * // → { className: 'btn-label' }
+ * const getStyles: GetStylesFn<'root' | 'label'> = createGetStyles(...);
+ * getStyles('root');  // → { className: string, style?: StyleProp }
+ * getStyles('label'); // → { className: string }
  * ```
  */
-export type GetStylesFn<Names extends string> = (
-  name: Names,
-) => GetStylesOutput;
+export type GetStylesFn<Names extends string> = (name: Names) => GetStylesOutput;

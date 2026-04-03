@@ -1,6 +1,6 @@
 import { cx } from './cx';
 import { splitStyle } from './split-style';
-import type { GetStylesInput, GetStylesFn } from './types';
+import type { GetStylesInput, GetStylesFn, WithRoot } from './types';
 
 /**
  * Creates a getStyles function for a component.
@@ -20,12 +20,15 @@ import type { GetStylesInput, GetStylesFn } from './types';
  * **Deterministic design**: Root slot always returns a style object (never undefined).
  * This avoids conditional branching and ensures consistent behavior.
  *
- * @template Names - The component's StylesNames type
+ * **Type constraint**: Names MUST include 'root'. This is enforced at compile time.
+ *
+ * @template Names - The component's StylesNames type (must include 'root')
  * @param input - Input data for computing styles
  * @returns A getStyles function
  *
  * @example
  * ```ts
+ * // ✅ Valid: Names includes 'root'
  * const getStyles = createGetStyles({
  *   classes: { root: 'btn-root', label: 'btn-label' },
  *   vars: { '--button-height': '48px' },
@@ -42,14 +45,17 @@ import type { GetStylesInput, GetStylesFn } from './types';
  *
  * getStyles('label');
  * // → { className: 'btn-label' }
+ *
+ * // ❌ Invalid: Names doesn't include 'root' (compile error)
+ * // const badGetStyles = createGetStyles<'label' | 'icon'>({ ... });
  * ```
  */
 export function createGetStyles<Names extends string>(
-  input: GetStylesInput<Names>,
-): GetStylesFn<Names> {
+  input: GetStylesInput<WithRoot<Names>>,
+): GetStylesFn<WithRoot<Names>> {
   const { classes, vars, className, classNames, style } = input;
 
-  return function getStyles(name: Names) {
+  return function getStyles(name: WithRoot<Names>) {
     // Root slot: merge className and style
     if (name === 'root') {
       // Split user style into CSS Variables and inline styles
