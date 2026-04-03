@@ -1,11 +1,14 @@
 import * as React from 'react';
-import type { ElementType, PolymorphicProps } from '../polymorphic/types';
+import type { ElementType, PolymorphicProps, PolymorphicRef } from '../polymorphic/types';
 
 /**
  * Polymorphic component type that supports dynamic element rendering.
  * 
  * This type represents a component that can render as different HTML elements
  * or React components while maintaining full type safety for props and refs.
+ * 
+ * The ref type is explicitly preserved in the props signature to ensure correct
+ * type inference when using refs with polymorphic components.
  * 
  * @template DefaultC - The default element type (e.g., 'button', 'div')
  * @template Props - Additional props specific to the component
@@ -16,12 +19,20 @@ import type { ElementType, PolymorphicProps } from '../polymorphic/types';
  * <Button />                           // Renders as button
  * <Button component="a" href="..." />  // Renders as anchor
  * <Button component={Link} to="..." /> // Renders as Link
+ * 
+ * // Ref type is correctly inferred based on component prop
+ * const buttonRef = useRef<HTMLButtonElement>(null);
+ * const anchorRef = useRef<HTMLAnchorElement>(null);
+ * <Button ref={buttonRef} />                    // ✅ Correct
+ * <Button component="a" ref={anchorRef} />      // ✅ Correct
  * ```
  */
 export type PolymorphicComponent<DefaultC extends ElementType, Props = {}> = <
   C extends ElementType = DefaultC,
 >(
-  props: PolymorphicProps<C, Props>,
+  props: PolymorphicProps<C, Props> & {
+    ref?: PolymorphicRef<C>;
+  },
 ) => React.ReactElement | null;
 
 /**
@@ -78,10 +89,11 @@ export type PolymorphicComponent<DefaultC extends ElementType, Props = {}> = <
  *    type assertions.
  * 
  * 4. **Ref forwarding** - Automatically handles ref forwarding with correct
- *    type inference based on the rendered element.
+ *    type inference based on the rendered element. The ref type is explicitly
+ *    preserved in PolymorphicComponent's signature.
  * 
- * 5. **Props merging** - Element-specific props override component props
- *    (e.g., `<a>`'s `href: string` overrides custom `href?: number`).
+ * 5. **Props merging** - Component props override element props at the type level
+ *    (Component Props > Element Props), allowing components to define their own APIs.
  */
 export function createComponent<DefaultC extends ElementType, Props = {}>(
   component: any,

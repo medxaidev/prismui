@@ -90,6 +90,9 @@ export type PolymorphicRef<C extends ElementType> = React.ComponentPropsWithRef<
  * Note: ref is handled natively by React through PropsOf (ComponentPropsWithRef),
  * ensuring proper variance and avoiding manual override conflicts.
  *
+ * The 'component' prop is a system-level reserved field and is protected from
+ * user-defined Props to prevent type conflicts and ensure polymorphic behavior.
+ *
  * @template C - The element type (defaults to the component's default element)
  * @template Props - Additional props specific to the component
  *
@@ -104,9 +107,13 @@ export type PolymorphicRef<C extends ElementType> = React.ComponentPropsWithRef<
  * <Button onClick={...} />                    // button props
  * <Button component="a" href="..." />         // anchor props
  * <Button component={Link} to="..." />        // Link props
+ *
+ * // Protection: User cannot override 'component' prop
+ * type BadProps = { component?: string }; // This will be stripped
+ * type SafeProps = PolymorphicProps<'button', BadProps>; // component is protected
  * ```
  */
 export type PolymorphicProps<C extends ElementType, Props = {}> = MergeProps<
   PropsOf<C>,
-  Props & ComponentProp<C>
+  Omit<Props, 'component'> & ComponentProp<C>
 >;
