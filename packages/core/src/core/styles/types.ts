@@ -37,29 +37,33 @@
 // =============================================================================
 
 /**
- * Base type for all StylesNames.
+ * Base type for all component StylesNames.
  *
- * Every component defines its own narrowed union type (e.g. `ButtonStylesNames`),
- * but all of them extend `string`. This base type exists so that generic utilities
- * can accept any StylesNames without knowing the specific component.
+ * StylesNames define the addressable styling units within a component.
+ * Each component should define its own narrowed union type.
  *
- * Components should define their StylesNames in their own files, not here.
+ * This is a generic type that defaults to string, allowing both:
+ * 1. Loose usage (StylesNames) - accepts any string
+ * 2. Strict usage (StylesNames<'root' | 'inner'>) - type-safe union
+ *
+ * @template T - The specific style names (defaults to string for backward compatibility)
  *
  * @example
  * ```ts
- * // Generic utility function
+ * // Generic usage (accepts any string)
  * function logStyleName(name: StylesNames): void {
  *   console.log(name);
  * }
  *
  * // Component-specific type (defined in component file)
- * type ButtonStylesNames = 'root' | 'inner' | 'label';
+ * type ButtonStylesNames = StylesNames<'root' | 'inner' | 'label'>;
  *
  * // Usage
- * logStyleName('root' satisfies ButtonStylesNames); // ✅
+ * const name: ButtonStylesNames = 'root'; // 
+ * const invalid: ButtonStylesNames = 'invalid'; // Type error
  * ```
  */
-export type StylesNames = string;
+export type StylesNames<T extends string = string> = T;
 
 // =============================================================================
 // CSS Variables Types (Step 2.2: Styling Data Flow)

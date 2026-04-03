@@ -1,5 +1,5 @@
 import * as React from 'react';
-import type { ElementType, PolymorphicProps, PolymorphicRef } from '../polymorphic/types';
+import type { ElementType, PolymorphicProps } from '../polymorphic/types';
 
 /**
  * Polymorphic component type that supports dynamic element rendering.
@@ -7,8 +7,8 @@ import type { ElementType, PolymorphicProps, PolymorphicRef } from '../polymorph
  * This type represents a component that can render as different HTML elements
  * or React components while maintaining full type safety for props and refs.
  * 
- * The ref type is explicitly preserved in the props signature to ensure correct
- * type inference when using refs with polymorphic components.
+ * Note: ref is already included in PolymorphicProps via PropsOf (ComponentPropsWithRef),
+ * so it does not need to be added separately.
  * 
  * @template DefaultC - The default element type (e.g., 'button', 'div')
  * @template Props - Additional props specific to the component
@@ -30,9 +30,7 @@ import type { ElementType, PolymorphicProps, PolymorphicRef } from '../polymorph
 export type PolymorphicComponent<DefaultC extends ElementType, Props = {}> = <
   C extends ElementType = DefaultC,
 >(
-  props: PolymorphicProps<C, Props> & {
-    ref?: PolymorphicRef<C>;
-  },
+  props: PolymorphicProps<C, Props>,
 ) => React.ReactElement | null;
 
 /**
@@ -89,8 +87,8 @@ export type PolymorphicComponent<DefaultC extends ElementType, Props = {}> = <
  *    type assertions.
  * 
  * 4. **Ref forwarding** - Automatically handles ref forwarding with correct
- *    type inference based on the rendered element. The ref type is explicitly
- *    preserved in PolymorphicComponent's signature.
+ *    type inference based on the rendered element. Ref is included in PolymorphicProps
+ *    via PropsOf (ComponentPropsWithRef).
  * 
  * 5. **Props merging** - Component props override element props at the type level
  *    (Component Props > Element Props), allowing components to define their own APIs.

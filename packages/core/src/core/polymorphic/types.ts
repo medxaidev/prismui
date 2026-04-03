@@ -67,6 +67,27 @@ export type ComponentProp<C extends ElementType> = {
 };
 
 /**
+ * Type-level constraint that prevents 'component' from being defined in user Props.
+ * Returns 'never' if 'component' is found, blocking the type instead of polluting it.
+ *
+ * This uses a constraint-based approach: errors should BLOCK, not CARRY.
+ *
+ * @template Props - User-defined props to validate
+ *
+ * @example
+ * ```ts
+ * type GoodProps = { variant?: 'solid' };
+ * type ValidatedGood = DisallowComponentProp<GoodProps>; // { variant?: 'solid' }
+ *
+ * type BadProps = { component?: string; variant?: 'solid' };
+ * type ValidatedBad = DisallowComponentProp<BadProps>; // never (blocks the type)
+ * ```
+ */
+export type DisallowComponentProp<Props> = 'component' extends keyof Props
+  ? never
+  : Props;
+
+/**
  * Extracts the correct ref type for a given element type.
  * Note: With the current implementation, ref is already included in PropsOf,
  * so this type is primarily for explicit ref typing when needed.
@@ -90,15 +111,15 @@ export type PolymorphicRef<C extends ElementType> = React.ComponentPropsWithRef<
  * Note: ref is handled natively by React through PropsOf (ComponentPropsWithRef),
  * ensuring proper variance and avoiding manual override conflicts.
  *
- * The 'component' prop is a system-level reserved field and is protected from
- * user-defined Props to prevent type conflicts and ensure polymorphic behavior.
+ * The 'component' prop is a RESERVED KEYWORD for polymorphic rendering.
+ * If you try to define 'component' in your Props, you will get an explicit type error.
  *
  * @template C - The element type (defaults to the component's default element)
- * @template Props - Additional props specific to the component
+ * @template Props - Additional props specific to the component (must not include 'component')
  *
  * @example
  * ```ts
- * // Button component with default 'button' element
+ * // Correct: Button component with default 'button' element
  * type ButtonProps<C extends ElementType = 'button'> = PolymorphicProps<C, {
  *   size?: 'sm' | 'md' | 'lg';
  * }>;
@@ -108,12 +129,13 @@ export type PolymorphicRef<C extends ElementType> = React.ComponentPropsWithRef<
  * <Button component="a" href="..." />         // anchor props
  * <Button component={Link} to="..." />        // Link props
  *
- * // Protection: User cannot override 'component' prop
- * type BadProps = { component?: string }; // This will be stripped
- * type SafeProps = PolymorphicProps<'button', BadProps>; // component is protected
+ * // Error: User cannot define 'component' prop
+ * type BadProps = { component?: string; variant?: 'solid' };
+ * type ErrorProps = PolymorphicProps<'button', BadProps>;
+ * // Type error: Do not define "component" in component props. It is a reserved keyword.
  * ```
  */
 export type PolymorphicProps<C extends ElementType, Props = {}> = MergeProps<
   PropsOf<C>,
-  Omit<Props, 'component'> & ComponentProp<C>
+  Omit<DisallowComponentProp<Props>, 'component'> & ComponentProp<C>
 >;
