@@ -191,7 +191,7 @@ export type InlineStyleObject = React.CSSProperties;
  * />
  * ```
  */
-export type StyleProp = React.CSSProperties | undefined;
+export type StyleProp = (React.CSSProperties & CSSVariablesObject) | undefined;
 
 /**
  * VarsResolver function type.

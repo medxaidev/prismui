@@ -281,16 +281,15 @@ describe('CssVariable, CssVariables, VarsResolver — CSS Variables types', () =
   });
 
   it('StyleProp accepts both CSS Variables and inline styles', () => {
-    // Note: CSS Variables are not part of React.CSSProperties type definition,
-    // but they work at runtime. We use 'as any' for the CSS variable keys.
+    // StyleProp is now React.CSSProperties & CSSVariablesObject, so it accepts both
     const style: import('./types').StyleProp = {
       '--button-height': '60px',
       '--opacity': 0.5,
       padding: 0,
       margin: '8px',
-    } as any;
-    expect((style as any)?.['--button-height']).toBe('60px');
-    expect((style as any)?.['--opacity']).toBe(0.5);
+    };
+    expect(style?.['--button-height']).toBe('60px');
+    expect(style?.['--opacity']).toBe(0.5);
     expect(style?.padding).toBe(0);
     expect(style?.margin).toBe('8px');
   });
@@ -540,12 +539,12 @@ describe('StylesOverride — Styling Override types', () => {
       style: {
         '--button-height': '60px',
         padding: 0,
-      } as React.CSSProperties,
+      },
     };
     expect(override.className).toBe('user-button');
     expect(override.classNames?.root).toBe('user-root');
     expect(override.classNames?.label).toBe('user-label');
-    expect((override.style as any)?.['--button-height']).toBe('60px');
+    expect(override.style?.['--button-height']).toBe('60px');
     expect(override.style?.padding).toBe(0);
   });
 
@@ -578,13 +577,13 @@ describe('StylesOverride — Styling Override types', () => {
       style: {
         '--button-height': '60px',
         padding: 0,
-      } as React.CSSProperties,
+      },
     };
 
     expect(props.size).toBe('lg');
     expect(props.variant).toBe('solid');
     expect(props.className).toBe('my-button');
     expect(props.classNames?.root).toBe('my-root');
-    expect((props.style as any)?.['--button-height']).toBe('60px');
+    expect(props.style?.['--button-height']).toBe('60px');
   });
 });
