@@ -9,3 +9,14 @@
 
 export { createComponent } from './create-component';
 export type { PolymorphicComponent } from './create-component';
+
+// Factory system with styling integration
+export { factory } from './factory';
+export type { FactoryRenderContext } from './factory';
+
+// Styling context
+export { createStylingContext, omitComponentProps } from './create-styling-context';
+export type { StylingContext } from './create-styling-context';
+
+// Component types
+export type { ComponentPayload, StylingProps, ComponentProps } from './types';

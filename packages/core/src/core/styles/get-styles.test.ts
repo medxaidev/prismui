@@ -8,6 +8,7 @@ describe('createGetStyles', () => {
       classes: { root: 'btn-root', label: 'btn-label' },
       className: 'user-button',
       classNames: { root: 'user-root' },
+      vars: {}
     };
 
     const getStyles = createGetStyles(input);
@@ -19,6 +20,7 @@ describe('createGetStyles', () => {
   it('merges className for non-root slot', () => {
     const input: GetStylesInput<'root' | 'label'> = {
       classes: { root: 'btn-root', label: 'btn-label' },
+      vars: {},
       classNames: { label: 'user-label' },
     };
 
@@ -69,6 +71,7 @@ describe('createGetStyles', () => {
   it('handles empty classNames', () => {
     const input: GetStylesInput<'root' | 'label'> = {
       classes: { root: 'btn-root', label: 'btn-label' },
+      vars: {},
     };
 
     const getStyles = createGetStyles(input);
@@ -81,6 +84,7 @@ describe('createGetStyles', () => {
     const input: GetStylesInput<'root' | 'label'> = {
       classes: { root: 'btn-root', label: 'btn-label' },
       style: { padding: 0 } as any,
+      vars: {},
     };
 
     const getStyles = createGetStyles(input);
@@ -104,6 +108,7 @@ describe('createGetStyles', () => {
   it('filters out undefined className values', () => {
     const input: GetStylesInput<'root' | 'label'> = {
       classes: { root: 'btn-root', label: 'btn-label' },
+      vars: {},
       className: undefined,
       classNames: {},
     };
