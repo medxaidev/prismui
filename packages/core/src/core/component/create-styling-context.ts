@@ -171,15 +171,25 @@ export function createStylingContext<Props, Names extends string = string>(
     return { getStyles, getRootProps };
   }
 
-  const { resources, logic } = styling;
+  const { structure, resources, logic } = styling;
 
-  // Runtime validation (development only)
-  if (process.env.NODE_ENV !== 'production') {
-    if (!resources.classes.root) {
-      throw new Error(
-        `[PrismUI] Missing 'root' class in component styling. ` +
-        `All components must define a 'root' slot in their CSS Modules.`,
-      );
+  // Runtime validation (development only, component library development mode)
+  // ⚠️ Only triggers in component library development (PRISMUI_DEV=true)
+  // ⚠️ Does NOT trigger in application layer usage (zero runtime overhead)
+  if (process.env.NODE_ENV !== 'production' && process.env.PRISMUI_DEV) {
+    const { stylesNames } = structure;
+    const { classes } = resources;
+
+    // Check all stylesNames (not just root)
+    for (const name of stylesNames) {
+      if (!classes[name]) {
+        throw new Error(
+          `[PrismUI] Missing class "${name}" in CSS Module. ` +
+          `Expected classes: [${stylesNames.join(', ')}]. ` +
+          `Received classes: [${Object.keys(classes).join(', ')}]. ` +
+          `Please ensure your CSS Module defines all required classes.`,
+        );
+      }
     }
   }
 

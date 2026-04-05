@@ -18,5 +18,9 @@ export type { FactoryRenderContext } from './factory';
 export { createStylingContext, omitComponentProps } from './create-styling-context';
 export type { StylingContext } from './create-styling-context';
 
+// CSS Modules type safety
+export { ensureAllClasses } from './ensure-classes';
+export type { ExactClasses } from './ensure-classes';
+
 // Component types
 export type { ComponentPayload, StylingProps, ComponentProps } from './types';
