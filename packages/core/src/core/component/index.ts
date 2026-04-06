@@ -18,6 +18,13 @@ export type { FactoryRenderContext } from './factory';
 export { createStylingContext, omitComponentProps } from './create-styling-context';
 export type { StylingContext } from './create-styling-context';
 
+<<<<<<< HEAD
+=======
+// React Hook for styling system
+export { useStyles } from './use-styles';
+export type { StylingInput } from './use-styles';
+
+>>>>>>> f6dce95 (feat(core): update styleing)
 // CSS Modules type safety
 export { ensureAllClasses } from './ensure-classes';
 export type { ExactClasses } from './ensure-classes';
