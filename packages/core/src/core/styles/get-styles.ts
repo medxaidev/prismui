@@ -55,14 +55,18 @@ import type { GetStylesInput, GetStylesFn, WithRoot } from './types';
 export function createGetStyles<Names extends string>(
   input: GetStylesInput<WithRoot<Names>>,
 ): GetStylesFn<WithRoot<Names>> {
-  const { classes, vars, className, classNames, style } = input;
+  const { classes, vars, className, classNames, style, styles, userVars } = input;
 
   return function getStyles(name: WithRoot<Names>) {
     // Root slot: merge className and style
     if (name === 'root') {
+      // Merge order: system vars → userVars → styles['root'] → style
+      const rootStyles = styles?.['root' as WithRoot<Names>];
       const mergedStyle = {
-        ...vars,   // System CSS Variables (from VarsResolver)
-        ...style,  // User override (CSS Variables + inline styles)
+        ...vars,        // System CSS Variables (from VarsResolver)
+        ...userVars,    // User CSS Variables override (from vars prop)
+        ...rootStyles,  // User inline styles for root (from styles.root)
+        ...style,       // User inline styles for root (from style prop, highest priority)
       };
 
       return {
@@ -72,9 +76,13 @@ export function createGetStyles<Names extends string>(
       };
     }
 
-    // Other slots: merge className only
+    // Other slots: merge className and styles
+    const slotStyle = styles?.[name];
+
     return {
       className: cx(classes[name], classNames?.[name]),
+      // Include style if user provided styles for this slot
+      style: slotStyle && Object.keys(slotStyle).length > 0 ? slotStyle : undefined,
     };
   };
 }

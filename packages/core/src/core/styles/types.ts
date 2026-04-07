@@ -344,6 +344,52 @@ export type StylesOverride<Names extends string = string> = {
    * ```
    */
   classNames?: Partial<Record<Names, string>>;
+
+  /**
+   * StylesNames-level inline style overrides.
+   *
+   * Each key corresponds to a StylesName, and the value is the inline styles to apply.
+   * Supports both CSS Variables and regular CSS properties.
+   *
+   * Merge order (Step 2.4 must follow):
+   *   system vars → styles[name] → style (for root only)
+   *
+   * **Step 2.8 requirement**: This MUST be fully implemented for Stage 2 validation.
+   *
+   * @example
+   * ```tsx
+   * <Button
+   *   styles={{
+   *     root: { borderRadius: '20px', '--button-height': '60px' },
+   *     label: { fontWeight: 'bold' },
+   *   }}
+   * />
+   * ```
+   */
+  styles?: Partial<Record<Names, React.CSSProperties>>;
+
+  /**
+   * CSS Variables override (alternative to style prop).
+   *
+   * Provides a dedicated API for overriding CSS Variables without mixing
+   * with inline styles. This is the recommended way to customize component appearance.
+   *
+   * Merge order (Step 2.4 must follow):
+   *   system vars → vars → style
+   *
+   * **Step 2.8 requirement**: This MUST be fully implemented for Stage 2 validation.
+   *
+   * @example
+   * ```tsx
+   * <Button
+   *   vars={{
+   *     '--button-height': '60px',
+   *     '--button-bg': '#ff0000',
+   *   }}
+   * />
+   * ```
+   */
+  vars?: CSSVariablesObject;
 };
 
 // =============================================================================
@@ -450,6 +496,26 @@ export type GetStylesInput<Names extends string> = {
    * Contains both CSS Variables and inline styles.
    */
   style?: StyleProp;
+
+  /**
+   * User-provided styles for each slot.
+   * Each slot can have its own inline styles.
+   *
+   * Merge order: system vars → styles[name] → style (for root only)
+   *
+   * **Step 2.8 requirement**: This MUST be fully supported.
+   */
+  styles?: Partial<Record<Names, React.CSSProperties>>;
+
+  /**
+   * User-provided CSS Variables override.
+   * Applied to the root slot.
+   *
+   * Merge order: system vars → userVars → style
+   *
+   * **Step 2.8 requirement**: This MUST be fully supported.
+   */
+  userVars?: CSSVariablesObject;
 };
 
 /**

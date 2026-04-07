@@ -1,6 +1,34 @@
 import { createGetStyles, type GetStylesFn, type StyleProp } from '../styles';
 import type { ComponentPayload } from './types';
 
+// Safe environment variable access for browser/Vite environments
+// In Vite/browser: import.meta.env is available
+// In Node.js: process.env is available
+const isDev = (() => {
+  if (typeof process !== 'undefined' && process.env) {
+    return process.env.NODE_ENV !== 'production';
+  }
+  // Vite injects import.meta.env at build time, so we check for DEV mode
+  // @ts-ignore - import.meta.env exists in Vite but not in TypeScript by default
+  if (typeof import.meta !== 'undefined' && import.meta.env) {
+    // @ts-ignore
+    return import.meta.env.DEV ?? true;
+  }
+  return true; // Default to dev mode if we can't determine
+})();
+
+const isPrismUIDev = (() => {
+  if (typeof process !== 'undefined' && process.env) {
+    return process.env.PRISMUI_DEV === 'true';
+  }
+  // @ts-ignore
+  if (typeof import.meta !== 'undefined' && import.meta.env) {
+    // @ts-ignore
+    return import.meta.env.PRISMUI_DEV === 'true';
+  }
+  return false; // Default to false if we can't determine
+})();
+
 /**
  * ⚠️ CONSTITUTIONAL CONSTRAINT
  * 
@@ -165,6 +193,8 @@ export function createStylingContext<Props, Names extends string = string>(
     className?: string;
     style?: React.CSSProperties;
     classNames?: Partial<Record<Names, string>>;
+    styles?: Partial<Record<Names, React.CSSProperties>>;
+    vars?: Record<string, string>;
   },
   componentPropKeys?: readonly (keyof Props)[],
 ): StylingContext<Names> {
@@ -202,7 +232,7 @@ export function createStylingContext<Props, Names extends string = string>(
   // Runtime validation (development only, component library development mode)
   // ⚠️ Only triggers in component library development (PRISMUI_DEV=true)
   // ⚠️ Does NOT trigger in application layer usage (zero runtime overhead)
-  if (process.env.NODE_ENV !== 'production' && process.env.PRISMUI_DEV) {
+  if (isDev && isPrismUIDev) {
     const { stylesNames } = structure;
     const { classes } = resources;
 
@@ -221,7 +251,7 @@ export function createStylingContext<Props, Names extends string = string>(
 
   // CRITICAL: varsResolver MUST only receive pure component props
   // Extract styling props first
-  const { className, style, classNames, ...restProps } = props;
+  const { className, style, classNames, styles, vars: userVars, ...restProps } = props;
 
   // ✅ Use componentPropKeys to isolate component props from DOM props
   // This prevents varsResolver from accessing onClick, aria-*, etc.
@@ -231,7 +261,7 @@ export function createStylingContext<Props, Names extends string = string>(
 
   // 🚨 DEV VALIDATION: Detect leaked component props
   // This catches the silent error where componentPropKeys is incomplete
-  if (process.env.NODE_ENV !== 'production' && componentPropKeys) {
+  if (isDev && componentPropKeys) {
     const declaredKeys = new Set(componentPropKeys);
     const actualKeys = Object.keys(restProps);
 
@@ -281,12 +311,14 @@ export function createStylingContext<Props, Names extends string = string>(
     className,
     classNames,
     style: style as StyleProp,
+    styles,
+    userVars,
   });
 
   // SYSTEM CONSTRAINT: getStyles('root') is tracked in dev mode
   // Root slot MUST use getRootProps() to ensure style merge rules
   const getStyles: GetStylesFn<Names> = (name: Names) => {
-    if (process.env.NODE_ENV !== 'production') {
+    if (isDev) {
       if (name === 'root') {
         rootAccessedDirectly = true;
       }
@@ -308,7 +340,7 @@ export function createStylingContext<Props, Names extends string = string>(
   };
 
   // Dev-mode warning: detect getStyles('root') bypass
-  if (process.env.NODE_ENV !== 'production') {
+  if (isDev) {
     // Schedule check after render (microtask)
     queueMicrotask(() => {
       if (rootAccessedDirectly) {

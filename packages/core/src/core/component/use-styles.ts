@@ -99,14 +99,16 @@ export function useStyles<Props = any, Names extends string = string>(
   const normalized = normalizeStylingInput(input);
 
   // Convert normalized input to createStylingContext format
-  // createStylingContext expects: Props & { className?, style?, classNames? }
+  // createStylingContext expects: Props & { className?, style?, classNames?, styles?, vars? }
   const propsForContext = {
     ...normalized.props,
     classNames: normalized.overrides.classNames,
-    // Note: normalized.overrides.styles and vars are not yet supported by createStylingContext
-    // They will be added in Step 2.8
+    styles: normalized.overrides.styles,
+    vars: normalized.overrides.vars,
   } as Props & {
     classNames?: Partial<Record<Names, string>>;
+    styles?: Partial<Record<Names, React.CSSProperties>>;
+    vars?: Record<string, string>;
   };
 
   return createStylingContext(styling, propsForContext);
