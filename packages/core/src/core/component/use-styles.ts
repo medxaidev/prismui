@@ -1,5 +1,28 @@
+import { useRef } from "react";
 import { createStylingContext, type StylingContext } from "./create-styling-context";
 import type { ComponentPayload } from "./types";
+
+/**
+ * Internal Hook to bind React semantics
+ * 
+ * This ensures useStyles is a true React Hook, not a pure function.
+ * 
+ * Why this is critical:
+ * - React Hook rules only apply to functions that call Hooks
+ * - Without this, ESLint hook rules won't enforce proper usage
+ * - Users could incorrectly call useStyles in conditionals
+ * - Future Hook additions (useContext, etc.) won't cause breaking changes
+ * 
+ * Implementation:
+ * - Uses useRef as a lightweight, side-effect-free Hook
+ * - The ref value is never used, it only serves to bind React semantics
+ * - Zero runtime overhead (useRef is extremely cheap)
+ */
+function usePrismUISemantics(): void {
+  // This Hook call is intentional and critical for React semantics
+  // It ensures useStyles is recognized as a Hook by React and ESLint
+  useRef(null);
+}
 
 /**
  * React Hook for Styling System
@@ -65,9 +88,12 @@ export function useStyles<Props = any, Names extends string = string>(
   styling: ComponentPayload<Props, Names>["styling"],
   input: StylingInput<Props>,
 ): StylingContext<Names> {
-  // CRITICAL: Bind React semantics (reserve for Step 2.8)
-  // const theme = useThemeOptional(); // Step 2.8 will implement
-  // Currently not used, but reserves the Hook semantics for future Theme integration
+  // CRITICAL: Bind React semantics
+  // This makes useStyles a true React Hook, enabling:
+  // - ESLint hook rules enforcement
+  // - Proper Hook usage validation
+  // - Future Hook additions without breaking changes
+  usePrismUISemantics();
 
   // Normalize input (supports both flat and layered APIs)
   const normalized = normalizeStylingInput(input);
@@ -88,14 +114,41 @@ export function useStyles<Props = any, Names extends string = string>(
 
 /**
  * Type guard for LayeredStylingInput
+ * 
+ * Strict validation to prevent false positives:
+ * - Must be an object
+ * - Must have at least one of: props, overrides
+ * - If props exists, it must be object or undefined
+ * - If overrides exists, it must be object or undefined
+ * 
+ * This prevents incorrect detection of invalid inputs like:
+ * { props: 123 } or { overrides: "invalid" }
  */
 function isLayeredInput<Props>(input: any): input is LayeredStylingInput<Props> {
-  return (
-    input &&
-    typeof input === "object" &&
-    (("props" in input && (input.props === undefined || typeof input.props === "object")) ||
-      ("overrides" in input && (input.overrides === undefined || typeof input.overrides === "object")))
-  );
+  // Must be an object
+  if (!input || typeof input !== "object") {
+    return false;
+  }
+
+  const hasProps = "props" in input;
+  const hasOverrides = "overrides" in input;
+
+  // Must have at least one layer
+  if (!hasProps && !hasOverrides) {
+    return false;
+  }
+
+  // If props exists, it must be object or undefined
+  if (hasProps && input.props !== undefined && typeof input.props !== "object") {
+    return false;
+  }
+
+  // If overrides exists, it must be object or undefined
+  if (hasOverrides && input.overrides !== undefined && typeof input.overrides !== "object") {
+    return false;
+  }
+
+  return true;
 }
 
 /**
