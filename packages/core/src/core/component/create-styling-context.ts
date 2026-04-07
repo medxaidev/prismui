@@ -2,6 +2,32 @@ import { createGetStyles, type GetStylesFn, type StyleProp } from '../styles';
 import type { ComponentPayload } from './types';
 
 /**
+ * ⚠️ CONSTITUTIONAL CONSTRAINT
+ * 
+ * createStylingContext MUST NOT contain any styling semantics.
+ * It ONLY orchestrates data flow.
+ * 
+ * FORBIDDEN:
+ * - Variant logic (if variant === 'primary')
+ * - State logic (if disabled)
+ * - Theme interpretation
+ * - Style calculation
+ * - Priority resolution beyond simple merge
+ * 
+ * ALLOWED:
+ * - Data extraction (props → componentProps)
+ * - Function delegation (varsResolver, createGetStyles)
+ * - Dev-mode validation (type checking, warnings)
+ * - Merge orchestration (call createGetStyles, not implement merge)
+ * 
+ * WHY:
+ * - Prevents "god function" anti-pattern
+ * - Keeps styling semantics in their proper layers
+ * - Ensures this remains a pure orchestrator
+ * - Makes violations immediately visible in code review
+ */
+
+/**
  * Styling context returned by createStylingContext.
  */
 export type StylingContext<Names extends string = string> = {
@@ -202,6 +228,47 @@ export function createStylingContext<Props, Names extends string = string>(
   const componentProps = componentPropKeys
     ? pickComponentProps(restProps, componentPropKeys as readonly (keyof typeof restProps)[])
     : restProps; // fallback: accept rest (legacy, will warn in dev)
+
+  // 🚨 DEV VALIDATION: Detect leaked component props
+  // This catches the silent error where componentPropKeys is incomplete
+  if (process.env.NODE_ENV !== 'production' && componentPropKeys) {
+    const declaredKeys = new Set(componentPropKeys);
+    const actualKeys = Object.keys(restProps);
+
+    // Known DOM props that are safe to pass through
+    const knownDOMProps = new Set([
+      'children', 'id', 'role', 'tabIndex', 'title', 'aria-label', 'aria-labelledby',
+      'aria-describedby', 'aria-hidden', 'aria-expanded', 'aria-controls', 'aria-selected',
+      'onClick', 'onMouseEnter', 'onMouseLeave', 'onFocus', 'onBlur', 'onChange',
+      'onKeyDown', 'onKeyUp', 'onKeyPress', 'disabled', 'type', 'name', 'value',
+      'placeholder', 'autoFocus', 'autoComplete', 'required', 'readOnly', 'maxLength',
+      'minLength', 'pattern', 'accept', 'multiple', 'checked', 'defaultValue',
+      'defaultChecked', 'href', 'target', 'rel', 'download', 'src', 'alt', 'width',
+      'height', 'loading', 'decoding', 'crossOrigin', 'referrerPolicy', 'sizes',
+      'srcSet', 'useMap', 'isMap', 'form', 'formAction', 'formEncType', 'formMethod',
+      'formNoValidate', 'formTarget', 'data-testid',
+    ]);
+
+    const leaked = actualKeys.filter(
+      (key) => !declaredKeys.has(key as any) && !knownDOMProps.has(key) && !key.startsWith('data-') && !key.startsWith('aria-'),
+    );
+
+    if (leaked.length > 0) {
+      const declaredList = Array.from(componentPropKeys).map(k => String(k)).join(', ');
+      const leakedList = leaked.join(', ');
+      const fixExample = [...Array.from(componentPropKeys).map(k => String(k)), ...leaked]
+        .map(k => `'${k}'`)
+        .join(', ');
+
+      console.error(
+        `[PrismUI] Component prop leak detected! These props are NOT in componentPropKeys and will leak to DOM:\n` +
+        `  Leaked props: ${leakedList}\n` +
+        `  Declared componentPropKeys: [${declaredList}]\n` +
+        `  Fix: Add missing props to componentPropKeys array.\n` +
+        `  Example: componentPropKeys: [${fixExample}]`,
+      );
+    }
+  }
 
   const vars = logic?.varsResolver?.(componentProps as Props) ?? {};
 

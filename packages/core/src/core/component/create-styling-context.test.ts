@@ -143,7 +143,7 @@ describe('createStylingContext', () => {
     it('warns in dev mode when getStyles("root") is called directly', () => {
       const originalEnv = process.env.NODE_ENV;
       process.env.NODE_ENV = 'development';
-      const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+      const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => { });
 
       const styling: ComponentPayload['styling'] = {
         structure: { stylesNames: ['root'] as const },
@@ -171,7 +171,7 @@ describe('createStylingContext', () => {
     it('does not warn when getRootProps is used (correct path)', () => {
       const originalEnv = process.env.NODE_ENV;
       process.env.NODE_ENV = 'development';
-      const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+      const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => { });
 
       const styling: ComponentPayload['styling'] = {
         structure: { stylesNames: ['root'] as const },
@@ -195,7 +195,9 @@ describe('createStylingContext', () => {
 
     it('throws error in dev mode if root class is missing', () => {
       const originalEnv = process.env.NODE_ENV;
+      const originalPrismUIDev = process.env.PRISMUI_DEV;
       process.env.NODE_ENV = 'development';
+      process.env.PRISMUI_DEV = 'true';
 
       const styling: ComponentPayload['styling'] = {
         structure: { stylesNames: ['root'] as const },
@@ -204,9 +206,10 @@ describe('createStylingContext', () => {
 
       expect(() => {
         createStylingContext(styling, {});
-      }).toThrow(/Missing 'root' class/);
+      }).toThrow(/Missing class "root" in CSS Module/);
 
       process.env.NODE_ENV = originalEnv;
+      process.env.PRISMUI_DEV = originalPrismUIDev;
     });
   });
 });

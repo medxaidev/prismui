@@ -25,8 +25,7 @@
     "noImplicitReturns": true,
     "noFallthroughCasesInSwitch": true,
     "allowSyntheticDefaultImports": true,
-    "noEmit": true,
-    "baseUrl": "."
+    "noEmit": true
   },
   "include": [
     "vitest.config.ts",
