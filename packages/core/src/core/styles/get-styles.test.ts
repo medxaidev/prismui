@@ -48,7 +48,7 @@ describe('createGetStyles', () => {
     expect(labelResult.style).toBeUndefined();
   });
 
-  it('splits user style into CSS Variables and inline styles', () => {
+  it('merges user style with system vars (simple override)', () => {
     const input: GetStylesInput<'root' | 'label'> = {
       classes: { root: 'btn-root', label: 'btn-label' },
       vars: { '--button-height': '48px' },
@@ -61,6 +61,7 @@ describe('createGetStyles', () => {
     const getStyles = createGetStyles(input);
     const result = getStyles('root');
 
+    // Simple override: { ...vars, ...style }
     expect(result.style).toEqual({
       '--button-height': '48px',
       '--opacity': 0.5,
@@ -103,6 +104,19 @@ describe('createGetStyles', () => {
     const result = getStyles('root');
 
     expect(result.style).toEqual({ '--button-height': '48px' });
+  });
+
+  it('returns undefined style when both vars and style are empty', () => {
+    const input: GetStylesInput<'root' | 'label'> = {
+      classes: { root: 'btn-root', label: 'btn-label' },
+      vars: {},
+    };
+
+    const getStyles = createGetStyles(input);
+    const result = getStyles('root');
+
+    // Avoid <div style={{}} /> - return undefined instead
+    expect(result.style).toBeUndefined();
   });
 
   it('filters out undefined className values', () => {
@@ -163,7 +177,7 @@ describe('createGetStyles', () => {
     expect(labelResult.style).toBeUndefined();
   });
 
-  it('preserves merge order for style', () => {
+  it('user override takes precedence over system vars', () => {
     const input: GetStylesInput<'root'> = {
       classes: { root: 'btn-root' },
       vars: { '--button-height': '48px' },
@@ -173,7 +187,7 @@ describe('createGetStyles', () => {
     const getStyles = createGetStyles(input);
     const result = getStyles('root');
 
-    // User vars should override system vars
+    // User override wins: { ...vars, ...style }
     expect(result.style?.['--button-height' as any]).toBe('60px');
   });
 });
