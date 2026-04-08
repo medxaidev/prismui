@@ -228,9 +228,9 @@ export type StyleProp = (React.CSSProperties & CSSVariablesObject) | undefined;
  *   // '--invalid': 'red',  // ❌ Type error
  * });
  *
- * // With theme
+ * // With theme (theme is always provided — useThemeOptional fallback ensures it)
  * const resolverWithTheme: VarsResolver<ButtonProps> = (props, theme) => ({
- *   '--button-height': theme?.spacing?.(2) ?? '8px',
+ *   '--button-height': theme.spacing.md ?? '1rem',
  * });
  * ```
  */
@@ -239,7 +239,7 @@ export type VarsResolver<
   Variable extends string = CssVariable
 > = (
   props: Props,
-  theme?: any // Theme type TBD in future stage
+  theme: import("../theme/types").PrismUITheme
 ) => CssVariables<Variable>;
 
 // =============================================================================

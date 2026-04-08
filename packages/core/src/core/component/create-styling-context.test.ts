@@ -84,7 +84,8 @@ describe('createStylingContext', () => {
       const ctx = createStylingContext(styling, props, componentPropKeys);
 
       // varsResolver should only receive component props (size), not DOM props (onClick)
-      expect(varsResolver).toHaveBeenCalledWith({ size: 'lg' });
+      // Second argument is theme (undefined when called without theme from test context)
+      expect(varsResolver).toHaveBeenCalledWith({ size: 'lg' }, undefined);
       expect(varsResolver).toHaveBeenCalledTimes(1);
 
       const rootStyles = ctx.getStyles('root' as any);

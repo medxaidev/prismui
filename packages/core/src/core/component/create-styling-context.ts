@@ -1,4 +1,5 @@
 import { createGetStyles, type GetStylesFn, type StyleProp } from '../styles';
+import type { PrismUITheme } from '../theme/types';
 import type { ComponentPayload } from './types';
 
 // Safe environment variable access for browser/Vite environments
@@ -105,7 +106,7 @@ function pickComponentProps<T extends Record<string, any>>(
  */
 export function omitComponentProps<T extends Record<string, any>>(
   props: T,
-  componentPropKeys: readonly (keyof T)[],
+  componentPropKeys: readonly PropertyKey[],
 ): Record<string, any> {
   const result: Record<string, any> = {};
   const omitSet = new Set<string | number | symbol>(componentPropKeys);
@@ -197,6 +198,7 @@ export function createStylingContext<Props, Names extends string = string>(
     vars?: Record<string, string>;
   },
   componentPropKeys?: readonly (keyof Props)[],
+  theme?: PrismUITheme,
 ): StylingContext<Names> {
   // Fallback: no styling system
   if (!styling) {
@@ -300,7 +302,7 @@ export function createStylingContext<Props, Names extends string = string>(
     }
   }
 
-  const vars = logic?.varsResolver?.(componentProps as Props) ?? {};
+  const vars = logic?.varsResolver?.(componentProps as Props, theme!) ?? {};
 
   // Create getStyles function with dev-mode root access detection
   let rootAccessedDirectly = false;

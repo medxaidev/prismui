@@ -6,8 +6,22 @@ export const hello = () => {
   console.log('Hello from core!');
 };
 
-// Theme System (Stage 3)
-export { defaultTheme, defaultColorFamilies, defaultLightPalette, defaultDarkPalette } from "./core/theme";
+// Theme System (Stage 3 + Stage 2 Extension)
+export {
+  defaultTheme,
+  defaultColorFamilies,
+  defaultLightPalette,
+  defaultDarkPalette,
+  // Theme Runtime (Stage 2 extension)
+  ThemeContext,
+  useTheme,
+  useThemeOptional,
+  PrismUIProvider,
+  resolveColorRef,
+  generateCSSVariables,
+  applyDiffCSSVariables,
+} from "./core/theme";
+export type { PrismUIProviderProps } from "./core/theme";
 export type {
   CSSLength,
   TokenRef,

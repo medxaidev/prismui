@@ -1,5 +1,6 @@
 import { useRef } from "react";
 import { createStylingContext, type StylingContext } from "./create-styling-context";
+import { useThemeOptional } from "../theme/context/theme.context";
 import type { ComponentPayload } from "./types";
 
 /**
@@ -111,7 +112,11 @@ export function useStyles<Props = any, Names extends string = string>(
     vars?: Record<string, string>;
   };
 
-  return createStylingContext(styling, propsForContext);
+  // Inject theme via useThemeOptional (always returns a valid theme,
+  // falls back to defaultTheme when used outside PrismUIProvider)
+  const theme = useThemeOptional();
+
+  return createStylingContext(styling, propsForContext, undefined, theme);
 }
 
 /**
