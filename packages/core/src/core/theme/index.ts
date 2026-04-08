@@ -1,13 +1,4 @@
-export interface CoreConfig {
-  name: string;
-}
-
-export const hello = () => {
-  console.log('Hello from core!');
-};
-
-// Theme System (Stage 3)
-export { defaultTheme } from './core/theme';
+export { defaultTheme } from './default-theme';
 export type {
   CSSLength,
   TokenRef,
@@ -22,4 +13,4 @@ export type {
   ShadowValue,
   BreakpointValue,
   ResponsiveValue,
-} from './core/theme';
+} from './types';

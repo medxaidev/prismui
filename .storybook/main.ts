@@ -7,9 +7,6 @@ const config: StorybookConfig = {
   },
   stories: ['../packages/**/*.stories.@(ts|tsx|mdx)'],
   addons: [],
-  docs: {
-    autodocs: 'tag',
-  },
   typescript: {
     check: false,
     reactDocgen: 'react-docgen-typescript',
