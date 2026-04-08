@@ -7,12 +7,14 @@ export const hello = () => {
 };
 
 // Theme System (Stage 3)
-export { defaultTheme, defaultColorFamilies } from "./core/theme";
+export { defaultTheme, defaultColorFamilies, defaultLightPalette, defaultDarkPalette } from "./core/theme";
 export type {
   CSSLength,
   TokenRef,
   PrismUITheme,
+  SemanticColorToken,
   PrismUIPalette,
+  SemanticColorName,
   ColorShade,
   ColorValue,
   ColorScale,

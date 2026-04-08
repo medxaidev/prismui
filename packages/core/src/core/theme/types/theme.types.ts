@@ -21,6 +21,7 @@ import type {
   BreakpointScale,
 } from "./token-scale.types";
 import type { PrismUIColorFamilies } from "./color.types";
+import type { PrismUIPalette } from "./palette.types";
 
 /**
  * CSS Length
@@ -68,14 +69,3 @@ export interface PrismUITheme {
   scale: number;
 }
 
-/**
- * Palette
- * Reserved for Step 3.3
- *
- * ⚠️ Note: Uses TokenRef internally (reference relationship)
- * Example: primary: "colors.blue.6"
- */
-export interface PrismUIPalette {
-  // Reserved for Step 3.3
-  [key: string]: unknown;
-}

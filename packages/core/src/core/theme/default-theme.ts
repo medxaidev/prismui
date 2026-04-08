@@ -1,5 +1,6 @@
 import type { PrismUITheme } from './types';
 import { defaultColorFamilies } from './default-colors';
+import { defaultLightPalette, defaultDarkPalette } from './default-palette';
 
 /**
  * Default PrismUI Theme
@@ -14,12 +15,8 @@ export const defaultTheme: PrismUITheme = {
   colors: defaultColorFamilies,
 
   palette: {
-    light: {
-      // Reserved for Step 3.3
-    },
-    dark: {
-      // Reserved for Step 3.3
-    },
+    light: defaultLightPalette,
+    dark: defaultDarkPalette,
   },
 
   // ========== Typography System ==========

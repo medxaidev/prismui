@@ -2,8 +2,13 @@ export type {
   CSSLength,
   TokenRef,
   PrismUITheme,
-  PrismUIPalette,
 } from "./theme.types";
+
+export type {
+  SemanticColorToken,
+  PrismUIPalette,
+  SemanticColorName,
+} from "./palette.types";
 
 export type {
   ColorShade,

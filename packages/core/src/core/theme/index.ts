@@ -1,10 +1,13 @@
 export { defaultTheme } from "./default-theme";
 export { defaultColorFamilies } from "./default-colors";
+export { defaultLightPalette, defaultDarkPalette } from "./default-palette";
 export type {
   CSSLength,
   TokenRef,
   PrismUITheme,
+  SemanticColorToken,
   PrismUIPalette,
+  SemanticColorName,
   ColorShade,
   ColorValue,
   ColorScale,
