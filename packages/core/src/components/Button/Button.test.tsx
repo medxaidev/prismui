@@ -148,7 +148,7 @@ describe('Button', () => {
       const { container } = render(
         <Button styles={{ label: { fontWeight: 'bold' } }}>Button</Button>
       );
-      const label = container.querySelector('span:last-child');
+      const label = container.querySelector('span > span');
       expect(label).toHaveStyle({ fontWeight: 'bold' });
     });
 
@@ -164,7 +164,7 @@ describe('Button', () => {
         </Button>
       );
       const button = container.querySelector('button');
-      const label = container.querySelector('span:last-child');
+      const label = container.querySelector('span > span');
       expect(button).toHaveStyle({ borderRadius: '20px' });
       expect(label).toHaveStyle({ fontWeight: 'bold' });
     });

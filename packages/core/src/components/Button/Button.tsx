@@ -81,7 +81,7 @@ export const Button = factory(
   {
     displayName: 'Button',
     defaultElement: 'button',
-    componentPropKeys: ['size', 'variant', 'color', 'disabled'] as const,
+    componentPropKeys: ['size', 'variant', 'color'] as const,
     styling: {
       structure: {
         stylesNames: ['root', 'inner', 'label'] as const,

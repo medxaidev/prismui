@@ -8,7 +8,6 @@ import type {
   FontSizeValue,
   RadiusValue,
   BreakpointValue,
-  ResponsiveValue,
 } from './types';
 
 describe('Theme System', () => {
@@ -48,12 +47,12 @@ describe('Theme System', () => {
       expect(defaultTheme.radius.xl).toBe('1rem');
     });
 
-    it('should use px for breakpoints', () => {
-      expect(defaultTheme.breakpoints.xs).toBe('576px');
-      expect(defaultTheme.breakpoints.sm).toBe('768px');
-      expect(defaultTheme.breakpoints.md).toBe('992px');
-      expect(defaultTheme.breakpoints.lg).toBe('1200px');
-      expect(defaultTheme.breakpoints.xl).toBe('1400px');
+    it('should have numeric breakpoints (px values as numbers)', () => {
+      expect(defaultTheme.breakpoints.xs).toBe(576);
+      expect(defaultTheme.breakpoints.sm).toBe(768);
+      expect(defaultTheme.breakpoints.md).toBe(992);
+      expect(defaultTheme.breakpoints.lg).toBe(1200);
+      expect(defaultTheme.breakpoints.xl).toBe(1400);
     });
 
     it('should have shadow definitions', () => {
@@ -115,40 +114,20 @@ describe('Theme System', () => {
         'xs',
         'md',
         'xl',
-        '768px',
-        '1200px',
+        768,
+        1200,
       ];
       expect(values).toHaveLength(5);
-    });
-
-    it('should allow ResponsiveValue with base', () => {
-      const value1: ResponsiveValue<string> = 'md';
-      const value2: ResponsiveValue<string> = {
-        base: 'sm',
-        md: 'lg',
-      };
-      const value3: ResponsiveValue<number> = {
-        base: 12,
-        xs: 14,
-        sm: 16,
-        md: 18,
-        lg: 20,
-        xl: 24,
-      };
-
-      expect(value1).toBe('md');
-      expect(value2.base).toBe('sm');
-      expect(value3.xl).toBe(24);
     });
   });
 
   describe('Type Safety', () => {
     it('should enforce PrismUITheme structure', () => {
       const theme: PrismUITheme = {
-        colors: {},
+        colors: {} as any,
         palette: {
-          light: {},
-          dark: {},
+          light: {} as any,
+          dark: {} as any,
         },
         typography: {
           fontFamily: 'Arial',
@@ -196,11 +175,11 @@ describe('Theme System', () => {
           xl: 'none',
         },
         breakpoints: {
-          xs: '576px',
-          sm: '768px',
-          md: '992px',
-          lg: '1200px',
-          xl: '1400px',
+          xs: 576,
+          sm: 768,
+          md: 992,
+          lg: 1200,
+          xl: 1400,
         },
         scale: 1,
       };

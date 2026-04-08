@@ -77,6 +77,8 @@ export function PrismUIProvider({
     // This is critical for multi-theme isolation correctness.
     if (prevTargetRef.current && prevTargetRef.current !== element) {
       applyDiffCSSVariables(prevTargetRef.current, {}, prevVarsRef.current);
+      // Reset cache: new target has no previously-applied variables
+      prevVarsRef.current = {};
     }
 
     const next = generateCSSVariables(theme, colorScheme);

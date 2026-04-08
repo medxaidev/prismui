@@ -5,9 +5,11 @@ export type {
 } from "./theme.types";
 
 export type {
+  SemanticColorRoles,
   SemanticColorToken,
   PrismUIPalette,
   SemanticColorName,
+  ColorRoleLevel,
 } from "./palette.types";
 
 export type {

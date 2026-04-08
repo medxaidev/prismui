@@ -18,7 +18,7 @@ const isDev = (() => {
   return true; // Default to dev mode if we can't determine
 })();
 
-const isPrismUIDev = (() => {
+const getIsPrismUIDev = (): boolean => {
   if (typeof process !== 'undefined' && process.env) {
     return process.env.PRISMUI_DEV === 'true';
   }
@@ -27,8 +27,8 @@ const isPrismUIDev = (() => {
     // @ts-ignore
     return import.meta.env.PRISMUI_DEV === 'true';
   }
-  return false; // Default to false if we can't determine
-})();
+  return false;
+};
 
 /**
  * ⚠️ CONSTITUTIONAL CONSTRAINT
@@ -234,7 +234,7 @@ export function createStylingContext<Props, Names extends string = string>(
   // Runtime validation (development only, component library development mode)
   // ⚠️ Only triggers in component library development (PRISMUI_DEV=true)
   // ⚠️ Does NOT trigger in application layer usage (zero runtime overhead)
-  if (isDev && isPrismUIDev) {
+  if (isDev && getIsPrismUIDev()) {
     const { stylesNames } = structure;
     const { classes } = resources;
 
