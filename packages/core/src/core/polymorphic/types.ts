@@ -105,14 +105,18 @@ export type PolymorphicRef<C extends ElementType> = React.ComponentPropsWithRef<
 /**
  * Complete polymorphic props type that combines:
  * - Element-specific props (from PropsOf, including ref)
- * - Custom component props
+ * - Custom component props (validated by DisallowComponentProp)
  * - Component prop for polymorphic rendering
  *
- * Note: ref is handled natively by React through PropsOf (ComponentPropsWithRef),
- * ensuring proper variance and avoiding manual override conflicts.
+ * ## Ref handling
+ * ref is included natively via PropsOf<C> (which uses ComponentPropsWithRef),
+ * so ref type automatically follows the `component` prop. No separate ref injection needed.
  *
+ * ## 'component' reservation
  * The 'component' prop is a RESERVED KEYWORD for polymorphic rendering.
- * If you try to define 'component' in your Props, you will get an explicit type error.
+ * DisallowComponentProp<Props> returns `never` if Props defines 'component',
+ * which causes `never & ComponentProp<C>` to collapse the entire override to `never`,
+ * blocking the type at compile time (BLOCK, not CARRY).
  *
  * @template C - The element type (defaults to the component's default element)
  * @template Props - Additional props specific to the component (must not include 'component')
@@ -125,17 +129,17 @@ export type PolymorphicRef<C extends ElementType> = React.ComponentPropsWithRef<
  * }>;
  *
  * // Usage:
- * <Button onClick={...} />                    // button props
- * <Button component="a" href="..." />         // anchor props
+ * <Button onClick={...} />                    // button props + ref: HTMLButtonElement
+ * <Button component="a" href="..." />         // anchor props + ref: HTMLAnchorElement
  * <Button component={Link} to="..." />        // Link props
  *
  * // Error: User cannot define 'component' prop
  * type BadProps = { component?: string; variant?: 'solid' };
  * type ErrorProps = PolymorphicProps<'button', BadProps>;
- * // Type error: Do not define "component" in component props. It is a reserved keyword.
+ * // DisallowComponentProp<BadProps> → never → entire type blocked
  * ```
  */
 export type PolymorphicProps<C extends ElementType, Props = {}> = MergeProps<
   PropsOf<C>,
-  Omit<DisallowComponentProp<Props>, 'component'> & ComponentProp<C>
+  DisallowComponentProp<Props> & ComponentProp<C>
 >;

@@ -13,6 +13,7 @@ import type {
   ComponentProp,
   PolymorphicRef,
   PolymorphicProps,
+  DisallowComponentProp,
 } from './types';
 
 // ============================================================================
@@ -54,8 +55,8 @@ const divProps: DivPropsTest = {
   onClick: () => { },
 };
 
-// ✅ ref is correctly excluded from PropsOf
-type ButtonPropsHasRef = 'ref' extends keyof ButtonPropsTest ? false : true;
+// ✅ ref is included in PropsOf (via ComponentPropsWithRef) — type follows the element
+type ButtonPropsHasRef = 'ref' extends keyof ButtonPropsTest ? true : false;
 
 // ============================================================================
 // Test 3: MergeProps
@@ -251,6 +252,26 @@ const routerButton: ButtonProps<typeof Link> = {
 };
 
 // ============================================================================
+// Test 12: DisallowComponentProp — blocking behavior
+// ============================================================================
+
+// ✅ Props without 'component' pass through unchanged
+type SafeProps = { variant?: 'solid' };
+type ValidatedSafe = DisallowComponentProp<SafeProps>;
+type SafeIsNotNever = ValidatedSafe extends never ? false : true; // true
+
+// ✅ Props WITH 'component' are blocked (returns never)
+type UnsafeProps = { component?: string; variant?: 'solid' };
+type ValidatedUnsafe = DisallowComponentProp<UnsafeProps>;
+type UnsafeIsNever = ValidatedUnsafe extends never ? true : false; // true
+
+// ✅ PolymorphicProps with conflicting 'component' prop in Props → entire override becomes never
+// This means MergeProps<PropsOf<C>, never> = never & ComponentProp<C> = never
+type ConflictingProps = { component?: string };
+type BlockedPolymorphic = PolymorphicProps<'button', ConflictingProps>;
+type BlockedIsNever = BlockedPolymorphic extends never ? true : false; // true
+
+// ============================================================================
 // Summary: All tests passed ✅
 // ============================================================================
 
@@ -258,14 +279,16 @@ const routerButton: ButtonProps<typeof Link> = {
  * Type test verification:
  * 
  * ✅ ElementType accepts intrinsic and custom elements
- * ✅ PropsOf extracts props without ref
+ * ✅ PropsOf includes ref (via ComponentPropsWithRef) — type follows the element
  * ✅ MergeProps correctly merges with override precedence
  * ✅ ComponentProp creates optional component prop
- * ✅ PolymorphicRef extracts correct ref type
+ * ✅ PolymorphicRef extracts correct ref type (available separately when needed)
  * ✅ PolymorphicProps combines all features correctly
  * ✅ Props override works as expected
  * ✅ Custom components work correctly
  * ✅ Type safety enforced (wrong types rejected)
+ * ✅ DisallowComponentProp blocks (returns never) when Props defines 'component'
+ * ✅ PolymorphicProps blocks entirely when Props conflicts with 'component'
  */
 
 // ============================================================================
