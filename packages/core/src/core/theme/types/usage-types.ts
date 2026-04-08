@@ -1,37 +1,69 @@
-import type { PrismUITheme, CSSLength } from './theme.types';
+import type { CSSLength } from "./theme.types";
+import type {
+  SpacingScale,
+  FontSizeScale,
+  FontWeightScale,
+  LineHeightScale,
+  RadiusScale,
+  ShadowScale,
+  BreakpointScale,
+} from "./token-scale.types";
 
 /**
  * Usage Types
  *
- * 提供规范 + escape hatch
- * 供 Stage 2 的 StyleProps 使用
+ * Provides specification + escape hatch
+ * For Stage 2 StyleProps consumption
+ *
+ * These types are independent of Theme structure
+ * They use Token Scale types directly to avoid circular dependencies
  */
 
-// Spacing（支持 theme token + CSSLength）
-export type SpacingValue = keyof PrismUITheme['spacing'] | CSSLength;
+/**
+ * Spacing Value
+ *
+ * Supports theme token + CSSLength escape hatch
+ */
+export type SpacingValue = SpacingScale | CSSLength;
 
-// Typography
-export type FontSizeValue = keyof PrismUITheme['typography']['fontSize'] | CSSLength;
-export type FontWeightValue = keyof PrismUITheme['typography']['fontWeight'] | number;
-export type LineHeightValue = keyof PrismUITheme['typography']['lineHeight'] | number;
+/**
+ * Font Size Value
+ *
+ * Supports theme token + CSSLength escape hatch
+ */
+export type FontSizeValue = FontSizeScale | CSSLength;
 
-// Radius（支持 theme token + CSSLength）
-export type RadiusValue = keyof PrismUITheme['radius'] | CSSLength;
+/**
+ * Font Weight Value
+ *
+ * Supports theme token + number escape hatch
+ */
+export type FontWeightValue = FontWeightScale | number;
 
-// Shadow（支持 theme token + 任意 CSS shadow 字符串）
-export type ShadowValue = keyof PrismUITheme['shadows'] | string;
+/**
+ * Line Height Value
+ *
+ * Supports theme token + number escape hatch
+ */
+export type LineHeightValue = LineHeightScale | number;
 
-// Breakpoint（支持 theme token + px 值）
-export type BreakpointValue = keyof PrismUITheme['breakpoints'] | `${number}px`;
+/**
+ * Radius Value
+ *
+ * Supports theme token + CSSLength escape hatch
+ */
+export type RadiusValue = RadiusScale | CSSLength;
 
-// Responsive（必须包含 base）
-export type ResponsiveValue<T> =
-  | T
-  | {
-      base?: T;
-      xs?: T;
-      sm?: T;
-      md?: T;
-      lg?: T;
-      xl?: T;
-    };
+/**
+ * Shadow Value
+ *
+ * Supports theme token + any CSS shadow string escape hatch
+ */
+export type ShadowValue = ShadowScale | string;
+
+/**
+ * Breakpoint Value
+ *
+ * Supports theme token + number escape hatch
+ */
+export type BreakpointValue = BreakpointScale | number;

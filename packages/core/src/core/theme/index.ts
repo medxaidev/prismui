@@ -1,10 +1,23 @@
-export { defaultTheme } from './default-theme';
+export { defaultTheme } from "./default-theme";
+export { defaultColorFamilies } from "./default-colors";
 export type {
   CSSLength,
   TokenRef,
   PrismUITheme,
-  PrismUIColorFamilies,
   PrismUIPalette,
+  ColorShade,
+  ColorValue,
+  ColorScale,
+  DefaultColorFamily,
+  PrismUIColorFamilies,
+  ColorRef,
+  SpacingScale,
+  FontSizeScale,
+  FontWeightScale,
+  LineHeightScale,
+  RadiusScale,
+  ShadowScale,
+  BreakpointScale,
   SpacingValue,
   FontSizeValue,
   FontWeightValue,
@@ -12,5 +25,4 @@ export type {
   RadiusValue,
   ShadowValue,
   BreakpointValue,
-  ResponsiveValue,
-} from './types';
+} from "./types";

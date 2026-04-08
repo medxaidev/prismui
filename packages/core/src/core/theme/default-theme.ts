@@ -1,28 +1,28 @@
 import type { PrismUITheme } from './types';
+import { defaultColorFamilies } from './default-colors';
 
 /**
  * Default PrismUI Theme
  *
- * 核心定义：
- * - 所有 token 都有明确单位
- * - fontSize/spacing/radius 使用 rem
- * - breakpoints 使用 px
+ * Core Definition:
+ * - All tokens have explicit units
+ * - fontSize/spacing/radius use rem
+ * - breakpoints use px (number)
  */
 export const defaultTheme: PrismUITheme = {
-  // ========== 颜色系统 ==========
-  // 留给 Step 3.2
-  colors: {},
+  // ========== Color System ==========
+  colors: defaultColorFamilies,
 
   palette: {
     light: {
-      // 留给 Step 3.3
+      // Reserved for Step 3.3
     },
     dark: {
-      // 留给 Step 3.3
+      // Reserved for Step 3.3
     },
   },
 
-  // ========== 字体系统 ==========
+  // ========== Typography System ==========
   typography: {
     fontFamily:
       '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
@@ -53,7 +53,7 @@ export const defaultTheme: PrismUITheme = {
     },
   },
 
-  // ========== 间距系统 ==========
+  // ========== Spacing System ==========
   spacing: {
     xs: '0.25rem', // 4px
     sm: '0.5rem', // 8px
@@ -62,7 +62,7 @@ export const defaultTheme: PrismUITheme = {
     xl: '2rem', // 32px
   },
 
-  // ========== 圆角系统 ==========
+  // ========== Radius System ==========
   radius: {
     xs: '0.125rem', // 2px
     sm: '0.25rem', // 4px
@@ -71,7 +71,7 @@ export const defaultTheme: PrismUITheme = {
     xl: '1rem', // 16px
   },
 
-  // ========== 阴影系统 ==========
+  // ========== Shadow System ==========
   shadows: {
     xs: '0 1px 3px rgba(0, 0, 0, 0.05), 0 1px 2px rgba(0, 0, 0, 0.1)',
     sm: '0 1px 3px rgba(0, 0, 0, 0.05), rgba(0, 0, 0, 0.05) 0px 10px 15px -5px, rgba(0, 0, 0, 0.04) 0px 7px 7px -5px',
@@ -80,15 +80,15 @@ export const defaultTheme: PrismUITheme = {
     xl: '0 1px 3px rgba(0, 0, 0, 0.05), rgba(0, 0, 0, 0.05) 0px 36px 28px -7px, rgba(0, 0, 0, 0.04) 0px 17px 17px -7px',
   },
 
-  // ========== 断点系统 ==========
+  // ========== Breakpoint System ==========
   breakpoints: {
-    xs: '576px',
-    sm: '768px',
-    md: '992px',
-    lg: '1200px',
-    xl: '1400px',
+    xs: 576,
+    sm: 768,
+    md: 992,
+    lg: 1200,
+    xl: 1400,
   },
 
-  // ========== 全局配置 ==========
+  // ========== Global Config ==========
   scale: 1,
 };
