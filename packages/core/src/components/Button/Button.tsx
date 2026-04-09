@@ -1,5 +1,7 @@
 import { factory, ensureClasses } from '../../core/component';
 import type { VarsResolver, StylesOverride } from '../../core/styles';
+import { withVariantColors } from '../../core/variant';
+import type { Variant, ThemeColor } from '../../core/variant';
 import classes from './Button.module.css';
 
 // 1. 定义 StylesNames
@@ -11,9 +13,9 @@ export interface ButtonOwnProps {
   children?: React.ReactNode;
 
   // Variants
-  variant?: 'filled' | 'outline' | 'subtle' | 'transparent';
+  variant?: Variant;
   size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl';
-  color?: 'primary' | 'secondary' | 'error' | 'success';
+  color?: ThemeColor;
 
   // State
   disabled?: boolean;
@@ -22,13 +24,10 @@ export interface ButtonOwnProps {
 // 3. 完整 Props = 组件 Props + 系统级 Styling Overrides
 export type ButtonProps = ButtonOwnProps & StylesOverride<ButtonStylesNames>;
 
-// 4. 定义 VarsResolver
-const varsResolver: VarsResolver<ButtonOwnProps> = (props) => {
-  const size = props.size || 'md';
-  const variant = props.variant || 'filled';
-  const color = props.color || 'primary';
+// 4. 定义 VarsResolver (size only — color delegated to withVariantColors)
+const sizeVarsResolver: VarsResolver<ButtonOwnProps> = (props) => {
+  const size = props.size ?? 'md';
 
-  // Size mapping
   const sizeMap = {
     xs: { height: '24px', paddingX: '8px', fontSize: '12px' },
     sm: { height: '32px', paddingX: '12px', fontSize: '14px' },
@@ -37,40 +36,16 @@ const varsResolver: VarsResolver<ButtonOwnProps> = (props) => {
     xl: { height: '56px', paddingX: '24px', fontSize: '20px' },
   };
 
-  // Color mapping (simplified, no theme yet)
-  const colorMap = {
-    primary: '#3b82f6',
-    secondary: '#6b7280',
-    error: '#ef4444',
-    success: '#10b981',
-  };
-
   const sizeVars = sizeMap[size];
-  const colorValue = colorMap[color];
-
-  // Variant-specific styles
-  let bg = 'transparent';
-  let textColor = colorValue;
-  let border = 'none';
-
-  if (variant === 'filled') {
-    bg = colorValue;
-    textColor = '#ffffff';
-  } else if (variant === 'outline') {
-    border = `1px solid ${colorValue}`;
-  } else if (variant === 'subtle') {
-    bg = `color-mix(in srgb, ${colorValue} 10%, transparent)`;
-  }
 
   return {
     '--button-height': sizeVars.height,
     '--button-padding-x': sizeVars.paddingX,
     '--button-font-size': sizeVars.fontSize,
-    '--button-bg': bg,
-    '--button-color': textColor,
-    '--button-border': border,
   };
 };
+
+const varsResolver = withVariantColors(sizeVarsResolver);
 
 const stylesNames = ['root', 'inner', 'label'] as const;
 

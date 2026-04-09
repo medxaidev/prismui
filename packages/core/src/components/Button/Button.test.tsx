@@ -75,28 +75,29 @@ describe('Button', () => {
   });
 
   describe('Colors', () => {
-    it('renders primary color (default)', () => {
+    it('renders primary color (default) — injects --prismui-variant-* system vars', () => {
       const { container } = render(<Button>Primary</Button>);
       const button = container.querySelector('button');
-      expect(button).toHaveStyle({ '--button-color': '#ffffff' });
+      expect(button).toHaveStyle({ '--prismui-variant-bg': 'var(--prismui-color-primary-high-bg)' });
+      expect(button).toHaveStyle({ '--prismui-variant-fg': 'var(--prismui-color-primary-high-fg)' });
     });
 
     it('renders secondary color', () => {
       const { container } = render(<Button color="secondary">Secondary</Button>);
       const button = container.querySelector('button');
-      expect(button).toBeInTheDocument();
+      expect(button).toHaveStyle({ '--prismui-variant-bg': 'var(--prismui-color-secondary-high-bg)' });
     });
 
     it('renders error color', () => {
       const { container } = render(<Button color="error">Error</Button>);
       const button = container.querySelector('button');
-      expect(button).toBeInTheDocument();
+      expect(button).toHaveStyle({ '--prismui-variant-bg': 'var(--prismui-color-error-high-bg)' });
     });
 
     it('renders success color', () => {
       const { container } = render(<Button color="success">Success</Button>);
       const button = container.querySelector('button');
-      expect(button).toBeInTheDocument();
+      expect(button).toHaveStyle({ '--prismui-variant-bg': 'var(--prismui-color-success-high-bg)' });
     });
   });
 

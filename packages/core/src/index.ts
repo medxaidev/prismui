@@ -56,3 +56,5 @@ export type { Variant, ThemeColor } from "./core/variant";
 export { VARIANTS, THEME_COLORS } from "./core/variant";
 export { variantColorResolver, VARIANT_TO_ROLE } from "./core/variant";
 export type { VariantColorResolverInput, VariantColorOutput } from "./core/variant";
+export { withVariantColors, VARIANT_CSS_VARS } from "./core/variant";
+export type { VariantCssVarKey, VariantCssVarName, WithVariantColorsOptions } from "./core/variant";

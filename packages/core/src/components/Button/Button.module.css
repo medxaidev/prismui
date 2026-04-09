@@ -16,9 +16,9 @@
   font-family: inherit;
 
   /* Appearance */
-  background: var(--button-bg);
-  color: var(--button-color);
-  border: var(--button-border);
+  background: var(--prismui-variant-bg);
+  color: var(--prismui-variant-fg);
+  border: 1px solid var(--prismui-variant-border);
   border-radius: 6px;
 
   /* Interaction */
@@ -33,7 +33,7 @@
 }
 
 .root:hover:not(:disabled) {
-  opacity: 0.9;
+  background: var(--prismui-variant-hover-bg);
 }
 
 .root:active:not(:disabled) {
