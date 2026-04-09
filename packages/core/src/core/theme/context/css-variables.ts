@@ -33,13 +33,31 @@ export function resolveColorRef(ref: ColorRef, theme: PrismUITheme): string {
     if (process.env.NODE_ENV !== "production") {
       console.warn(
         `[PrismUI] Invalid ColorRef: "${ref}" — ` +
-          `family "${family}" or shade "${shade}" not found in theme.colors`,
+        `family "${family}" or shade "${shade}" not found in theme.colors`,
       );
     }
     return "transparent"; // visible failure, not silent
   }
 
   return value;
+}
+
+/**
+ * selectPalette
+ *
+ * Indirection layer between colorScheme and palette lookup.
+ * Currently a direct property access, but this layer enables future extensions:
+ * - nested colorScheme override (per-subtree dark mode)
+ * - media query auto-switching
+ * - per-component colorScheme override (Stage 5)
+ *
+ * Cost: zero. Benefit: unlocks Stage 5 extensibility without API change.
+ */
+export function selectPalette(
+  theme: PrismUITheme,
+  colorScheme: "light" | "dark",
+): PrismUIPalette {
+  return theme.palette[colorScheme];
 }
 
 /**
@@ -52,15 +70,33 @@ export function resolveColorRef(ref: ColorRef, theme: PrismUITheme): string {
  * Zero runtime derivation — all values are direct lookups.
  *
  * Naming convention:
- * - --prismui-color-{name}          semantic palette base
- * - --prismui-color-{name}-hover    semantic palette hover
- * - --prismui-color-{name}-active   semantic palette active
+ *
+ * Abstract interaction states (generic, non-variant-specific):
+ * - --prismui-color-{name}                  base color
+ * - --prismui-color-{name}-hover            hover state
+ * - --prismui-color-{name}-active           active/pressed state
+ *
+ * Color roles (variant-specific, consumed by variant system in Step 4.2):
+ * - --prismui-color-{name}-high-bg          high emphasis background
+ * - --prismui-color-{name}-high-hover-bg    high emphasis hover background
+ * - --prismui-color-{name}-high-fg          high emphasis foreground
+ * - --prismui-color-{name}-low-bg           low emphasis background
+ * - --prismui-color-{name}-low-hover-bg     low emphasis hover background
+ * - --prismui-color-{name}-low-fg           low emphasis foreground
+ * - --prismui-color-{name}-bordered-border  bordered border color
+ * - --prismui-color-{name}-bordered-fg      bordered foreground
+ * - --prismui-color-{name}-bordered-hover-bg bordered hover background
+ * - --prismui-color-{name}-minimal-fg       minimal foreground
+ * - --prismui-color-{name}-minimal-hover-bg minimal hover background
+ *
+ * Token scale:
  * - --prismui-spacing-{scale}
  * - --prismui-radius-{scale}
  * - --prismui-shadow-{scale}
  * - --prismui-font-size-{scale}
  * - --prismui-font-weight-{scale}
  * - --prismui-line-height-{scale}
+ *
  * Reserved (Stage 4): --prismui-component-{name}-{property}
  */
 export function generateCSSVariables(
@@ -68,7 +104,7 @@ export function generateCSSVariables(
   colorScheme: "light" | "dark" = "light",
 ): Record<string, string> {
   const vars: Record<string, string> = {};
-  const palette: PrismUIPalette = theme.palette[colorScheme];
+  const palette: PrismUIPalette = selectPalette(theme, colorScheme);
 
   // ── Semantic Palette ─────────────────────────────────────────────────────
   const semanticNames = [
@@ -83,12 +119,30 @@ export function generateCSSVariables(
 
   for (const name of semanticNames) {
     const token = palette[name];
+
+    // Abstract interaction states (generic, non-variant-specific)
     vars[`--prismui-color-${name}`] = resolveColorRef(token.base, theme);
     vars[`--prismui-color-${name}-hover`] = resolveColorRef(token.hover, theme);
-    vars[`--prismui-color-${name}-active`] = resolveColorRef(
-      token.active,
-      theme,
-    );
+    vars[`--prismui-color-${name}-active`] = resolveColorRef(token.active, theme);
+
+    // Color roles — high emphasis (e.g. 'filled' variant)
+    vars[`--prismui-color-${name}-high-bg`] = resolveColorRef(token.high.bg, theme);
+    vars[`--prismui-color-${name}-high-hover-bg`] = resolveColorRef(token.high.hoverBg, theme);
+    vars[`--prismui-color-${name}-high-fg`] = resolveColorRef(token.high.fg, theme);
+
+    // Color roles — low emphasis (e.g. 'soft' variant)
+    vars[`--prismui-color-${name}-low-bg`] = resolveColorRef(token.low.bg, theme);
+    vars[`--prismui-color-${name}-low-hover-bg`] = resolveColorRef(token.low.hoverBg, theme);
+    vars[`--prismui-color-${name}-low-fg`] = resolveColorRef(token.low.fg, theme);
+
+    // Color roles — bordered (e.g. 'outlined' variant)
+    vars[`--prismui-color-${name}-bordered-border`] = resolveColorRef(token.bordered.border, theme);
+    vars[`--prismui-color-${name}-bordered-fg`] = resolveColorRef(token.bordered.fg, theme);
+    vars[`--prismui-color-${name}-bordered-hover-bg`] = resolveColorRef(token.bordered.hoverBg, theme);
+
+    // Color roles — minimal (e.g. 'plain' variant)
+    vars[`--prismui-color-${name}-minimal-fg`] = resolveColorRef(token.minimal.fg, theme);
+    vars[`--prismui-color-${name}-minimal-hover-bg`] = resolveColorRef(token.minimal.hoverBg, theme);
   }
 
   // ── Spacing ───────────────────────────────────────────────────────────────

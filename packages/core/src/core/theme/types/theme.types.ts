@@ -26,23 +26,31 @@ import type { PrismUIPalette } from "./palette.types";
 /**
  * CSS Length
  *
- * Supported CSS length units
- * - number: numeric value (interpreted by Styling Engine)
- * - px: pixels
- * - rem: relative to root element font size
- * - %: percentage
+ * Supported CSS length units:
+ * - number: treated as px (e.g. 12 → "12px"). Convention is fixed — no ambiguity.
+ * - `${n}px`: explicit pixels
+ * - `${n}rem`: relative to root font size
+ * - `${n}%`: percentage
+ *
+ * ⚠️ number = px is a system-wide invariant. The Styling Engine MUST NOT reinterpret
+ * this as rem or scaled units. "Interpretation authority must not drift."
  */
 export type CSSLength = number | `${number}px` | `${number}rem` | `${number}%`;
 
 /**
  * Token Reference
  *
- * Used to reference other tokens (Graph structure)
+ * Used to reference other tokens (Graph structure).
  * Format: "category.key" or "category.family.shade"
  *
  * Examples:
  * - "colors.blue.500" → references colors.blue[500]
  * - "spacing.md" → references spacing.md
+ *
+ * ⚠️ TokenRef is typed as `string` for authoring flexibility (Steps 3.2–3.3 use
+ * concrete typed structs instead). The format convention above is a DOCUMENTATION
+ * CONTRACT, not enforced at the type level. Consumers must validate references
+ * at build time or via resolveColorRef at runtime.
  */
 export type TokenRef = string;
 

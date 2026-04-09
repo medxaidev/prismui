@@ -1,3 +1,4 @@
+// CSSLength is defined in theme.types: number = px (system-wide invariant)
 import type { CSSLength } from "./theme.types";
 import type {
   SpacingScale,

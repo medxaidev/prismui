@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { resolveColorRef, generateCSSVariables, applyDiffCSSVariables } from "./css-variables";
+import { resolveColorRef, selectPalette, generateCSSVariables, applyDiffCSSVariables } from "./css-variables";
 import { defaultTheme } from "../default-theme";
 
 // ─────────────────────────────────────────────────────────────────
@@ -27,7 +27,7 @@ describe("resolveColorRef", () => {
   });
 
   it("console.warns in dev for invalid ref", () => {
-    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => { });
     const originalEnv = process.env.NODE_ENV;
     process.env.NODE_ENV = "development";
 
@@ -45,7 +45,7 @@ describe("resolveColorRef", () => {
   });
 
   it("does NOT console.warn in production for invalid ref", () => {
-    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => { });
     const originalEnv = process.env.NODE_ENV;
     process.env.NODE_ENV = "production";
 
@@ -148,6 +148,81 @@ describe("generateCSSVariables", () => {
     const vars = generateCSSVariables(defaultTheme, "light");
     const hasComponent = Object.keys(vars).some((k) => k.startsWith("--prismui-component-"));
     expect(hasComponent).toBe(false);
+  });
+
+  it("generates color role variables — high emphasis for primary", () => {
+    const vars = generateCSSVariables(defaultTheme, "light");
+    // primary.high: bg=blue.500, hoverBg=blue.600, fg=gray.50
+    expect(vars["--prismui-color-primary-high-bg"]).toBeDefined();
+    expect(vars["--prismui-color-primary-high-hover-bg"]).toBeDefined();
+    expect(vars["--prismui-color-primary-high-fg"]).toBeDefined();
+    // high-bg resolves blue.500 (same as base)
+    expect(vars["--prismui-color-primary-high-bg"]).toBe(vars["--prismui-color-primary"]);
+    // high-hover-bg resolves blue.600 (same as hover)
+    expect(vars["--prismui-color-primary-high-hover-bg"]).toBe(vars["--prismui-color-primary-hover"]);
+  });
+
+  it("generates color role variables — low emphasis for primary", () => {
+    const vars = generateCSSVariables(defaultTheme, "light");
+    expect(vars["--prismui-color-primary-low-bg"]).toBeDefined();
+    expect(vars["--prismui-color-primary-low-hover-bg"]).toBeDefined();
+    expect(vars["--prismui-color-primary-low-fg"]).toBeDefined();
+  });
+
+  it("generates color role variables — bordered for primary", () => {
+    const vars = generateCSSVariables(defaultTheme, "light");
+    expect(vars["--prismui-color-primary-bordered-border"]).toBeDefined();
+    expect(vars["--prismui-color-primary-bordered-fg"]).toBeDefined();
+    expect(vars["--prismui-color-primary-bordered-hover-bg"]).toBeDefined();
+  });
+
+  it("generates color role variables — minimal for primary", () => {
+    const vars = generateCSSVariables(defaultTheme, "light");
+    expect(vars["--prismui-color-primary-minimal-fg"]).toBeDefined();
+    expect(vars["--prismui-color-primary-minimal-hover-bg"]).toBeDefined();
+  });
+
+  it("generates all color role variables for all 7 semantic names", () => {
+    const vars = generateCSSVariables(defaultTheme, "light");
+    const names = ["primary", "secondary", "info", "success", "warning", "error", "neutral"];
+    const roleSuffixes = [
+      "high-bg", "high-hover-bg", "high-fg",
+      "low-bg", "low-hover-bg", "low-fg",
+      "bordered-border", "bordered-fg", "bordered-hover-bg",
+      "minimal-fg", "minimal-hover-bg",
+    ];
+    for (const name of names) {
+      for (const suffix of roleSuffixes) {
+        const key = `--prismui-color-${name}-${suffix}`;
+        expect(vars).toHaveProperty(key);
+        expect(typeof vars[key]).toBe("string");
+        expect(vars[key].length).toBeGreaterThan(0);
+      }
+    }
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────
+// selectPalette
+// ─────────────────────────────────────────────────────────────────
+
+describe("selectPalette", () => {
+  it("returns light palette for colorScheme=light", () => {
+    const palette = selectPalette(defaultTheme, "light");
+    expect(palette).toBe(defaultTheme.palette.light);
+  });
+
+  it("returns dark palette for colorScheme=dark", () => {
+    const palette = selectPalette(defaultTheme, "dark");
+    expect(palette).toBe(defaultTheme.palette.dark);
+  });
+
+  it("returns palette with all 7 semantic tokens", () => {
+    const palette = selectPalette(defaultTheme, "light");
+    const names = ["primary", "secondary", "info", "success", "warning", "error", "neutral"];
+    for (const name of names) {
+      expect(palette).toHaveProperty(name);
+    }
   });
 });
 
