@@ -26,9 +26,9 @@ export type FontSizeScale = "xs" | "sm" | "md" | "lg" | "xl";
 /**
  * Font Weight Scale
  *
- * 4-step font weight scale
+ * 5-step font weight scale
  */
-export type FontWeightScale = "regular" | "medium" | "semibold" | "bold";
+export type FontWeightScale = "regular" | "medium" | "semibold" | "bold" | "extrabold";
 
 /**
  * Line Height Scale

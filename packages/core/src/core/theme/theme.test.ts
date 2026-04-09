@@ -25,9 +25,12 @@ describe('Theme System', () => {
     });
 
     it('should have correct typography', () => {
-      expect(defaultTheme.typography.fontFamily).toContain('system');
+      expect(defaultTheme.typography.fontFamily).toContain('Public Sans Variable');
+      expect(defaultTheme.typography.fontFamily).toContain('sans-serif');
       expect(defaultTheme.typography.fontSize.md).toBe('1rem');
       expect(defaultTheme.typography.fontWeight.regular).toBe(400);
+      expect(defaultTheme.typography.fontWeight.extrabold).toBe(800);
+      expect(defaultTheme.typography.lineHeight.xs).toBe(1.25);
       expect(defaultTheme.typography.lineHeight.md).toBe(1.5);
     });
 
@@ -59,6 +62,21 @@ describe('Theme System', () => {
       expect(defaultTheme.shadows.xs).toContain('rgba');
       expect(defaultTheme.shadows.md).toContain('rgba');
       expect(defaultTheme.shadows.xl).toContain('rgba');
+    });
+
+    it('should use MUI-style gray-tinted shadows for xs/sm/md/lg', () => {
+      expect(defaultTheme.shadows.xs).toContain('145, 158, 171');
+      expect(defaultTheme.shadows.sm).toContain('145, 158, 171');
+      expect(defaultTheme.shadows.md).toContain('145, 158, 171');
+      expect(defaultTheme.shadows.lg).toContain('145, 158, 171');
+    });
+
+    it('should have all 5 font weights including extrabold', () => {
+      expect(defaultTheme.typography.fontWeight.regular).toBe(400);
+      expect(defaultTheme.typography.fontWeight.medium).toBe(500);
+      expect(defaultTheme.typography.fontWeight.semibold).toBe(600);
+      expect(defaultTheme.typography.fontWeight.bold).toBe(700);
+      expect(defaultTheme.typography.fontWeight.extrabold).toBe(800);
     });
   });
 
@@ -144,6 +162,7 @@ describe('Theme System', () => {
             medium: 500,
             semibold: 600,
             bold: 700,
+            extrabold: 800,
           },
           lineHeight: {
             xs: 1.4,

@@ -22,7 +22,7 @@ export const defaultTheme: PrismUITheme = {
   // ========== Typography System ==========
   typography: {
     fontFamily:
-      '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
+      '"Public Sans Variable", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
     fontFamilyMonospace:
       '"SF Mono", Monaco, "Cascadia Code", "Roboto Mono", Consolas, "Courier New", monospace',
 
@@ -39,11 +39,12 @@ export const defaultTheme: PrismUITheme = {
       medium: 500,
       semibold: 600,
       bold: 700,
+      extrabold: 800,
     },
 
     lineHeight: {
-      xs: 1.4,
-      sm: 1.45,
+      xs: 1.25,
+      sm: 1.4,
       md: 1.5,
       lg: 1.55,
       xl: 1.6,
@@ -70,11 +71,11 @@ export const defaultTheme: PrismUITheme = {
 
   // ========== Shadow System ==========
   shadows: {
-    xs: '0 1px 3px rgba(0, 0, 0, 0.05), 0 1px 2px rgba(0, 0, 0, 0.1)',
-    sm: '0 1px 3px rgba(0, 0, 0, 0.05), rgba(0, 0, 0, 0.05) 0px 10px 15px -5px, rgba(0, 0, 0, 0.04) 0px 7px 7px -5px',
-    md: '0 1px 3px rgba(0, 0, 0, 0.05), rgba(0, 0, 0, 0.05) 0px 20px 25px -5px, rgba(0, 0, 0, 0.04) 0px 10px 10px -5px',
-    lg: '0 1px 3px rgba(0, 0, 0, 0.05), rgba(0, 0, 0, 0.05) 0px 28px 23px -7px, rgba(0, 0, 0, 0.04) 0px 12px 12px -7px',
-    xl: '0 1px 3px rgba(0, 0, 0, 0.05), rgba(0, 0, 0, 0.05) 0px 36px 28px -7px, rgba(0, 0, 0, 0.04) 0px 17px 17px -7px',
+    xs: '0 1px 2px 0 rgba(145, 158, 171, 0.16)',
+    sm: '0 4px 8px 0 rgba(145, 158, 171, 0.16)',
+    md: '0 0 2px 0 rgba(145, 158, 171, 0.2), 0 12px 24px -4px rgba(145, 158, 171, 0.12)',
+    lg: '0 16px 32px -4px rgba(145, 158, 171, 0.16)',
+    xl: '-40px 40px 80px -8px rgba(0, 0, 0, 0.24)',
   },
 
   // ========== Breakpoint System ==========

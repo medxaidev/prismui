@@ -56,7 +56,7 @@ export const defaultLightPalette: PrismUIPalette = {
     base: "colors.yellow.500",
     hover: "colors.yellow.600",
     active: "colors.yellow.700",
-    high: { bg: "colors.yellow.500", hoverBg: "colors.yellow.600", fg: "colors.gray.50" },
+    high: { bg: "colors.yellow.500", hoverBg: "colors.yellow.600", fg: "colors.gray.800" },
     low: { bg: "colors.yellow.50", hoverBg: "colors.yellow.100", fg: "colors.yellow.700" },
     bordered: { border: "colors.yellow.300", fg: "colors.yellow.600", hoverBg: "colors.yellow.50" },
     minimal: { fg: "colors.yellow.600", hoverBg: "colors.yellow.50" },
