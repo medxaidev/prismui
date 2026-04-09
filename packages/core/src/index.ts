@@ -50,3 +50,7 @@ export type {
   ShadowValue,
   BreakpointValue,
 } from "./core/theme";
+
+// Variant System (Stage 4)
+export type { Variant, ThemeColor } from "./core/variant";
+export { VARIANTS, THEME_COLORS } from "./core/variant";
