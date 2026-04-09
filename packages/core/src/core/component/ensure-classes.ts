@@ -1,35 +1,27 @@
 /**
- * 编译期类型约束：确保 CSS Modules 完全对齐 stylesNames
+ * 编译期类型约束：从 stylesNames 数组推导 Names，确保 CSS Modules 包含所有必需的 class。
  *
- * 三重检查：
+ * 检查：
  * 1. 缺少 class → ❌ 编译错误
  * 2. 拼错 class → ❌ 编译错误
- * 3. 多余 class → ❌ 编译错误
+ *
+ * 多余 class 由 Layer 2 Runtime 验证覆盖（__PRISMUI_INTERNAL__ 环境）。
  *
  * @example
  * ```ts
- * type ButtonStylesNames = 'root' | 'inner' | 'label';
  * import styles from './Button.module.css';
  *
- * // ⚠️ 必须传入两个泛型参数
- * const classes = ensureAllClasses<ButtonStylesNames, typeof styles>(styles);
- * // ✅ 完全对齐检查
+ * // ✅ 无需手动写泛型参数，Names 从 stylesNames 自动推导
+ * const stylesNames = ['root', 'inner', 'label'] as const;
+ * const classes = ensureClasses(stylesNames, styles);
  * ```
  */
-export type ExactClasses<
-  Names extends string,
-  ClassesObj extends Record<string, string>,
-> =
-  & Record<Names, string>  // 必须包含所有 Names
-  & {
-    [K in keyof ClassesObj]: K extends Names ? string : never;  // 禁止多余 key
-  };
-
-export function ensureAllClasses<
-  Names extends string,
-  ClassesObj extends Record<string, string>,
+export function ensureClasses<
+  const Names extends readonly string[],
+  ClassesObj extends Record<Names[number], string>,
 >(
-  classes: ExactClasses<Names, ClassesObj>,
-): Record<Names, string> {
+  _stylesNames: Names,
+  classes: ClassesObj,
+): Record<Names[number], string> {
   return classes;
 }

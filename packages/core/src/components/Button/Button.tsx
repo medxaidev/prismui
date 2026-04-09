@@ -1,5 +1,4 @@
-import { factory } from '../../core/component';
-import { ensureAllClasses } from '../../core/component';
+import { factory, ensureClasses } from '../../core/component';
 import type { VarsResolver, StylesOverride } from '../../core/styles';
 import classes from './Button.module.css';
 
@@ -73,8 +72,10 @@ const varsResolver: VarsResolver<ButtonOwnProps> = (props) => {
   };
 };
 
-// 5. 验证 CSS Modules 类型安全
-const validatedClasses = ensureAllClasses<ButtonStylesNames, typeof classes>(classes);
+const stylesNames = ['root', 'inner', 'label'] as const;
+
+// 5. 验证 CSS Modules 类型安全（Names 从 stylesNames 自动推导，无需手动写泛型）
+const validatedClasses = ensureClasses(stylesNames, classes);
 
 // 6. 使用 Factory (核心组件 MUST 使用 factory，NOT useStyles)
 export const Button = factory(
@@ -84,7 +85,7 @@ export const Button = factory(
     componentPropKeys: ['size', 'variant', 'color'] as const,
     styling: {
       structure: {
-        stylesNames: ['root', 'inner', 'label'] as const,
+        stylesNames,
       },
       resources: {
         classes: validatedClasses,

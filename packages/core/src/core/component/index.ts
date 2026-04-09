@@ -23,8 +23,7 @@ export { useStyles } from './use-styles';
 export type { StylingInput } from './use-styles';
 
 // CSS Modules type safety
-export { ensureAllClasses } from './ensure-classes';
-export type { ExactClasses } from './ensure-classes';
+export { ensureClasses } from './ensure-classes';
 
 // Component types
 export type { ComponentPayload, StylingProps, ComponentProps } from './types';

@@ -18,17 +18,10 @@ const isDev = (() => {
   return true; // Default to dev mode if we can't determine
 })();
 
-const getIsPrismUIDev = (): boolean => {
-  if (typeof process !== 'undefined' && process.env) {
-    return process.env.PRISMUI_DEV === 'true';
-  }
-  // @ts-ignore
-  if (typeof import.meta !== 'undefined' && import.meta.env) {
-    // @ts-ignore
-    return import.meta.env.PRISMUI_DEV === 'true';
-  }
-  return false;
-};
+// __PRISMUI_INTERNAL__ is injected at build time via vite.config.ts `define`.
+// It is true only in the component library's own build, not in application builds.
+// This ensures runtime validation only runs during component development.
+declare const __PRISMUI_INTERNAL__: boolean | undefined;
 
 /**
  * ⚠️ CONSTITUTIONAL CONSTRAINT
@@ -232,9 +225,9 @@ export function createStylingContext<Props, Names extends string = string>(
   const { structure, resources, logic } = styling;
 
   // Runtime validation (development only, component library development mode)
-  // ⚠️ Only triggers in component library development (PRISMUI_DEV=true)
+  // ⚠️ Only triggers in component library build (__PRISMUI_INTERNAL__ = true via define)
   // ⚠️ Does NOT trigger in application layer usage (zero runtime overhead)
-  if (isDev && getIsPrismUIDev()) {
+  if (isDev && typeof __PRISMUI_INTERNAL__ !== 'undefined' && __PRISMUI_INTERNAL__) {
     const { stylesNames } = structure;
     const { classes } = resources;
 

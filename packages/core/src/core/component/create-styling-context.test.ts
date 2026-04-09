@@ -196,9 +196,9 @@ describe('createStylingContext', () => {
 
     it('throws error in dev mode if root class is missing', () => {
       const originalEnv = process.env.NODE_ENV;
-      const originalPrismUIDev = process.env.PRISMUI_DEV;
       process.env.NODE_ENV = 'development';
-      process.env.PRISMUI_DEV = 'true';
+      // Simulate __PRISMUI_INTERNAL__ = true (normally injected by vite.config.ts `define`)
+      (globalThis as any).__PRISMUI_INTERNAL__ = true;
 
       const styling: ComponentPayload['styling'] = {
         structure: { stylesNames: ['root'] as const },
@@ -210,7 +210,7 @@ describe('createStylingContext', () => {
       }).toThrow(/Missing class "root" in CSS Module/);
 
       process.env.NODE_ENV = originalEnv;
-      process.env.PRISMUI_DEV = originalPrismUIDev;
+      (globalThis as any).__PRISMUI_INTERNAL__ = undefined;
     });
   });
 });

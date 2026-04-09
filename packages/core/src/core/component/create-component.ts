@@ -2,36 +2,30 @@ import * as React from 'react';
 import type { ElementType, PolymorphicProps } from '../polymorphic/types';
 
 /**
- * Polymorphic component type that supports dynamic element rendering.
- * 
- * This type represents a component that can render as different HTML elements
- * or React components while maintaining full type safety for props and refs.
- * 
- * Note: ref is already included in PolymorphicProps via PropsOf (ComponentPropsWithRef),
- * so it does not need to be added separately.
- * 
+ * Polymorphic component type that supports dynamic element rendering with ref forwarding.
+ *
+ * This is a two-part intersection type:
+ *
+ * 1. `React.ForwardRefExoticComponent<PolymorphicProps<DefaultC, Props>>`
+ *    — Tells JSX that this is a forwardRef component, enabling `<Button ref={...} />`.
+ *    Without this, TypeScript reports "Property 'ref' does not exist" on the JSX element.
+ *
+ * 2. `& { <C extends ElementType = DefaultC>(props: PolymorphicProps<C, Props>): ... }`
+ *    — Generic call signature overload so that `C` is inferred at the call site.
+ *    e.g. `<Button component="a" />` → C inferred as 'a' → props become anchor props,
+ *    ref becomes HTMLAnchorElement. Without this overload, C is always fixed to DefaultC.
+ *
+ * Both parts are required. Either alone is insufficient.
+ *
  * @template DefaultC - The default element type (e.g., 'button', 'div')
  * @template Props - Additional props specific to the component
- * 
- * @example
- * ```tsx
- * // Component can be called with different element types
- * <Button />                           // Renders as button
- * <Button component="a" href="..." />  // Renders as anchor
- * <Button component={Link} to="..." /> // Renders as Link
- * 
- * // Ref type is correctly inferred based on component prop
- * const buttonRef = useRef<HTMLButtonElement>(null);
- * const anchorRef = useRef<HTMLAnchorElement>(null);
- * <Button ref={buttonRef} />                    // ✅ Correct
- * <Button component="a" ref={anchorRef} />      // ✅ Correct
- * ```
  */
-export type PolymorphicComponent<DefaultC extends ElementType, Props = {}> = <
-  C extends ElementType = DefaultC,
->(
-  props: PolymorphicProps<C, Props>,
-) => React.ReactElement | null;
+export type PolymorphicComponent<DefaultC extends ElementType, Props = {}> =
+  React.ForwardRefExoticComponent<PolymorphicProps<DefaultC, Props>> & {
+    <C extends ElementType = DefaultC>(
+      props: PolymorphicProps<C, Props>,
+    ): React.ReactElement | null;
+  };
 
 /**
  * Creates a polymorphic component with full type safety.

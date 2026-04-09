@@ -22,7 +22,8 @@ import type { ComponentPayload } from "./types";
 function usePrismUISemantics(): void {
   // This Hook call is intentional and critical for React semantics
   // It ensures useStyles is recognized as a Hook by React and ESLint
-  useRef(null);
+  // useRef(undefined): no value is stored, this call exists solely to bind Hook semantics
+  useRef(undefined);
 }
 
 /**
@@ -164,6 +165,20 @@ function isLayeredInput<Props>(input: any): input is LayeredStylingInput<Props> 
 function normalizeStylingInput<Props>(input: StylingInput<Props>): NormalizedStylingInput {
   // Detect if layered structure (using type guard)
   if (isLayeredInput(input)) {
+    // Dev-mode guard: detect mixed flat + layered structure (silent data loss)
+    // e.g. { props: { size: 'sm' }, size: 'lg' } — 'size' would be silently ignored
+    if (process.env.NODE_ENV !== 'production') {
+      const hasMixed = Object.keys(input).some((k) => k !== 'props' && k !== 'overrides');
+      if (hasMixed) {
+        const extraKeys = Object.keys(input).filter((k) => k !== 'props' && k !== 'overrides');
+        throw new Error(
+          `[PrismUI] Invalid StylingInput: do not mix flat and layered API. ` +
+          `Unexpected keys alongside 'props'/'overrides': [${extraKeys.join(', ')}]. ` +
+          `Use either { size, variant, classNames } (flat) or { props: { size, variant }, overrides: { classNames } } (layered).`,
+        );
+      }
+    }
+
     return {
       props: input.props ?? {},
       overrides: input.overrides ?? {},
