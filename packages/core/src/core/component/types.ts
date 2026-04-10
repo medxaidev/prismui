@@ -2,6 +2,26 @@ import type { ElementType } from 'react';
 import type { Classes, VarsResolver } from '../styles';
 
 /**
+ * System identifiers for factory's declarative systems injection.
+ *
+ * Each system corresponds to a middleware (e.g. 'variant' → withVariantColors).
+ * Future: 'size' | 'state'
+ */
+export type ComponentSystem = 'variant';
+
+/**
+ * A single system entry in the factory payload.
+ * Can be a plain string (always inject) or an object with per-system options.
+ *
+ * @example
+ * systems: ['variant']
+ * systems: [{ name: 'variant', enabled: (props) => props.variant !== undefined }]
+ */
+export type ComponentSystemEntry =
+  | ComponentSystem
+  | { name: ComponentSystem; enabled?: (props: any) => boolean };
+
+/**
  * Styling-specific props.
  *
  * These props control the styling system and should NOT be passed to DOM.
@@ -107,6 +127,22 @@ export type ComponentPayload<Props = any, Names extends string = string> = {
    * ```
    */
   componentPropKeys?: readonly (keyof Props)[];
+
+  /**
+   * Declarative system injection.
+   *
+   * Systems are applied left-to-right as nested wrappers around varsResolver.
+   * The rightmost system is the outermost wrapper and has the highest priority.
+   *
+   * factory() checks for a Symbol mark on the varsResolver before injecting,
+   * so manually wrapping with withVariantColors() + declaring 'variant' here
+   * is safe — the mark prevents double-wrapping.
+   *
+   * @example
+   * systems: ['variant']
+   * systems: [{ name: 'variant', enabled: (props) => props.variant !== undefined }]
+   */
+  systems?: readonly ComponentSystemEntry[];
 };
 
 /**

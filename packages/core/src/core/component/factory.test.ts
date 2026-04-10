@@ -1,7 +1,13 @@
 import { describe, it, expect, vi } from 'vitest';
 import * as React from 'react';
 import { factory } from './factory';
+import { withVariantColors, VARIANT_CSS_VARS } from '../variant/with-variant-colors';
+import { WITH_VARIANT_MARK } from './system-marks';
 import type { ComponentPayload } from './types';
+import type { VarsResolver } from '../styles/types';
+import type { PrismUITheme } from '../theme/types';
+
+const DUMMY_THEME = {} as PrismUITheme;
 
 describe('factory', () => {
   describe('basic functionality', () => {
@@ -179,7 +185,7 @@ describe('factory', () => {
     it('warns when componentPropKeys is missing and unknown props exist', () => {
       const originalEnv = process.env.NODE_ENV;
       process.env.NODE_ENV = 'development';
-      const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+      const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => { });
 
       const payload: ComponentPayload = {
         displayName: 'MissingPropKeys',
@@ -211,7 +217,7 @@ describe('factory', () => {
     it('does not warn for known DOM props', () => {
       const originalEnv = process.env.NODE_ENV;
       process.env.NODE_ENV = 'development';
-      const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+      const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => { });
 
       const payload: ComponentPayload = {
         displayName: 'KnownDOMProps',
@@ -301,6 +307,85 @@ describe('factory', () => {
       const Component = factory(payload, customRender);
 
       expect(Component).toBeDefined();
+    });
+  });
+
+  describe('systems — declarative injection (pure resolver tests)', () => {
+    // These tests verify the resolver transformation applied by factory's systems loop
+    // without needing a DOM/jsdom environment. We extract the resolver produced by
+    // withVariantColors and call it directly.
+
+    const base: VarsResolver<any> = () => ({ '--btn-height': '40px' });
+    const props = { variant: 'solid', color: 'primary' };
+
+    it("systems: ['variant'] causes the resulting varsResolver to inject --prismui-variant-* keys", () => {
+      // withVariantColors is the function factory would call internally.
+      // Here we verify its output has the 4 variant vars.
+      const resolver = withVariantColors(base);
+      const result = resolver(props, DUMMY_THEME);
+      expect(result[VARIANT_CSS_VARS.bg]).toBeDefined();
+      expect(result[VARIANT_CSS_VARS.fg]).toBeDefined();
+      expect(result[VARIANT_CSS_VARS.hoverBg]).toBeDefined();
+      expect(result[VARIANT_CSS_VARS.border]).toBeDefined();
+    });
+
+    it('base varsResolver output is preserved alongside variant vars', () => {
+      const resolver = withVariantColors(base);
+      const result = resolver(props, DUMMY_THEME);
+      expect(result['--btn-height']).toBe('40px');
+    });
+
+    it('no systems → base resolver output contains no --prismui-variant-* keys', () => {
+      const result = base(props, DUMMY_THEME);
+      expect(result[VARIANT_CSS_VARS.bg]).toBeUndefined();
+    });
+
+    it('double-wrap detection: WITH_VARIANT_MARK on manualWrapped prevents second wrap', () => {
+      const manualWrapped = withVariantColors(base);
+      // Simulate what factory does: check mark before injecting
+      const alreadyMarked = !!(manualWrapped as any)[WITH_VARIANT_MARK];
+      expect(alreadyMarked).toBe(true);
+      // factory would skip wrapping → resolver is still manualWrapped (single layer)
+      const result = manualWrapped(props, DUMMY_THEME);
+      expect(result[VARIANT_CSS_VARS.bg]).toBeDefined();
+      expect(result['--btn-height']).toBe('40px');
+    });
+
+    it('enabled guard — returns only base vars when guard returns false', () => {
+      const resolver = withVariantColors(base, {
+        enabled: (p) => p.variant !== undefined,
+      });
+      const result = resolver({ color: 'primary' }, DUMMY_THEME); // no variant prop
+      expect(result[VARIANT_CSS_VARS.bg]).toBeUndefined();
+      expect(result['--btn-height']).toBe('40px');
+    });
+
+    it('enabled guard — injects variant vars when guard returns true', () => {
+      const resolver = withVariantColors(base, {
+        enabled: (p) => p.variant !== undefined,
+      });
+      const result = resolver(props, DUMMY_THEME); // has variant
+      expect(result[VARIANT_CSS_VARS.bg]).toBeDefined();
+    });
+
+    it('WITH_VARIANT_MARK is stamped on withVariantColors output', () => {
+      const wrapped = withVariantColors(base);
+      expect((wrapped as any)[WITH_VARIANT_MARK]).toBe(true);
+    });
+
+    it('factory creates component successfully with systems field (smoke test)', () => {
+      const Comp = factory({
+        displayName: 'SystemsSmoke',
+        defaultElement: 'button',
+        componentPropKeys: ['variant', 'color'] as const,
+        systems: ['variant'],
+        styling: {
+          structure: { stylesNames: ['root'] as const },
+          resources: { classes: { root: 'root' } },
+          logic: { varsResolver: base },
+        },
+      });
+      expect(Comp.displayName).toBe('SystemsSmoke');
     });
   });
 });

@@ -4,6 +4,8 @@ import {
   omitComponentProps,
   type StylingContext,
 } from './create-styling-context';
+import { SYSTEM_MARKS } from './system-marks';
+import { withVariantColors } from '../variant/with-variant-colors';
 import type { ComponentPayload } from './types';
 
 /**
@@ -135,7 +137,7 @@ export function factory<Payload extends ComponentPayload>(
         if (unknownProps.length > 0) {
           console.warn(
             `[PrismUI] Component "${payload.displayName}" has props that may leak to DOM: ${unknownProps.join(', ')}. ` +
-              `Consider declaring componentPropKeys: ${JSON.stringify(unknownProps)}`,
+            `Consider declaring componentPropKeys: ${JSON.stringify(unknownProps)}`,
           );
         }
       }
@@ -143,10 +145,31 @@ export function factory<Payload extends ComponentPayload>(
 
     // Apply styling system if configured
     if (payload.styling) {
+      // Stage 5.1: systems injection — apply declared systems left-to-right.
+      // Each system wraps the previous resolver; rightmost = highest priority.
+      // A Symbol mark on the resolver prevents double-wrapping.
+      let resolvedStyling = payload.styling;
+      if (payload.systems && payload.systems.length > 0) {
+        let resolver = payload.styling.logic?.varsResolver ?? (() => ({}));
+        for (const entry of payload.systems) {
+          const name = typeof entry === 'string' ? entry : entry.name;
+          const opts = typeof entry === 'string' ? undefined : { enabled: entry.enabled };
+          if (name === 'variant') {
+            if (!(resolver as any)[SYSTEM_MARKS.variant]) {
+              resolver = withVariantColors(resolver, opts);
+            }
+          }
+        }
+        resolvedStyling = {
+          ...payload.styling,
+          logic: { ...payload.styling.logic, varsResolver: resolver },
+        };
+      }
+
       // CRITICAL: Create Styling Engine Instance
       // Pass componentPropKeys for varsResolver isolation
       const styles = createStylingContext(
-        payload.styling,
+        resolvedStyling,
         props,
         payload.componentPropKeys as any,
       );

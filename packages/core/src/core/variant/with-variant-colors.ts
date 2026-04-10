@@ -1,4 +1,5 @@
 import type { VarsResolver } from '../styles/types';
+import { WITH_VARIANT_MARK } from '../component/system-marks';
 import { variantColorResolver } from './variant-color-resolver';
 
 /**
@@ -76,7 +77,7 @@ export function withVariantColors<Props extends Record<string, any>>(
   base: VarsResolver<Props>,
   options?: WithVariantColorsOptions<Props>,
 ): VarsResolver<Props> {
-  return (props, theme) => {
+  const wrapped = (props: Props, theme: Parameters<VarsResolver<Props>>[1]) => {
     const baseVars = base(props, theme);
 
     if (options?.enabled && !options.enabled(props)) {
@@ -96,4 +97,6 @@ export function withVariantColors<Props extends Record<string, any>>(
       ...baseVars,
     };
   };
+  (wrapped as any)[WITH_VARIANT_MARK] = true;
+  return wrapped as VarsResolver<Props>;
 }

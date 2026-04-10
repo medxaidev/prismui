@@ -26,4 +26,7 @@ export type { StylingInput } from './use-styles';
 export { ensureClasses } from './ensure-classes';
 
 // Component types
-export type { ComponentPayload, StylingProps, ComponentProps } from './types';
+export type { ComponentPayload, StylingProps, ComponentProps, ComponentSystem, ComponentSystemEntry } from './types';
+
+// System marks (for double-wrap detection)
+export { WITH_VARIANT_MARK, SYSTEM_MARKS } from './system-marks';

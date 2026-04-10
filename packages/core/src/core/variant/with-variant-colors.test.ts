@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { withVariantColors, VARIANT_CSS_VARS } from './with-variant-colors';
+import { WITH_VARIANT_MARK } from '../component/system-marks';
 import { VARIANTS, THEME_COLORS } from './types';
 import type { VarsResolver } from '../styles/types';
 import type { PrismUITheme } from '../theme/types';
@@ -208,6 +209,30 @@ describe('Variant System — Step 4.3: withVariantColors Middleware', () => {
       const input = { variant: 'soft', color: 'info', size: 'lg' };
       resolver(input, DUMMY_THEME);
       expect(capturedProps).toBe(input);
+    });
+  });
+
+  describe('withVariantColors — Symbol mark (double-wrap prevention)', () => {
+    it('stamps WITH_VARIANT_MARK on the returned resolver', () => {
+      const wrapped = withVariantColors(emptyBase);
+      expect((wrapped as any)[WITH_VARIANT_MARK]).toBe(true);
+    });
+
+    it('stamps WITH_VARIANT_MARK even when options are provided', () => {
+      const wrapped = withVariantColors(emptyBase, {
+        enabled: (props) => props.variant !== undefined,
+      });
+      expect((wrapped as any)[WITH_VARIANT_MARK]).toBe(true);
+    });
+
+    it('base resolver does NOT have the mark (only wrapped one does)', () => {
+      expect((emptyBase as any)[WITH_VARIANT_MARK]).toBeUndefined();
+    });
+
+    it('mark is a Symbol (not a string or boolean property collision)', () => {
+      const wrapped = withVariantColors(emptyBase);
+      const ownSymbols = Object.getOwnPropertySymbols(wrapped);
+      expect(ownSymbols).toContain(WITH_VARIANT_MARK);
     });
   });
 });
