@@ -6,6 +6,7 @@ import {
 } from './create-styling-context';
 import { SYSTEM_MARKS } from './system-marks';
 import { withVariantColors } from '../variant/with-variant-colors';
+import { withSizeVars } from '../size/with-size-vars';
 import type { ComponentPayload } from './types';
 
 /**
@@ -157,6 +158,10 @@ export function factory<Payload extends ComponentPayload>(
           if (name === 'variant') {
             if (!(resolver as any)[SYSTEM_MARKS.variant]) {
               resolver = withVariantColors(resolver, opts);
+            }
+          } else if (name === 'size') {
+            if (!(resolver as any)[SYSTEM_MARKS.size]) {
+              resolver = withSizeVars(resolver, opts);
             }
           }
         }

@@ -51,6 +51,11 @@ export type {
   BreakpointValue,
 } from "./core/theme";
 
+// Size System (Stage 5.2)
+export type { PrismuiSize, SizeScale, PrismuiSizeTokens } from "./core/size";
+export { defaultSizeTokens, withSizeVars, SIZE_CSS_VARS } from "./core/size";
+export type { WithSizeVarsOptions, SizeCssVarKey, SizeCssVarName } from "./core/size";
+
 // Variant System (Stage 4)
 export type { Variant, ThemeColor } from "./core/variant";
 export { VARIANTS, THEME_COLORS } from "./core/variant";

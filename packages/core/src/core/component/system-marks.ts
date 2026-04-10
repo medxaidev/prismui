@@ -14,9 +14,10 @@
  */
 
 export const WITH_VARIANT_MARK = Symbol('withVariantColors');
+export const WITH_SIZE_MARK = Symbol('withSizeVars');
 
 export const SYSTEM_MARKS = {
   variant: WITH_VARIANT_MARK,
-  // future: size: WITH_SIZE_MARK,
+  size: WITH_SIZE_MARK,
   // future: state: WITH_STATE_MARK,
 } as const;

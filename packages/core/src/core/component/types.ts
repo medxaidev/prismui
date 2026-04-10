@@ -4,10 +4,10 @@ import type { Classes, VarsResolver } from '../styles';
 /**
  * System identifiers for factory's declarative systems injection.
  *
- * Each system corresponds to a middleware (e.g. 'variant' → withVariantColors).
- * Future: 'size' | 'state'
+ * Each system corresponds to a middleware (e.g. 'variant' → withVariantColors, 'size' → withSizeVars).
+ * Future: 'state'
  */
-export type ComponentSystem = 'variant';
+export type ComponentSystem = 'variant' | 'size';
 
 /**
  * A single system entry in the factory payload.

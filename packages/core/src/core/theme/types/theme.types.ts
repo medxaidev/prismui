@@ -22,6 +22,7 @@ import type {
 } from "./token-scale.types";
 import type { PrismUIColorFamilies } from "./color.types";
 import type { PrismUIPalette } from "./palette.types";
+import type { PrismuiSizeTokens } from "../../size/types";
 
 /**
  * CSS Length
@@ -74,6 +75,7 @@ export interface PrismUITheme {
   radius: Record<RadiusScale, CSSLength>;
   shadows: Record<ShadowScale, string>;
   breakpoints: Record<BreakpointScale, number>;
+  size: PrismuiSizeTokens;
   scale: number;
 }
 

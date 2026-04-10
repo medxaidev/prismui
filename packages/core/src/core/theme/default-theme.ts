@@ -1,6 +1,7 @@
 import type { PrismUITheme } from './types';
 import { defaultColorFamilies } from './default-colors';
 import { defaultLightPalette, defaultDarkPalette } from './default-palette';
+import { defaultSizeTokens } from '../size/default-size-tokens';
 
 /**
  * Default PrismUI Theme
@@ -86,6 +87,9 @@ export const defaultTheme: PrismUITheme = {
     lg: 1200,
     xl: 1400,
   },
+
+  // ========== Size System ==========
+  size: defaultSizeTokens,
 
   // ========== Global Config ==========
   scale: 1,

@@ -2,7 +2,9 @@ import { describe, it, expect, vi } from 'vitest';
 import * as React from 'react';
 import { factory } from './factory';
 import { withVariantColors, VARIANT_CSS_VARS } from '../variant/with-variant-colors';
-import { WITH_VARIANT_MARK } from './system-marks';
+import { withSizeVars, SIZE_CSS_VARS } from '../size/with-size-vars';
+import { WITH_VARIANT_MARK, WITH_SIZE_MARK } from './system-marks';
+import { defaultSizeTokens } from '../size/default-size-tokens';
 import type { ComponentPayload } from './types';
 import type { VarsResolver } from '../styles/types';
 import type { PrismUITheme } from '../theme/types';
@@ -386,6 +388,63 @@ describe('factory', () => {
         },
       });
       expect(Comp.displayName).toBe('SystemsSmoke');
+    });
+  });
+
+  describe("systems — size injection (pure resolver tests)", () => {
+    const SIZE_THEME = { size: defaultSizeTokens } as unknown as PrismUITheme;
+    const base: VarsResolver<any> = () => ({ '--btn-extra': 'value' });
+
+    it("systems: ['size'] injects --prismui-size-height and --prismui-size-padding-x", () => {
+      const resolver = withSizeVars(base);
+      const result = resolver({ size: 'lg' }, SIZE_THEME);
+      expect(result[SIZE_CSS_VARS.height]).toBe('48px');
+      expect(result[SIZE_CSS_VARS.paddingX]).toBe('20px');
+    });
+
+    it('base vars are preserved alongside size vars', () => {
+      const resolver = withSizeVars(base);
+      const result = resolver({ size: 'md' }, SIZE_THEME);
+      expect(result['--btn-extra']).toBe('value');
+    });
+
+    it("systems: ['variant', 'size'] both inject their respective vars", () => {
+      const variantResolved = withVariantColors(base);
+      const sizeResolved = withSizeVars(variantResolved);
+      const result = sizeResolved({ variant: 'filled', color: 'primary', size: 'md' }, SIZE_THEME);
+      expect(result[VARIANT_CSS_VARS.bg]).toBeDefined();
+      expect(result[SIZE_CSS_VARS.height]).toBe('40px');
+      expect(result[SIZE_CSS_VARS.paddingX]).toBe('16px');
+    });
+
+    it('double-wrap detection: WITH_SIZE_MARK prevents second size wrap', () => {
+      const wrapped = withSizeVars(base);
+      const alreadyMarked = !!(wrapped as any)[WITH_SIZE_MARK];
+      expect(alreadyMarked).toBe(true);
+    });
+
+    it('WITH_SIZE_MARK does not affect WITH_VARIANT_MARK (independent marks)', () => {
+      const variantWrapped = withVariantColors(base);
+      const sizeWrapped = withSizeVars(base);
+      expect((variantWrapped as any)[WITH_VARIANT_MARK]).toBe(true);
+      expect((variantWrapped as any)[WITH_SIZE_MARK]).toBeUndefined();
+      expect((sizeWrapped as any)[WITH_SIZE_MARK]).toBe(true);
+      expect((sizeWrapped as any)[WITH_VARIANT_MARK]).toBeUndefined();
+    });
+
+    it("factory creates component successfully with systems: ['size'] (smoke test)", () => {
+      const Comp = factory({
+        displayName: 'SizeSmoke',
+        defaultElement: 'button',
+        componentPropKeys: ['size'] as const,
+        systems: ['size'],
+        styling: {
+          structure: { stylesNames: ['root'] as const },
+          resources: { classes: { root: 'root' } },
+          logic: { varsResolver: () => ({}) },
+        },
+      });
+      expect(Comp.displayName).toBe('SizeSmoke');
     });
   });
 });
