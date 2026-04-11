@@ -1,24 +1,16 @@
 import { factory, ensureClasses } from '../../core/component';
 import type { VarsResolver, StylesOverride } from '../../core/styles';
 import { withVariantColors } from '../../core/variant';
-import type { Variant, ThemeColor } from '../../core/variant';
+import type { PolymorphicSystemProps } from '../../core/props';
 import classes from './Button.module.css';
 
 // 1. 定义 StylesNames
 export type ButtonStylesNames = 'root' | 'inner' | 'label';
 
-// 2. 定义组件专属 Props
-export interface ButtonOwnProps {
+// 2. 定义组件专属 Props（系统级 props 来自 Props Contract）
+export interface ButtonOwnProps extends PolymorphicSystemProps {
   // Content
   children?: React.ReactNode;
-
-  // Variants
-  variant?: Variant;
-  size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl';
-  color?: ThemeColor;
-
-  // State
-  disabled?: boolean;
 }
 
 // 3. 完整 Props = 组件 Props + 系统级 Styling Overrides

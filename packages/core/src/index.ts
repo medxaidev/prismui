@@ -51,6 +51,9 @@ export type {
   BreakpointValue,
 } from "./core/theme";
 
+// Props Contract (Stage 5.3)
+export type { VariantProps, SizeProps, DisabledProps, PolymorphicSystemProps } from "./core/props";
+
 // Size System (Stage 5.2)
 export type { PrismuiSize, SizeScale, PrismuiSizeTokens } from "./core/size";
 export { defaultSizeTokens, withSizeVars, SIZE_CSS_VARS } from "./core/size";
