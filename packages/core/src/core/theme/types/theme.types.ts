@@ -23,6 +23,7 @@ import type {
 import type { PrismUIColorFamilies } from "./color.types";
 import type { PrismUIPalette } from "./palette.types";
 import type { PrismuiSizeTokens } from "../../size/types";
+import type { PrismuiStateTokens } from "../../state/types";
 
 /**
  * CSS Length
@@ -76,6 +77,7 @@ export interface PrismUITheme {
   shadows: Record<ShadowScale, string>;
   breakpoints: Record<BreakpointScale, number>;
   size: PrismuiSizeTokens;
+  state: PrismuiStateTokens;
   scale: number;
 }
 

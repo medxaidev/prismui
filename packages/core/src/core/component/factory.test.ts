@@ -3,8 +3,10 @@ import * as React from 'react';
 import { factory } from './factory';
 import { withVariantColors, VARIANT_CSS_VARS } from '../variant/with-variant-colors';
 import { withSizeVars, SIZE_CSS_VARS } from '../size/with-size-vars';
-import { WITH_VARIANT_MARK, WITH_SIZE_MARK } from './system-marks';
+import { withStateVars, STATE_CSS_VARS } from '../state/with-state-vars';
+import { WITH_VARIANT_MARK, WITH_SIZE_MARK, WITH_STATE_MARK } from './system-marks';
 import { defaultSizeTokens } from '../size/default-size-tokens';
+import { defaultStateTokens } from '../state/default-state-tokens';
 import type { ComponentPayload } from './types';
 import type { VarsResolver } from '../styles/types';
 import type { PrismUITheme } from '../theme/types';
@@ -445,6 +447,70 @@ describe('factory', () => {
         },
       });
       expect(Comp.displayName).toBe('SizeSmoke');
+    });
+  });
+
+  describe("systems — state injection (pure resolver tests)", () => {
+    const STATE_THEME = { state: defaultStateTokens } as unknown as PrismUITheme;
+    const base: VarsResolver<any> = () => ({ '--btn-extra': 'value' });
+
+    it("systems: ['state'] injects --prismui-state-opacity-disabled and --prismui-state-cursor-disabled", () => {
+      const resolver = withStateVars(base);
+      const result = resolver({}, STATE_THEME);
+      expect(result[STATE_CSS_VARS.opacityDisabled]).toBe(0.5);
+      expect(result[STATE_CSS_VARS.cursorDisabled]).toBe('not-allowed');
+    });
+
+    it("state resolver preserves baseVars", () => {
+      const resolver = withStateVars(base);
+      const result = resolver({}, STATE_THEME);
+      expect(result['--btn-extra']).toBe('value');
+    });
+
+    it("WITH_STATE_MARK is stamped on withStateVars output", () => {
+      const resolver = withStateVars(base);
+      expect((resolver as any)[WITH_STATE_MARK]).toBe(true);
+    });
+
+    it("double-wrap prevention: WITH_STATE_MARK prevents second wrapping", () => {
+      const alreadyWrapped = withStateVars(base);
+      const SIZE_THEME = { size: defaultSizeTokens, state: defaultStateTokens } as unknown as PrismUITheme;
+      const result1 = alreadyWrapped({}, SIZE_THEME);
+      const wrappedAgain = withStateVars(alreadyWrapped);
+      const result2 = wrappedAgain({}, SIZE_THEME);
+      expect(result1[STATE_CSS_VARS.opacityDisabled]).toBe(result2[STATE_CSS_VARS.opacityDisabled]);
+    });
+
+    it("systems: ['variant', 'size', 'state'] — all three inject correctly", () => {
+      const allThree: VarsResolver<any> = () => ({});
+      const variantWrapped = withVariantColors(allThree);
+      const sizeWrapped = withSizeVars(variantWrapped);
+      const stateWrapped = withStateVars(sizeWrapped);
+      const FULL_THEME = {
+        ...DUMMY_THEME,
+        size: defaultSizeTokens,
+        state: defaultStateTokens,
+      } as PrismUITheme;
+      const result = stateWrapped({ size: 'md', variant: 'filled', color: 'primary' }, FULL_THEME);
+      expect(result).toHaveProperty(STATE_CSS_VARS.opacityDisabled);
+      expect(result).toHaveProperty(STATE_CSS_VARS.cursorDisabled);
+      expect(result).toHaveProperty(SIZE_CSS_VARS.height);
+      expect(result).toHaveProperty(VARIANT_CSS_VARS.bg);
+    });
+
+    it("factory creates component successfully with systems: ['state'] (smoke test)", () => {
+      const Comp = factory({
+        displayName: 'StateSmoke',
+        defaultElement: 'button',
+        componentPropKeys: ['disabled'] as const,
+        systems: ['state'],
+        styling: {
+          structure: { stylesNames: ['root'] as const },
+          resources: { classes: { root: 'root' } },
+          logic: { varsResolver: () => ({}) },
+        },
+      });
+      expect(Comp.displayName).toBe('StateSmoke');
     });
   });
 });

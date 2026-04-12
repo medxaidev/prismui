@@ -7,7 +7,7 @@ import type { Classes, VarsResolver } from '../styles';
  * Each system corresponds to a middleware (e.g. 'variant' → withVariantColors, 'size' → withSizeVars).
  * Future: 'state'
  */
-export type ComponentSystem = 'variant' | 'size';
+export type ComponentSystem = 'variant' | 'size' | 'state';
 
 /**
  * A single system entry in the factory payload.

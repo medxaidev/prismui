@@ -41,8 +41,8 @@
 }
 
 .root:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
+  opacity: var(--prismui-state-opacity-disabled);
+  cursor: var(--prismui-state-cursor-disabled);
 }
 
 .inner {

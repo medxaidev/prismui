@@ -7,6 +7,7 @@ import {
 import { SYSTEM_MARKS } from './system-marks';
 import { withVariantColors } from '../variant/with-variant-colors';
 import { withSizeVars } from '../size/with-size-vars';
+import { withStateVars } from '../state/with-state-vars';
 import type { ComponentPayload } from './types';
 
 /**
@@ -162,6 +163,10 @@ export function factory<Payload extends ComponentPayload>(
           } else if (name === 'size') {
             if (!(resolver as any)[SYSTEM_MARKS.size]) {
               resolver = withSizeVars(resolver, opts);
+            }
+          } else if (name === 'state') {
+            if (!(resolver as any)[SYSTEM_MARKS.state]) {
+              resolver = withStateVars(resolver, opts);
             }
           }
         }

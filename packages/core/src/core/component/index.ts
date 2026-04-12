@@ -29,4 +29,4 @@ export { ensureClasses } from './ensure-classes';
 export type { ComponentPayload, StylingProps, ComponentProps, ComponentSystem, ComponentSystemEntry } from './types';
 
 // System marks (for double-wrap detection)
-export { WITH_VARIANT_MARK, WITH_SIZE_MARK, SYSTEM_MARKS } from './system-marks';
+export { WITH_VARIANT_MARK, WITH_SIZE_MARK, WITH_STATE_MARK, SYSTEM_MARKS } from './system-marks';

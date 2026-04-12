@@ -51,6 +51,11 @@ export type {
   BreakpointValue,
 } from "./core/theme";
 
+// State System (Stage 5.4)
+export type { PrismuiStateTokens } from "./core/state";
+export { defaultStateTokens, withStateVars, STATE_CSS_VARS } from "./core/state";
+export type { WithStateVarsOptions, StateCssVarKey, StateCssVarName } from "./core/state";
+
 // Props Contract (Stage 5.3)
 export type { VariantProps, SizeProps, DisabledProps, PolymorphicSystemProps } from "./core/props";
 
