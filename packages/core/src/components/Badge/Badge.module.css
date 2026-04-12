@@ -1,0 +1,37 @@
+.root {
+  /* ===== Variant System ===== */
+  background: var(--prismui-variant-bg);
+  color:      var(--prismui-variant-fg);
+  border:     1px solid var(--prismui-variant-border);
+
+  /* ===== Size System ===== */
+  /* min-height (not height) — Badge is inline, content may wrap */
+  min-height:    var(--prismui-size-height);
+  padding-left:  var(--prismui-size-padding-x);
+  padding-right: var(--prismui-size-padding-x);
+
+  /* ===== Layout ===== */
+  display:         inline-flex;
+  align-items:     center;
+  justify-content: center;
+
+  /* ===== Typography (component-private, not covered by size system) ===== */
+  font-size:   0.75em;
+  font-weight: 600;
+  line-height: 1;
+  white-space: nowrap;
+  font-family: inherit;
+
+  /* ===== Shape ===== */
+  border-radius: 4px;
+
+  /* ===== Reset ===== */
+  text-decoration: none;
+  user-select:     none;
+}
+
+/* State System */
+.root:disabled {
+  opacity: var(--prismui-state-opacity-disabled);
+  cursor:  var(--prismui-state-cursor-disabled);
+}

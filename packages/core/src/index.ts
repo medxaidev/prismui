@@ -71,3 +71,9 @@ export { variantColorResolver, VARIANT_TO_ROLE } from "./core/variant";
 export type { VariantColorResolverInput, VariantColorOutput } from "./core/variant";
 export { withVariantColors, VARIANT_CSS_VARS } from "./core/variant";
 export type { VariantCssVarKey, VariantCssVarName, WithVariantColorsOptions } from "./core/variant";
+
+// Components (Stage 6)
+export { Badge } from "./components/Badge";
+export type { BadgeProps, BadgeStylesNames, BadgeOwnProps } from "./components/Badge";
+export { Button } from "./components/Button";
+export type { ButtonProps } from "./components/Button";

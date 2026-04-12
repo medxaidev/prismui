@@ -8,6 +8,7 @@ import { SYSTEM_MARKS } from './system-marks';
 import { withVariantColors } from '../variant/with-variant-colors';
 import { withSizeVars } from '../size/with-size-vars';
 import { withStateVars } from '../state/with-state-vars';
+import { useThemeOptional } from '../theme/context/theme.context';
 import type { ComponentPayload } from './types';
 
 /**
@@ -178,10 +179,13 @@ export function factory<Payload extends ComponentPayload>(
 
       // CRITICAL: Create Styling Engine Instance
       // Pass componentPropKeys for varsResolver isolation
+      // eslint-disable-next-line react-hooks/rules-of-hooks
+      const theme = useThemeOptional();
       const styles = createStylingContext(
         resolvedStyling,
         props,
         payload.componentPropKeys as any,
+        theme,
       );
 
       // Custom render (multi-slot support)
