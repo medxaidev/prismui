@@ -20,7 +20,11 @@ export {
   resolveColorRef,
   generateCSSVariables,
   applyDiffCSSVariables,
+  // Theme Override Model (Stage 7.2)
+  createTheme,
+  deepMerge,
 } from "./core/theme";
+export type { DeepPartial } from "./core/theme";
 export type { PrismUIProviderProps } from "./core/theme";
 export type {
   CSSLength,
