@@ -20,7 +20,7 @@ import type {
   ShadowScale,
   BreakpointScale,
 } from "./token-scale.types";
-import type { PrismUIColorFamilies } from "./color.types";
+import type { DefaultColorFamily, PrismUIColorFamilies } from "./color.types";
 import type { PrismUIPalette } from "./palette.types";
 import type { PrismuiSizeTokens } from "../../size/types";
 import type { PrismuiStateTokens } from "../../state/types";
@@ -58,12 +58,16 @@ export type TokenRef = string;
 
 /**
  * PrismUI Theme
+ *
+ * Generic parameter C: the union of all color family names.
+ * Defaults to DefaultColorFamily (built-in families only).
+ * Extend with: PrismUITheme<DefaultColorFamily | 'brand'>
  */
-export interface PrismUITheme {
-  colors: PrismUIColorFamilies;
+export interface PrismUITheme<C extends string = DefaultColorFamily> {
+  colors: PrismUIColorFamilies<C>;
   palette: {
-    light: PrismUIPalette;
-    dark: PrismUIPalette;
+    light: PrismUIPalette<C>;
+    dark: PrismUIPalette<C>;
   };
   typography: {
     fontFamily: string;
@@ -79,5 +83,11 @@ export interface PrismUITheme {
   size: PrismuiSizeTokens;
   state: PrismuiStateTokens;
   scale: number;
+  /**
+   * Custom CSS Variables injection (escape hatch).
+   * Keys starting with "--prismui-" will trigger a DEV warning.
+   * Use your own prefix (e.g. "--app-", "--my-") for safe custom tokens.
+   */
+  customTokens?: Record<string, string>;
 }
 

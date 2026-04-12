@@ -22,7 +22,7 @@ import type {
  * resolveColorRef("colors.blue.500", theme) → "#0C68E9"
  * resolveColorRef("colors.invalid.999", theme) → "transparent" + console.warn
  */
-export function resolveColorRef(ref: ColorRef, theme: PrismUITheme): string {
+export function resolveColorRef(ref: ColorRef | string, theme: PrismUITheme<string>): string {
   const parts = ref.split(".");
   // format: "colors.{family}.{shade}"
   const family = parts[1] as DefaultColorFamily;
@@ -54,9 +54,9 @@ export function resolveColorRef(ref: ColorRef, theme: PrismUITheme): string {
  * Cost: zero. Benefit: unlocks Stage 5 extensibility without API change.
  */
 export function selectPalette(
-  theme: PrismUITheme,
+  theme: PrismUITheme<string>,
   colorScheme: "light" | "dark",
-): PrismUIPalette {
+): PrismUIPalette<string> {
   return theme.palette[colorScheme];
 }
 
@@ -100,11 +100,11 @@ export function selectPalette(
  * Reserved (Stage 4): --prismui-component-{name}-{property}
  */
 export function generateCSSVariables(
-  theme: PrismUITheme,
+  theme: PrismUITheme<string>,
   colorScheme: "light" | "dark" = "light",
 ): Record<string, string> {
   const vars: Record<string, string> = {};
-  const palette: PrismUIPalette = selectPalette(theme, colorScheme);
+  const palette: PrismUIPalette<string> = selectPalette(theme, colorScheme);
 
   // ── Semantic Palette ─────────────────────────────────────────────────────
   const semanticNames = [
@@ -169,6 +169,32 @@ export function generateCSSVariables(
   }
   for (const [scale, value] of Object.entries(theme.typography.lineHeight)) {
     vars[`--prismui-line-height-${scale}`] = String(value);
+  }
+
+  // ── Color Family Shades ───────────────────────────────────────────────────
+  // Injects all color families as raw shade CSS Variables.
+  // Note: naming spaces do NOT collide:
+  //   --prismui-color-blue-500         ← color family shade (raw value)
+  //   --prismui-color-primary-high-bg  ← semantic palette role (resolved ColorRef)
+  for (const [family, shades] of Object.entries(theme.colors)) {
+    for (const [shade, value] of Object.entries(shades as Record<string, string>)) {
+      vars[`--prismui-color-${family}-${shade}`] = value;
+    }
+  }
+
+  // ── Custom Tokens ─────────────────────────────────────────────────────────
+  // Escape hatch: inject user-defined CSS Variables.
+  // DEV warning when key uses --prismui- prefix (system-reserved namespace).
+  if (theme.customTokens) {
+    for (const [key, value] of Object.entries(theme.customTokens)) {
+      if (process.env.NODE_ENV !== "production" && key.startsWith("--prismui-")) {
+        console.warn(
+          `[PrismUI] customTokens key "${key}" starts with "--prismui-" — ` +
+          `this may override system variables. Use a custom prefix (e.g. "--app-").`,
+        );
+      }
+      vars[key] = value;
+    }
   }
 
   return vars;

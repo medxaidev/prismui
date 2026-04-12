@@ -12,7 +12,7 @@ import type { PrismUITheme } from "../types";
  *
  * null forces the check in useTheme() to actually catch the error.
  */
-export const ThemeContext = React.createContext<PrismUITheme | null>(null);
+export const ThemeContext = React.createContext<PrismUITheme<string> | null>(null);
 
 /**
  * useTheme
@@ -21,12 +21,12 @@ export const ThemeContext = React.createContext<PrismUITheme | null>(null);
  * MUST be used within <PrismUIProvider>.
  * Throws if called outside Provider (null default enforces this).
  */
-export function useTheme(): PrismUITheme {
+export function useTheme(): PrismUITheme<string> {
   const theme = React.useContext(ThemeContext);
   if (!theme) {
     throw new Error(
       "[PrismUI] useTheme must be used within <PrismUIProvider>. " +
-        "Wrap your application with <PrismUIProvider theme={theme}>.",
+      "Wrap your application with <PrismUIProvider theme={theme}>.",
     );
   }
   return theme;
@@ -45,6 +45,6 @@ export function useTheme(): PrismUITheme {
  * - Avoids forcing every component to wrap with Provider in tests
  * - The public API (useTheme) still enforces Provider requirement
  */
-export function useThemeOptional(): PrismUITheme {
+export function useThemeOptional(): PrismUITheme<string> {
   return React.useContext(ThemeContext) ?? defaultTheme;
 }

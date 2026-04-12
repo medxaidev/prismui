@@ -26,7 +26,7 @@ function OptionalThemeReadout() {
 
 describe("useTheme", () => {
   it("throws when used outside PrismUIProvider", () => {
-    const spy = vi.spyOn(console, "error").mockImplementation(() => {});
+    const spy = vi.spyOn(console, "error").mockImplementation(() => { });
     expect(() => render(<ThemeReadout />)).toThrow(
       "[PrismUI] useTheme must be used within <PrismUIProvider>",
     );
@@ -171,5 +171,137 @@ describe("PrismUIProvider — defaults", () => {
     expect(
       document.documentElement.style.getPropertyValue("--prismui-color-primary"),
     ).toBe("#0C68E9");
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────
+// Token Extension — color family shades
+// ─────────────────────────────────────────────────────────────────
+
+describe("Token Extension — color family shades", () => {
+  it("injects default color family shades as CSS variables", () => {
+    render(
+      <PrismUIProvider theme={defaultTheme} colorScheme="light">
+        <div />
+      </PrismUIProvider>,
+    );
+    // blue[500] from defaultColorFamilies
+    expect(
+      document.documentElement.style.getPropertyValue("--prismui-color-blue-500"),
+    ).toBe(defaultTheme.colors.blue[500]);
+  });
+
+  it("shade vars and semantic role vars coexist without conflict", () => {
+    render(
+      <PrismUIProvider theme={defaultTheme} colorScheme="light">
+        <div />
+      </PrismUIProvider>,
+    );
+    const shadeVar = document.documentElement.style.getPropertyValue("--prismui-color-blue-500");
+    const roleVar = document.documentElement.style.getPropertyValue("--prismui-color-primary-high-bg");
+    // Both exist and are different CSS variables
+    expect(shadeVar).toBeTruthy();
+    expect(roleVar).toBeTruthy();
+    // shade var is raw hex, role var is also resolved hex — but different names
+    expect(shadeVar).not.toBe("");
+    expect(roleVar).not.toBe("");
+  });
+
+  it("injects custom color family shades", () => {
+    type MyColors = "blue" | "cyan" | "green" | "yellow" | "violet" | "red" | "indigo" | "purple" | "pink" | "orange" | "teal" | "gray" | "brand";
+    const brandShade500 = "#2563EB";
+    const themeWithBrand: PrismUITheme<MyColors> = {
+      ...defaultTheme,
+      colors: {
+        ...defaultTheme.colors,
+        brand: {
+          50: "#eff6ff",
+          100: "#dbeafe",
+          200: "#bfdbfe",
+          300: "#93c5fd",
+          400: "#60a5fa",
+          500: brandShade500,
+          600: "#2563EB",
+          700: "#1d4ed8",
+          800: "#1e40af",
+          900: "#1e3a8a",
+        },
+      },
+    };
+    render(
+      <PrismUIProvider theme={themeWithBrand} colorScheme="light">
+        <div />
+      </PrismUIProvider>,
+    );
+    expect(
+      document.documentElement.style.getPropertyValue("--prismui-color-brand-500"),
+    ).toBe(brandShade500);
+    expect(
+      document.documentElement.style.getPropertyValue("--prismui-color-brand-50"),
+    ).toBe("#eff6ff");
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────
+// Token Extension — customTokens
+// ─────────────────────────────────────────────────────────────────
+
+describe("Token Extension — customTokens", () => {
+  it("injects customTokens as CSS variables", () => {
+    const theme: PrismUITheme = {
+      ...defaultTheme,
+      customTokens: {
+        "--app-sidebar-width": "240px",
+        "--app-header-height": "64px",
+      },
+    };
+    render(
+      <PrismUIProvider theme={theme} colorScheme="light">
+        <div />
+      </PrismUIProvider>,
+    );
+    expect(
+      document.documentElement.style.getPropertyValue("--app-sidebar-width"),
+    ).toBe("240px");
+    expect(
+      document.documentElement.style.getPropertyValue("--app-header-height"),
+    ).toBe("64px");
+  });
+
+  it("DEV: warns when customToken key starts with --prismui-", () => {
+    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => { });
+    const theme: PrismUITheme = {
+      ...defaultTheme,
+      customTokens: { "--prismui-spacing-md": "99px" },
+    };
+    render(
+      <PrismUIProvider theme={theme} colorScheme="light">
+        <div />
+      </PrismUIProvider>,
+    );
+    expect(warnSpy).toHaveBeenCalledWith(
+      expect.stringContaining("--prismui-spacing-md"),
+    );
+    expect(warnSpy).toHaveBeenCalledWith(
+      expect.stringContaining("--prismui-"),
+    );
+    warnSpy.mockRestore();
+  });
+
+  it("still injects value even when --prismui- prefix triggers warn", () => {
+    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => { });
+    const theme: PrismUITheme = {
+      ...defaultTheme,
+      customTokens: { "--prismui-spacing-md": "99px" },
+    };
+    render(
+      <PrismUIProvider theme={theme} colorScheme="light">
+        <div />
+      </PrismUIProvider>,
+    );
+    expect(
+      document.documentElement.style.getPropertyValue("--prismui-spacing-md"),
+    ).toBe("99px");
+    warnSpy.mockRestore();
   });
 });

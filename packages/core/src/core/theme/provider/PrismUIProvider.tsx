@@ -10,9 +10,10 @@ import type { PrismUITheme } from "../types";
 export interface PrismUIProviderProps {
   /**
    * The theme to inject. Must be a complete PrismUITheme (no merge).
+   * Accepts extended themes: PrismUITheme<DefaultColorFamily | 'brand'>.
    * Defaults to defaultTheme.
    */
-  theme?: PrismUITheme;
+  theme?: PrismUITheme<string>;
 
   /**
    * Which palette set to use for CSS Variables generation.
@@ -55,7 +56,7 @@ export interface PrismUIProviderProps {
  * - Default target: document.documentElement (:root) for global CSS Variable scope
  */
 export function PrismUIProvider({
-  theme = defaultTheme,
+  theme = defaultTheme as PrismUITheme<string>,
   colorScheme = "light",
   target,
   children,
