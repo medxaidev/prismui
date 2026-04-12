@@ -1,6 +1,5 @@
 import { factory, ensureClasses } from '../../core/component';
 import type { VarsResolver, StylesOverride } from '../../core/styles';
-import { withVariantColors } from '../../core/variant';
 import type { PolymorphicSystemProps } from '../../core/props';
 import classes from './Button.module.css';
 
@@ -16,40 +15,31 @@ export interface ButtonOwnProps extends PolymorphicSystemProps {
 // 3. 完整 Props = 组件 Props + 系统级 Styling Overrides
 export type ButtonProps = ButtonOwnProps & StylesOverride<ButtonStylesNames>;
 
-// 4. 定义 VarsResolver (size only — color delegated to withVariantColors)
-const sizeVarsResolver: VarsResolver<ButtonOwnProps> = (props) => {
-  const size = props.size ?? 'md';
-
-  const sizeMap = {
-    xs: { height: '24px', paddingX: '8px', fontSize: '12px' },
-    sm: { height: '32px', paddingX: '12px', fontSize: '14px' },
-    md: { height: '40px', paddingX: '16px', fontSize: '16px' },
-    lg: { height: '48px', paddingX: '20px', fontSize: '18px' },
-    xl: { height: '56px', paddingX: '24px', fontSize: '20px' },
-  };
-
-  const sizeVars = sizeMap[size];
-
-  return {
-    '--button-height': sizeVars.height,
-    '--button-padding-x': sizeVars.paddingX,
-    '--button-font-size': sizeVars.fontSize,
-  };
+// 4. 定义 VarsResolver（只处理私有变量，桥接系统 CSS var）
+//    --button-height / --button-padding-x 桥接自 Size System，保持向后兼容
+//    --button-font-size 是组件私有（Size System 未覆盖 font-size）
+const fontSizeMap: Record<string, string> = {
+  xs: '12px', sm: '14px', md: '16px', lg: '18px', xl: '20px',
 };
 
-const varsResolver = withVariantColors(sizeVarsResolver);
+const varsResolver: VarsResolver<ButtonOwnProps> = (props) => ({
+  '--button-height': 'var(--prismui-size-height)',
+  '--button-padding-x': 'var(--prismui-size-padding-x)',
+  '--button-font-size': fontSizeMap[props.size ?? 'md'],
+});
 
 const stylesNames = ['root', 'inner', 'label'] as const;
 
 // 5. 验证 CSS Modules 类型安全（Names 从 stylesNames 自动推导，无需手动写泛型）
 const validatedClasses = ensureClasses(stylesNames, classes);
 
-// 6. 使用 Factory (核心组件 MUST 使用 factory，NOT useStyles)
+// 6. 使用 Factory（声明式三轴系统注入）
 export const Button = factory(
   {
     displayName: 'Button',
     defaultElement: 'button',
-    componentPropKeys: ['size', 'variant', 'color'] as const,
+    componentPropKeys: ['size', 'variant', 'color', 'disabled'] as const,
+    systems: ['variant', 'size', 'state'],
     styling: {
       structure: {
         stylesNames,
@@ -62,8 +52,8 @@ export const Button = factory(
       },
     },
   },
-  ({ Element, ref, domProps, styles }) => (
-    <Element ref={ref} {...styles.getRootProps()} {...domProps}>
+  ({ Element, ref, domProps, componentProps, styles }) => (
+    <Element ref={ref} {...styles.getRootProps()} {...domProps} disabled={componentProps.disabled}>
       <span {...styles.getStyles('inner')}>
         <span {...styles.getStyles('label')}>{domProps.children}</span>
       </span>

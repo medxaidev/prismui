@@ -46,31 +46,36 @@ describe('Button', () => {
     it('renders xs size', () => {
       const { container } = render(<Button size="xs">XS</Button>);
       const button = container.querySelector('button');
-      expect(button).toHaveStyle({ '--button-height': '24px' });
+      expect(button).toHaveStyle({ '--button-height': 'var(--prismui-size-height)' });
+      expect(button).toHaveStyle({ '--prismui-size-height': '24px' });
     });
 
     it('renders sm size', () => {
       const { container } = render(<Button size="sm">SM</Button>);
       const button = container.querySelector('button');
-      expect(button).toHaveStyle({ '--button-height': '32px' });
+      expect(button).toHaveStyle({ '--button-height': 'var(--prismui-size-height)' });
+      expect(button).toHaveStyle({ '--prismui-size-height': '32px' });
     });
 
     it('renders md size (default)', () => {
       const { container } = render(<Button>MD</Button>);
       const button = container.querySelector('button');
-      expect(button).toHaveStyle({ '--button-height': '40px' });
+      expect(button).toHaveStyle({ '--button-height': 'var(--prismui-size-height)' });
+      expect(button).toHaveStyle({ '--prismui-size-height': '40px' });
     });
 
     it('renders lg size', () => {
       const { container } = render(<Button size="lg">LG</Button>);
       const button = container.querySelector('button');
-      expect(button).toHaveStyle({ '--button-height': '48px' });
+      expect(button).toHaveStyle({ '--button-height': 'var(--prismui-size-height)' });
+      expect(button).toHaveStyle({ '--prismui-size-height': '48px' });
     });
 
     it('renders xl size', () => {
       const { container } = render(<Button size="xl">XL</Button>);
       const button = container.querySelector('button');
-      expect(button).toHaveStyle({ '--button-height': '56px' });
+      expect(button).toHaveStyle({ '--button-height': 'var(--prismui-size-height)' });
+      expect(button).toHaveStyle({ '--prismui-size-height': '56px' });
     });
   });
 
@@ -226,6 +231,46 @@ describe('Button', () => {
   describe('Disabled State', () => {
     it('applies disabled attribute', () => {
       const { container } = render(<Button disabled>Disabled</Button>);
+      const button = container.querySelector('button');
+      expect(button).toBeDisabled();
+    });
+  });
+
+  describe('State System', () => {
+    it('injects --prismui-state-opacity-disabled', () => {
+      const { container } = render(<Button>State</Button>);
+      const button = container.querySelector('button');
+      expect(button).toHaveStyle({ '--prismui-state-opacity-disabled': '0.5' });
+    });
+
+    it('injects --prismui-state-cursor-disabled', () => {
+      const { container } = render(<Button>State</Button>);
+      const button = container.querySelector('button');
+      expect(button).toHaveStyle({ '--prismui-state-cursor-disabled': 'not-allowed' });
+    });
+  });
+
+  describe('Blueprint Checklist — componentPropKeys leak prevention', () => {
+    it('variant does NOT appear as DOM attribute', () => {
+      const { container } = render(<Button variant="outline">Button</Button>);
+      const button = container.querySelector('button');
+      expect(button).not.toHaveAttribute('variant');
+    });
+
+    it('color does NOT appear as DOM attribute', () => {
+      const { container } = render(<Button color="error">Button</Button>);
+      const button = container.querySelector('button');
+      expect(button).not.toHaveAttribute('color');
+    });
+
+    it('size does NOT appear as DOM attribute', () => {
+      const { container } = render(<Button size="lg">Button</Button>);
+      const button = container.querySelector('button');
+      expect(button).not.toHaveAttribute('size');
+    });
+
+    it('disabled IS present on button DOM (form element, explicit pass-through)', () => {
+      const { container } = render(<Button disabled>Button</Button>);
       const button = container.querySelector('button');
       expect(button).toBeDisabled();
     });
