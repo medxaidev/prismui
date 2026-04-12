@@ -1,6 +1,18 @@
 export { defaultTheme } from "./default-theme";
 export { createTheme, deepMerge } from "./create-theme";
 export type { DeepPartial } from "./create-theme";
+export {
+  ColorSchemeContext,
+  ColorSchemeProvider,
+  useColorScheme,
+  useColorSchemeOptional,
+} from "./color-scheme.context";
+export type {
+  ColorScheme,
+  ColorSchemeStrategy,
+  ColorSchemeContextValue,
+  ColorSchemeProviderProps,
+} from "./color-scheme.context";
 export { defaultColorFamilies } from "./default-colors";
 export { defaultLightPalette, defaultDarkPalette } from "./default-palette";
 export { ThemeContext, useTheme, useThemeOptional } from "./context";

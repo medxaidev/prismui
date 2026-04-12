@@ -62,13 +62,17 @@ export type TokenRef = string;
  * Generic parameter C: the union of all color family names.
  * Defaults to DefaultColorFamily (built-in families only).
  * Extend with: PrismUITheme<DefaultColorFamily | 'brand'>
+ *
+ * Generic parameter S: the union of all color scheme (palette) keys.
+ * Defaults to 'light' | 'dark'.
+ * Extend with: PrismUITheme<DefaultColorFamily, 'light' | 'dark' | 'dim'>
  */
-export interface PrismUITheme<C extends string = DefaultColorFamily> {
+export interface PrismUITheme<
+  C extends string = DefaultColorFamily,
+  S extends string = 'light' | 'dark',
+> {
   colors: PrismUIColorFamilies<C>;
-  palette: {
-    light: PrismUIPalette<C>;
-    dark: PrismUIPalette<C>;
-  };
+  palette: Record<S, PrismUIPalette<C>>;
   typography: {
     fontFamily: string;
     fontFamilyMonospace: string;

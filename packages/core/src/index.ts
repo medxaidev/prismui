@@ -23,8 +23,19 @@ export {
   // Theme Override Model (Stage 7.2)
   createTheme,
   deepMerge,
+  // Color Scheme Management (Stage 7.3)
+  ColorSchemeContext,
+  ColorSchemeProvider,
+  useColorScheme,
+  useColorSchemeOptional,
 } from "./core/theme";
 export type { DeepPartial } from "./core/theme";
+export type {
+  ColorScheme,
+  ColorSchemeStrategy,
+  ColorSchemeContextValue,
+  ColorSchemeProviderProps,
+} from "./core/theme";
 export type { PrismUIProviderProps } from "./core/theme";
 export type {
   CSSLength,

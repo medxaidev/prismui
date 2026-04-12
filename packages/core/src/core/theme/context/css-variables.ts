@@ -54,10 +54,20 @@ export function resolveColorRef(ref: ColorRef | string, theme: PrismUITheme<stri
  * Cost: zero. Benefit: unlocks Stage 5 extensibility without API change.
  */
 export function selectPalette(
-  theme: PrismUITheme<string>,
-  colorScheme: "light" | "dark",
+  theme: PrismUITheme<string, string>,
+  colorScheme: string,
 ): PrismUIPalette<string> {
-  return theme.palette[colorScheme];
+  const palette = (theme.palette as Record<string, PrismUIPalette<string>>)[colorScheme];
+  if (!palette) {
+    if (process.env.NODE_ENV !== "production") {
+      console.warn(
+        `[PrismUI] colorScheme "${colorScheme}" not found in theme.palette. ` +
+        `Falling back to first available palette.`,
+      );
+    }
+    return Object.values(theme.palette as Record<string, PrismUIPalette<string>>)[0];
+  }
+  return palette;
 }
 
 /**
@@ -100,8 +110,8 @@ export function selectPalette(
  * Reserved (Stage 4): --prismui-component-{name}-{property}
  */
 export function generateCSSVariables(
-  theme: PrismUITheme<string>,
-  colorScheme: "light" | "dark" = "light",
+  theme: PrismUITheme<string, string>,
+  colorScheme: string = "light",
 ): Record<string, string> {
   const vars: Record<string, string> = {};
   const palette: PrismUIPalette<string> = selectPalette(theme, colorScheme);

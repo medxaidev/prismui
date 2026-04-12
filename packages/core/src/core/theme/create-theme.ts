@@ -69,11 +69,14 @@ export function deepMerge<T>(base: T, override: DeepPartial<T>): T {
 //
 // @param overrides - Partial theme overrides (any depth). Omit to get a clean copy.
 //   null values explicitly clear a field (advanced usage).
-export function createTheme<C extends string = DefaultColorFamily>(
-  overrides?: DeepPartial<PrismUITheme<C>>,
-): PrismUITheme<C> {
+export function createTheme<
+  C extends string = DefaultColorFamily,
+  S extends string = 'light' | 'dark',
+>(
+  overrides?: DeepPartial<PrismUITheme<C, S>>,
+): PrismUITheme<C, S> {
   return deepMerge(
-    defaultTheme as unknown as PrismUITheme<C>,
-    (overrides ?? {}) as DeepPartial<PrismUITheme<C>>,
+    defaultTheme as unknown as PrismUITheme<C, S>,
+    (overrides ?? {}) as DeepPartial<PrismUITheme<C, S>>,
   );
 }

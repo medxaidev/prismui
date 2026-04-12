@@ -13,14 +13,14 @@ export interface PrismUIProviderProps {
    * Accepts extended themes: PrismUITheme<DefaultColorFamily | 'brand'>.
    * Defaults to defaultTheme.
    */
-  theme?: PrismUITheme<string>;
+  theme?: PrismUITheme<string, string>;
 
   /**
-   * Which palette set to use for CSS Variables generation.
-   * Controls whether palette.light or palette.dark is used.
-   * Defaults to 'light'.
+   * Which palette key to use for CSS Variables generation.
+   * Must be a key of theme.palette (defaults to 'light').
+   * When used inside <ColorSchemeProvider>, this is managed automatically.
    */
-  colorScheme?: "light" | "dark";
+  colorScheme?: string;
 
   /**
    * CSS Variables injection target element.
@@ -56,7 +56,7 @@ export interface PrismUIProviderProps {
  * - Default target: document.documentElement (:root) for global CSS Variable scope
  */
 export function PrismUIProvider({
-  theme = defaultTheme as PrismUITheme<string>,
+  theme = defaultTheme as PrismUITheme<string, string>,
   colorScheme = "light",
   target,
   children,
