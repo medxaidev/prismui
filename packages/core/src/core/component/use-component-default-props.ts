@@ -53,13 +53,17 @@ function mergeWithDefaults<P extends Record<string, any>>(
  *
  * DEV guards:
  * - Warns if defaultProps contains `styles` or `classNames` (must use Styling Engine instead).
+ * - Warns if defaultProps contains keys not in componentPropKeys (unknown prop, will have no effect).
+ *   Only active when componentPropKeys is provided; legacy components without it are silent.
  *
  * @param componentName - Stable system ID (from payload.componentName ?? payload.displayName)
  * @param props - Raw props received by the component
+ * @param componentPropKeys - Declared component prop keys from payload (optional, DEV warn only)
  */
 export function useComponentDefaultProps<P extends Record<string, any>>(
   componentName: string,
   props: P,
+  componentPropKeys?: readonly (keyof P)[],
 ): P {
   const theme = useThemeOptional();
   const defaults = (theme.components?.[componentName]?.defaultProps ?? {}) as Partial<P>;
@@ -70,6 +74,19 @@ export function useComponentDefaultProps<P extends Record<string, any>>(
         `[PrismUI] Do not use "styles" or "classNames" in theme.components["${componentName}"].defaultProps. ` +
         `Use the Styling Engine classNames/styles override instead.`,
       );
+    }
+
+    if (componentPropKeys && Object.keys(defaults).length > 0) {
+      const validPropKeys = new Set(componentPropKeys.map(String));
+      for (const key in defaults) {
+        if (!validPropKeys.has(key)) {
+          console.warn(
+            `[PrismUI] theme.components.${componentName}.defaultProps key "${key}" ` +
+            `is not a declared component prop and will have no effect. ` +
+            `Declared props: [${[...componentPropKeys].map(String).join(', ')}].`,
+          );
+        }
+      }
     }
   }
 

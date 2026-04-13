@@ -338,3 +338,78 @@ describe('createTheme components merge', () => {
     expect(extended.components?.Button?.defaultProps?.variant).toBe('outline');
   });
 });
+
+// ─────────────────────────────────────────────────────────────────
+// defaultProps unknown-key DEV warn (Stage 8.3)
+// ─────────────────────────────────────────────────────────────────
+
+describe('useComponentDefaultProps — unknown defaultProps key DEV warn', () => {
+  function renderWithKeys(
+    theme: ReturnType<typeof createTheme>,
+    componentName: string,
+    componentPropKeys: readonly string[],
+  ) {
+    function Inner() {
+      useComponentDefaultProps(componentName, {}, componentPropKeys as any);
+      return null;
+    }
+    render(<PrismUIProvider theme={theme}><Inner /></PrismUIProvider>);
+  }
+
+  it('unknown defaultProps key with componentPropKeys → console.warn', () => {
+    const spy = vi.spyOn(console, 'warn').mockImplementation(() => { });
+    const theme = createTheme({
+      components: { Button: { defaultProps: { size: 'lg', ghost: true } } },
+    });
+    renderWithKeys(theme, 'Button', ['size', 'variant']);
+    const calls = spy.mock.calls.map((c) => c[0] as string);
+    expect(calls.some((msg) => msg.includes('"ghost"'))).toBe(true);
+    expect(calls.some((msg) => msg.includes('"size"'))).toBe(false);
+    spy.mockRestore();
+  });
+
+  it('all defaultProps keys declared → no unknown-key warn', () => {
+    const spy = vi.spyOn(console, 'warn').mockImplementation(() => { });
+    const theme = createTheme({
+      components: { Button: { defaultProps: { size: 'lg' } } },
+    });
+    renderWithKeys(theme, 'Button', ['size', 'variant']);
+    const unknownKeyWarns = spy.mock.calls.filter(
+      (c) => (c[0] as string).includes('will have no effect'),
+    );
+    expect(unknownKeyWarns).toHaveLength(0);
+    spy.mockRestore();
+  });
+
+  it('no componentPropKeys → no unknown-key warn (backward compat)', () => {
+    const spy = vi.spyOn(console, 'warn').mockImplementation(() => { });
+    const theme = createTheme({
+      components: { Button: { defaultProps: { ghost: true } } },
+    });
+    function Inner() {
+      useComponentDefaultProps('Button', {});
+      return null;
+    }
+    render(<PrismUIProvider theme={theme}><Inner /></PrismUIProvider>);
+    const unknownKeyWarns = spy.mock.calls.filter(
+      (c) => (c[0] as string).includes('will have no effect'),
+    );
+    expect(unknownKeyWarns).toHaveLength(0);
+    spy.mockRestore();
+  });
+
+  it('unknown-key warn does NOT affect merge result for known keys', () => {
+    const spy = vi.spyOn(console, 'warn').mockImplementation(() => { });
+    const theme = createTheme({
+      components: { Button: { defaultProps: { size: 'lg', ghost: true } } },
+    });
+    let captured: any = null;
+    function Inner() {
+      captured = useComponentDefaultProps('Button', {}, ['size', 'variant'] as any);
+      return null;
+    }
+    render(<PrismUIProvider theme={theme}><Inner /></PrismUIProvider>);
+    expect(captured?.size).toBe('lg');
+    spy.mockRestore();
+  });
+});

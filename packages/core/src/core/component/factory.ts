@@ -120,6 +120,14 @@ export function factory<Payload extends ComponentPayload>(
   payload: Payload,
   render?: (ctx: FactoryRenderContext<any, any>) => React.ReactNode,
 ) {
+  // ── Stage 8.3: build validSlotsSet once at factory definition time (not per render) ──
+  // stylesNames is a module-level constant array defined at component authoring time;
+  // its reference is stable across all renders. Building the Set here (factory closure)
+  // means each render receives the same Set reference — zero per-render allocation.
+  const validSlotsSet = payload.styling?.structure.stylesNames
+    ? new Set(payload.styling.structure.stylesNames)
+    : undefined;
+
   // ── DEV-only: componentName stability checks (runs once at factory init, not per render) ──
   if (process.env.NODE_ENV !== 'production') {
     if (!payload.componentName) {
@@ -142,10 +150,12 @@ export function factory<Payload extends ComponentPayload>(
 
   const Component = React.forwardRef<any, any>((props: any, ref) => {
     // ── Stage 7.4: resolve theme defaultProps before any other logic ──
+    // Stage 8.3: pass componentPropKeys for DEV warn on unknown defaultProps keys.
     // eslint-disable-next-line react-hooks/rules-of-hooks
     const resolvedProps = useComponentDefaultProps(
       payload.componentName ?? payload.displayName,
       props,
+      payload.componentPropKeys as readonly (keyof typeof props)[] | undefined,
     );
 
     // CRITICAL: Extract styling props to prevent leakage to DOM.
@@ -220,12 +230,14 @@ export function factory<Payload extends ComponentPayload>(
 
       // Stage 8.2: merge theme.components[X].classNames/.styles/.vars with props inputs.
       // themeVars and vars are separate channels — NOT merged here.
+      // Stage 8.3: pass validSlotsSet for DEV unknown-slot warn (stable Set, built at factory init).
       // eslint-disable-next-line react-hooks/rules-of-hooks
       const { classNames, styles: mergedStyles, themeVars, vars } = useComponentStylingInput(
         payload.componentName ?? payload.displayName,
         resolvedProps.classNames,
         resolvedProps.styles,
         resolvedProps.vars,
+        validSlotsSet as ReadonlySet<string> | undefined,
       );
 
       // stylingProps is a fresh object — not a patch over resolvedProps.

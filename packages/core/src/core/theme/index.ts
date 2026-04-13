@@ -21,6 +21,7 @@ export { PrismUIProvider } from "./provider";
 export type { PrismUIProviderProps } from "./provider";
 export type {
   CSSLength,
+  CSSVarKey,
   TokenRef,
   PrismUITheme,
   PrismUIComponentConfig,

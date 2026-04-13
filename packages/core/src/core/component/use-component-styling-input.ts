@@ -27,6 +27,7 @@ export function useComponentStylingInput<Names extends string>(
   propsClassNames?: Partial<Record<Names, string>>,
   propsStyles?: Partial<Record<Names, React.CSSProperties>>,
   propsVars?: Record<string, string | number>,
+  validSet?: ReadonlySet<Names>,
 ): {
   classNames: Partial<Record<Names, string>> | undefined;
   styles: Partial<Record<Names, React.CSSProperties>> | undefined;
@@ -50,6 +51,31 @@ export function useComponentStylingInput<Names extends string>(
   // Fast path: nothing to merge
   if (!hasClassNames && !hasStyles && !hasVars) {
     return { classNames: undefined, styles: undefined, themeVars: undefined, vars: undefined };
+  }
+
+  // ── DEV: warn on unknown theme classNames/styles slots ───────────────────
+  // validSet is a pre-built Set (stable reference, constructed once at factory
+  // definition time — not per render). Only theme-level overrides are checked;
+  // props.classNames / props.styles keys are not validated (user freedom).
+  if (process.env.NODE_ENV !== 'production' && validSet) {
+    for (const slot in themeClassNames) {
+      if (!validSet.has(slot as Names)) {
+        console.warn(
+          `[PrismUI] theme.components.${componentName}.classNames key "${slot}" ` +
+          `is not a valid slot. Valid slots: [${[...validSet].join(', ')}]. ` +
+          `This override will have no effect.`,
+        );
+      }
+    }
+    for (const slot in themeStyles) {
+      if (!validSet.has(slot as Names)) {
+        console.warn(
+          `[PrismUI] theme.components.${componentName}.styles key "${slot}" ` +
+          `is not a valid slot. Valid slots: [${[...validSet].join(', ')}]. ` +
+          `This override will have no effect.`,
+        );
+      }
+    }
   }
 
   // ── classNames merge — dual-path write (mirrors styles strategy) ──────────

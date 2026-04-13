@@ -39,6 +39,7 @@ export type {
 export type { PrismUIProviderProps } from "./core/theme";
 export type {
   CSSLength,
+  CSSVarKey,
   TokenRef,
   PrismUITheme,
   PrismUIComponentConfig,

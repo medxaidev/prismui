@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { render } from '@testing-library/react';
 import { useComponentStylingInput } from './use-component-styling-input';
 import { PrismUIProvider } from '../theme/provider/PrismUIProvider';
@@ -16,15 +16,17 @@ function StylingInputReadout({
   propsClassNames,
   propsStyles,
   propsVars,
+  validSet,
   onResult,
 }: {
   componentName: string;
   propsClassNames?: Record<string, string>;
   propsStyles?: Record<string, React.CSSProperties>;
   propsVars?: Record<string, string | number>;
+  validSet?: ReadonlySet<string>;
   onResult: (r: Result) => void;
 }) {
-  const result = useComponentStylingInput(componentName, propsClassNames, propsStyles, propsVars);
+  const result = useComponentStylingInput(componentName, propsClassNames, propsStyles, propsVars, validSet);
   onResult(result);
   return null;
 }
@@ -35,6 +37,7 @@ function renderWithTheme(
   propsClassNames?: Record<string, string>,
   propsStyles?: Record<string, React.CSSProperties>,
   propsVars?: Record<string, string | number>,
+  validSet?: ReadonlySet<string>,
 ): Result {
   let captured: Result = { classNames: undefined, styles: undefined, themeVars: undefined, vars: undefined };
   render(
@@ -44,6 +47,7 @@ function renderWithTheme(
         propsClassNames={propsClassNames}
         propsStyles={propsStyles}
         propsVars={propsVars}
+        validSet={validSet}
         onResult={(r) => { captured = r; }}
       />
     </PrismUIProvider>,
@@ -286,5 +290,79 @@ describe('useComponentStylingInput — vars dual-channel', () => {
     expect(result.classNames).toBeUndefined();
     expect(result.styles).toBeUndefined();
     expect(result.themeVars).toEqual({ '--btn-h': '40px' });
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────
+// validSet — DEV warn for unknown theme classNames/styles slots (Stage 8.3)
+// ─────────────────────────────────────────────────────────────────
+
+describe('useComponentStylingInput — validSet DEV warn', () => {
+  it('unknown theme classNames slot → console.warn with slot name', () => {
+    const spy = vi.spyOn(console, 'warn').mockImplementation(() => { });
+    const theme = createTheme({
+      components: { Button: { classNames: { root: 'r', typo: 'x' } } },
+    });
+    renderWithTheme(theme, 'Button', undefined, undefined, undefined, new Set(['root', 'label']));
+    const calls = spy.mock.calls.map((c) => c[0] as string);
+    expect(calls.some((msg) => msg.includes('"typo"') && msg.includes('classNames'))).toBe(true);
+    expect(calls.some((msg) => msg.includes('"root"'))).toBe(false);
+    spy.mockRestore();
+  });
+
+  it('unknown theme styles slot → console.warn with slot name', () => {
+    const spy = vi.spyOn(console, 'warn').mockImplementation(() => { });
+    const theme = createTheme({
+      components: { Button: { styles: { root: { opacity: 1 }, ghost: { color: 'red' } } } },
+    });
+    renderWithTheme(theme, 'Button', undefined, undefined, undefined, new Set(['root']));
+    const calls = spy.mock.calls.map((c) => c[0] as string);
+    expect(calls.some((msg) => msg.includes('"ghost"') && msg.includes('styles'))).toBe(true);
+    spy.mockRestore();
+  });
+
+  it('all theme classNames slots valid → no warn', () => {
+    const spy = vi.spyOn(console, 'warn').mockImplementation(() => { });
+    const theme = createTheme({
+      components: { Button: { classNames: { root: 'r', label: 'l' } } },
+    });
+    renderWithTheme(theme, 'Button', undefined, undefined, undefined, new Set(['root', 'label']));
+    const warnCalls = spy.mock.calls.filter((c) => (c[0] as string).includes('classNames'));
+    expect(warnCalls).toHaveLength(0);
+    spy.mockRestore();
+  });
+
+  it('no validSet → no warn (backward compat)', () => {
+    const spy = vi.spyOn(console, 'warn').mockImplementation(() => { });
+    const theme = createTheme({
+      components: { Button: { classNames: { typo: 'x' } } },
+    });
+    renderWithTheme(theme, 'Button');
+    const slotWarnCalls = spy.mock.calls.filter(
+      (c) => (c[0] as string).includes('classNames') && (c[0] as string).includes('valid slot'),
+    );
+    expect(slotWarnCalls).toHaveLength(0);
+    spy.mockRestore();
+  });
+
+  it('unknown slot warn does NOT affect known-slot merge result', () => {
+    const spy = vi.spyOn(console, 'warn').mockImplementation(() => { });
+    const theme = createTheme({
+      components: { Button: { classNames: { root: 'theme-root', typo: 'x' } } },
+    });
+    const result = renderWithTheme(theme, 'Button', undefined, undefined, undefined, new Set(['root']));
+    expect(result.classNames?.['root' as any]).toBe('theme-root');
+    spy.mockRestore();
+  });
+
+  it('props.classNames unknown slot → no warn (user freedom, only theme is validated)', () => {
+    const spy = vi.spyOn(console, 'warn').mockImplementation(() => { });
+    const theme = createTheme({});
+    renderWithTheme(theme, 'Button', { typo: 'x' }, undefined, undefined, new Set(['root']));
+    const slotWarnCalls = spy.mock.calls.filter(
+      (c) => (c[0] as string).includes('valid slot'),
+    );
+    expect(slotWarnCalls).toHaveLength(0);
+    spy.mockRestore();
   });
 });

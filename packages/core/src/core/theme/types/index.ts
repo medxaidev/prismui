@@ -1,5 +1,6 @@
 export type {
   CSSLength,
+  CSSVarKey,
   TokenRef,
   PrismUITheme,
   PrismUIComponentConfig,

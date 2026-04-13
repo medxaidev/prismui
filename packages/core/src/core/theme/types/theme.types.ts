@@ -27,6 +27,19 @@ import type { PrismuiSizeTokens } from "../../size/types";
 import type { PrismuiStateTokens } from "../../state/types";
 
 /**
+ * Valid CSS Custom Property name — must start with "--" per CSS specification.
+ *
+ * Enforced at compile time for `vars` overrides.
+ * Component-level vars should use the component prefix, e.g. "--button-height".
+ * Token-domain vars ("--prismui-*") are managed by the theme token system, not here.
+ *
+ * @example
+ *   '--button-height'  // ✅
+ *   'button-height'    // ❌ compile error
+ */
+export type CSSVarKey = `--${string}`;
+
+/**
  * Per-component theme configuration.
  *
  * - `defaultProps`: scalar prop defaults (shallow merge, input-simulator semantics).
@@ -35,12 +48,14 @@ import type { PrismuiStateTokens } from "../../state/types";
  *   - `styles`/`classNames` must NOT be set here (use Styling Engine overrides).
  * - `classNames`: per-slot className injection (theme < props, cx-merged).
  * - `styles`: per-slot inline style injection (theme < props, spread-merged, undefined values stripped).
+ * - `vars`: CSS Variable overrides keyed by `CSSVarKey` (`--${string}`).
+ *   Compile-time enforcement: non-`--` keys are type errors.
  */
 export interface PrismUIComponentConfig {
   defaultProps?: Record<string, unknown>;
   classNames?: Record<string, string>;
   styles?: Record<string, React.CSSProperties>;
-  vars?: Record<string, string | number>;
+  vars?: Record<CSSVarKey, string | number>;
 }
 
 /**
