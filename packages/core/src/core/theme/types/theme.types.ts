@@ -40,6 +40,7 @@ export interface PrismUIComponentConfig {
   defaultProps?: Record<string, unknown>;
   classNames?: Record<string, string>;
   styles?: Record<string, React.CSSProperties>;
+  vars?: Record<string, string | number>;
 }
 
 /**

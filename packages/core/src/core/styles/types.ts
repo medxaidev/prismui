@@ -468,13 +468,16 @@ export type GetStylesInput<Names extends string> = {
   classes: Classes<Names>;
 
   /**
-   * System CSS Variables (from VarsResolver).
-   * Applied only to the root slot.
+   * Ordered CSS Variable layers (from createStylingContext).
+   * Applied only to the root slot via sequential Object.assign merge.
    *
-   * MUST be an object (never undefined).
-   * VarsResolver MUST always return an object (even if empty).
+   * Order determines priority: later layers override earlier ones.
+   * createStylingContext assembles: [systemVars, themeVars, userVars, ...]
+   *
+   * createGetStyles does NOT know what any layer means — it only iterates.
+   * Layer semantics are the sole responsibility of createStylingContext.
    */
-  vars: StyleProp;
+  varsChain: (Record<string, string | number> | undefined)[];
 
   /**
    * User-provided className for the root element.
@@ -507,15 +510,6 @@ export type GetStylesInput<Names extends string> = {
    */
   styles?: Partial<Record<Names, React.CSSProperties>>;
 
-  /**
-   * User-provided CSS Variables override.
-   * Applied to the root slot.
-   *
-   * Merge order: system vars → userVars → style
-   *
-   * **Step 2.8 requirement**: This MUST be fully supported.
-   */
-  userVars?: CSSVariablesObject;
 };
 
 /**

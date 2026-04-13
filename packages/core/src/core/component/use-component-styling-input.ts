@@ -26,25 +26,30 @@ export function useComponentStylingInput<Names extends string>(
   componentName: string,
   propsClassNames?: Partial<Record<Names, string>>,
   propsStyles?: Partial<Record<Names, React.CSSProperties>>,
+  propsVars?: Record<string, string | number>,
 ): {
   classNames: Partial<Record<Names, string>> | undefined;
   styles: Partial<Record<Names, React.CSSProperties>> | undefined;
+  themeVars: Record<string, string | number> | undefined;
+  vars: Record<string, string | number> | undefined;
 } {
   const theme = useThemeOptional();
-  // Read components map once; reused by Step 8.2 (vars)
+  // Read components map once
   const components = theme.components;
   const config = components ? components[componentName] : undefined;
 
   const themeClassNames = config?.classNames as Partial<Record<Names, string>> | undefined;
   const themeStyles = config?.styles as Partial<Record<Names, React.CSSProperties>> | undefined;
+  const themeVarsRaw = config?.vars;
 
   // Independent bail-out per dimension
   const hasClassNames = themeClassNames || propsClassNames;
   const hasStyles = themeStyles || propsStyles;
+  const hasVars = themeVarsRaw || propsVars;
 
   // Fast path: nothing to merge
-  if (!hasClassNames && !hasStyles) {
-    return { classNames: undefined, styles: undefined };
+  if (!hasClassNames && !hasStyles && !hasVars) {
+    return { classNames: undefined, styles: undefined, themeVars: undefined, vars: undefined };
   }
 
   // ── classNames merge — dual-path write (mirrors styles strategy) ──────────
@@ -122,5 +127,39 @@ export function useComponentStylingInput<Names extends string>(
     if (Object.keys(styles).length === 0) styles = undefined;
   }
 
-  return { classNames, styles };
+  // ── vars — dual-channel: themeVars and propsVars passed independently ─────
+  // They are NOT merged here. createStylingContext assembles varsChain in order:
+  //   system(varsResolver) → theme → user(props) → rootStyles → style
+  //
+  // DEV: warn on themeVars keys that are not valid CSS variables (must start with '--').
+  // Correct component convention: "--button-height", NOT "--prismui-*" (token domain).
+  // Step 8.3 will upgrade to full variable contract validation.
+  let resolvedThemeVars: Record<string, string | number> | undefined;
+  if (themeVarsRaw) {
+    if (process.env.NODE_ENV !== 'production') {
+      for (const key in themeVarsRaw) {
+        if (!key.startsWith('--')) {
+          console.warn(
+            `[PrismUI] theme.components.${componentName}.vars key "${key}" ` +
+            `is not a valid CSS variable (must start with "--"). ` +
+            `Component-level vars should use the component prefix, ` +
+            `e.g. "--${componentName.toLowerCase()}-*".`,
+          );
+        }
+      }
+    }
+    resolvedThemeVars = Object.keys(themeVarsRaw).length > 0 ? themeVarsRaw : undefined;
+  }
+
+  // propsVars empty guard: {} === "not passed" — avoids DevTools false "user layer" signal
+  // and keeps Step 8.3 variable contract checks semantically clean.
+  const resolvedPropsVars =
+    propsVars && Object.keys(propsVars).length > 0 ? propsVars : undefined;
+
+  return {
+    classNames,
+    styles,
+    themeVars: resolvedThemeVars,
+    vars: resolvedPropsVars,
+  };
 }

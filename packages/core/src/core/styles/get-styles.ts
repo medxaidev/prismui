@@ -55,18 +55,23 @@ import type { GetStylesInput, GetStylesFn, WithRoot } from './types';
 export function createGetStyles<Names extends string>(
   input: GetStylesInput<WithRoot<Names>>,
 ): GetStylesFn<WithRoot<Names>> {
-  const { classes, vars, className, classNames, style, styles, userVars } = input;
+  const { classes, varsChain, className, classNames, style, styles } = input;
 
   return function getStyles(name: WithRoot<Names>) {
     // Root slot: merge className and style
     if (name === 'root') {
-      // Merge order: system vars → userVars → styles['root'] → style
+      // Merge all vars layers in order (priority: later layers win).
+      // varsChain is assembled by createStylingContext; createGetStyles is layer-agnostic.
+      const mergedVars: Record<string, string | number> = {};
+      for (const layer of varsChain) {
+        if (layer) Object.assign(mergedVars, layer);
+      }
+
       const rootStyles = styles?.['root' as WithRoot<Names>];
       const mergedStyle = {
-        ...vars,        // System CSS Variables (from VarsResolver)
-        ...userVars,    // User CSS Variables override (from vars prop)
+        ...mergedVars,  // All CSS Variable layers (order decided by createStylingContext)
         ...rootStyles,  // User inline styles for root (from styles.root)
-        ...style,       // User inline styles for root (from style prop, highest priority)
+        ...style,       // User inline style for root (from style prop, highest priority)
       };
 
       return {

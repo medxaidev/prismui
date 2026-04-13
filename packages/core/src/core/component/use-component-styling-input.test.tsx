@@ -15,14 +15,16 @@ function StylingInputReadout({
   componentName,
   propsClassNames,
   propsStyles,
+  propsVars,
   onResult,
 }: {
   componentName: string;
   propsClassNames?: Record<string, string>;
   propsStyles?: Record<string, React.CSSProperties>;
+  propsVars?: Record<string, string | number>;
   onResult: (r: Result) => void;
 }) {
-  const result = useComponentStylingInput(componentName, propsClassNames, propsStyles);
+  const result = useComponentStylingInput(componentName, propsClassNames, propsStyles, propsVars);
   onResult(result);
   return null;
 }
@@ -32,14 +34,16 @@ function renderWithTheme(
   componentName: string,
   propsClassNames?: Record<string, string>,
   propsStyles?: Record<string, React.CSSProperties>,
+  propsVars?: Record<string, string | number>,
 ): Result {
-  let captured: Result = { classNames: undefined, styles: undefined };
+  let captured: Result = { classNames: undefined, styles: undefined, themeVars: undefined, vars: undefined };
   render(
     <PrismUIProvider theme={theme}>
       <StylingInputReadout
         componentName={componentName}
         propsClassNames={propsClassNames}
         propsStyles={propsStyles}
+        propsVars={propsVars}
         onResult={(r) => { captured = r; }}
       />
     </PrismUIProvider>,
@@ -54,9 +58,9 @@ const baseTheme = createTheme({});
 // ─────────────────────────────────────────────────────────────────
 
 describe('useComponentStylingInput — fast path', () => {
-  it('no theme config, no props → { classNames: undefined, styles: undefined }', () => {
+  it('no theme config, no props → all undefined', () => {
     const result = renderWithTheme(baseTheme, 'Button');
-    expect(result).toEqual({ classNames: undefined, styles: undefined });
+    expect(result).toEqual({ classNames: undefined, styles: undefined, themeVars: undefined, vars: undefined });
   });
 
   it('only theme classNames, no styles → styles: undefined', () => {
@@ -77,7 +81,7 @@ describe('useComponentStylingInput — fast path', () => {
   it('theme.components is undefined → no throw, returns fast-path', () => {
     const theme = createTheme({});
     const result = renderWithTheme(theme, 'NonExistent');
-    expect(result).toEqual({ classNames: undefined, styles: undefined });
+    expect(result).toEqual({ classNames: undefined, styles: undefined, themeVars: undefined, vars: undefined });
   });
 });
 
@@ -204,5 +208,83 @@ describe('useComponentStylingInput — styles merge', () => {
     const result = renderWithTheme(theme, 'Button', undefined, { root: {} });
     // Both sides are empty; merged = {} → not written
     expect(result.styles).toBeUndefined();
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────
+// vars — dual-channel (Stage 8.2)
+// ─────────────────────────────────────────────────────────────────
+
+describe('useComponentStylingInput — vars dual-channel', () => {
+  it('fast path: no theme vars, no props vars → themeVars: undefined, vars: undefined', () => {
+    const result = renderWithTheme(baseTheme, 'Button');
+    expect(result.themeVars).toBeUndefined();
+    expect(result.vars).toBeUndefined();
+  });
+
+  it('only theme vars → themeVars set, vars: undefined', () => {
+    const theme = createTheme({
+      components: { Button: { vars: { '--btn-h': '40px' } } },
+    });
+    const result = renderWithTheme(theme, 'Button');
+    expect(result.themeVars).toEqual({ '--btn-h': '40px' });
+    expect(result.vars).toBeUndefined();
+  });
+
+  it('only props vars → themeVars: undefined, vars set', () => {
+    const result = renderWithTheme(baseTheme, 'Button', undefined, undefined, { '--btn-h': '60px' });
+    expect(result.themeVars).toBeUndefined();
+    expect(result.vars).toEqual({ '--btn-h': '60px' });
+  });
+
+  it('dual-channel independence: same key in both — NOT merged', () => {
+    const theme = createTheme({
+      components: { Button: { vars: { '--btn-h': '40px' } } },
+    });
+    const result = renderWithTheme(theme, 'Button', undefined, undefined, { '--btn-h': '60px' });
+    expect(result.themeVars).toEqual({ '--btn-h': '40px' });
+    expect(result.vars).toEqual({ '--btn-h': '60px' });
+  });
+
+  it('dual-channel independence: different keys — each preserved independently', () => {
+    const theme = createTheme({
+      components: { Button: { vars: { '--btn-h': '40px' } } },
+    });
+    const result = renderWithTheme(theme, 'Button', undefined, undefined, { '--btn-color': 'red' });
+    expect(result.themeVars).toEqual({ '--btn-h': '40px' });
+    expect(result.vars).toEqual({ '--btn-color': 'red' });
+  });
+
+  it('themeVars empty guard: theme.vars = {} → themeVars: undefined', () => {
+    const theme = createTheme({
+      components: { Button: { vars: {} } },
+    });
+    const result = renderWithTheme(theme, 'Button');
+    expect(result.themeVars).toBeUndefined();
+  });
+
+  it('propsVars empty guard: props.vars = {} → vars: undefined', () => {
+    const result = renderWithTheme(baseTheme, 'Button', undefined, undefined, {});
+    expect(result.vars).toBeUndefined();
+  });
+
+  it('independent bail-out: classNames present, no vars → themeVars/vars: undefined', () => {
+    const theme = createTheme({
+      components: { Button: { classNames: { root: 'theme-root' } } },
+    });
+    const result = renderWithTheme(theme, 'Button');
+    expect(result.classNames).toBeDefined();
+    expect(result.themeVars).toBeUndefined();
+    expect(result.vars).toBeUndefined();
+  });
+
+  it('independent bail-out: vars present, no classNames/styles → classNames/styles: undefined', () => {
+    const theme = createTheme({
+      components: { Button: { vars: { '--btn-h': '40px' } } },
+    });
+    const result = renderWithTheme(theme, 'Button');
+    expect(result.classNames).toBeUndefined();
+    expect(result.styles).toBeUndefined();
+    expect(result.themeVars).toEqual({ '--btn-h': '40px' });
   });
 });

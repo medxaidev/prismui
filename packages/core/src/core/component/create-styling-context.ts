@@ -188,7 +188,8 @@ export function createStylingContext<Props, Names extends string = string>(
     style?: React.CSSProperties;
     classNames?: Partial<Record<Names, string>>;
     styles?: Partial<Record<Names, React.CSSProperties>>;
-    vars?: Record<string, string>;
+    themeVars?: Record<string, string | number>;
+    vars?: Record<string, string | number>;
   },
   componentPropKeys?: readonly (keyof Props)[],
   theme?: PrismUITheme,
@@ -246,7 +247,7 @@ export function createStylingContext<Props, Names extends string = string>(
 
   // CRITICAL: varsResolver MUST only receive pure component props
   // Extract styling props first
-  const { className, style, classNames, styles, vars: userVars, ...restProps } = props;
+  const { className, style, classNames, styles, themeVars, vars: userVars, ...restProps } = props;
 
   // ✅ Use componentPropKeys to isolate component props from DOM props
   // This prevents varsResolver from accessing onClick, aria-*, etc.
@@ -295,19 +296,29 @@ export function createStylingContext<Props, Names extends string = string>(
     }
   }
 
-  const vars = logic?.varsResolver?.(componentProps as Props, theme!) ?? {};
+  const systemVars = logic?.varsResolver?.(componentProps as Props, theme!) ?? {};
+
+  // ── varsChain assembly — createStylingContext is the ONLY place that knows layer semantics ──
+  // VarsLayerName type locks down legal layer names; new layers require explicit union extension.
+  type VarsLayerName = 'system' | 'theme' | 'user';
+  const varsLayers: Record<VarsLayerName, Record<string, string | number> | undefined> = {
+    system: systemVars as Record<string, string | number>,  // layer 1: varsResolver output
+    theme: themeVars,                                      // layer 2: theme.components[X].vars
+    user: userVars,                                       // layer 3: props.vars
+  };
+  const varsOrder: VarsLayerName[] = ['system', 'theme', 'user'];
+  const varsChain = varsOrder.map(k => varsLayers[k]);
 
   // Create getStyles function with dev-mode root access detection
   let rootAccessedDirectly = false;
 
   const rawGetStyles = createGetStyles({
     classes: resources.classes,
-    vars: vars as StyleProp,
+    varsChain,
     className,
     classNames,
     style: style as StyleProp,
     styles,
-    userVars,
   });
 
   // SYSTEM CONSTRAINT: getStyles('root') is tracked in dev mode

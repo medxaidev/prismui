@@ -148,10 +148,10 @@ export function factory<Payload extends ComponentPayload>(
       props,
     );
 
-    // CRITICAL: Extract styling props to prevent leakage to DOM
-    // classNames/styles are intentionally discarded here (_/__) — they are
-    // consumed by useComponentStylingInput below and must not leak into stylingProps.
-    const { component, className, style, classNames: _, styles: __, ...rest } = resolvedProps;
+    // CRITICAL: Extract styling props to prevent leakage to DOM.
+    // classNames/styles/vars are consumed by useComponentStylingInput and re-added
+    // explicitly as merged outputs — they must not leak into stylingProps via rest.
+    const { component, className, style, classNames: _, styles: __, vars: ___, ...rest } = resolvedProps;
 
     const Element = component || payload.defaultElement;
 
@@ -218,23 +218,26 @@ export function factory<Payload extends ComponentPayload>(
       // eslint-disable-next-line react-hooks/rules-of-hooks
       const theme = useThemeOptional();
 
-      // Stage 8.1: merge theme.components[X].classNames/.styles with props inputs.
-      // Returns the resolved styling input for createStylingContext.
+      // Stage 8.2: merge theme.components[X].classNames/.styles/.vars with props inputs.
+      // themeVars and vars are separate channels — NOT merged here.
       // eslint-disable-next-line react-hooks/rules-of-hooks
-      const { classNames, styles: mergedStyles } = useComponentStylingInput(
+      const { classNames, styles: mergedStyles, themeVars, vars } = useComponentStylingInput(
         payload.componentName ?? payload.displayName,
         resolvedProps.classNames,
         resolvedProps.styles,
+        resolvedProps.vars,
       );
 
       // stylingProps is a fresh object — not a patch over resolvedProps.
-      // classNames and mergedStyles are the merged outputs, not the raw props.
+      // Explicitly exclude classNames/styles/vars from rest to avoid implicit override.
       const stylingProps = {
         ...rest,
         className,
         style,
         classNames,
         styles: mergedStyles,
+        themeVars,
+        vars,
       };
 
       const styles = createStylingContext(
