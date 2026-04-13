@@ -11,6 +11,7 @@
  * - Statically resolvable
  */
 
+import type * as React from 'react';
 import type {
   SpacingScale,
   FontSizeScale,
@@ -32,9 +33,13 @@ import type { PrismuiStateTokens } from "../../state/types";
  *   - `undefined` from user props falls back to defaultProps value.
  *   - `null` from user props explicitly clears the default.
  *   - `styles`/`classNames` must NOT be set here (use Styling Engine overrides).
+ * - `classNames`: per-slot className injection (theme < props, cx-merged).
+ * - `styles`: per-slot inline style injection (theme < props, spread-merged, undefined values stripped).
  */
 export interface PrismUIComponentConfig {
   defaultProps?: Record<string, unknown>;
+  classNames?: Record<string, string>;
+  styles?: Record<string, React.CSSProperties>;
 }
 
 /**

@@ -10,6 +10,7 @@ import { withSizeVars } from '../size/with-size-vars';
 import { withStateVars } from '../state/with-state-vars';
 import { useThemeOptional } from '../theme/context/theme.context';
 import { useComponentDefaultProps } from './use-component-default-props';
+import { useComponentStylingInput } from './use-component-styling-input';
 import type { ComponentPayload } from './types';
 
 // DEV: module-level registry to detect duplicate componentName registrations.
@@ -148,7 +149,9 @@ export function factory<Payload extends ComponentPayload>(
     );
 
     // CRITICAL: Extract styling props to prevent leakage to DOM
-    const { component, className, style, classNames, ...rest } = resolvedProps;
+    // classNames/styles are intentionally discarded here (_/__) — they are
+    // consumed by useComponentStylingInput below and must not leak into stylingProps.
+    const { component, className, style, classNames: _, styles: __, ...rest } = resolvedProps;
 
     const Element = component || payload.defaultElement;
 
@@ -214,9 +217,29 @@ export function factory<Payload extends ComponentPayload>(
       // Pass componentPropKeys for varsResolver isolation
       // eslint-disable-next-line react-hooks/rules-of-hooks
       const theme = useThemeOptional();
+
+      // Stage 8.1: merge theme.components[X].classNames/.styles with props inputs.
+      // Returns the resolved styling input for createStylingContext.
+      // eslint-disable-next-line react-hooks/rules-of-hooks
+      const { classNames, styles: mergedStyles } = useComponentStylingInput(
+        payload.componentName ?? payload.displayName,
+        resolvedProps.classNames,
+        resolvedProps.styles,
+      );
+
+      // stylingProps is a fresh object — not a patch over resolvedProps.
+      // classNames and mergedStyles are the merged outputs, not the raw props.
+      const stylingProps = {
+        ...rest,
+        className,
+        style,
+        classNames,
+        styles: mergedStyles,
+      };
+
       const styles = createStylingContext(
         resolvedStyling,
-        resolvedProps,
+        stylingProps,
         payload.componentPropKeys as any,
         theme,
       );
