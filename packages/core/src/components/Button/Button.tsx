@@ -37,6 +37,7 @@ const validatedClasses = ensureClasses(stylesNames, classes);
 export const Button = factory(
   {
     displayName: 'Button',
+    componentName: 'Button',
     defaultElement: 'button',
     componentPropKeys: ['size', 'variant', 'color', 'disabled'] as const,
     systems: ['variant', 'size', 'state'],

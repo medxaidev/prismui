@@ -20,6 +20,7 @@ const validatedClasses = ensureClasses(stylesNames, classes);
 // Layer 4: factory（声明式三轴接入，Minimal 类型：无私有变量）
 export const Badge = factory({
   displayName: 'Badge',
+  componentName: 'Badge',
   defaultElement: 'span',
   componentPropKeys: ['variant', 'color', 'size', 'disabled'] as const,
   systems: ['variant', 'size', 'state'],

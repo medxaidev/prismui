@@ -63,6 +63,56 @@ export function deepMerge<T>(base: T, override: DeepPartial<T>): T {
   return result as T;
 }
 
+// ── validateThemeComponents ────────────────────────────────────────────────
+// DEV-only: validates theme.components key naming conventions.
+// Runs once per unique theme object (WeakSet guard).
+//
+// Checks:
+//   1. All simple keys (no namespace ".") are lowercase → likely typo, warn once.
+//   2. Duplicate keys differing only in casing → grouped into one warn per collision set.
+const _validatedThemes =
+  process.env.NODE_ENV !== 'production' ? new WeakSet<object>() : null;
+
+function validateThemeComponents(theme: PrismUITheme): void {
+  if (process.env.NODE_ENV !== 'production') {
+    if (_validatedThemes!.has(theme)) return;
+    _validatedThemes!.add(theme);
+
+    const keys = Object.keys(theme.components ?? {});
+    if (keys.length === 0) return;
+
+    // Check 1: all simple keys (no ".") are lowercase → normalization hint
+    const simpleKeys = keys.filter((k) => !k.includes('.'));
+    const hasAllLowercase =
+      simpleKeys.length > 0 &&
+      simpleKeys.every((k) => k === k.toLowerCase());
+    if (hasAllLowercase) {
+      console.warn(
+        `[PrismUI] theme.components keys are all lowercase. ` +
+        `Component names are case-sensitive (e.g. "Button", not "button"). ` +
+        `Keys: ${simpleKeys.join(', ')}.`,
+      );
+    }
+
+    // Check 2: case-insensitive duplicate keys — one warn per collision group
+    const groups = new Map<string, string[]>();
+    for (const key of keys) {
+      const lower = key.toLowerCase();
+      const list = groups.get(lower) ?? [];
+      list.push(key);
+      groups.set(lower, list);
+    }
+    for (const [, group] of groups) {
+      if (group.length > 1) {
+        console.warn(
+          `[PrismUI] Duplicate theme.components keys with different casing: ` +
+          `${group.map((k) => `"${k}"`).join(', ')}. Keys are case-sensitive.`,
+        );
+      }
+    }
+  }
+}
+
 // ── createTheme ────────────────────────────────────────────────────────────
 // Always uses deepMerge — no shallow copy branch.
 // Guarantees: returned theme shares NO internal object references with defaultTheme.
@@ -75,8 +125,10 @@ export function createTheme<
 >(
   overrides?: DeepPartial<PrismUITheme<C, S>>,
 ): PrismUITheme<C, S> {
-  return deepMerge(
+  const theme = deepMerge(
     defaultTheme as unknown as PrismUITheme<C, S>,
     (overrides ?? {}) as DeepPartial<PrismUITheme<C, S>>,
   );
+  validateThemeComponents(theme as unknown as PrismUITheme);
+  return theme;
 }

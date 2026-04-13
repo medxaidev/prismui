@@ -124,8 +124,8 @@ export function factory<Payload extends ComponentPayload>(
     if (!payload.componentName) {
       console.warn(
         `[PrismUI] componentName is missing for "${payload.displayName}". ` +
-        `theme.components defaultProps will use displayName as fallback, ` +
-        `which may be unstable after minification. Add componentName to the factory payload.`,
+        `Theme overrides via theme.components will NOT work reliably for this component. ` +
+        `Add componentName to enable theming.`,
       );
     }
     const name = payload.componentName ?? payload.displayName;
