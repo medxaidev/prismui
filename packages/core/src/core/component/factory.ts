@@ -9,7 +9,13 @@ import { withVariantColors } from '../variant/with-variant-colors';
 import { withSizeVars } from '../size/with-size-vars';
 import { withStateVars } from '../state/with-state-vars';
 import { useThemeOptional } from '../theme/context/theme.context';
+import { useComponentDefaultProps } from './use-component-default-props';
 import type { ComponentPayload } from './types';
+
+// DEV: module-level registry to detect duplicate componentName registrations.
+// Lives outside render — populated once per factory() call at module load time.
+const _registeredComponentNames =
+  process.env.NODE_ENV !== 'production' ? new Set<string>() : null;
 
 /**
  * Pick only declared component props from a props object.
@@ -113,9 +119,36 @@ export function factory<Payload extends ComponentPayload>(
   payload: Payload,
   render?: (ctx: FactoryRenderContext<any, any>) => React.ReactNode,
 ) {
+  // ── DEV-only: componentName stability checks (runs once at factory init, not per render) ──
+  if (process.env.NODE_ENV !== 'production') {
+    if (!payload.componentName) {
+      console.warn(
+        `[PrismUI] componentName is missing for "${payload.displayName}". ` +
+        `theme.components defaultProps will use displayName as fallback, ` +
+        `which may be unstable after minification. Add componentName to the factory payload.`,
+      );
+    }
+    const name = payload.componentName ?? payload.displayName;
+    if (_registeredComponentNames!.has(name)) {
+      console.warn(
+        `[PrismUI] Duplicate componentName "${name}" detected. ` +
+        `theme.components defaultProps may be overridden unexpectedly.`,
+      );
+    } else {
+      _registeredComponentNames!.add(name);
+    }
+  }
+
   const Component = React.forwardRef<any, any>((props: any, ref) => {
+    // ── Stage 7.4: resolve theme defaultProps before any other logic ──
+    // eslint-disable-next-line react-hooks/rules-of-hooks
+    const resolvedProps = useComponentDefaultProps(
+      payload.componentName ?? payload.displayName,
+      props,
+    );
+
     // CRITICAL: Extract styling props to prevent leakage to DOM
-    const { component, className, style, classNames, ...rest } = props;
+    const { component, className, style, classNames, ...rest } = resolvedProps;
 
     const Element = component || payload.defaultElement;
 
@@ -183,7 +216,7 @@ export function factory<Payload extends ComponentPayload>(
       const theme = useThemeOptional();
       const styles = createStylingContext(
         resolvedStyling,
-        props,
+        resolvedProps,
         payload.componentPropKeys as any,
         theme,
       );

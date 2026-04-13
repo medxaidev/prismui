@@ -97,4 +97,7 @@ export const defaultTheme: PrismUITheme = {
 
   // ========== Global Config ==========
   scale: 1,
+
+  // ========== Component defaultProps ==========
+  components: {},
 };

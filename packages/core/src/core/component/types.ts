@@ -59,6 +59,21 @@ export type ComponentPayload<Props = any, Names extends string = string> = {
   displayName: string;
 
   /**
+   * Stable system ID for theme.components lookup.
+   *
+   * Unlike displayName (which may be minified or repeated), componentName is a
+   * stable identifier used as the key in theme.components defaultProps.
+   *
+   * - If omitted, falls back to displayName (with a DEV warning).
+   * - Must be globally unique within an application.
+   * - Recommended format: "Button" (core), "pro.Table" (pro), "app.Card" (app-level).
+   *
+   * @example
+   * componentName: 'Button'
+   */
+  componentName?: string;
+
+  /**
    * Default HTML element or React component to render.
    */
   defaultElement: ElementType;

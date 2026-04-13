@@ -41,6 +41,7 @@ export type {
   CSSLength,
   TokenRef,
   PrismUITheme,
+  PrismUIComponentConfig,
   SemanticColorToken,
   PrismUIPalette,
   SemanticColorName,
@@ -86,6 +87,9 @@ export { variantColorResolver, VARIANT_TO_ROLE } from "./core/variant";
 export type { VariantColorResolverInput, VariantColorOutput } from "./core/variant";
 export { withVariantColors, VARIANT_CSS_VARS } from "./core/variant";
 export type { VariantCssVarKey, VariantCssVarName, WithVariantColorsOptions } from "./core/variant";
+
+// Component Factory System (Stage 6 + Stage 7.4)
+export { useComponentDefaultProps } from './core/component';
 
 // Components (Stage 6)
 export { Badge } from "./components/Badge";

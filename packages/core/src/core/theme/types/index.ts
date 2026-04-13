@@ -2,6 +2,7 @@ export type {
   CSSLength,
   TokenRef,
   PrismUITheme,
+  PrismUIComponentConfig,
 } from "./theme.types";
 
 export type {

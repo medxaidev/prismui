@@ -23,6 +23,7 @@ export type {
   CSSLength,
   TokenRef,
   PrismUITheme,
+  PrismUIComponentConfig,
   SemanticColorToken,
   PrismUIPalette,
   SemanticColorName,

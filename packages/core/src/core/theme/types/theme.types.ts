@@ -26,6 +26,18 @@ import type { PrismuiSizeTokens } from "../../size/types";
 import type { PrismuiStateTokens } from "../../state/types";
 
 /**
+ * Per-component theme configuration.
+ *
+ * - `defaultProps`: scalar prop defaults (shallow merge, input-simulator semantics).
+ *   - `undefined` from user props falls back to defaultProps value.
+ *   - `null` from user props explicitly clears the default.
+ *   - `styles`/`classNames` must NOT be set here (use Styling Engine overrides).
+ */
+export interface PrismUIComponentConfig {
+  defaultProps?: Record<string, unknown>;
+}
+
+/**
  * CSS Length
  *
  * Supported CSS length units:
@@ -93,5 +105,19 @@ export interface PrismUITheme<
    * Use your own prefix (e.g. "--app-", "--my-") for safe custom tokens.
    */
   customTokens?: Record<string, string>;
+
+  /**
+   * Per-component default props.
+   * Key: componentName (stable system ID declared in factory payload).
+   * Value: { defaultProps } — scalar props only (shallow merge).
+   *
+   * @example
+   * createTheme({
+   *   components: {
+   *     Button: { defaultProps: { size: 'lg', variant: 'filled' } },
+   *   },
+   * })
+   */
+  components?: Record<string, PrismUIComponentConfig>;
 }
 

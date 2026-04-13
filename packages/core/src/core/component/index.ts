@@ -22,6 +22,9 @@ export type { StylingContext } from './create-styling-context';
 export { useStyles } from './use-styles';
 export type { StylingInput } from './use-styles';
 
+// Component defaultProps hook
+export { useComponentDefaultProps } from './use-component-default-props';
+
 // CSS Modules type safety
 export { ensureClasses } from './ensure-classes';
 
