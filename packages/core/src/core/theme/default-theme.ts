@@ -95,6 +95,13 @@ export const defaultTheme: PrismUITheme = {
   // ========== State System ==========
   state: defaultStateTokens,
 
+  // ========== Focus Ring System ==========
+  focusRing: {
+    width: '2px',
+    offset: '2px',
+    color: 'var(--prismui-color-primary)',
+  },
+
   // ========== Global Config ==========
   scale: 1,
 

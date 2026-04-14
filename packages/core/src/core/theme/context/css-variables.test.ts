@@ -200,6 +200,28 @@ describe("generateCSSVariables", () => {
       }
     }
   });
+
+  it("generates focus ring variables from defaultTheme", () => {
+    const vars = generateCSSVariables(defaultTheme, "light");
+    expect(vars["--prismui-focus-ring-width"]).toBe("2px");
+    expect(vars["--prismui-focus-ring-offset"]).toBe("2px");
+    expect(vars["--prismui-focus-ring-color"]).toBe("var(--prismui-color-primary)");
+  });
+
+  it("generates focus ring variables from custom focusRing theme override", () => {
+    const customTheme = {
+      ...defaultTheme,
+      focusRing: {
+        width: '3px' as const,
+        offset: '4px' as const,
+        color: '#0055ff',
+      },
+    };
+    const vars = generateCSSVariables(customTheme, "light");
+    expect(vars["--prismui-focus-ring-width"]).toBe("3px");
+    expect(vars["--prismui-focus-ring-offset"]).toBe("4px");
+    expect(vars["--prismui-focus-ring-color"]).toBe("#0055ff");
+  });
 });
 
 // ─────────────────────────────────────────────────────────────────

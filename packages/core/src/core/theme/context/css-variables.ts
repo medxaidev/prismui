@@ -107,6 +107,11 @@ export function selectPalette(
  * - --prismui-font-weight-{scale}
  * - --prismui-line-height-{scale}
  *
+ * Focus ring (Stage 9 / a11y):
+ * - --prismui-focus-ring-width   → outline width for :focus-visible
+ * - --prismui-focus-ring-offset  → outline offset for :focus-visible
+ * - --prismui-focus-ring-color   → outline color (CSS value, not ColorRef)
+ *
  * Reserved (Stage 4): --prismui-component-{name}-{property}
  */
 export function generateCSSVariables(
@@ -191,6 +196,11 @@ export function generateCSSVariables(
       vars[`--prismui-color-${family}-${shade}`] = value;
     }
   }
+
+  // ── Focus Ring ────────────────────────────────────────────────────────────
+  vars['--prismui-focus-ring-width'] = String(theme.focusRing.width);
+  vars['--prismui-focus-ring-offset'] = String(theme.focusRing.offset);
+  vars['--prismui-focus-ring-color'] = theme.focusRing.color;
 
   // ── Custom Tokens ─────────────────────────────────────────────────────────
   // Escape hatch: inject user-defined CSS Variables.

@@ -119,6 +119,24 @@ export interface PrismUITheme<
   breakpoints: Record<BreakpointScale, number>;
   size: PrismuiSizeTokens;
   state: PrismuiStateTokens;
+  /**
+   * Focus Ring tokens.
+   *
+   * Controls the appearance of the keyboard focus indicator (:focus-visible).
+   * Injected as CSS Variables:
+   *   --prismui-focus-ring-width   → outline width
+   *   --prismui-focus-ring-offset  → outline offset (gap between element and ring)
+   *   --prismui-focus-ring-color   → outline color (CSS color value, not ColorRef)
+   *
+   * color is a direct CSS value (e.g. 'var(--prismui-color-primary)') rather
+   * than a ColorRef, because focus ring color often needs to reference already-
+   * resolved palette variables, not raw color lookups.
+   */
+  focusRing: {
+    width: CSSLength;
+    offset: CSSLength;
+    color: string;
+  };
   scale: number;
   /**
    * Custom CSS Variables injection (escape hatch).
