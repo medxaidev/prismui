@@ -6,3 +6,6 @@ export type { VariantColorResolverInput, VariantColorOutput } from "./variant-co
 
 export { withVariantColors, VARIANT_CSS_VARS } from "./with-variant-colors";
 export type { VariantCssVarKey, VariantCssVarName, WithVariantColorsOptions } from "./with-variant-colors";
+
+export { SHADE_SCALE, VARIANT_STEP_RULES } from "./variant-step-rules";
+export type { VariantStepRule } from "./variant-step-rules";

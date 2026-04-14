@@ -8,15 +8,17 @@ import type { PrismUIPalette } from "./types";
  *
  * Convention (not rule):
  * - base:   500 (primary shade)
- * - hover:  600 (slightly darker)
- * - active: 700 (darkest of the three)
+ * - hover:  700 (two shades darker — VARIANT_STEP_RULES.filled.hoverShade = 7)
+ * - active: 800 (darkest of the three)
+ *
+ * Rule reference: core/variant/variant-step-rules.ts — VARIANT_STEP_RULES.filled
  */
 export const defaultLightPalette: PrismUIPalette = {
   primary: {
     base: "colors.blue.500",
     hover: "colors.blue.600",
     active: "colors.blue.700",
-    high: { bg: "colors.blue.500", hoverBg: "colors.blue.600", fg: "colors.gray.50" },
+    high: { bg: "colors.blue.500", hoverBg: "colors.blue.700", fg: "colors.gray.50" },
     low: { bg: "colors.blue.50", hoverBg: "colors.blue.100", fg: "colors.blue.700" },
     bordered: { border: "colors.blue.300", fg: "colors.blue.600", hoverBg: "colors.blue.50" },
     minimal: { fg: "colors.blue.600", hoverBg: "colors.blue.50" },
@@ -26,7 +28,7 @@ export const defaultLightPalette: PrismUIPalette = {
     base: "colors.violet.500",
     hover: "colors.violet.600",
     active: "colors.violet.700",
-    high: { bg: "colors.violet.500", hoverBg: "colors.violet.600", fg: "colors.gray.50" },
+    high: { bg: "colors.violet.500", hoverBg: "colors.violet.700", fg: "colors.gray.50" },
     low: { bg: "colors.violet.50", hoverBg: "colors.violet.100", fg: "colors.violet.700" },
     bordered: { border: "colors.violet.300", fg: "colors.violet.600", hoverBg: "colors.violet.50" },
     minimal: { fg: "colors.violet.600", hoverBg: "colors.violet.50" },
@@ -36,7 +38,7 @@ export const defaultLightPalette: PrismUIPalette = {
     base: "colors.cyan.500",
     hover: "colors.cyan.600",
     active: "colors.cyan.700",
-    high: { bg: "colors.cyan.500", hoverBg: "colors.cyan.600", fg: "colors.gray.50" },
+    high: { bg: "colors.cyan.500", hoverBg: "colors.cyan.700", fg: "colors.gray.50" },
     low: { bg: "colors.cyan.50", hoverBg: "colors.cyan.100", fg: "colors.cyan.700" },
     bordered: { border: "colors.cyan.300", fg: "colors.cyan.600", hoverBg: "colors.cyan.50" },
     minimal: { fg: "colors.cyan.600", hoverBg: "colors.cyan.50" },
@@ -46,7 +48,7 @@ export const defaultLightPalette: PrismUIPalette = {
     base: "colors.green.500",
     hover: "colors.green.600",
     active: "colors.green.700",
-    high: { bg: "colors.green.500", hoverBg: "colors.green.600", fg: "colors.gray.50" },
+    high: { bg: "colors.green.500", hoverBg: "colors.green.700", fg: "colors.gray.50" },
     low: { bg: "colors.green.50", hoverBg: "colors.green.100", fg: "colors.green.700" },
     bordered: { border: "colors.green.300", fg: "colors.green.600", hoverBg: "colors.green.50" },
     minimal: { fg: "colors.green.600", hoverBg: "colors.green.50" },
@@ -56,7 +58,7 @@ export const defaultLightPalette: PrismUIPalette = {
     base: "colors.yellow.500",
     hover: "colors.yellow.600",
     active: "colors.yellow.700",
-    high: { bg: "colors.yellow.500", hoverBg: "colors.yellow.600", fg: "colors.gray.800" },
+    high: { bg: "colors.yellow.500", hoverBg: "colors.yellow.700", fg: "colors.gray.800" },
     low: { bg: "colors.yellow.50", hoverBg: "colors.yellow.100", fg: "colors.yellow.700" },
     bordered: { border: "colors.yellow.300", fg: "colors.yellow.600", hoverBg: "colors.yellow.50" },
     minimal: { fg: "colors.yellow.600", hoverBg: "colors.yellow.50" },
@@ -66,7 +68,7 @@ export const defaultLightPalette: PrismUIPalette = {
     base: "colors.red.500",
     hover: "colors.red.600",
     active: "colors.red.700",
-    high: { bg: "colors.red.500", hoverBg: "colors.red.600", fg: "colors.gray.50" },
+    high: { bg: "colors.red.500", hoverBg: "colors.red.700", fg: "colors.gray.50" },
     low: { bg: "colors.red.50", hoverBg: "colors.red.100", fg: "colors.red.700" },
     bordered: { border: "colors.red.300", fg: "colors.red.600", hoverBg: "colors.red.50" },
     minimal: { fg: "colors.red.600", hoverBg: "colors.red.50" },
@@ -76,7 +78,7 @@ export const defaultLightPalette: PrismUIPalette = {
     base: "colors.gray.600",
     hover: "colors.gray.700",
     active: "colors.gray.800",
-    high: { bg: "colors.gray.600", hoverBg: "colors.gray.700", fg: "colors.gray.50" },
+    high: { bg: "colors.gray.600", hoverBg: "colors.gray.800", fg: "colors.gray.50" },
     low: { bg: "colors.gray.100", hoverBg: "colors.gray.200", fg: "colors.gray.700" },
     bordered: { border: "colors.gray.300", fg: "colors.gray.600", hoverBg: "colors.gray.100" },
     minimal: { fg: "colors.gray.600", hoverBg: "colors.gray.100" },

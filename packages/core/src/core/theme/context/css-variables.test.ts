@@ -152,14 +152,15 @@ describe("generateCSSVariables", () => {
 
   it("generates color role variables — high emphasis for primary", () => {
     const vars = generateCSSVariables(defaultTheme, "light");
-    // primary.high: bg=blue.500, hoverBg=blue.600, fg=gray.50
+    // primary.high: bg=blue.500, hoverBg=blue.700, fg=gray.50
+    // (VARIANT_STEP_RULES.filled: bgShade=5→500, hoverShade=7→700, +2 step)
     expect(vars["--prismui-color-primary-high-bg"]).toBeDefined();
     expect(vars["--prismui-color-primary-high-hover-bg"]).toBeDefined();
     expect(vars["--prismui-color-primary-high-fg"]).toBeDefined();
     // high-bg resolves blue.500 (same as base)
     expect(vars["--prismui-color-primary-high-bg"]).toBe(vars["--prismui-color-primary"]);
-    // high-hover-bg resolves blue.600 (same as hover)
-    expect(vars["--prismui-color-primary-high-hover-bg"]).toBe(vars["--prismui-color-primary-hover"]);
+    // high-hover-bg resolves blue.700 (same as active — hoverShade=7, +2 from bg)
+    expect(vars["--prismui-color-primary-high-hover-bg"]).toBe(vars["--prismui-color-primary-active"]);
   });
 
   it("generates color role variables — low emphasis for primary", () => {
