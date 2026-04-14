@@ -4,7 +4,7 @@
   align-items: center;
   justify-content: center;
 
-  /* Sizing (from CSS variables) */
+  /* Sizing */
   height: var(--button-height);
   padding-left: var(--button-padding-x);
   padding-right: var(--button-padding-x);
@@ -24,12 +24,11 @@
   /* Interaction */
   cursor: pointer;
   user-select: none;
-  transition: all 0.15s ease;
+  transition: background 150ms ease, transform 100ms ease, opacity 150ms ease;
 
   /* Reset */
   appearance: none;
   text-decoration: none;
-  outline: none;
 }
 
 .root:hover:not(:disabled) {
@@ -38,6 +37,11 @@
 
 .root:active:not(:disabled) {
   transform: scale(0.98);
+}
+
+.root:focus-visible {
+  outline: var(--prismui-focus-ring-width) solid var(--prismui-focus-ring-color);
+  outline-offset: var(--prismui-focus-ring-offset);
 }
 
 .root:disabled {

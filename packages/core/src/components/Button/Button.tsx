@@ -3,23 +3,20 @@ import type { VarsResolver, StylesOverride } from '../../core/styles';
 import type { PolymorphicSystemProps } from '../../core/props';
 import classes from './Button.module.css';
 
-// 1. 定义 StylesNames
 export type ButtonStylesNames = 'root' | 'inner' | 'label';
 
-// 2. 定义组件专属 Props（系统级 props 来自 Props Contract）
 export interface ButtonOwnProps extends PolymorphicSystemProps {
-  // Content
   children?: React.ReactNode;
 }
 
-// 3. 完整 Props = 组件 Props + 系统级 Styling Overrides
 export type ButtonProps = ButtonOwnProps & StylesOverride<ButtonStylesNames>;
 
-// 4. 定义 VarsResolver（只处理私有变量，桥接系统 CSS var）
-//    --button-height / --button-padding-x 桥接自 Size System，保持向后兼容
-//    --button-font-size 是组件私有（Size System 未覆盖 font-size）
 const fontSizeMap: Record<string, string> = {
-  xs: '12px', sm: '14px', md: '16px', lg: '18px', xl: '20px',
+  xs: '0.75rem',
+  sm: '0.875rem',
+  md: '1rem',
+  lg: '1.125rem',
+  xl: '1.25rem',
 };
 
 const varsResolver: VarsResolver<ButtonOwnProps> = (props) => ({
@@ -30,10 +27,8 @@ const varsResolver: VarsResolver<ButtonOwnProps> = (props) => ({
 
 const stylesNames = ['root', 'inner', 'label'] as const;
 
-// 5. 验证 CSS Modules 类型安全（Names 从 stylesNames 自动推导，无需手动写泛型）
 const validatedClasses = ensureClasses(stylesNames, classes);
 
-// 6. 使用 Factory（声明式三轴系统注入）
 export const Button = factory(
   {
     displayName: 'Button',
