@@ -1,6 +1,12 @@
 import { describe, it, expect } from 'vitest';
 import { render } from '@testing-library/react';
 import { Button } from './Button';
+import { PrismUIProvider } from '../../core/theme/provider/PrismUIProvider';
+import { createTheme } from '../../core/theme/create-theme';
+
+function renderWithTheme(theme: ReturnType<typeof createTheme>, ui: React.ReactElement) {
+  return render(<PrismUIProvider theme={theme}>{ui}</PrismUIProvider>);
+}
 
 describe('Button', () => {
   describe('Basic Rendering', () => {
@@ -292,6 +298,120 @@ describe('Button', () => {
       expect(button).toHaveStyle({
         borderRadius: '20px',
         '--button-height': '60px',
+      });
+    });
+  });
+
+  describe('theme.components integration', () => {
+    describe('defaultProps', () => {
+      it('theme defaultProps size fills missing prop → CSS token reflects xl', () => {
+        const theme = createTheme({ components: { Button: { defaultProps: { size: 'xl' } } } });
+        const { container } = renderWithTheme(theme, <Button>B</Button>);
+        const button = container.querySelector('button');
+        expect(button).toHaveStyle({ '--prismui-size-height': '56px' });
+      });
+
+      it('props size overrides theme defaultProps size', () => {
+        const theme = createTheme({ components: { Button: { defaultProps: { size: 'xl' } } } });
+        const { container } = renderWithTheme(theme, <Button size="sm">B</Button>);
+        const button = container.querySelector('button');
+        expect(button).toHaveStyle({ '--prismui-size-height': '32px' });
+      });
+    });
+
+    describe('classNames', () => {
+      it('theme classNames.root → injected onto root element', () => {
+        const theme = createTheme({ components: { Button: { classNames: { root: 'theme-btn' } } } });
+        const { container } = renderWithTheme(theme, <Button>B</Button>);
+        expect(container.querySelector('button')).toHaveClass('theme-btn');
+      });
+
+      it('theme classNames.label → injected onto label slot', () => {
+        const theme = createTheme({ components: { Button: { classNames: { label: 'theme-label' } } } });
+        const { container } = renderWithTheme(theme, <Button>B</Button>);
+        expect(container.querySelector('span > span')).toHaveClass('theme-label');
+      });
+
+      it('theme + props classNames same slot → cx-merged (both classes present)', () => {
+        const theme = createTheme({ components: { Button: { classNames: { root: 'theme-btn' } } } });
+        const { container } = renderWithTheme(
+          theme,
+          <Button classNames={{ root: 'props-btn' }}>B</Button>,
+        );
+        const button = container.querySelector('button');
+        expect(button).toHaveClass('theme-btn');
+        expect(button).toHaveClass('props-btn');
+      });
+
+      it('theme classNames without props classNames → only theme class present', () => {
+        const theme = createTheme({ components: { Button: { classNames: { root: 'theme-only' } } } });
+        const { container } = renderWithTheme(theme, <Button>B</Button>);
+        expect(container.querySelector('button')).toHaveClass('theme-only');
+      });
+    });
+
+    describe('styles', () => {
+      it('theme styles.root → injected as inline style', () => {
+        const theme = createTheme({ components: { Button: { styles: { root: { borderRadius: '99px' } } } } });
+        const { container } = renderWithTheme(theme, <Button>B</Button>);
+        expect(container.querySelector('button')).toHaveStyle({ borderRadius: '99px' });
+      });
+
+      it('props styles.root overrides theme styles.root (same property)', () => {
+        const theme = createTheme({ components: { Button: { styles: { root: { borderRadius: '4px' } } } } });
+        const { container } = renderWithTheme(
+          theme,
+          <Button styles={{ root: { borderRadius: '20px' } }}>B</Button>,
+        );
+        expect(container.querySelector('button')).toHaveStyle({ borderRadius: '20px' });
+      });
+
+      it('props style prop overrides theme styles.root (highest priority)', () => {
+        const theme = createTheme({ components: { Button: { styles: { root: { borderRadius: '4px' } } } } });
+        const { container } = renderWithTheme(
+          theme,
+          <Button style={{ borderRadius: '50%' }}>B</Button>,
+        );
+        expect(container.querySelector('button')).toHaveStyle({ borderRadius: '50%' });
+      });
+    });
+
+    describe('vars', () => {
+      it('theme vars → injected CSS Variable on root element', () => {
+        const theme = createTheme({ components: { Button: { vars: { '--button-height': '80px' } } } });
+        const { container } = renderWithTheme(theme, <Button>B</Button>);
+        expect(container.querySelector('button')).toHaveStyle({ '--button-height': '80px' });
+      });
+
+      it('theme vars override varsResolver output (same key)', () => {
+        // varsResolver outputs --button-height: var(--prismui-size-height)
+        // theme vars should win over that
+        const theme = createTheme({ components: { Button: { vars: { '--button-height': '88px' } } } });
+        const { container } = renderWithTheme(theme, <Button>B</Button>);
+        expect(container.querySelector('button')).toHaveStyle({ '--button-height': '88px' });
+      });
+
+      it('props vars override theme vars (props > theme priority)', () => {
+        const theme = createTheme({ components: { Button: { vars: { '--button-height': '80px' } } } });
+        const { container } = renderWithTheme(
+          theme,
+          <Button vars={{ '--button-height': '100px' }}>B</Button>,
+        );
+        expect(container.querySelector('button')).toHaveStyle({ '--button-height': '100px' });
+      });
+
+      it('props style CSS var overrides props vars (style > vars priority)', () => {
+        const theme = createTheme({ components: { Button: { vars: { '--button-height': '80px' } } } });
+        const { container } = renderWithTheme(
+          theme,
+          <Button
+            vars={{ '--button-height': '100px' }}
+            style={{ '--button-height': '120px' } as React.CSSProperties}
+          >
+            B
+          </Button>,
+        );
+        expect(container.querySelector('button')).toHaveStyle({ '--button-height': '120px' });
       });
     });
   });

@@ -2,6 +2,12 @@
 import { describe, it, expect } from 'vitest';
 import { render } from '@testing-library/react';
 import { Badge } from './Badge';
+import { PrismUIProvider } from '../../core/theme/provider/PrismUIProvider';
+import { createTheme } from '../../core/theme/create-theme';
+
+function renderWithTheme(theme: ReturnType<typeof createTheme>, ui: React.ReactElement) {
+  return render(<PrismUIProvider theme={theme}>{ui}</PrismUIProvider>);
+}
 
 describe('Badge', () => {
   describe('Basic Rendering', () => {
@@ -183,6 +189,77 @@ describe('Badge', () => {
       const { container } = render(<Badge size="lg">Badge</Badge>);
       const el = container.querySelector('span');
       expect(el).not.toHaveAttribute('size');
+    });
+  });
+
+  describe('theme.components integration', () => {
+    describe('defaultProps', () => {
+      it('theme defaultProps variant fills missing prop → variant-bg is transparent (outline role)', () => {
+        const theme = createTheme({ components: { Badge: { defaultProps: { variant: 'outline' } } } });
+        const { container } = renderWithTheme(theme, <Badge>N</Badge>);
+        const el = container.querySelector('span');
+        expect(el).toHaveStyle({ '--prismui-variant-bg': 'transparent' });
+      });
+
+      it('props variant overrides theme defaultProps variant', () => {
+        const theme = createTheme({ components: { Badge: { defaultProps: { variant: 'outline' } } } });
+        const { container } = renderWithTheme(theme, <Badge variant="filled">N</Badge>);
+        const el = container.querySelector('span');
+        expect(el).toHaveStyle({ '--prismui-variant-bg': 'var(--prismui-color-primary-high-bg)' });
+      });
+    });
+
+    describe('classNames', () => {
+      it('theme classNames.root → injected onto root element', () => {
+        const theme = createTheme({ components: { Badge: { classNames: { root: 'theme-badge' } } } });
+        const { container } = renderWithTheme(theme, <Badge>N</Badge>);
+        expect(container.querySelector('span')).toHaveClass('theme-badge');
+      });
+
+      it('theme + props classNames same slot → cx-merged (both classes present)', () => {
+        const theme = createTheme({ components: { Badge: { classNames: { root: 'theme-badge' } } } });
+        const { container } = renderWithTheme(
+          theme,
+          <Badge classNames={{ root: 'props-badge' }}>N</Badge>,
+        );
+        const el = container.querySelector('span');
+        expect(el).toHaveClass('theme-badge');
+        expect(el).toHaveClass('props-badge');
+      });
+    });
+
+    describe('styles', () => {
+      it('theme styles.root → injected as inline style', () => {
+        const theme = createTheme({ components: { Badge: { styles: { root: { borderRadius: '2px' } } } } });
+        const { container } = renderWithTheme(theme, <Badge>N</Badge>);
+        expect(container.querySelector('span')).toHaveStyle({ borderRadius: '2px' });
+      });
+
+      it('props styles.root overrides theme styles.root (same property)', () => {
+        const theme = createTheme({ components: { Badge: { styles: { root: { borderRadius: '2px' } } } } });
+        const { container } = renderWithTheme(
+          theme,
+          <Badge styles={{ root: { borderRadius: '50%' } }}>N</Badge>,
+        );
+        expect(container.querySelector('span')).toHaveStyle({ borderRadius: '50%' });
+      });
+    });
+
+    describe('vars', () => {
+      it('theme vars → injected CSS Variable on root element', () => {
+        const theme = createTheme({ components: { Badge: { vars: { '--badge-radius': '4px' } } } });
+        const { container } = renderWithTheme(theme, <Badge>N</Badge>);
+        expect(container.querySelector('span')).toHaveStyle({ '--badge-radius': '4px' });
+      });
+
+      it('props vars override theme vars (props > theme priority)', () => {
+        const theme = createTheme({ components: { Badge: { vars: { '--badge-radius': '4px' } } } });
+        const { container } = renderWithTheme(
+          theme,
+          <Badge vars={{ '--badge-radius': '99px' }}>N</Badge>,
+        );
+        expect(container.querySelector('span')).toHaveStyle({ '--badge-radius': '99px' });
+      });
     });
   });
 });
