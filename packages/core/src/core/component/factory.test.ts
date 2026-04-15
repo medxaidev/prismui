@@ -10,6 +10,8 @@ import { defaultStateTokens } from '../state/default-state-tokens';
 import type { ComponentPayload } from './types';
 import type { VarsResolver } from '../styles/types';
 import type { PrismUITheme } from '../theme/types';
+import { defineSlots, SLOT_SYMBOL } from './define-slots';
+import { render } from '@testing-library/react';
 
 const DUMMY_THEME = {} as PrismUITheme;
 
@@ -511,6 +513,186 @@ describe('factory', () => {
         },
       });
       expect(Comp.displayName).toBe('StateSmoke');
+    });
+  });
+
+  describe('Stage 9: Slot System', () => {
+
+    describe('compound component generation', () => {
+      it('generates compound components for non-root slots', () => {
+        const Comp = factory({
+          displayName: 'SlotTest',
+          defaultElement: 'button',
+          slots: defineSlots({ root: 'button', inner: 'span', label: 'span' }),
+        });
+
+        expect((Comp as any).Inner).toBeDefined();
+        expect((Comp as any).Label).toBeDefined();
+      });
+
+      it('does not generate compound for root slot', () => {
+        const Comp = factory({
+          displayName: 'SlotTest',
+          defaultElement: 'button',
+          slots: defineSlots({ root: 'button', label: 'span' }),
+        });
+
+        expect((Comp as any).Root).toBeUndefined();
+      });
+
+      it('compound has correct displayName', () => {
+        const Comp = factory({
+          displayName: 'MyButton',
+          defaultElement: 'button',
+          slots: defineSlots({ root: 'button', inner: 'span', label: 'span' }),
+        });
+
+        expect((Comp as any).Inner.displayName).toBe('MyButton.Inner');
+        expect((Comp as any).Label.displayName).toBe('MyButton.Label');
+      });
+
+      it('compound has SLOT_SYMBOL metadata', () => {
+        const Comp = factory({
+          displayName: 'MetaTest',
+          componentName: 'MetaTest',
+          defaultElement: 'button',
+          slots: defineSlots({ root: 'button', label: 'span' }),
+        });
+
+        const meta = (Comp as any).Label[SLOT_SYMBOL];
+        expect(meta).toBeDefined();
+        expect(meta.slotName).toBe('label');
+        expect(meta.componentName).toBe('MetaTest');
+      });
+
+      it('compound uses componentName fallback to displayName for metadata', () => {
+        const Comp = factory({
+          displayName: 'FallbackTest',
+          defaultElement: 'div',
+          slots: defineSlots({ root: 'div', item: 'li' }),
+        });
+
+        const meta = (Comp as any).Item[SLOT_SYMBOL];
+        expect(meta.componentName).toBe('FallbackTest');
+      });
+    });
+
+    describe('effectiveDefaultElement (slots.root > defaultElement)', () => {
+      it('uses slots.root when both are provided and consistent', () => {
+        const Comp = factory({
+          displayName: 'ConsistentRoot',
+          defaultElement: 'button',
+          slots: defineSlots({ root: 'button', label: 'span' }),
+        });
+
+        // Component created successfully (no throw)
+        expect(Comp.displayName).toBe('ConsistentRoot');
+      });
+
+      it('DEV warns when slots.root and defaultElement are inconsistent', () => {
+        const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+        factory({
+          displayName: 'InconsistentRoot',
+          defaultElement: 'button',
+          slots: defineSlots({ root: 'a', label: 'span' }),
+        });
+
+        expect(warnSpy).toHaveBeenCalledWith(
+          expect.stringContaining('InconsistentRoot'),
+        );
+        expect(warnSpy).toHaveBeenCalledWith(
+          expect.stringContaining('slots.root will be used as source of truth'),
+        );
+
+        warnSpy.mockRestore();
+      });
+    });
+
+    describe('slots-derived stylesNames', () => {
+      it('creates component with slots and no explicit stylesNames', () => {
+        const Comp = factory({
+          displayName: 'DeriveTest',
+          defaultElement: 'div',
+          slots: defineSlots({ root: 'div', header: 'div', body: 'div' }),
+          styling: {
+            structure: { stylesNames: [] as const },
+            resources: { classes: { root: 'r', header: 'h', body: 'b' } },
+          },
+        });
+
+        expect(Comp.displayName).toBe('DeriveTest');
+        // Compound components are generated
+        expect((Comp as any).Header).toBeDefined();
+        expect((Comp as any).Body).toBeDefined();
+      });
+    });
+
+    describe('DEV compound misuse protection', () => {
+      it('warns when compound is rendered without data-prismui-slot-usage', () => {
+        const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+        const Comp = factory({
+          displayName: 'MisuseTest',
+          defaultElement: 'button',
+          slots: defineSlots({ root: 'button', label: 'span' }),
+        });
+
+        // Get the compound component
+        const Label = (Comp as any).Label;
+        expect(Label).toBeDefined();
+
+        // Render it (this triggers the forwardRef which checks for the marker)
+        render(React.createElement(Label, null, 'test'));
+
+        expect(warnSpy).toHaveBeenCalledWith(
+          expect.stringContaining('MisuseTest.Label is used outside of MisuseTest render'),
+        );
+
+        warnSpy.mockRestore();
+      });
+
+      it('does not warn when compound has data-prismui-slot-usage', () => {
+        const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+        const Comp = factory({
+          displayName: 'CorrectUseTest',
+          defaultElement: 'button',
+          slots: defineSlots({ root: 'button', label: 'span' }),
+        });
+
+        const Label = (Comp as any).Label;
+
+        render(React.createElement(Label, { 'data-prismui-slot-usage': true }, 'test'));
+
+        // No misuse warning for this specific compound
+        const misuseWarnings = warnSpy.mock.calls.filter(
+          (call) => typeof call[0] === 'string' && call[0].includes('CorrectUseTest.Label is used outside'),
+        );
+        expect(misuseWarnings).toHaveLength(0);
+
+        warnSpy.mockRestore();
+      });
+
+      it('strips data-prismui-slot-usage from DOM output', () => {
+        const Comp = factory({
+          displayName: 'StripTest',
+          defaultElement: 'button',
+          slots: defineSlots({ root: 'button', label: 'span' }),
+        });
+
+        const Label = (Comp as any).Label;
+
+        const { container } = render(
+          React.createElement(Label, { 'data-prismui-slot-usage': true, className: 'test' }, 'hello'),
+        );
+
+        const span = container.querySelector('span');
+        expect(span).toBeInTheDocument();
+        expect(span).toHaveClass('test');
+        expect(span).not.toHaveAttribute('data-prismui-slot-usage');
+        expect(span).toHaveTextContent('hello');
+      });
     });
   });
 });

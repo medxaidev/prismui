@@ -1,5 +1,6 @@
 import type { ElementType } from 'react';
 import type { Classes, VarsResolver } from '../styles';
+import type { SlotDefinition } from './define-slots';
 
 /**
  * System identifiers for factory's declarative systems injection.
@@ -144,6 +145,19 @@ export type ComponentPayload<Props = any, Names extends string = string> = {
   componentPropKeys?: readonly (keyof Props)[];
 
   /**
+   * Slot declarations (optional).
+   *
+   * If provided:
+   * - stylesNames is auto-derived from Object.keys(slots) via resolveStylesNames
+   * - Compound components are auto-generated and attached as static properties
+   * - slots.root > defaultElement (slots is the structure source of truth)
+   *
+   * @example
+   * slots: defineSlots({ root: 'button', inner: 'span', label: 'span' })
+   */
+  slots?: SlotDefinition;
+
+  /**
    * Declarative system injection.
    *
    * Systems are applied left-to-right as nested wrappers around varsResolver.
@@ -159,6 +173,24 @@ export type ComponentPayload<Props = any, Names extends string = string> = {
    */
   systems?: readonly ComponentSystemEntry[];
 };
+
+/**
+ * Extract the resolved Names type from a ComponentPayload.
+ *
+ * Priority (matches resolveStylesNames runtime logic):
+ * 1. slots exists → keyof slots & string (literal union, never degrades to `string`)
+ * 2. no slots, stylesNames exists → stylesNames array element type
+ * 3. neither → string (legacy fallback)
+ *
+ * This is the type-level counterpart of resolveStylesNames().
+ * It ensures getStyles, classNames, styles are all constrained to exact slot names.
+ */
+export type ResolvedNames<P extends ComponentPayload> =
+  P extends { slots: infer S }
+    ? keyof S & string
+    : P extends { styling: { structure: { stylesNames: readonly (infer N extends string)[] } } }
+      ? N
+      : string;
 
 /**
  * Complete component props.

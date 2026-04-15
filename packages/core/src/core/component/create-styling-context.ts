@@ -192,7 +192,7 @@ export function createStylingContext<Props, Names extends string = string>(
     vars?: Record<string, string | number>;
   },
   componentPropKeys?: readonly (keyof Props)[],
-  theme?: PrismUITheme,
+  theme?: PrismUITheme<string, string>,
 ): StylingContext<Names> {
   // Fallback: no styling system
   if (!styling) {

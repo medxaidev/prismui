@@ -11,7 +11,10 @@ import { withStateVars } from '../state/with-state-vars';
 import { useThemeOptional } from '../theme/context/theme.context';
 import { useComponentDefaultProps } from './use-component-default-props';
 import { useComponentStylingInput } from './use-component-styling-input';
-import type { ComponentPayload } from './types';
+import { SLOT_SYMBOL } from './define-slots';
+import type { SlotMetadata } from './define-slots';
+import { resolveStylesNames } from './resolve-styles-names';
+import type { ComponentPayload, ResolvedNames } from './types';
 
 // DEV: module-level registry to detect duplicate componentName registrations.
 // Lives outside render — populated once per factory() call at module load time.
@@ -118,14 +121,34 @@ export type FactoryRenderContext<Props, Names extends string> = {
  */
 export function factory<Payload extends ComponentPayload>(
   payload: Payload,
-  render?: (ctx: FactoryRenderContext<any, any>) => React.ReactNode,
+  render?: (ctx: FactoryRenderContext<any, ResolvedNames<Payload>>) => React.ReactNode,
 ) {
+  // ── Stage 9: slots.root > defaultElement resolution ──
+  // slots is the structure source of truth; defaultElement is legacy fallback.
+  const effectiveDefaultElement = payload.slots?.root ?? payload.defaultElement;
+
+  if (process.env.NODE_ENV !== 'production') {
+    if (payload.slots?.root && payload.defaultElement) {
+      if (payload.slots.root !== payload.defaultElement) {
+        console.warn(
+          `[PrismUI] "${payload.displayName}" has inconsistent root element:\n` +
+          `  defaultElement = "${String(payload.defaultElement)}"\n` +
+          `  slots.root = "${String(payload.slots.root)}"\n` +
+          `→ slots.root will be used as source of truth.`,
+        );
+      }
+    }
+  }
+
+  // ── Stage 9: resolve stylesNames via single source of truth ──
+  // When slots exist, stylesNames is derived from slots keys (or explicit subset).
+  // resolveStylesNames handles all 4 priority paths + DEV subset validation.
+  const resolvedStylesNames = resolveStylesNames(payload);
+
   // ── Stage 8.3: build validSlotsSet once at factory definition time (not per render) ──
-  // stylesNames is a module-level constant array defined at component authoring time;
-  // its reference is stable across all renders. Building the Set here (factory closure)
-  // means each render receives the same Set reference — zero per-render allocation.
-  const validSlotsSet = payload.styling?.structure.stylesNames
-    ? new Set(payload.styling.structure.stylesNames)
+  // Uses resolvedStylesNames (slots-aware) instead of raw stylesNames.
+  const validSlotsSet = resolvedStylesNames.length > 0
+    ? new Set(resolvedStylesNames)
     : undefined;
 
   // ── DEV-only: componentName stability checks (runs once at factory init, not per render) ──
@@ -163,7 +186,7 @@ export function factory<Payload extends ComponentPayload>(
     // explicitly as merged outputs — they must not leak into stylingProps via rest.
     const { component, className, style, classNames: _, styles: __, vars: ___, ...rest } = resolvedProps;
 
-    const Element = component || payload.defaultElement;
+    const Element = component || effectiveDefaultElement;
 
     // ✅ CORRECT MODEL: DOMProps = AllProps - ComponentProps - StylingProps
     // omitComponentProps removes declared component props, leaving only DOM-safe props
@@ -281,5 +304,45 @@ export function factory<Payload extends ComponentPayload>(
   });
 
   Component.displayName = payload.displayName;
+
+  // ── Stage 9: Compound Component auto-generation + SLOT_SYMBOL marker ──
+  // Runs once at factory init (module load time), not per render.
+  if (payload.slots) {
+    for (const [name, slotDefaultElement] of Object.entries(payload.slots)) {
+      if (name === 'root') continue; // root is the component itself
+
+      const slotDisplayName = name.charAt(0).toUpperCase() + name.slice(1);
+      const fullDisplayName = `${payload.displayName}.${slotDisplayName}`;
+
+      const SlotComponent = React.forwardRef<any, any>((slotProps, slotRef) => {
+        // DEV: detect compound used outside factory render (no styles)
+        if (process.env.NODE_ENV !== 'production') {
+          if (!slotProps['data-prismui-slot-usage']) {
+            console.warn(
+              `[PrismUI] ${fullDisplayName} is used outside of ` +
+              `${payload.displayName} render.\n` +
+              `It will NOT receive styles automatically. ` +
+              `This is a structure label, not a structure instance.`,
+            );
+          }
+        }
+
+        // Strip internal marker before passing to DOM
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const { 'data-prismui-slot-usage': _marker, ...domProps } = slotProps;
+        return React.createElement(slotDefaultElement, { ref: slotRef, ...domProps });
+      });
+      SlotComponent.displayName = fullDisplayName;
+
+      // Slot metadata marker — for DEV tools and future system observability
+      (SlotComponent as any)[SLOT_SYMBOL] = {
+        slotName: name,
+        componentName: payload.componentName ?? payload.displayName,
+      } satisfies SlotMetadata;
+
+      (Component as any)[slotDisplayName] = SlotComponent;
+    }
+  }
+
   return Component as any;
 }

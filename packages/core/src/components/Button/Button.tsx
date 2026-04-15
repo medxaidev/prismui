@@ -1,9 +1,17 @@
-import { factory, ensureClasses } from '../../core/component';
+import { factory, ensureClasses, defineSlots } from '../../core/component';
+import type { SlotNames } from '../../core/component';
 import type { VarsResolver, StylesOverride } from '../../core/styles';
 import type { PolymorphicSystemProps } from '../../core/props';
 import classes from './Button.module.css';
 
-export type ButtonStylesNames = 'root' | 'inner' | 'label';
+// Stage 9: Slot System — structure declaration as source of truth
+const buttonSlots = defineSlots({
+  root: 'button',
+  inner: 'span',
+  label: 'span',
+});
+
+export type ButtonStylesNames = SlotNames<typeof buttonSlots>;
 
 export interface ButtonOwnProps extends PolymorphicSystemProps {
   children?: React.ReactNode;
@@ -25,7 +33,8 @@ const varsResolver: VarsResolver<ButtonOwnProps> = (props) => ({
   '--button-font-size': fontSizeMap[props.size ?? 'md'],
 });
 
-const stylesNames = ['root', 'inner', 'label'] as const;
+// stylesNames derived from slots for ensureClasses (compile-time validation)
+const stylesNames = Object.keys(buttonSlots) as (keyof typeof buttonSlots)[];
 
 const validatedClasses = ensureClasses(stylesNames, classes);
 
@@ -34,6 +43,7 @@ export const Button = factory(
     displayName: 'Button',
     componentName: 'Button',
     defaultElement: 'button',
+    slots: buttonSlots,
     componentPropKeys: ['size', 'variant', 'color', 'disabled'] as const,
     systems: ['variant', 'size', 'state'],
     styling: {
@@ -50,9 +60,9 @@ export const Button = factory(
   },
   ({ Element, ref, domProps, componentProps, styles }) => (
     <Element ref={ref} {...styles.getRootProps()} {...domProps} disabled={componentProps.disabled}>
-      <span {...styles.getStyles('inner')}>
-        <span {...styles.getStyles('label')}>{domProps.children}</span>
-      </span>
+      <Button.Inner data-prismui-slot-usage {...styles.getStyles('inner')}>
+        <Button.Label data-prismui-slot-usage {...styles.getStyles('label')}>{domProps.children}</Button.Label>
+      </Button.Inner>
     </Element>
   ),
 );

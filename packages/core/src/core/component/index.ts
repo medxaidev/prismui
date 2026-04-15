@@ -29,7 +29,12 @@ export { useComponentDefaultProps } from './use-component-default-props';
 export { ensureClasses } from './ensure-classes';
 
 // Component types
-export type { ComponentPayload, StylingProps, ComponentProps, ComponentSystem, ComponentSystemEntry } from './types';
+export type { ComponentPayload, StylingProps, ComponentProps, ComponentSystem, ComponentSystemEntry, ResolvedNames } from './types';
+
+// Slot System (Stage 9)
+export { defineSlots, SLOT_SYMBOL } from './define-slots';
+export type { SlotDefinition, SlotNames, SlotMetadata } from './define-slots';
+export { resolveStylesNames } from './resolve-styles-names';
 
 // System marks (for double-wrap detection)
 export { WITH_VARIANT_MARK, WITH_SIZE_MARK, WITH_STATE_MARK, SYSTEM_MARKS } from './system-marks';
