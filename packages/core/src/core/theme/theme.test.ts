@@ -201,11 +201,11 @@ describe('Theme System', () => {
           xl: 1400,
         },
         size: {
-          xs: { height: '24px', paddingX: '8px' },
-          sm: { height: '32px', paddingX: '12px' },
-          md: { height: '40px', paddingX: '16px' },
-          lg: { height: '48px', paddingX: '20px' },
-          xl: { height: '56px', paddingX: '24px' },
+          xs: { height: '24px', paddingX: '8px',  fontSize: '12px' },
+          sm: { height: '30px', paddingX: '10px', fontSize: '13px' },
+          md: { height: '36px', paddingX: '12px', fontSize: '14px' },
+          lg: { height: '42px', paddingX: '14px', fontSize: '15px' },
+          xl: { height: '48px', paddingX: '16px', fontSize: '16px' },
         },
         state: {
           disabled: { opacity: 0.5, cursor: 'not-allowed' },

@@ -19,18 +19,10 @@ export interface ButtonOwnProps extends PolymorphicSystemProps {
 
 export type ButtonProps = ButtonOwnProps & StylesOverride<ButtonStylesNames>;
 
-const fontSizeMap: Record<string, string> = {
-  xs: '0.75rem',
-  sm: '0.875rem',
-  md: '1rem',
-  lg: '1.125rem',
-  xl: '1.25rem',
-};
-
-const varsResolver: VarsResolver<ButtonOwnProps> = (props) => ({
+const varsResolver: VarsResolver<ButtonOwnProps> = () => ({
   '--button-height': 'var(--prismui-size-height)',
   '--button-padding-x': 'var(--prismui-size-padding-x)',
-  '--button-font-size': fontSizeMap[props.size ?? 'md'],
+  '--button-font-size': 'var(--prismui-size-font-size)',
 });
 
 // stylesNames derived from slots for ensureClasses (compile-time validation)

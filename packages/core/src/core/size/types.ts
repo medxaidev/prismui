@@ -2,11 +2,17 @@
  * Size System Types
  *
  * Core Definition:
- * Size System = 组件盒子模型的统一映射协议
+ * Size System = 组件盒子模型 + 文字大小的统一映射协议
  *
- * Constraints:
- * - SizeScale only covers box model: height + paddingX
- * - Explicitly excludes: fontSize (Typography System), iconSize (Icon System), gap (Spacing System)
+ * Three dimensions (v2):
+ * - height   — 组件高度，step = +6
+ * - paddingX — 水平内边距，step = +2
+ * - fontSize — 组件文字大小，step = +1
+ *
+ * Core principle: Typography 比 Layout 更稳定
+ *   height(+6) > paddingX(+2) > fontSize(+1)
+ *
+ * Explicitly excludes: iconSize (Icon System), gap (Spacing System)
  */
 
 /**
@@ -17,18 +23,25 @@
 export type PrismuiSize = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
 
 /**
- * SizeScale — 盒子模型维度。
+ * SizeScale — 三维度比例单元。
  *
- * 职责：height（组件高度）+ paddingX（水平内边距）。
+ * 职责：
+ *   height   — 组件高度
+ *   paddingX — 水平内边距
+ *   fontSize — 组件文字大小
+ *
+ * 比例协调原则：
+ *   height / paddingX / fontSize 是一组，修改任何一个都必须同时审计另外两个。
+ *   Typography 比 Layout 更稳定：fontSize 步长 (+1) < paddingX (+2) < height (+6)
  *
  * 明确排除：
- *   fontSize  → 属于 Typography System（未来 Step）
- *   iconSize  → 属于 Icon System（未来 Step）
- *   gap       → 属于 Layout/Spacing System（未来 Step）
+ *   iconSize → 属于 Icon System（未来 Step）
+ *   gap      → 属于 Layout/Spacing System（未来 Step）
  */
 export interface SizeScale {
   height: string;
   paddingX: string;
+  fontSize: string;
 }
 
 /**

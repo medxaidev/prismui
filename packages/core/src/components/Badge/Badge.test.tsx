@@ -77,31 +77,31 @@ describe('Badge', () => {
     it('injects --prismui-size-height for sm', () => {
       const { container } = render(<Badge size="sm">SM</Badge>);
       const el = container.querySelector('span');
-      expect(el).toHaveStyle({ '--prismui-size-height': '32px' });
+      expect(el).toHaveStyle({ '--prismui-size-height': '30px' });
     });
 
     it('injects --prismui-size-height for md (default)', () => {
       const { container } = render(<Badge>MD</Badge>);
       const el = container.querySelector('span');
-      expect(el).toHaveStyle({ '--prismui-size-height': '40px' });
+      expect(el).toHaveStyle({ '--prismui-size-height': '36px' });
     });
 
     it('injects --prismui-size-height for lg', () => {
       const { container } = render(<Badge size="lg">LG</Badge>);
       const el = container.querySelector('span');
-      expect(el).toHaveStyle({ '--prismui-size-height': '48px' });
+      expect(el).toHaveStyle({ '--prismui-size-height': '42px' });
     });
 
     it('injects --prismui-size-height for xl', () => {
       const { container } = render(<Badge size="xl">XL</Badge>);
       const el = container.querySelector('span');
-      expect(el).toHaveStyle({ '--prismui-size-height': '56px' });
+      expect(el).toHaveStyle({ '--prismui-size-height': '48px' });
     });
 
     it('injects --prismui-size-padding-x for md', () => {
       const { container } = render(<Badge>MD</Badge>);
       const el = container.querySelector('span');
-      expect(el).toHaveStyle({ '--prismui-size-padding-x': '16px' });
+      expect(el).toHaveStyle({ '--prismui-size-padding-x': '12px' });
     });
 
     it('all 5 sizes inject different height values', () => {

@@ -77,33 +77,38 @@ describe('Button', () => {
 
     it('renders sm size', () => {
       const { container } = render(<Button size="sm">SM</Button>);
-      expect(container.querySelector('button')).toHaveStyle({ '--prismui-size-height': '32px' });
+      expect(container.querySelector('button')).toHaveStyle({ '--prismui-size-height': '30px' });
     });
 
     it('renders md size (default)', () => {
       const { container } = render(<Button>MD</Button>);
-      expect(container.querySelector('button')).toHaveStyle({ '--prismui-size-height': '40px' });
+      expect(container.querySelector('button')).toHaveStyle({ '--prismui-size-height': '36px' });
     });
 
     it('renders lg size', () => {
       const { container } = render(<Button size="lg">LG</Button>);
-      expect(container.querySelector('button')).toHaveStyle({ '--prismui-size-height': '48px' });
+      expect(container.querySelector('button')).toHaveStyle({ '--prismui-size-height': '42px' });
     });
 
     it('renders xl size', () => {
       const { container } = render(<Button size="xl">XL</Button>);
-      expect(container.querySelector('button')).toHaveStyle({ '--prismui-size-height': '56px' });
+      expect(container.querySelector('button')).toHaveStyle({ '--prismui-size-height': '48px' });
     });
 
-    it('injects font-size CSS variable per size', () => {
+    it('injects font-size CSS variable from Size System', () => {
+      const { container } = render(<Button>M</Button>);
+      expect(container.querySelector('button')).toHaveStyle({ '--button-font-size': 'var(--prismui-size-font-size)' });
+    });
+
+    it('Size System injects --prismui-size-font-size per tier', () => {
       const { container: xs } = render(<Button size="xs">X</Button>);
-      expect(xs.querySelector('button')).toHaveStyle({ '--button-font-size': '0.75rem' });
+      expect(xs.querySelector('button')).toHaveStyle({ '--prismui-size-font-size': '12px' });
 
       const { container: md } = render(<Button>M</Button>);
-      expect(md.querySelector('button')).toHaveStyle({ '--button-font-size': '1rem' });
+      expect(md.querySelector('button')).toHaveStyle({ '--prismui-size-font-size': '14px' });
 
       const { container: xl } = render(<Button size="xl">X</Button>);
-      expect(xl.querySelector('button')).toHaveStyle({ '--button-font-size': '1.25rem' });
+      expect(xl.querySelector('button')).toHaveStyle({ '--prismui-size-font-size': '16px' });
     });
   });
 
@@ -270,13 +275,13 @@ describe('Button', () => {
       it('theme defaultProps size fills missing prop', () => {
         const theme = createTheme({ components: { Button: { defaultProps: { size: 'xl' } } } });
         const { container } = renderWithTheme(theme, <Button>B</Button>);
-        expect(container.querySelector('button')).toHaveStyle({ '--prismui-size-height': '56px' });
+        expect(container.querySelector('button')).toHaveStyle({ '--prismui-size-height': '48px' });
       });
 
       it('props size overrides theme defaultProps size', () => {
         const theme = createTheme({ components: { Button: { defaultProps: { size: 'xl' } } } });
         const { container } = renderWithTheme(theme, <Button size="sm">B</Button>);
-        expect(container.querySelector('button')).toHaveStyle({ '--prismui-size-height': '32px' });
+        expect(container.querySelector('button')).toHaveStyle({ '--prismui-size-height': '30px' });
       });
     });
 

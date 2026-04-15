@@ -11,8 +11,8 @@ const emptyBase: VarsResolver<Record<string, any>> = () => ({});
 describe('Size System — Step 5.2: withSizeVars Middleware', () => {
 
   describe('SIZE_CSS_VARS constant', () => {
-    it('exports exactly 2 system variable names', () => {
-      expect(Object.keys(SIZE_CSS_VARS)).toHaveLength(2);
+    it('exports exactly 3 system variable names', () => {
+      expect(Object.keys(SIZE_CSS_VARS)).toHaveLength(3);
     });
 
     it('all names start with --prismui-size-', () => {
@@ -21,9 +21,10 @@ describe('Size System — Step 5.2: withSizeVars Middleware', () => {
       });
     });
 
-    it('contains the expected keys: height and paddingX', () => {
+    it('contains the expected keys: height, paddingX, and fontSize', () => {
       expect(SIZE_CSS_VARS.height).toBe('--prismui-size-height');
       expect(SIZE_CSS_VARS.paddingX).toBe('--prismui-size-padding-x');
+      expect(SIZE_CSS_VARS.fontSize).toBe('--prismui-size-font-size');
     });
   });
 
@@ -33,51 +34,58 @@ describe('Size System — Step 5.2: withSizeVars Middleware', () => {
       expect(typeof resolver).toBe('function');
     });
 
-    it('output always contains both system variable keys', () => {
+    it('output always contains all 3 system variable keys', () => {
       const resolver = withSizeVars(emptyBase);
       const result = resolver({ size: 'md' }, DUMMY_THEME);
       expect(result).toHaveProperty('--prismui-size-height');
       expect(result).toHaveProperty('--prismui-size-padding-x');
+      expect(result).toHaveProperty('--prismui-size-font-size');
     });
   });
 
   describe('withSizeVars — 5-tier size mapping', () => {
     const resolver = withSizeVars(emptyBase);
 
-    it('size=xs → 24px height, 8px paddingX', () => {
+    it('size=xs → 24px height, 8px paddingX, 12px fontSize', () => {
       const result = resolver({ size: 'xs' }, DUMMY_THEME);
       expect(result['--prismui-size-height']).toBe('24px');
       expect(result['--prismui-size-padding-x']).toBe('8px');
+      expect(result['--prismui-size-font-size']).toBe('12px');
     });
 
-    it('size=sm → 32px height, 12px paddingX', () => {
+    it('size=sm → 30px height, 10px paddingX, 13px fontSize', () => {
       const result = resolver({ size: 'sm' }, DUMMY_THEME);
-      expect(result['--prismui-size-height']).toBe('32px');
-      expect(result['--prismui-size-padding-x']).toBe('12px');
+      expect(result['--prismui-size-height']).toBe('30px');
+      expect(result['--prismui-size-padding-x']).toBe('10px');
+      expect(result['--prismui-size-font-size']).toBe('13px');
     });
 
-    it('size=md → 40px height, 16px paddingX', () => {
+    it('size=md → 36px height, 12px paddingX, 14px fontSize', () => {
       const result = resolver({ size: 'md' }, DUMMY_THEME);
-      expect(result['--prismui-size-height']).toBe('40px');
-      expect(result['--prismui-size-padding-x']).toBe('16px');
+      expect(result['--prismui-size-height']).toBe('36px');
+      expect(result['--prismui-size-padding-x']).toBe('12px');
+      expect(result['--prismui-size-font-size']).toBe('14px');
     });
 
-    it('size=lg → 48px height, 20px paddingX', () => {
+    it('size=lg → 42px height, 14px paddingX, 15px fontSize', () => {
       const result = resolver({ size: 'lg' }, DUMMY_THEME);
-      expect(result['--prismui-size-height']).toBe('48px');
-      expect(result['--prismui-size-padding-x']).toBe('20px');
+      expect(result['--prismui-size-height']).toBe('42px');
+      expect(result['--prismui-size-padding-x']).toBe('14px');
+      expect(result['--prismui-size-font-size']).toBe('15px');
     });
 
-    it('size=xl → 56px height, 24px paddingX', () => {
+    it('size=xl → 48px height, 16px paddingX, 16px fontSize', () => {
       const result = resolver({ size: 'xl' }, DUMMY_THEME);
-      expect(result['--prismui-size-height']).toBe('56px');
-      expect(result['--prismui-size-padding-x']).toBe('24px');
+      expect(result['--prismui-size-height']).toBe('48px');
+      expect(result['--prismui-size-padding-x']).toBe('16px');
+      expect(result['--prismui-size-font-size']).toBe('16px');
     });
 
     it('no size prop → defaults to md', () => {
       const result = resolver({}, DUMMY_THEME);
-      expect(result['--prismui-size-height']).toBe('40px');
-      expect(result['--prismui-size-padding-x']).toBe('16px');
+      expect(result['--prismui-size-height']).toBe('36px');
+      expect(result['--prismui-size-padding-x']).toBe('12px');
+      expect(result['--prismui-size-font-size']).toBe('14px');
     });
   });
 
@@ -96,7 +104,7 @@ describe('Size System — Step 5.2: withSizeVars Middleware', () => {
       const resolver = withSizeVars(base);
       const result = resolver({ size: 'md' }, DUMMY_THEME);
       expect(result['--btn-extra']).toBe('value');
-      expect(result['--prismui-size-height']).toBe('40px');
+      expect(result['--prismui-size-height']).toBe('36px');
     });
   });
 
@@ -122,6 +130,7 @@ describe('Size System — Step 5.2: withSizeVars Middleware', () => {
       const result = resolver({}, DUMMY_THEME); // no size prop
       expect(result['--prismui-size-height']).toBeUndefined();
       expect(result['--prismui-size-padding-x']).toBeUndefined();
+      expect(result['--prismui-size-font-size']).toBeUndefined();
       expect(result['--btn-height']).toBe('40px');
     });
 
@@ -130,7 +139,7 @@ describe('Size System — Step 5.2: withSizeVars Middleware', () => {
         enabled: (p) => p.size !== undefined,
       });
       const result = resolver({ size: 'lg' }, DUMMY_THEME);
-      expect(result['--prismui-size-height']).toBe('48px');
+      expect(result['--prismui-size-height']).toBe('42px');
     });
   });
 
@@ -138,17 +147,18 @@ describe('Size System — Step 5.2: withSizeVars Middleware', () => {
     it('theme.size tokens override defaultSizeTokens', () => {
       const customTheme = {
         size: {
-          xs: { height: '20px', paddingX: '6px' },
-          sm: { height: '28px', paddingX: '10px' },
-          md: { height: '36px', paddingX: '14px' },
-          lg: { height: '44px', paddingX: '18px' },
-          xl: { height: '52px', paddingX: '22px' },
+          xs: { height: '20px', paddingX: '6px',  fontSize: '11px' },
+          sm: { height: '28px', paddingX: '10px', fontSize: '12px' },
+          md: { height: '34px', paddingX: '14px', fontSize: '13px' },
+          lg: { height: '44px', paddingX: '18px', fontSize: '15px' },
+          xl: { height: '52px', paddingX: '22px', fontSize: '17px' },
         },
       } as unknown as PrismUITheme;
       const resolver = withSizeVars(emptyBase);
       const result = resolver({ size: 'md' }, customTheme);
-      expect(result['--prismui-size-height']).toBe('36px');
+      expect(result['--prismui-size-height']).toBe('34px');
       expect(result['--prismui-size-padding-x']).toBe('14px');
+      expect(result['--prismui-size-font-size']).toBe('13px');
     });
   });
 

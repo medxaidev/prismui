@@ -1,25 +1,28 @@
 import type { PrismuiSizeTokens } from './types';
 
 /**
- * defaultSizeTokens
+ * defaultSizeTokens — Size System v2
  *
- * Default box model values for all 5 size tiers.
+ * Three-dimension proportional scale for all 5 size tiers.
  *
- * Design decision (Stage-3 Step-1, 2026-04-14):
- * PrismUI uses strict 8px grid: 24 / 32 / 40 / 48 / 56.
- * md = 40px is intentionally larger than the industry default of 36px (MUI/Mantine).
- * Rationale: 8px grid consistency > migration convenience.
- * Migration note: users coming from MUI/Mantine who want 36px should use size="sm" (32px)
- * or override via theme.components.Button.defaultProps.size.
+ * Design decision (Stage-3 Step-1 v2, 2026-04-15):
+ * md = 36px aligns with industry consensus (MUI / Mantine).
  * See: devdocs/stage/stage-3-step-(stage-9)-1.md
  *
+ * Scale:
+ *   height   — step +6 (24 → 30 → 36 → 42 → 48)
+ *   paddingX — step +2 ( 8 → 10 → 12 → 14 → 16)
+ *   fontSize — step +1 (12 → 13 → 14 → 15 → 16)
+ *
+ * Core principle: Typography 比 Layout 更稳定
+ *   height(+6) > paddingX(+2) > fontSize(+1)
+ *
  * Units: px strings (CSSLength format)
- * Only height + paddingX — fontSize / iconSize / gap are NOT part of the size contract.
  */
 export const defaultSizeTokens: PrismuiSizeTokens = {
-  xs: { height: '24px', paddingX: '8px'  },
-  sm: { height: '32px', paddingX: '12px' },
-  md: { height: '40px', paddingX: '16px' },
-  lg: { height: '48px', paddingX: '20px' },
-  xl: { height: '56px', paddingX: '24px' },
+  xs: { height: '24px', paddingX: '8px',  fontSize: '12px' },
+  sm: { height: '30px', paddingX: '10px', fontSize: '13px' },
+  md: { height: '36px', paddingX: '12px', fontSize: '14px' },
+  lg: { height: '42px', paddingX: '14px', fontSize: '15px' },
+  xl: { height: '48px', paddingX: '16px', fontSize: '16px' },
 };

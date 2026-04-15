@@ -397,11 +397,12 @@ describe('factory', () => {
     const SIZE_THEME = { size: defaultSizeTokens } as unknown as PrismUITheme;
     const base: VarsResolver<any> = () => ({ '--btn-extra': 'value' });
 
-    it("systems: ['size'] injects --prismui-size-height and --prismui-size-padding-x", () => {
+    it("systems: ['size'] injects --prismui-size-height, --prismui-size-padding-x, and --prismui-size-font-size", () => {
       const resolver = withSizeVars(base);
       const result = resolver({ size: 'lg' }, SIZE_THEME);
-      expect(result[SIZE_CSS_VARS.height]).toBe('48px');
-      expect(result[SIZE_CSS_VARS.paddingX]).toBe('20px');
+      expect(result[SIZE_CSS_VARS.height]).toBe('42px');
+      expect(result[SIZE_CSS_VARS.paddingX]).toBe('14px');
+      expect(result[SIZE_CSS_VARS.fontSize]).toBe('15px');
     });
 
     it('base vars are preserved alongside size vars', () => {
@@ -415,8 +416,8 @@ describe('factory', () => {
       const sizeResolved = withSizeVars(variantResolved);
       const result = sizeResolved({ variant: 'filled', color: 'primary', size: 'md' }, SIZE_THEME);
       expect(result[VARIANT_CSS_VARS.bg]).toBeDefined();
-      expect(result[SIZE_CSS_VARS.height]).toBe('40px');
-      expect(result[SIZE_CSS_VARS.paddingX]).toBe('16px');
+      expect(result[SIZE_CSS_VARS.height]).toBe('36px');
+      expect(result[SIZE_CSS_VARS.paddingX]).toBe('12px');
     });
 
     it('double-wrap detection: WITH_SIZE_MARK prevents second size wrap', () => {

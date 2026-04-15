@@ -6,19 +6,23 @@ import type { PrismuiSize } from './types';
 /**
  * SIZE_CSS_VARS
  *
- * The 2 system-level CSS variable names that withSizeVars injects.
- * These form the Size System Contract (box model only):
- *   --prismui-size-height    → component height
- *   --prismui-size-padding-x → horizontal padding
+ * The 3 system-level CSS variable names that withSizeVars injects.
+ * These form the Size System v2 Contract (three-dimension proportional scale):
+ *   --prismui-size-height    → component height    (step +6)
+ *   --prismui-size-padding-x → horizontal padding   (step +2)
+ *   --prismui-size-font-size → component font size  (step +1)
+ *
+ * Core principle: Typography 比 Layout 更稳定
+ *   height(+6) > paddingX(+2) > fontSize(+1)
  *
  * Explicitly excluded from this contract:
- *   fontSize  → Typography System
  *   iconSize  → Icon System
  *   gap       → Layout/Spacing System
  */
 export const SIZE_CSS_VARS = {
   height: '--prismui-size-height',
   paddingX: '--prismui-size-padding-x',
+  fontSize: '--prismui-size-font-size',
 } as const;
 
 export type SizeCssVarKey = keyof typeof SIZE_CSS_VARS;
@@ -43,8 +47,9 @@ export interface WithSizeVarsOptions<Props extends Record<string, any>> {
 /**
  * withSizeVars
  *
- * A varsResolver middleware that injects --prismui-size-height and
- * --prismui-size-padding-x based on props.size and the theme size token table.
+ * A varsResolver middleware that injects --prismui-size-height,
+ * --prismui-size-padding-x, and --prismui-size-font-size based on
+ * props.size and the theme size token table.
  *
  * Spread order: system size vars first, then baseVars.
  * This means baseVarsResolver can override any --prismui-size-* variable
@@ -90,6 +95,7 @@ export function withSizeVars<Props extends Record<string, any>>(
     return {
       [SIZE_CSS_VARS.height]: sizeTokens.height,
       [SIZE_CSS_VARS.paddingX]: sizeTokens.paddingX,
+      [SIZE_CSS_VARS.fontSize]: sizeTokens.fontSize,
       ...baseVars,
     };
   };
