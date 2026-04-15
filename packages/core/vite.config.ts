@@ -11,7 +11,7 @@ export default defineConfig({
   css: {
     modules: {
       // 类名生成规则
-      generateScopedName: (name, filename, css) => {
+      generateScopedName: (name, filename, _css) => {
         // 开发环境：可读性优先
         if (process.env.NODE_ENV === 'development') {
           const componentName = filename

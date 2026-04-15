@@ -21,13 +21,13 @@ import type {
 // ============================================================================
 
 // ✅ Should accept intrinsic elements
-type IntrinsicElement1 = ElementType extends 'button' ? true : false;
-type IntrinsicElement2 = ElementType extends 'a' ? true : false;
-type IntrinsicElement3 = ElementType extends 'div' ? true : false;
+export type _IntrinsicElement1 = ElementType extends 'button' ? true : false;
+export type _IntrinsicElement2 = ElementType extends 'a' ? true : false;
+export type _IntrinsicElement3 = ElementType extends 'div' ? true : false;
 
 // ✅ Should accept custom components
-const CustomComponent = (props: { custom: string }) => null;
-type CustomElement = typeof CustomComponent extends ElementType ? true : false;
+const CustomComponent = (_props: { custom: string }) => null;
+export type _CustomElement = typeof CustomComponent extends ElementType ? true : false;
 
 // ============================================================================
 // Test 2: PropsOf
@@ -56,7 +56,7 @@ const divProps: DivPropsTest = {
 };
 
 // ✅ ref is included in PropsOf (via ComponentPropsWithRef) — type follows the element
-type ButtonPropsHasRef = 'ref' extends keyof ButtonPropsTest ? true : false;
+export type _ButtonPropsHasRef = 'ref' extends keyof ButtonPropsTest ? true : false;
 
 // ============================================================================
 // Test 3: MergeProps
@@ -95,20 +95,20 @@ const buttonComponentProp: ButtonComponentProp = {
 const emptyComponentProp: ButtonComponentProp = {};
 
 // ✅ Type safety: different element types are not compatible
-type ComponentPropTypeCheck = ComponentProp<'button'> extends ComponentProp<'a'> ? false : true;
+export type _ComponentPropTypeCheck = ComponentProp<'button'> extends ComponentProp<'a'> ? false : true;
 
 // ============================================================================
 // Test 5: PolymorphicRef
 // ============================================================================
 
 // ✅ Should extract correct ref type for button
-type ButtonRef = PolymorphicRef<'button'>;
+export type _ButtonRef = PolymorphicRef<'button'>;
 
 // ✅ Should extract correct ref type for anchor
-type AnchorRef = PolymorphicRef<'a'>;
+export type _AnchorRef = PolymorphicRef<'a'>;
 
 // ✅ Should extract correct ref type for div
-type DivRef = PolymorphicRef<'div'>;
+export type _DivRef = PolymorphicRef<'div'>;
 
 // ============================================================================
 // Test 6: PolymorphicProps - Core functionality
@@ -143,7 +143,7 @@ const buttonAsAnchor: ButtonAsAnchor = {
 };
 
 // ✅ Type safety: button-specific props not valid for anchor
-type AnchorHasType = 'type' extends keyof ButtonAsAnchor ? false : true;
+export type _AnchorHasType = 'type' extends keyof ButtonAsAnchor ? false : true;
 
 // ✅ Test with div element
 type ButtonAsDiv = PolymorphicProps<'div', ButtonOwnProps>;
@@ -160,8 +160,8 @@ const buttonAsDiv: ButtonAsDiv = {
 // ============================================================================
 
 // ✅ Ref is optional and correctly typed
-type ButtonRefIsOptional = undefined extends ButtonAsButton['ref'] ? true : false;
-type AnchorRefIsOptional = undefined extends ButtonAsAnchor['ref'] ? true : false;
+export type _ButtonRefIsOptional = undefined extends ButtonAsButton['ref'] ? true : false;
+export type _AnchorRefIsOptional = undefined extends ButtonAsAnchor['ref'] ? true : false;
 
 // ============================================================================
 // Test 8: PolymorphicProps - Custom component
@@ -173,7 +173,7 @@ type LinkProps = {
   replace?: boolean;
 };
 
-const Link = (props: LinkProps & { children?: React.ReactNode }) => null;
+const Link = (_props: LinkProps & { children?: React.ReactNode }) => null;
 
 type ButtonAsLink = PolymorphicProps<typeof Link, ButtonOwnProps>;
 
@@ -186,7 +186,7 @@ const buttonAsLink: ButtonAsLink = {
 };
 
 // ✅ Type safety: anchor props not valid for Link
-type LinkHasHref = 'href' extends keyof ButtonAsLink ? false : true;
+export type _LinkHasHref = 'href' extends keyof ButtonAsLink ? false : true;
 
 // ============================================================================
 // Test 9: PolymorphicProps - Props override
@@ -201,7 +201,7 @@ type CustomButton = PolymorphicProps<
 >;
 
 // Type safety: custom onClick signature enforced
-type CustomOnClickCheck = CustomButton['onClick'] extends ((id: string) => void) ? true : false;
+export type _CustomOnClickCheck = CustomButton['onClick'] extends ((id: string) => void) ? true : false;
 
 // ============================================================================
 // Test 10: PolymorphicProps - Empty props
@@ -258,18 +258,18 @@ const routerButton: ButtonProps<typeof Link> = {
 // ✅ Props without 'component' pass through unchanged
 type SafeProps = { variant?: 'solid' };
 type ValidatedSafe = DisallowComponentProp<SafeProps>;
-type SafeIsNotNever = ValidatedSafe extends never ? false : true; // true
+export type _SafeIsNotNever = ValidatedSafe extends never ? false : true; // true
 
 // ✅ Props WITH 'component' are blocked (returns never)
 type UnsafeProps = { component?: string; variant?: 'solid' };
 type ValidatedUnsafe = DisallowComponentProp<UnsafeProps>;
-type UnsafeIsNever = ValidatedUnsafe extends never ? true : false; // true
+export type _UnsafeIsNever = ValidatedUnsafe extends never ? true : false; // true
 
 // ✅ PolymorphicProps with conflicting 'component' prop in Props → entire override becomes never
 // This means MergeProps<PropsOf<C>, never> = never & ComponentProp<C> = never
 type ConflictingProps = { component?: string };
 type BlockedPolymorphic = PolymorphicProps<'button', ConflictingProps>;
-type BlockedIsNever = BlockedPolymorphic extends never ? true : false; // true
+export type _BlockedIsNever = BlockedPolymorphic extends never ? true : false; // true
 
 // ============================================================================
 // Summary: All tests passed ✅
@@ -296,6 +296,13 @@ type BlockedIsNever = BlockedPolymorphic extends never ? true : false; // true
 // ============================================================================
 
 import { describe, it, expect } from 'vitest';
+
+// Suppress unused variable warnings for type-level test values
+void buttonProps; void anchorProps; void divProps; void bValue;
+void buttonComponentProp; void emptyComponentProp;
+void buttonAsButton; void buttonAsAnchor; void buttonAsDiv;
+void buttonAsLink; void simpleButton; void defaultButton;
+void linkButton; void routerButton;
 
 describe('Polymorphic types — Runtime verification', () => {
   it('type definitions are correctly exported', () => {

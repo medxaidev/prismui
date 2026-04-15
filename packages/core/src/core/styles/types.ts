@@ -239,7 +239,7 @@ export type VarsResolver<
   Variable extends string = CssVariable
 > = (
   props: Props,
-  theme: import("../theme/types").PrismUITheme<string, string>
+  theme?: import("../theme/types").PrismUITheme<string, string>
 ) => CssVariables<Variable>;
 
 // =============================================================================

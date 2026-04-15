@@ -220,6 +220,7 @@ describe('createComponent - Case 7: Props Conflict Override', () => {
     render(
       <ConflictButton
         component="a"
+        // @ts-expect-error — deliberate: ConflictButtonProps.href (number) conflicts with <a>.href (string)
         href="/test">
         Link
       </ConflictButton>,

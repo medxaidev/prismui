@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react';
-import React, { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { PrismUIProvider } from './provider';
 
 const meta = {
@@ -22,7 +22,7 @@ interface SwatchRowProps {
 
 function SwatchRow({ name, root }: SwatchRowProps) {
   const el = root ?? (typeof document !== 'undefined' ? document.documentElement : null);
-  const [vars, setVars] = useState<Record<string, string>>({});
+  const [_vars, setVars] = useState<Record<string, string>>({});
 
   useEffect(() => {
     if (!el) return;

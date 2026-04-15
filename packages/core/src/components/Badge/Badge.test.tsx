@@ -109,7 +109,6 @@ describe('Badge', () => {
       const heights = sizes.map((size) => {
         const { container } = render(<Badge size={size}>X</Badge>);
         const el = container.querySelector('span')!;
-        const style = window.getComputedStyle(el);
         return el.style.getPropertyValue('--prismui-size-height');
       });
       const unique = new Set(heights);

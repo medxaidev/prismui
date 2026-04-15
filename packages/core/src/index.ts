@@ -95,5 +95,5 @@ export { useComponentDefaultProps } from './core/component';
 // Components (Stage 6)
 export { Badge } from "./components/Badge";
 export type { BadgeProps, BadgeStylesNames, BadgeOwnProps } from "./components/Badge";
-export { Button } from "./components/Button_old";
-export type { ButtonProps } from "./components/Button_old";
+export { Button } from "./components/Button";
+export type { ButtonProps, ButtonStylesNames, ButtonOwnProps } from "./components/Button";

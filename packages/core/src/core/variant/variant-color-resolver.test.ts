@@ -1,7 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { variantColorResolver, VARIANT_TO_ROLE } from './variant-color-resolver';
 import { VARIANTS, THEME_COLORS } from './types';
-import type { Variant, ThemeColor } from './types';
 
 describe('Variant System — Step 4.2: Variant Color Resolver', () => {
   describe('VARIANT_TO_ROLE', () => {

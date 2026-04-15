@@ -81,7 +81,7 @@ export function withStateVars<Props extends Record<string, any>>(
       return baseVars;
     }
 
-    const stateTokens = theme.state ?? defaultStateTokens;
+    const stateTokens = theme?.state ?? defaultStateTokens;
 
     return {
       [STATE_CSS_VARS.opacityDisabled]: stateTokens.disabled.opacity,

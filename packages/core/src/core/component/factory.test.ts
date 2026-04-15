@@ -175,7 +175,7 @@ describe('factory', () => {
         },
       };
 
-      const customRender = vi.fn(({ componentProps, domProps }) => {
+      const customRender = vi.fn(({ componentProps: _componentProps, domProps: _domProps }) => {
         // componentProps should only have size, variant
         // domProps should have onClick, children, etc.
         return null;
@@ -208,11 +208,9 @@ describe('factory', () => {
       };
 
       // Create a mock render to trigger the warning
-      const TestWrapper = () => {
-        return React.createElement(Component, props);
-      };
+      // Render the component to trigger the warning path
+      void React.createElement(Component, props);
 
-      // The warning should be triggered during render
       // For now, just verify component was created
       expect(Component).toBeDefined();
 

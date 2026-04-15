@@ -200,6 +200,21 @@ describe('Theme System', () => {
           lg: 1200,
           xl: 1400,
         },
+        size: {
+          xs: { height: '24px', paddingX: '8px' },
+          sm: { height: '32px', paddingX: '12px' },
+          md: { height: '40px', paddingX: '16px' },
+          lg: { height: '48px', paddingX: '20px' },
+          xl: { height: '56px', paddingX: '24px' },
+        },
+        state: {
+          disabled: { opacity: 0.5, cursor: 'not-allowed' },
+        },
+        focusRing: {
+          width: '2px',
+          offset: '2px',
+          color: 'var(--prismui-color-primary)',
+        },
         scale: 1,
       };
 

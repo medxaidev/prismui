@@ -21,7 +21,7 @@ function useCSSVar(name: string): string {
   return val;
 }
 
-function ColorSwatch({ varName, label }: { varName: string; label: string }) {
+export function _ColorSwatch({ varName, label }: { varName: string; label: string }) {
   const value = useCSSVar(varName);
   return (
     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
@@ -85,7 +85,7 @@ function ColorPaletteGrid() {
             <tr key={name}>
               <td style={{ padding: '6px 12px', fontWeight: 600, color: '#454F5B', fontSize: 13 }}>{name}</td>
               {roleGroups.flatMap(g =>
-                g.vars(name).map((varName, i) => (
+                g.vars(name).map((varName, _i) => (
                   <td key={varName} style={{ padding: '4px 6px', textAlign: 'center' }}>
                     <div style={{
                       width: 32, height: 32, borderRadius: 4,

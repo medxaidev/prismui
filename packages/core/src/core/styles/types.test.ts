@@ -35,7 +35,7 @@ type ExampleCardStylesNames = 'root' | 'header' | 'body' | 'footer';
  * Compile-time assertion that T is exactly `true`.
  * Usage: `type _check = AssertTrue<SomeConditionalType>;`
  */
-type AssertTrue<T extends true> = T;
+export type _AssertTrue<T extends true> = T;
 
 describe('StylesNames — Styling Unit types', () => {
   // ===========================================================================
@@ -317,13 +317,13 @@ describe('CssVariable, CssVariables, VarsResolver — CSS Variables types', () =
   });
 
   it('VarsResolver (loose mode) accepts optional theme parameter', () => {
-    const resolver: import('./types').VarsResolver = (props: Record<string, any>, theme) => ({
-      '--button-height': theme?.spacing?.(2) ?? '8px',
+    const resolver: import('./types').VarsResolver = (_props: Record<string, any>, theme) => ({
+      '--button-height': theme?.spacing?.md ?? '8px',
     });
 
-    const vars1 = resolver({}, { spacing: (n: number) => `${n * 4}px` });
-    const vars2 = resolver({}, undefined);
-    expect(vars1['--button-height']).toBe('8px');
+    const vars1 = resolver({}, { spacing: { md: '16px' } } as any);
+    const vars2 = resolver({});
+    expect(vars1['--button-height']).toBe('16px');
     expect(vars2['--button-height']).toBe('8px');
   });
 
@@ -391,12 +391,12 @@ describe('CssVariable, CssVariables, VarsResolver — CSS Variables types', () =
     type ButtonProps = { size?: 'sm' | 'lg' };
     const resolver: import('./types').VarsResolver<ButtonProps> = (props, theme) => ({
       '--button-height': props.size === 'lg' ? '48px' : '36px',
-      '--button-spacing': theme?.spacing?.(2) ?? '8px',
+      '--button-spacing': theme?.spacing?.md ?? '8px',
     });
 
-    const vars = resolver({ size: 'lg' }, { spacing: (n: number) => `${n * 4}px` });
+    const vars = resolver({ size: 'lg' }, { spacing: { md: '16px' } } as any);
     expect(vars['--button-height']).toBe('48px');
-    expect(vars['--button-spacing']).toBe('8px');
+    expect(vars['--button-spacing']).toBe('16px');
   });
 });
 

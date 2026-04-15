@@ -85,7 +85,7 @@ export function withSizeVars<Props extends Record<string, any>>(
     }
 
     const size = (props.size as PrismuiSize) ?? 'md';
-    const sizeTokens = theme.size?.[size] ?? defaultSizeTokens[size];
+    const sizeTokens = theme?.size?.[size] ?? defaultSizeTokens[size];
 
     return {
       [SIZE_CSS_VARS.height]: sizeTokens.height,
