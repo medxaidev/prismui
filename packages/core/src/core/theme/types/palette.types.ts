@@ -11,7 +11,7 @@
  * - No runtime computation, no dynamic derivation
  */
 
-import type { ColorRef, DefaultColorFamily } from "./color.types";
+import type { ColorRef, ColorExpression, DefaultColorFamily } from "./color.types";
 
 /**
  * Semantic Color Roles (Step 3.4)
@@ -39,27 +39,33 @@ import type { ColorRef, DefaultColorFamily } from "./color.types";
  * stage. Renaming to a more abstract 'hoverLayer' is deferred to Stage 5 when
  * an overlay/state-layer abstraction is introduced.
  */
-export interface SemanticColorRoles<
-  T extends string = DefaultColorFamily,
-> {
+export interface SemanticColorRoles {
   high: {
-    bg: ColorRef<T>;   // high-emphasis background (typically shade 500)
-    hoverBg: ColorRef<T>;   // background on hover (typically shade 600)
-    fg: ColorRef<T>;   // foreground: text / icon (typically near-white)
+    bg: ColorExpression;           // high-emphasis background (shade 500)
+    hoverBg: ColorExpression;      // hover background (shade 700)
+    activeBg: ColorExpression;     // active/pressed background (shade 800)
+    fg: ColorExpression;           // foreground: text / icon (near-white)
+    hoverShadow: ColorExpression;  // hover shadow (per-color glow)
   };
   low: {
-    bg: ColorRef<T>;   // subtle background (typically shade 50)
-    hoverBg: ColorRef<T>;   // background on hover (typically shade 100)
-    fg: ColorRef<T>;   // foreground: text / icon (typically shade 700)
+    bg: ColorExpression;           // subtle background (alpha 0.08)
+    hoverBg: ColorExpression;      // hover background (alpha 0.16)
+    activeBg: ColorExpression;     // active background (alpha 0.24)
+    fg: ColorExpression;           // foreground (shade 700)
   };
   bordered: {
-    border: ColorRef<T>;   // border color (typically shade 300)
-    fg: ColorRef<T>;   // foreground: text / icon (typically shade 600)
-    hoverBg: ColorRef<T>;   // background revealed on hover (typically shade 50)
+    bg: ColorExpression;           // background (transparent)
+    fg: ColorExpression;           // foreground (shade 600)
+    border: ColorExpression;       // border color (alpha / currentcolor-based)
+    hoverBg: ColorExpression;      // hover background (alpha 0.08)
+    activeBg: ColorExpression;     // active background (alpha 0.16)
+    hoverBorder: ColorExpression;  // hover border (currentcolor)
+    hoverShadow: ColorExpression;  // hover shadow (currentcolor outline)
   };
   minimal: {
-    fg: ColorRef<T>;   // foreground: text / icon (typically shade 600)
-    hoverBg: ColorRef<T>;   // background revealed on hover (typically shade 50)
+    fg: ColorExpression;           // foreground (shade 600)
+    hoverBg: ColorExpression;      // hover background (alpha 0.08)
+    activeBg: ColorExpression;     // active background (alpha 0.16)
   };
 }
 
@@ -89,10 +95,16 @@ export interface SemanticColorRoles<
  */
 export interface SemanticColorToken<
   T extends string = DefaultColorFamily,
-> extends SemanticColorRoles<T> {
+> extends SemanticColorRoles {
   base: ColorRef<T>;
   hover: ColorRef<T>;
   active: ColorRef<T>;
+  /**
+   * The color family name this semantic color maps to.
+   * Used by resolveColorExpression to look up shades.
+   * e.g. primary → "blue", error → "red"
+   */
+  family: T;
 }
 
 /**

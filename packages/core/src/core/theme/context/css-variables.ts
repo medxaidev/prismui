@@ -4,6 +4,7 @@ import type {
   ColorRef,
   DefaultColorFamily,
   ColorShade,
+  ColorExpression,
 } from "../types";
 
 /**
@@ -40,6 +41,64 @@ export function resolveColorRef(ref: ColorRef | string, theme: PrismUITheme<stri
   }
 
   return value;
+}
+
+/**
+ * resolveColorExpression
+ *
+ * Resolve a ColorExpression to an actual CSS color value.
+ * ADR-001: alpha type internally uses color-mix(), no channel CSS vars needed.
+ *
+ * @param expr   - The ColorExpression to resolve
+ * @param family - Color family name ("blue", "red", etc.)
+ * @param theme  - PrismUITheme for color lookup
+ *
+ * @example
+ * resolveColorExpression({ type: 'shade', shade: 500 }, 'blue', theme)
+ *   → "#0C68E9"
+ * resolveColorExpression({ type: 'alpha', shade: 500, alpha: 0.08 }, 'blue', theme)
+ *   → "color-mix(in srgb, #0C68E9 8%, transparent)"
+ * resolveColorExpression({ type: 'raw', value: 'currentcolor' }, 'blue', theme)
+ *   → "currentcolor"
+ */
+export function resolveColorExpression(
+  expr: ColorExpression,
+  family: string,
+  theme: PrismUITheme<string>,
+): string {
+  switch (expr.type) {
+    case 'shade': {
+      const value = (theme.colors as Record<string, Record<number, string>>)[family]?.[expr.shade];
+      if (!value) {
+        if (process.env.NODE_ENV !== "production") {
+          console.warn(
+            `[PrismUI] resolveColorExpression: shade ${expr.shade} not found in family "${family}"`,
+          );
+        }
+        return "transparent";
+      }
+      return value;
+    }
+
+    case 'alpha': {
+      const hex = (theme.colors as Record<string, Record<number, string>>)[family]?.[expr.shade];
+      if (!hex) {
+        if (process.env.NODE_ENV !== "production") {
+          console.warn(
+            `[PrismUI] resolveColorExpression: shade ${expr.shade} not found in family "${family}"`,
+          );
+        }
+        return "transparent";
+      }
+      return `color-mix(in srgb, ${hex} ${Math.round(expr.alpha * 100)}%, transparent)`;
+    }
+
+    case 'raw':
+      return expr.value;
+
+    default:
+      return expr satisfies never;
+  }
 }
 
 /**
@@ -134,6 +193,9 @@ export function generateCSSVariables(
 
   for (const name of semanticNames) {
     const token = palette[name];
+    const family = token.family;
+    const re = (expr: import("../types").ColorExpression) =>
+      resolveColorExpression(expr, family, theme);
 
     // Abstract interaction states (generic, non-variant-specific)
     vars[`--prismui-color-${name}`] = resolveColorRef(token.base, theme);
@@ -141,23 +203,31 @@ export function generateCSSVariables(
     vars[`--prismui-color-${name}-active`] = resolveColorRef(token.active, theme);
 
     // Color roles — high emphasis (e.g. 'filled' variant)
-    vars[`--prismui-color-${name}-high-bg`] = resolveColorRef(token.high.bg, theme);
-    vars[`--prismui-color-${name}-high-hover-bg`] = resolveColorRef(token.high.hoverBg, theme);
-    vars[`--prismui-color-${name}-high-fg`] = resolveColorRef(token.high.fg, theme);
+    vars[`--prismui-color-${name}-high-bg`] = re(token.high.bg);
+    vars[`--prismui-color-${name}-high-hover-bg`] = re(token.high.hoverBg);
+    vars[`--prismui-color-${name}-high-active-bg`] = re(token.high.activeBg);
+    vars[`--prismui-color-${name}-high-fg`] = re(token.high.fg);
+    vars[`--prismui-color-${name}-high-hover-shadow`] = re(token.high.hoverShadow);
 
     // Color roles — low emphasis (e.g. 'soft' variant)
-    vars[`--prismui-color-${name}-low-bg`] = resolveColorRef(token.low.bg, theme);
-    vars[`--prismui-color-${name}-low-hover-bg`] = resolveColorRef(token.low.hoverBg, theme);
-    vars[`--prismui-color-${name}-low-fg`] = resolveColorRef(token.low.fg, theme);
+    vars[`--prismui-color-${name}-low-bg`] = re(token.low.bg);
+    vars[`--prismui-color-${name}-low-hover-bg`] = re(token.low.hoverBg);
+    vars[`--prismui-color-${name}-low-active-bg`] = re(token.low.activeBg);
+    vars[`--prismui-color-${name}-low-fg`] = re(token.low.fg);
 
     // Color roles — bordered (e.g. 'outlined' variant)
-    vars[`--prismui-color-${name}-bordered-border`] = resolveColorRef(token.bordered.border, theme);
-    vars[`--prismui-color-${name}-bordered-fg`] = resolveColorRef(token.bordered.fg, theme);
-    vars[`--prismui-color-${name}-bordered-hover-bg`] = resolveColorRef(token.bordered.hoverBg, theme);
+    vars[`--prismui-color-${name}-bordered-bg`] = re(token.bordered.bg);
+    vars[`--prismui-color-${name}-bordered-fg`] = re(token.bordered.fg);
+    vars[`--prismui-color-${name}-bordered-border`] = re(token.bordered.border);
+    vars[`--prismui-color-${name}-bordered-hover-bg`] = re(token.bordered.hoverBg);
+    vars[`--prismui-color-${name}-bordered-active-bg`] = re(token.bordered.activeBg);
+    vars[`--prismui-color-${name}-bordered-hover-border`] = re(token.bordered.hoverBorder);
+    vars[`--prismui-color-${name}-bordered-hover-shadow`] = re(token.bordered.hoverShadow);
 
     // Color roles — minimal (e.g. 'plain' variant)
-    vars[`--prismui-color-${name}-minimal-fg`] = resolveColorRef(token.minimal.fg, theme);
-    vars[`--prismui-color-${name}-minimal-hover-bg`] = resolveColorRef(token.minimal.hoverBg, theme);
+    vars[`--prismui-color-${name}-minimal-fg`] = re(token.minimal.fg);
+    vars[`--prismui-color-${name}-minimal-hover-bg`] = re(token.minimal.hoverBg);
+    vars[`--prismui-color-${name}-minimal-active-bg`] = re(token.minimal.activeBg);
   }
 
   // ── Spacing ───────────────────────────────────────────────────────────────

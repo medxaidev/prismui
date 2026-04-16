@@ -1,10 +1,25 @@
 import type { PrismUIPalette } from "./types";
 
 /**
+ * Opacity tokens — semantic layer for transparency control (ADR-001).
+ *
+ * Used by AlphaExpression in palette roles.
+ * Changing a value here globally adjusts all variants that reference it.
+ */
+export const OPACITY_TOKENS = {
+  outlinedBorder: 0.32,
+  hoverBg: 0.08,
+  activeBg: 0.16,
+  softBg: 0.08,
+  softHoverBg: 0.16,
+  softActiveBg: 0.24,
+} as const;
+
+/**
  * Default Light Palette
  *
  * Semantic color references for light mode.
- * Uses mid-to-deep shades that work well on white/light backgrounds.
+ * Uses ColorExpression objects (ADR-001: shade | alpha | raw).
  *
  * Convention (not rule):
  * - base:   500 (primary shade)
@@ -15,73 +30,241 @@ import type { PrismUIPalette } from "./types";
  */
 export const defaultLightPalette: PrismUIPalette = {
   primary: {
+    family: "blue",
     base: "colors.blue.500",
     hover: "colors.blue.600",
     active: "colors.blue.700",
-    high: { bg: "colors.blue.500", hoverBg: "colors.blue.700", fg: "colors.gray.50" },
-    low: { bg: "colors.blue.50", hoverBg: "colors.blue.100", fg: "colors.blue.700" },
-    bordered: { border: "colors.blue.300", fg: "colors.blue.600", hoverBg: "colors.blue.50" },
-    minimal: { fg: "colors.blue.600", hoverBg: "colors.blue.50" },
+    high: {
+      bg:          { type: 'shade', shade: 500 },
+      hoverBg:     { type: 'shade', shade: 700 },
+      activeBg:    { type: 'shade', shade: 800 },
+      fg:          { type: 'raw', value: '#FFFFFF' },
+      hoverShadow: { type: 'raw', value: 'none' }, // customShadows override
+    },
+    low: {
+      bg:       { type: 'alpha', shade: 500, alpha: OPACITY_TOKENS.softBg },
+      hoverBg:  { type: 'alpha', shade: 500, alpha: OPACITY_TOKENS.softHoverBg },
+      activeBg: { type: 'alpha', shade: 500, alpha: OPACITY_TOKENS.softActiveBg },
+      fg:       { type: 'shade', shade: 700 },
+    },
+    bordered: {
+      bg:          { type: 'raw', value: 'transparent' },
+      fg:          { type: 'shade', shade: 600 },
+      border:      { type: 'alpha', shade: 500, alpha: OPACITY_TOKENS.outlinedBorder },
+      hoverBg:     { type: 'alpha', shade: 500, alpha: OPACITY_TOKENS.hoverBg },
+      activeBg:    { type: 'alpha', shade: 500, alpha: OPACITY_TOKENS.activeBg },
+      hoverBorder: { type: 'raw', value: 'currentcolor' },
+      hoverShadow: { type: 'raw', value: 'currentcolor 0px 0px 0px 0.75px' },
+    },
+    minimal: {
+      fg:       { type: 'shade', shade: 600 },
+      hoverBg:  { type: 'alpha', shade: 500, alpha: OPACITY_TOKENS.hoverBg },
+      activeBg: { type: 'alpha', shade: 500, alpha: OPACITY_TOKENS.activeBg },
+    },
   },
 
   secondary: {
+    family: "violet",
     base: "colors.violet.500",
     hover: "colors.violet.600",
     active: "colors.violet.700",
-    high: { bg: "colors.violet.500", hoverBg: "colors.violet.700", fg: "colors.gray.50" },
-    low: { bg: "colors.violet.50", hoverBg: "colors.violet.100", fg: "colors.violet.700" },
-    bordered: { border: "colors.violet.300", fg: "colors.violet.600", hoverBg: "colors.violet.50" },
-    minimal: { fg: "colors.violet.600", hoverBg: "colors.violet.50" },
+    high: {
+      bg:          { type: 'shade', shade: 500 },
+      hoverBg:     { type: 'shade', shade: 700 },
+      activeBg:    { type: 'shade', shade: 800 },
+      fg:          { type: 'raw', value: '#FFFFFF' },
+      hoverShadow: { type: 'raw', value: 'none' },
+    },
+    low: {
+      bg:       { type: 'alpha', shade: 500, alpha: OPACITY_TOKENS.softBg },
+      hoverBg:  { type: 'alpha', shade: 500, alpha: OPACITY_TOKENS.softHoverBg },
+      activeBg: { type: 'alpha', shade: 500, alpha: OPACITY_TOKENS.softActiveBg },
+      fg:       { type: 'shade', shade: 700 },
+    },
+    bordered: {
+      bg:          { type: 'raw', value: 'transparent' },
+      fg:          { type: 'shade', shade: 600 },
+      border:      { type: 'alpha', shade: 500, alpha: OPACITY_TOKENS.outlinedBorder },
+      hoverBg:     { type: 'alpha', shade: 500, alpha: OPACITY_TOKENS.hoverBg },
+      activeBg:    { type: 'alpha', shade: 500, alpha: OPACITY_TOKENS.activeBg },
+      hoverBorder: { type: 'raw', value: 'currentcolor' },
+      hoverShadow: { type: 'raw', value: 'currentcolor 0px 0px 0px 0.75px' },
+    },
+    minimal: {
+      fg:       { type: 'shade', shade: 600 },
+      hoverBg:  { type: 'alpha', shade: 500, alpha: OPACITY_TOKENS.hoverBg },
+      activeBg: { type: 'alpha', shade: 500, alpha: OPACITY_TOKENS.activeBg },
+    },
   },
 
   info: {
+    family: "cyan",
     base: "colors.cyan.500",
     hover: "colors.cyan.600",
     active: "colors.cyan.700",
-    high: { bg: "colors.cyan.500", hoverBg: "colors.cyan.700", fg: "colors.gray.50" },
-    low: { bg: "colors.cyan.50", hoverBg: "colors.cyan.100", fg: "colors.cyan.700" },
-    bordered: { border: "colors.cyan.300", fg: "colors.cyan.600", hoverBg: "colors.cyan.50" },
-    minimal: { fg: "colors.cyan.600", hoverBg: "colors.cyan.50" },
+    high: {
+      bg:          { type: 'shade', shade: 500 },
+      hoverBg:     { type: 'shade', shade: 700 },
+      activeBg:    { type: 'shade', shade: 800 },
+      fg:          { type: 'raw', value: '#FFFFFF' },
+      hoverShadow: { type: 'raw', value: 'none' },
+    },
+    low: {
+      bg:       { type: 'alpha', shade: 500, alpha: OPACITY_TOKENS.softBg },
+      hoverBg:  { type: 'alpha', shade: 500, alpha: OPACITY_TOKENS.softHoverBg },
+      activeBg: { type: 'alpha', shade: 500, alpha: OPACITY_TOKENS.softActiveBg },
+      fg:       { type: 'shade', shade: 700 },
+    },
+    bordered: {
+      bg:          { type: 'raw', value: 'transparent' },
+      fg:          { type: 'shade', shade: 600 },
+      border:      { type: 'alpha', shade: 500, alpha: OPACITY_TOKENS.outlinedBorder },
+      hoverBg:     { type: 'alpha', shade: 500, alpha: OPACITY_TOKENS.hoverBg },
+      activeBg:    { type: 'alpha', shade: 500, alpha: OPACITY_TOKENS.activeBg },
+      hoverBorder: { type: 'raw', value: 'currentcolor' },
+      hoverShadow: { type: 'raw', value: 'currentcolor 0px 0px 0px 0.75px' },
+    },
+    minimal: {
+      fg:       { type: 'shade', shade: 600 },
+      hoverBg:  { type: 'alpha', shade: 500, alpha: OPACITY_TOKENS.hoverBg },
+      activeBg: { type: 'alpha', shade: 500, alpha: OPACITY_TOKENS.activeBg },
+    },
   },
 
   success: {
+    family: "green",
     base: "colors.green.500",
     hover: "colors.green.600",
     active: "colors.green.700",
-    high: { bg: "colors.green.500", hoverBg: "colors.green.700", fg: "colors.gray.50" },
-    low: { bg: "colors.green.50", hoverBg: "colors.green.100", fg: "colors.green.700" },
-    bordered: { border: "colors.green.300", fg: "colors.green.600", hoverBg: "colors.green.50" },
-    minimal: { fg: "colors.green.600", hoverBg: "colors.green.50" },
+    high: {
+      bg:          { type: 'shade', shade: 500 },
+      hoverBg:     { type: 'shade', shade: 700 },
+      activeBg:    { type: 'shade', shade: 800 },
+      fg:          { type: 'raw', value: '#FFFFFF' },
+      hoverShadow: { type: 'raw', value: 'none' },
+    },
+    low: {
+      bg:       { type: 'alpha', shade: 500, alpha: OPACITY_TOKENS.softBg },
+      hoverBg:  { type: 'alpha', shade: 500, alpha: OPACITY_TOKENS.softHoverBg },
+      activeBg: { type: 'alpha', shade: 500, alpha: OPACITY_TOKENS.softActiveBg },
+      fg:       { type: 'shade', shade: 700 },
+    },
+    bordered: {
+      bg:          { type: 'raw', value: 'transparent' },
+      fg:          { type: 'shade', shade: 600 },
+      border:      { type: 'alpha', shade: 500, alpha: OPACITY_TOKENS.outlinedBorder },
+      hoverBg:     { type: 'alpha', shade: 500, alpha: OPACITY_TOKENS.hoverBg },
+      activeBg:    { type: 'alpha', shade: 500, alpha: OPACITY_TOKENS.activeBg },
+      hoverBorder: { type: 'raw', value: 'currentcolor' },
+      hoverShadow: { type: 'raw', value: 'currentcolor 0px 0px 0px 0.75px' },
+    },
+    minimal: {
+      fg:       { type: 'shade', shade: 600 },
+      hoverBg:  { type: 'alpha', shade: 500, alpha: OPACITY_TOKENS.hoverBg },
+      activeBg: { type: 'alpha', shade: 500, alpha: OPACITY_TOKENS.activeBg },
+    },
   },
 
   warning: {
+    family: "yellow",
     base: "colors.yellow.500",
     hover: "colors.yellow.600",
     active: "colors.yellow.700",
-    high: { bg: "colors.yellow.500", hoverBg: "colors.yellow.700", fg: "colors.gray.800" },
-    low: { bg: "colors.yellow.50", hoverBg: "colors.yellow.100", fg: "colors.yellow.700" },
-    bordered: { border: "colors.yellow.300", fg: "colors.yellow.600", hoverBg: "colors.yellow.50" },
-    minimal: { fg: "colors.yellow.600", hoverBg: "colors.yellow.50" },
+    high: {
+      bg:          { type: 'shade', shade: 500 },
+      hoverBg:     { type: 'shade', shade: 700 },
+      activeBg:    { type: 'shade', shade: 800 },
+      fg:          { type: 'raw', value: '#212B36' }, // dark text for yellow
+      hoverShadow: { type: 'raw', value: 'none' },
+    },
+    low: {
+      bg:       { type: 'alpha', shade: 500, alpha: OPACITY_TOKENS.softBg },
+      hoverBg:  { type: 'alpha', shade: 500, alpha: OPACITY_TOKENS.softHoverBg },
+      activeBg: { type: 'alpha', shade: 500, alpha: OPACITY_TOKENS.softActiveBg },
+      fg:       { type: 'shade', shade: 700 },
+    },
+    bordered: {
+      bg:          { type: 'raw', value: 'transparent' },
+      fg:          { type: 'shade', shade: 600 },
+      border:      { type: 'alpha', shade: 500, alpha: OPACITY_TOKENS.outlinedBorder },
+      hoverBg:     { type: 'alpha', shade: 500, alpha: OPACITY_TOKENS.hoverBg },
+      activeBg:    { type: 'alpha', shade: 500, alpha: OPACITY_TOKENS.activeBg },
+      hoverBorder: { type: 'raw', value: 'currentcolor' },
+      hoverShadow: { type: 'raw', value: 'currentcolor 0px 0px 0px 0.75px' },
+    },
+    minimal: {
+      fg:       { type: 'shade', shade: 600 },
+      hoverBg:  { type: 'alpha', shade: 500, alpha: OPACITY_TOKENS.hoverBg },
+      activeBg: { type: 'alpha', shade: 500, alpha: OPACITY_TOKENS.activeBg },
+    },
   },
 
   error: {
+    family: "red",
     base: "colors.red.500",
     hover: "colors.red.600",
     active: "colors.red.700",
-    high: { bg: "colors.red.500", hoverBg: "colors.red.700", fg: "colors.gray.50" },
-    low: { bg: "colors.red.50", hoverBg: "colors.red.100", fg: "colors.red.700" },
-    bordered: { border: "colors.red.300", fg: "colors.red.600", hoverBg: "colors.red.50" },
-    minimal: { fg: "colors.red.600", hoverBg: "colors.red.50" },
+    high: {
+      bg:          { type: 'shade', shade: 500 },
+      hoverBg:     { type: 'shade', shade: 700 },
+      activeBg:    { type: 'shade', shade: 800 },
+      fg:          { type: 'raw', value: '#FFFFFF' },
+      hoverShadow: { type: 'raw', value: 'none' },
+    },
+    low: {
+      bg:       { type: 'alpha', shade: 500, alpha: OPACITY_TOKENS.softBg },
+      hoverBg:  { type: 'alpha', shade: 500, alpha: OPACITY_TOKENS.softHoverBg },
+      activeBg: { type: 'alpha', shade: 500, alpha: OPACITY_TOKENS.softActiveBg },
+      fg:       { type: 'shade', shade: 700 },
+    },
+    bordered: {
+      bg:          { type: 'raw', value: 'transparent' },
+      fg:          { type: 'shade', shade: 600 },
+      border:      { type: 'alpha', shade: 500, alpha: OPACITY_TOKENS.outlinedBorder },
+      hoverBg:     { type: 'alpha', shade: 500, alpha: OPACITY_TOKENS.hoverBg },
+      activeBg:    { type: 'alpha', shade: 500, alpha: OPACITY_TOKENS.activeBg },
+      hoverBorder: { type: 'raw', value: 'currentcolor' },
+      hoverShadow: { type: 'raw', value: 'currentcolor 0px 0px 0px 0.75px' },
+    },
+    minimal: {
+      fg:       { type: 'shade', shade: 600 },
+      hoverBg:  { type: 'alpha', shade: 500, alpha: OPACITY_TOKENS.hoverBg },
+      activeBg: { type: 'alpha', shade: 500, alpha: OPACITY_TOKENS.activeBg },
+    },
   },
 
   neutral: {
+    family: "gray",
     base: "colors.gray.600",
     hover: "colors.gray.700",
     active: "colors.gray.800",
-    high: { bg: "colors.gray.600", hoverBg: "colors.gray.800", fg: "colors.gray.50" },
-    low: { bg: "colors.gray.100", hoverBg: "colors.gray.200", fg: "colors.gray.700" },
-    bordered: { border: "colors.gray.300", fg: "colors.gray.600", hoverBg: "colors.gray.100" },
-    minimal: { fg: "colors.gray.600", hoverBg: "colors.gray.100" },
+    high: {
+      bg:          { type: 'shade', shade: 600 },
+      hoverBg:     { type: 'shade', shade: 800 },
+      activeBg:    { type: 'shade', shade: 900 },
+      fg:          { type: 'raw', value: '#FFFFFF' },
+      hoverShadow: { type: 'raw', value: 'none' },
+    },
+    low: {
+      bg:       { type: 'alpha', shade: 600, alpha: OPACITY_TOKENS.softBg },
+      hoverBg:  { type: 'alpha', shade: 600, alpha: OPACITY_TOKENS.softHoverBg },
+      activeBg: { type: 'alpha', shade: 600, alpha: OPACITY_TOKENS.softActiveBg },
+      fg:       { type: 'shade', shade: 700 },
+    },
+    bordered: {
+      bg:          { type: 'raw', value: 'transparent' },
+      fg:          { type: 'shade', shade: 600 },
+      border:      { type: 'alpha', shade: 600, alpha: OPACITY_TOKENS.outlinedBorder },
+      hoverBg:     { type: 'alpha', shade: 600, alpha: OPACITY_TOKENS.hoverBg },
+      activeBg:    { type: 'alpha', shade: 600, alpha: OPACITY_TOKENS.activeBg },
+      hoverBorder: { type: 'raw', value: 'currentcolor' },
+      hoverShadow: { type: 'raw', value: 'currentcolor 0px 0px 0px 0.75px' },
+    },
+    minimal: {
+      fg:       { type: 'shade', shade: 600 },
+      hoverBg:  { type: 'alpha', shade: 600, alpha: OPACITY_TOKENS.hoverBg },
+      activeBg: { type: 'alpha', shade: 600, alpha: OPACITY_TOKENS.activeBg },
+    },
   },
 };
 
@@ -98,72 +281,240 @@ export const defaultLightPalette: PrismUIPalette = {
  */
 export const defaultDarkPalette: PrismUIPalette = {
   primary: {
+    family: "blue",
     base: "colors.blue.400",
     hover: "colors.blue.300",
     active: "colors.blue.200",
-    high: { bg: "colors.blue.500", hoverBg: "colors.blue.400", fg: "colors.gray.100" },
-    low: { bg: "colors.blue.900", hoverBg: "colors.blue.800", fg: "colors.blue.200" },
-    bordered: { border: "colors.blue.700", fg: "colors.blue.300", hoverBg: "colors.blue.900" },
-    minimal: { fg: "colors.blue.300", hoverBg: "colors.blue.900" },
+    high: {
+      bg:          { type: 'shade', shade: 500 },
+      hoverBg:     { type: 'shade', shade: 400 },
+      activeBg:    { type: 'shade', shade: 300 },
+      fg:          { type: 'raw', value: '#FFFFFF' },
+      hoverShadow: { type: 'raw', value: 'none' },
+    },
+    low: {
+      bg:       { type: 'alpha', shade: 400, alpha: OPACITY_TOKENS.softBg },
+      hoverBg:  { type: 'alpha', shade: 400, alpha: OPACITY_TOKENS.softHoverBg },
+      activeBg: { type: 'alpha', shade: 400, alpha: OPACITY_TOKENS.softActiveBg },
+      fg:       { type: 'shade', shade: 200 },
+    },
+    bordered: {
+      bg:          { type: 'raw', value: 'transparent' },
+      fg:          { type: 'shade', shade: 300 },
+      border:      { type: 'alpha', shade: 400, alpha: OPACITY_TOKENS.outlinedBorder },
+      hoverBg:     { type: 'alpha', shade: 400, alpha: OPACITY_TOKENS.hoverBg },
+      activeBg:    { type: 'alpha', shade: 400, alpha: OPACITY_TOKENS.activeBg },
+      hoverBorder: { type: 'raw', value: 'currentcolor' },
+      hoverShadow: { type: 'raw', value: 'currentcolor 0px 0px 0px 0.75px' },
+    },
+    minimal: {
+      fg:       { type: 'shade', shade: 300 },
+      hoverBg:  { type: 'alpha', shade: 400, alpha: OPACITY_TOKENS.hoverBg },
+      activeBg: { type: 'alpha', shade: 400, alpha: OPACITY_TOKENS.activeBg },
+    },
   },
 
   secondary: {
+    family: "violet",
     base: "colors.violet.400",
     hover: "colors.violet.300",
     active: "colors.violet.200",
-    high: { bg: "colors.violet.500", hoverBg: "colors.violet.400", fg: "colors.gray.100" },
-    low: { bg: "colors.violet.900", hoverBg: "colors.violet.800", fg: "colors.violet.200" },
-    bordered: { border: "colors.violet.700", fg: "colors.violet.300", hoverBg: "colors.violet.900" },
-    minimal: { fg: "colors.violet.300", hoverBg: "colors.violet.900" },
+    high: {
+      bg:          { type: 'shade', shade: 500 },
+      hoverBg:     { type: 'shade', shade: 400 },
+      activeBg:    { type: 'shade', shade: 300 },
+      fg:          { type: 'raw', value: '#FFFFFF' },
+      hoverShadow: { type: 'raw', value: 'none' },
+    },
+    low: {
+      bg:       { type: 'alpha', shade: 400, alpha: OPACITY_TOKENS.softBg },
+      hoverBg:  { type: 'alpha', shade: 400, alpha: OPACITY_TOKENS.softHoverBg },
+      activeBg: { type: 'alpha', shade: 400, alpha: OPACITY_TOKENS.softActiveBg },
+      fg:       { type: 'shade', shade: 200 },
+    },
+    bordered: {
+      bg:          { type: 'raw', value: 'transparent' },
+      fg:          { type: 'shade', shade: 300 },
+      border:      { type: 'alpha', shade: 400, alpha: OPACITY_TOKENS.outlinedBorder },
+      hoverBg:     { type: 'alpha', shade: 400, alpha: OPACITY_TOKENS.hoverBg },
+      activeBg:    { type: 'alpha', shade: 400, alpha: OPACITY_TOKENS.activeBg },
+      hoverBorder: { type: 'raw', value: 'currentcolor' },
+      hoverShadow: { type: 'raw', value: 'currentcolor 0px 0px 0px 0.75px' },
+    },
+    minimal: {
+      fg:       { type: 'shade', shade: 300 },
+      hoverBg:  { type: 'alpha', shade: 400, alpha: OPACITY_TOKENS.hoverBg },
+      activeBg: { type: 'alpha', shade: 400, alpha: OPACITY_TOKENS.activeBg },
+    },
   },
 
   info: {
+    family: "cyan",
     base: "colors.cyan.400",
     hover: "colors.cyan.300",
     active: "colors.cyan.200",
-    high: { bg: "colors.cyan.500", hoverBg: "colors.cyan.400", fg: "colors.gray.100" },
-    low: { bg: "colors.cyan.900", hoverBg: "colors.cyan.800", fg: "colors.cyan.200" },
-    bordered: { border: "colors.cyan.700", fg: "colors.cyan.300", hoverBg: "colors.cyan.900" },
-    minimal: { fg: "colors.cyan.300", hoverBg: "colors.cyan.900" },
+    high: {
+      bg:          { type: 'shade', shade: 500 },
+      hoverBg:     { type: 'shade', shade: 400 },
+      activeBg:    { type: 'shade', shade: 300 },
+      fg:          { type: 'raw', value: '#FFFFFF' },
+      hoverShadow: { type: 'raw', value: 'none' },
+    },
+    low: {
+      bg:       { type: 'alpha', shade: 400, alpha: OPACITY_TOKENS.softBg },
+      hoverBg:  { type: 'alpha', shade: 400, alpha: OPACITY_TOKENS.softHoverBg },
+      activeBg: { type: 'alpha', shade: 400, alpha: OPACITY_TOKENS.softActiveBg },
+      fg:       { type: 'shade', shade: 200 },
+    },
+    bordered: {
+      bg:          { type: 'raw', value: 'transparent' },
+      fg:          { type: 'shade', shade: 300 },
+      border:      { type: 'alpha', shade: 400, alpha: OPACITY_TOKENS.outlinedBorder },
+      hoverBg:     { type: 'alpha', shade: 400, alpha: OPACITY_TOKENS.hoverBg },
+      activeBg:    { type: 'alpha', shade: 400, alpha: OPACITY_TOKENS.activeBg },
+      hoverBorder: { type: 'raw', value: 'currentcolor' },
+      hoverShadow: { type: 'raw', value: 'currentcolor 0px 0px 0px 0.75px' },
+    },
+    minimal: {
+      fg:       { type: 'shade', shade: 300 },
+      hoverBg:  { type: 'alpha', shade: 400, alpha: OPACITY_TOKENS.hoverBg },
+      activeBg: { type: 'alpha', shade: 400, alpha: OPACITY_TOKENS.activeBg },
+    },
   },
 
   success: {
+    family: "green",
     base: "colors.green.400",
     hover: "colors.green.300",
     active: "colors.green.200",
-    high: { bg: "colors.green.500", hoverBg: "colors.green.400", fg: "colors.gray.100" },
-    low: { bg: "colors.green.900", hoverBg: "colors.green.800", fg: "colors.green.200" },
-    bordered: { border: "colors.green.700", fg: "colors.green.300", hoverBg: "colors.green.900" },
-    minimal: { fg: "colors.green.300", hoverBg: "colors.green.900" },
+    high: {
+      bg:          { type: 'shade', shade: 500 },
+      hoverBg:     { type: 'shade', shade: 400 },
+      activeBg:    { type: 'shade', shade: 300 },
+      fg:          { type: 'raw', value: '#FFFFFF' },
+      hoverShadow: { type: 'raw', value: 'none' },
+    },
+    low: {
+      bg:       { type: 'alpha', shade: 400, alpha: OPACITY_TOKENS.softBg },
+      hoverBg:  { type: 'alpha', shade: 400, alpha: OPACITY_TOKENS.softHoverBg },
+      activeBg: { type: 'alpha', shade: 400, alpha: OPACITY_TOKENS.softActiveBg },
+      fg:       { type: 'shade', shade: 200 },
+    },
+    bordered: {
+      bg:          { type: 'raw', value: 'transparent' },
+      fg:          { type: 'shade', shade: 300 },
+      border:      { type: 'alpha', shade: 400, alpha: OPACITY_TOKENS.outlinedBorder },
+      hoverBg:     { type: 'alpha', shade: 400, alpha: OPACITY_TOKENS.hoverBg },
+      activeBg:    { type: 'alpha', shade: 400, alpha: OPACITY_TOKENS.activeBg },
+      hoverBorder: { type: 'raw', value: 'currentcolor' },
+      hoverShadow: { type: 'raw', value: 'currentcolor 0px 0px 0px 0.75px' },
+    },
+    minimal: {
+      fg:       { type: 'shade', shade: 300 },
+      hoverBg:  { type: 'alpha', shade: 400, alpha: OPACITY_TOKENS.hoverBg },
+      activeBg: { type: 'alpha', shade: 400, alpha: OPACITY_TOKENS.activeBg },
+    },
   },
 
   warning: {
+    family: "yellow",
     base: "colors.yellow.400",
     hover: "colors.yellow.300",
     active: "colors.yellow.200",
-    high: { bg: "colors.yellow.500", hoverBg: "colors.yellow.400", fg: "colors.gray.100" },
-    low: { bg: "colors.yellow.900", hoverBg: "colors.yellow.800", fg: "colors.yellow.200" },
-    bordered: { border: "colors.yellow.700", fg: "colors.yellow.300", hoverBg: "colors.yellow.900" },
-    minimal: { fg: "colors.yellow.300", hoverBg: "colors.yellow.900" },
+    high: {
+      bg:          { type: 'shade', shade: 500 },
+      hoverBg:     { type: 'shade', shade: 400 },
+      activeBg:    { type: 'shade', shade: 300 },
+      fg:          { type: 'raw', value: '#212B36' },
+      hoverShadow: { type: 'raw', value: 'none' },
+    },
+    low: {
+      bg:       { type: 'alpha', shade: 400, alpha: OPACITY_TOKENS.softBg },
+      hoverBg:  { type: 'alpha', shade: 400, alpha: OPACITY_TOKENS.softHoverBg },
+      activeBg: { type: 'alpha', shade: 400, alpha: OPACITY_TOKENS.softActiveBg },
+      fg:       { type: 'shade', shade: 200 },
+    },
+    bordered: {
+      bg:          { type: 'raw', value: 'transparent' },
+      fg:          { type: 'shade', shade: 300 },
+      border:      { type: 'alpha', shade: 400, alpha: OPACITY_TOKENS.outlinedBorder },
+      hoverBg:     { type: 'alpha', shade: 400, alpha: OPACITY_TOKENS.hoverBg },
+      activeBg:    { type: 'alpha', shade: 400, alpha: OPACITY_TOKENS.activeBg },
+      hoverBorder: { type: 'raw', value: 'currentcolor' },
+      hoverShadow: { type: 'raw', value: 'currentcolor 0px 0px 0px 0.75px' },
+    },
+    minimal: {
+      fg:       { type: 'shade', shade: 300 },
+      hoverBg:  { type: 'alpha', shade: 400, alpha: OPACITY_TOKENS.hoverBg },
+      activeBg: { type: 'alpha', shade: 400, alpha: OPACITY_TOKENS.activeBg },
+    },
   },
 
   error: {
+    family: "red",
     base: "colors.red.400",
     hover: "colors.red.300",
     active: "colors.red.200",
-    high: { bg: "colors.red.500", hoverBg: "colors.red.400", fg: "colors.gray.100" },
-    low: { bg: "colors.red.900", hoverBg: "colors.red.800", fg: "colors.red.200" },
-    bordered: { border: "colors.red.700", fg: "colors.red.300", hoverBg: "colors.red.900" },
-    minimal: { fg: "colors.red.300", hoverBg: "colors.red.900" },
+    high: {
+      bg:          { type: 'shade', shade: 500 },
+      hoverBg:     { type: 'shade', shade: 400 },
+      activeBg:    { type: 'shade', shade: 300 },
+      fg:          { type: 'raw', value: '#FFFFFF' },
+      hoverShadow: { type: 'raw', value: 'none' },
+    },
+    low: {
+      bg:       { type: 'alpha', shade: 400, alpha: OPACITY_TOKENS.softBg },
+      hoverBg:  { type: 'alpha', shade: 400, alpha: OPACITY_TOKENS.softHoverBg },
+      activeBg: { type: 'alpha', shade: 400, alpha: OPACITY_TOKENS.softActiveBg },
+      fg:       { type: 'shade', shade: 200 },
+    },
+    bordered: {
+      bg:          { type: 'raw', value: 'transparent' },
+      fg:          { type: 'shade', shade: 300 },
+      border:      { type: 'alpha', shade: 400, alpha: OPACITY_TOKENS.outlinedBorder },
+      hoverBg:     { type: 'alpha', shade: 400, alpha: OPACITY_TOKENS.hoverBg },
+      activeBg:    { type: 'alpha', shade: 400, alpha: OPACITY_TOKENS.activeBg },
+      hoverBorder: { type: 'raw', value: 'currentcolor' },
+      hoverShadow: { type: 'raw', value: 'currentcolor 0px 0px 0px 0.75px' },
+    },
+    minimal: {
+      fg:       { type: 'shade', shade: 300 },
+      hoverBg:  { type: 'alpha', shade: 400, alpha: OPACITY_TOKENS.hoverBg },
+      activeBg: { type: 'alpha', shade: 400, alpha: OPACITY_TOKENS.activeBg },
+    },
   },
 
   neutral: {
+    family: "gray",
     base: "colors.gray.400",
     hover: "colors.gray.300",
     active: "colors.gray.200",
-    high: { bg: "colors.gray.600", hoverBg: "colors.gray.500", fg: "colors.gray.100" },
-    low: { bg: "colors.gray.800", hoverBg: "colors.gray.700", fg: "colors.gray.200" },
-    bordered: { border: "colors.gray.600", fg: "colors.gray.300", hoverBg: "colors.gray.800" },
-    minimal: { fg: "colors.gray.300", hoverBg: "colors.gray.800" },
+    high: {
+      bg:          { type: 'shade', shade: 600 },
+      hoverBg:     { type: 'shade', shade: 500 },
+      activeBg:    { type: 'shade', shade: 400 },
+      fg:          { type: 'raw', value: '#FFFFFF' },
+      hoverShadow: { type: 'raw', value: 'none' },
+    },
+    low: {
+      bg:       { type: 'alpha', shade: 400, alpha: OPACITY_TOKENS.softBg },
+      hoverBg:  { type: 'alpha', shade: 400, alpha: OPACITY_TOKENS.softHoverBg },
+      activeBg: { type: 'alpha', shade: 400, alpha: OPACITY_TOKENS.softActiveBg },
+      fg:       { type: 'shade', shade: 200 },
+    },
+    bordered: {
+      bg:          { type: 'raw', value: 'transparent' },
+      fg:          { type: 'shade', shade: 300 },
+      border:      { type: 'alpha', shade: 400, alpha: OPACITY_TOKENS.outlinedBorder },
+      hoverBg:     { type: 'alpha', shade: 400, alpha: OPACITY_TOKENS.hoverBg },
+      activeBg:    { type: 'alpha', shade: 400, alpha: OPACITY_TOKENS.activeBg },
+      hoverBorder: { type: 'raw', value: 'currentcolor' },
+      hoverShadow: { type: 'raw', value: 'currentcolor 0px 0px 0px 0.75px' },
+    },
+    minimal: {
+      fg:       { type: 'shade', shade: 300 },
+      hoverBg:  { type: 'alpha', shade: 400, alpha: OPACITY_TOKENS.hoverBg },
+      activeBg: { type: 'alpha', shade: 400, alpha: OPACITY_TOKENS.activeBg },
+    },
   },
 };

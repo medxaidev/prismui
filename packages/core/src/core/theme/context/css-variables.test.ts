@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { resolveColorRef, selectPalette, generateCSSVariables, applyDiffCSSVariables } from "./css-variables";
+import { resolveColorRef, resolveColorExpression, selectPalette, generateCSSVariables, applyDiffCSSVariables } from "./css-variables";
 import { defaultTheme } from "../default-theme";
 
 // ─────────────────────────────────────────────────────────────────
@@ -52,6 +52,57 @@ describe("resolveColorRef", () => {
     resolveColorRef("colors.invalid.500" as any, defaultTheme);
 
     expect(warn).not.toHaveBeenCalled();
+
+    process.env.NODE_ENV = originalEnv;
+    warn.mockRestore();
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────
+// resolveColorExpression (ADR-001)
+// ─────────────────────────────────────────────────────────────────
+
+describe("resolveColorExpression", () => {
+  it("resolves shade expression to hex value", () => {
+    expect(resolveColorExpression({ type: 'shade', shade: 500 }, 'blue', defaultTheme)).toBe("#0C68E9");
+  });
+
+  it("resolves alpha expression to color-mix()", () => {
+    const result = resolveColorExpression({ type: 'alpha', shade: 500, alpha: 0.08 }, 'blue', defaultTheme);
+    expect(result).toBe("color-mix(in srgb, #0C68E9 8%, transparent)");
+  });
+
+  it("resolves alpha=0.32 correctly", () => {
+    const result = resolveColorExpression({ type: 'alpha', shade: 500, alpha: 0.32 }, 'blue', defaultTheme);
+    expect(result).toBe("color-mix(in srgb, #0C68E9 32%, transparent)");
+  });
+
+  it("resolves raw expression as-is", () => {
+    expect(resolveColorExpression({ type: 'raw', value: 'transparent' }, 'blue', defaultTheme)).toBe("transparent");
+    expect(resolveColorExpression({ type: 'raw', value: 'currentcolor' }, 'blue', defaultTheme)).toBe("currentcolor");
+    expect(resolveColorExpression({ type: 'raw', value: '#FFFFFF' }, 'blue', defaultTheme)).toBe("#FFFFFF");
+  });
+
+  it("returns 'transparent' for unknown shade family", () => {
+    const result = resolveColorExpression({ type: 'shade', shade: 500 }, 'unknown', defaultTheme);
+    expect(result).toBe("transparent");
+  });
+
+  it("returns 'transparent' for alpha with unknown family", () => {
+    const result = resolveColorExpression({ type: 'alpha', shade: 500, alpha: 0.5 }, 'unknown', defaultTheme);
+    expect(result).toBe("transparent");
+  });
+
+  it("console.warns in dev for invalid shade family", () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => { });
+    const originalEnv = process.env.NODE_ENV;
+    process.env.NODE_ENV = "development";
+
+    resolveColorExpression({ type: 'shade', shade: 500 }, 'unknown', defaultTheme);
+
+    expect(warn).toHaveBeenCalledWith(
+      expect.stringContaining("[PrismUI] resolveColorExpression"),
+    );
 
     process.env.NODE_ENV = originalEnv;
     warn.mockRestore();
@@ -152,45 +203,61 @@ describe("generateCSSVariables", () => {
 
   it("generates color role variables — high emphasis for primary", () => {
     const vars = generateCSSVariables(defaultTheme, "light");
-    // primary.high: bg=blue.500, hoverBg=blue.700, fg=gray.50
-    // (VARIANT_STEP_RULES.filled: bgShade=5→500, hoverShade=7→700, +2 step)
+    // primary.high: bg=shade(500), hoverBg=shade(700), activeBg=shade(800), fg=raw('#FFFFFF')
     expect(vars["--prismui-color-primary-high-bg"]).toBeDefined();
     expect(vars["--prismui-color-primary-high-hover-bg"]).toBeDefined();
+    expect(vars["--prismui-color-primary-high-active-bg"]).toBeDefined();
     expect(vars["--prismui-color-primary-high-fg"]).toBeDefined();
+    expect(vars["--prismui-color-primary-high-hover-shadow"]).toBeDefined();
     // high-bg resolves blue.500 (same as base)
     expect(vars["--prismui-color-primary-high-bg"]).toBe(vars["--prismui-color-primary"]);
     // high-hover-bg resolves blue.700 (same as active — hoverShade=7, +2 from bg)
     expect(vars["--prismui-color-primary-high-hover-bg"]).toBe(vars["--prismui-color-primary-active"]);
+    // fg is raw '#FFFFFF'
+    expect(vars["--prismui-color-primary-high-fg"]).toBe("#FFFFFF");
   });
 
   it("generates color role variables — low emphasis for primary", () => {
     const vars = generateCSSVariables(defaultTheme, "light");
     expect(vars["--prismui-color-primary-low-bg"]).toBeDefined();
     expect(vars["--prismui-color-primary-low-hover-bg"]).toBeDefined();
+    expect(vars["--prismui-color-primary-low-active-bg"]).toBeDefined();
     expect(vars["--prismui-color-primary-low-fg"]).toBeDefined();
+    // low.bg uses alpha expression → color-mix
+    expect(vars["--prismui-color-primary-low-bg"]).toContain("color-mix");
   });
 
   it("generates color role variables — bordered for primary", () => {
     const vars = generateCSSVariables(defaultTheme, "light");
+    expect(vars["--prismui-color-primary-bordered-bg"]).toBeDefined();
     expect(vars["--prismui-color-primary-bordered-border"]).toBeDefined();
     expect(vars["--prismui-color-primary-bordered-fg"]).toBeDefined();
     expect(vars["--prismui-color-primary-bordered-hover-bg"]).toBeDefined();
+    expect(vars["--prismui-color-primary-bordered-active-bg"]).toBeDefined();
+    expect(vars["--prismui-color-primary-bordered-hover-border"]).toBeDefined();
+    expect(vars["--prismui-color-primary-bordered-hover-shadow"]).toBeDefined();
+    // bordered.bg is raw 'transparent'
+    expect(vars["--prismui-color-primary-bordered-bg"]).toBe("transparent");
+    // bordered.hoverBorder is raw 'currentcolor'
+    expect(vars["--prismui-color-primary-bordered-hover-border"]).toBe("currentcolor");
   });
 
   it("generates color role variables — minimal for primary", () => {
     const vars = generateCSSVariables(defaultTheme, "light");
     expect(vars["--prismui-color-primary-minimal-fg"]).toBeDefined();
     expect(vars["--prismui-color-primary-minimal-hover-bg"]).toBeDefined();
+    expect(vars["--prismui-color-primary-minimal-active-bg"]).toBeDefined();
   });
 
   it("generates all color role variables for all 7 semantic names", () => {
     const vars = generateCSSVariables(defaultTheme, "light");
     const names = ["primary", "secondary", "info", "success", "warning", "error", "neutral"];
     const roleSuffixes = [
-      "high-bg", "high-hover-bg", "high-fg",
-      "low-bg", "low-hover-bg", "low-fg",
-      "bordered-border", "bordered-fg", "bordered-hover-bg",
-      "minimal-fg", "minimal-hover-bg",
+      "high-bg", "high-hover-bg", "high-active-bg", "high-fg", "high-hover-shadow",
+      "low-bg", "low-hover-bg", "low-active-bg", "low-fg",
+      "bordered-bg", "bordered-fg", "bordered-border", "bordered-hover-bg",
+      "bordered-active-bg", "bordered-hover-border", "bordered-hover-shadow",
+      "minimal-fg", "minimal-hover-bg", "minimal-active-bg",
     ];
     for (const name of names) {
       for (const suffix of roleSuffixes) {

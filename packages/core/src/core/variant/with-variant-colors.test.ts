@@ -12,8 +12,8 @@ const emptyBase: VarsResolver<Record<string, any>> = () => ({});
 describe('Variant System — Step 4.3: withVariantColors Middleware', () => {
 
   describe('VARIANT_CSS_VARS constant', () => {
-    it('exports exactly 4 system variable names', () => {
-      expect(Object.keys(VARIANT_CSS_VARS)).toHaveLength(4);
+    it('exports exactly 7 system variable names', () => {
+      expect(Object.keys(VARIANT_CSS_VARS)).toHaveLength(7);
     });
 
     it('all names start with --prismui-variant-', () => {
@@ -22,11 +22,14 @@ describe('Variant System — Step 4.3: withVariantColors Middleware', () => {
       });
     });
 
-    it('contains the 4 expected keys', () => {
+    it('contains the 7 expected keys', () => {
       expect(VARIANT_CSS_VARS.bg).toBe('--prismui-variant-bg');
       expect(VARIANT_CSS_VARS.fg).toBe('--prismui-variant-fg');
       expect(VARIANT_CSS_VARS.hoverBg).toBe('--prismui-variant-hover-bg');
+      expect(VARIANT_CSS_VARS.activeBg).toBe('--prismui-variant-active-bg');
       expect(VARIANT_CSS_VARS.border).toBe('--prismui-variant-border');
+      expect(VARIANT_CSS_VARS.hoverBorder).toBe('--prismui-variant-hover-border');
+      expect(VARIANT_CSS_VARS.hoverShadow).toBe('--prismui-variant-hover-shadow');
     });
   });
 
@@ -36,13 +39,16 @@ describe('Variant System — Step 4.3: withVariantColors Middleware', () => {
       expect(typeof resolver).toBe('function');
     });
 
-    it('output always contains all 4 system variable keys', () => {
+    it('output always contains all 7 system variable keys', () => {
       const resolver = withVariantColors(emptyBase);
       const result = resolver({ variant: 'filled', color: 'primary' }, DUMMY_THEME);
       expect(result).toHaveProperty('--prismui-variant-bg');
       expect(result).toHaveProperty('--prismui-variant-fg');
       expect(result).toHaveProperty('--prismui-variant-hover-bg');
+      expect(result).toHaveProperty('--prismui-variant-active-bg');
       expect(result).toHaveProperty('--prismui-variant-border');
+      expect(result).toHaveProperty('--prismui-variant-hover-border');
+      expect(result).toHaveProperty('--prismui-variant-hover-shadow');
     });
 
     it('output values are CSS var() references or "transparent"', () => {
@@ -50,7 +56,7 @@ describe('Variant System — Step 4.3: withVariantColors Middleware', () => {
       const result = resolver({ variant: 'filled', color: 'primary' }, DUMMY_THEME);
       Object.values(result).forEach((value) => {
         expect(
-          String(value).startsWith('var(') || value === 'transparent'
+          String(value).startsWith('var(') || value === 'transparent' || value === 'none'
         ).toBe(true);
       });
     });
@@ -79,28 +85,43 @@ describe('Variant System — Step 4.3: withVariantColors Middleware', () => {
           const bg = result['--prismui-variant-bg'] as string;
           const fg = result['--prismui-variant-fg'] as string;
           const hoverBg = result['--prismui-variant-hover-bg'] as string;
+          const activeBg = result['--prismui-variant-active-bg'] as string;
           const border = result['--prismui-variant-border'] as string;
+          const hoverBorder = result['--prismui-variant-hover-border'] as string;
+          const hoverShadow = result['--prismui-variant-hover-shadow'] as string;
 
           if (variant === 'filled') {
             expect(bg).toBe(`var(--prismui-color-${color}-high-bg)`);
             expect(fg).toBe(`var(--prismui-color-${color}-high-fg)`);
             expect(hoverBg).toBe(`var(--prismui-color-${color}-high-hover-bg)`);
+            expect(activeBg).toBe(`var(--prismui-color-${color}-high-active-bg)`);
             expect(border).toBe('transparent');
+            expect(hoverBorder).toBe('transparent');
+            expect(hoverShadow).toBe(`var(--prismui-color-${color}-high-hover-shadow)`);
           } else if (variant === 'soft') {
             expect(bg).toBe(`var(--prismui-color-${color}-low-bg)`);
             expect(fg).toBe(`var(--prismui-color-${color}-low-fg)`);
             expect(hoverBg).toBe(`var(--prismui-color-${color}-low-hover-bg)`);
+            expect(activeBg).toBe(`var(--prismui-color-${color}-low-active-bg)`);
             expect(border).toBe('transparent');
+            expect(hoverBorder).toBe('transparent');
+            expect(hoverShadow).toBe('none');
           } else if (variant === 'outlined') {
-            expect(bg).toBe('transparent');
+            expect(bg).toBe(`var(--prismui-color-${color}-bordered-bg)`);
             expect(fg).toBe(`var(--prismui-color-${color}-bordered-fg)`);
             expect(hoverBg).toBe(`var(--prismui-color-${color}-bordered-hover-bg)`);
+            expect(activeBg).toBe(`var(--prismui-color-${color}-bordered-active-bg)`);
             expect(border).toBe(`var(--prismui-color-${color}-bordered-border)`);
+            expect(hoverBorder).toBe(`var(--prismui-color-${color}-bordered-hover-border)`);
+            expect(hoverShadow).toBe(`var(--prismui-color-${color}-bordered-hover-shadow)`);
           } else if (variant === 'plain') {
             expect(bg).toBe('transparent');
             expect(fg).toBe(`var(--prismui-color-${color}-minimal-fg)`);
             expect(hoverBg).toBe(`var(--prismui-color-${color}-minimal-hover-bg)`);
+            expect(activeBg).toBe(`var(--prismui-color-${color}-minimal-active-bg)`);
             expect(border).toBe('transparent');
+            expect(hoverBorder).toBe('transparent');
+            expect(hoverShadow).toBe('none');
           }
         });
       });
@@ -180,7 +201,10 @@ describe('Variant System — Step 4.3: withVariantColors Middleware', () => {
       expect(result['--prismui-variant-bg']).toBeUndefined();
       expect(result['--prismui-variant-fg']).toBeUndefined();
       expect(result['--prismui-variant-hover-bg']).toBeUndefined();
+      expect(result['--prismui-variant-active-bg']).toBeUndefined();
       expect(result['--prismui-variant-border']).toBeUndefined();
+      expect(result['--prismui-variant-hover-border']).toBeUndefined();
+      expect(result['--prismui-variant-hover-shadow']).toBeUndefined();
     });
 
     it('when disabled, still returns baseVars', () => {

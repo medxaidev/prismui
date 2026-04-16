@@ -24,7 +24,12 @@
   /* Interaction */
   cursor: pointer;
   user-select: none;
-  transition: background 150ms ease, transform 100ms ease, opacity 150ms ease;
+  transition:
+    background 150ms ease,
+    border-color 150ms ease,
+    box-shadow 150ms ease,
+    transform 100ms ease,
+    opacity 150ms ease;
 
   /* Reset */
   appearance: none;
@@ -33,9 +38,12 @@
 
 .root:hover:not(:disabled) {
   background: var(--prismui-variant-hover-bg);
+  border-color: var(--prismui-variant-hover-border);
+  box-shadow: var(--prismui-variant-hover-shadow);
 }
 
 .root:active:not(:disabled) {
+  background: var(--prismui-variant-active-bg);
   transform: scale(0.98);
 }
 

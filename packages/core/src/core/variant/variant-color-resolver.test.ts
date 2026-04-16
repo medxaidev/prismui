@@ -87,16 +87,19 @@ describe('Variant System — Step 4.2: Variant Color Resolver', () => {
   describe('outlined variant', () => {
     it('returns bordered-role CSS variables for warning', () => {
       const result = variantColorResolver({ variant: 'outlined', color: 'warning' });
-      expect(result.bg).toBe('transparent');
+      expect(result.bg).toBe('var(--prismui-color-warning-bordered-bg)');
       expect(result.fg).toBe('var(--prismui-color-warning-bordered-fg)');
       expect(result.hoverBg).toBe('var(--prismui-color-warning-bordered-hover-bg)');
+      expect(result.activeBg).toBe('var(--prismui-color-warning-bordered-active-bg)');
       expect(result.border).toBe('var(--prismui-color-warning-bordered-border)');
+      expect(result.hoverBorder).toBe('var(--prismui-color-warning-bordered-hover-border)');
+      expect(result.hoverShadow).toBe('var(--prismui-color-warning-bordered-hover-shadow)');
     });
 
-    it('bg is always transparent', () => {
+    it('bg references bordered-bg var (resolved to transparent via palette)', () => {
       for (const color of THEME_COLORS) {
         const result = variantColorResolver({ variant: 'outlined', color });
-        expect(result.bg).toBe('transparent');
+        expect(result.bg).toContain('-bordered-bg)');
       }
     });
 
@@ -133,14 +136,17 @@ describe('Variant System — Step 4.2: Variant Color Resolver', () => {
   });
 
   describe('all 28 combinations coverage', () => {
-    it('all combinations produce 4 defined output fields', () => {
+    it('all combinations produce 7 defined output fields', () => {
       for (const variant of VARIANTS) {
         for (const color of THEME_COLORS) {
           const result = variantColorResolver({ variant, color });
           expect(result.bg).toBeDefined();
           expect(result.fg).toBeDefined();
           expect(result.hoverBg).toBeDefined();
+          expect(result.activeBg).toBeDefined();
           expect(result.border).toBeDefined();
+          expect(result.hoverBorder).toBeDefined();
+          expect(result.hoverShadow).toBeDefined();
         }
       }
     });
@@ -170,8 +176,8 @@ describe('Variant System — Step 4.2: Variant Color Resolver', () => {
       for (const variant of VARIANTS) {
         for (const color of THEME_COLORS) {
           const result = variantColorResolver({ variant, color });
-          for (const value of [result.bg, result.fg, result.hoverBg, result.border]) {
-            if (value !== 'transparent') {
+          for (const value of [result.bg, result.fg, result.hoverBg, result.activeBg, result.border, result.hoverBorder, result.hoverShadow]) {
+            if (value !== 'transparent' && value !== 'none') {
               expect(value).toMatch(varPattern);
             }
           }
@@ -212,9 +218,9 @@ describe('Variant System — Step 4.2: Variant Color Resolver', () => {
       }
     });
 
-    it('outlined and plain always have transparent bg', () => {
+    it('plain always has transparent bg, outlined has bordered-bg var', () => {
       for (const color of THEME_COLORS) {
-        expect(variantColorResolver({ variant: 'outlined', color }).bg).toBe('transparent');
+        expect(variantColorResolver({ variant: 'outlined', color }).bg).toContain('-bordered-bg)');
         expect(variantColorResolver({ variant: 'plain', color }).bg).toBe('transparent');
       }
     });

@@ -5,15 +5,18 @@ import { variantColorResolver } from './variant-color-resolver';
 /**
  * VARIANT_CSS_VARS
  *
- * The 4 system-level CSS variable names that withVariantColors injects.
+ * The 7 system-level CSS variable names that withVariantColors injects.
  * These form the Variant System Contract: any component that participates
- * in the variant system consumes exactly these 4 variables in its CSS Module.
+ * in the variant system consumes exactly these 7 variables in its CSS Module.
  */
 export const VARIANT_CSS_VARS = {
   bg: '--prismui-variant-bg',
   fg: '--prismui-variant-fg',
   hoverBg: '--prismui-variant-hover-bg',
+  activeBg: '--prismui-variant-active-bg',
   border: '--prismui-variant-border',
+  hoverBorder: '--prismui-variant-hover-border',
+  hoverShadow: '--prismui-variant-hover-shadow',
 } as const;
 
 export type VariantCssVarKey = keyof typeof VARIANT_CSS_VARS;
@@ -93,7 +96,10 @@ export function withVariantColors<Props extends Record<string, any>>(
       [VARIANT_CSS_VARS.bg]: variantVars.bg,
       [VARIANT_CSS_VARS.fg]: variantVars.fg,
       [VARIANT_CSS_VARS.hoverBg]: variantVars.hoverBg,
+      [VARIANT_CSS_VARS.activeBg]: variantVars.activeBg,
       [VARIANT_CSS_VARS.border]: variantVars.border,
+      [VARIANT_CSS_VARS.hoverBorder]: variantVars.hoverBorder,
+      [VARIANT_CSS_VARS.hoverShadow]: variantVars.hoverShadow,
       ...baseVars,
     };
   };

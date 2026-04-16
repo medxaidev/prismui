@@ -114,3 +114,36 @@ export type PrismUIColorFamilies<T extends string = DefaultColorFamily> =
  */
 export type ColorRef<T extends string = DefaultColorFamily> =
   `colors.${T}.${ColorShade}`;
+
+/**
+ * ColorExpression — Discriminated union for color values (ADR-001)
+ *
+ * Replaces ColorRef in palette roles to support:
+ * - Fixed shade lookups (backward-compatible with ColorRef)
+ * - Alpha blending (semantic layer; internally resolved to color-mix())
+ * - Raw CSS values (escape hatch: "transparent", "currentcolor", etc.)
+ *
+ * ADR-001: alpha is the semantic layer, color-mix is the implementation layer.
+ *          ChannelExpression was rejected — color-mix is a strict superset.
+ */
+
+export interface ShadeExpression {
+  type: 'shade';
+  shade: ColorShade;
+}
+
+export interface AlphaExpression {
+  type: 'alpha';
+  shade: ColorShade;
+  alpha: number; // 0–1
+}
+
+export interface RawExpression {
+  type: 'raw';
+  value: string;
+}
+
+export type ColorExpression =
+  | ShadeExpression
+  | AlphaExpression
+  | RawExpression;

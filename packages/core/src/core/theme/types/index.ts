@@ -21,6 +21,10 @@ export type {
   DefaultColorFamily,
   PrismUIColorFamilies,
   ColorRef,
+  ColorExpression,
+  ShadeExpression,
+  AlphaExpression,
+  RawExpression,
 } from "./color.types";
 
 export type {
