@@ -57,3 +57,17 @@ export type ShadowScale = "xs" | "sm" | "md" | "lg" | "xl";
  * 5-step breakpoint scale
  */
 export type BreakpointScale = "xs" | "sm" | "md" | "lg" | "xl";
+
+/**
+ * Transition Duration Scale
+ *
+ * 3-step duration scale
+ */
+export type TransitionDurationScale = "fast" | "base" | "slow";
+
+/**
+ * Transition Easing Scale
+ *
+ * 3-step easing curve scale
+ */
+export type TransitionEasingScale = "standard" | "in" | "out";

@@ -20,6 +20,8 @@ import type {
   RadiusScale,
   ShadowScale,
   BreakpointScale,
+  TransitionDurationScale,
+  TransitionEasingScale,
 } from "./token-scale.types";
 import type { DefaultColorFamily, PrismUIColorFamilies } from "./color.types";
 import type { PrismUIPalette } from "./palette.types";
@@ -117,6 +119,10 @@ export interface PrismUITheme<
   radius: Record<RadiusScale, CSSLength>;
   shadows: Record<ShadowScale, string>;
   breakpoints: Record<BreakpointScale, number>;
+  transition: {
+    duration: Record<TransitionDurationScale, string>;
+    easing: Record<TransitionEasingScale, string>;
+  };
   size: PrismuiSizeTokens;
   state: PrismuiStateTokens;
   /**

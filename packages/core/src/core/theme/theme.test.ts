@@ -59,6 +59,18 @@ describe('Theme System', () => {
       expect(defaultTheme.breakpoints.xl).toBe(1400);
     });
 
+    it('should have transition duration tokens', () => {
+      expect(defaultTheme.transition.duration.fast).toBe('120ms');
+      expect(defaultTheme.transition.duration.base).toBe('150ms');
+      expect(defaultTheme.transition.duration.slow).toBe('200ms');
+    });
+
+    it('should have transition easing tokens', () => {
+      expect(defaultTheme.transition.easing.standard).toBe('cubic-bezier(0.4, 0, 0.2, 1)');
+      expect(defaultTheme.transition.easing.in).toBe('cubic-bezier(0.4, 0, 1, 1)');
+      expect(defaultTheme.transition.easing.out).toBe('cubic-bezier(0, 0, 0.2, 1)');
+    });
+
     it('should have shadow definitions', () => {
       expect(defaultTheme.shadows.xs).toContain('rgba');
       expect(defaultTheme.shadows.md).toContain('rgba');
@@ -201,6 +213,14 @@ describe('Theme System', () => {
           md: 992,
           lg: 1200,
           xl: 1400,
+        },
+        transition: {
+          duration: { fast: '120ms', base: '150ms', slow: '200ms' },
+          easing: {
+            standard: 'cubic-bezier(0.4, 0, 0.2, 1)',
+            in: 'cubic-bezier(0.4, 0, 1, 1)',
+            out: 'cubic-bezier(0, 0, 0.2, 1)',
+          },
         },
         size: {
           xs: { height: '24px', paddingX: '8px',  fontSize: '12px' },

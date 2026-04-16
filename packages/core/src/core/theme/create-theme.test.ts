@@ -134,6 +134,14 @@ describe('createTheme — partial overrides', () => {
     expect(theme.spacing.md).toBe(defaultTheme.spacing.md);
   });
 
+  it('transition partial override: duration.fast only — other transition values preserved', () => {
+    const theme = createTheme({ transition: { duration: { fast: '80ms' } } });
+    expect(theme.transition.duration.fast).toBe('80ms');
+    expect(theme.transition.duration.base).toBe(defaultTheme.transition.duration.base);
+    expect(theme.transition.duration.slow).toBe(defaultTheme.transition.duration.slow);
+    expect(theme.transition.easing.standard).toBe(defaultTheme.transition.easing.standard);
+  });
+
   it('size token partial override: sm.height only — sm.paddingX + other sizes preserved', () => {
     const theme = createTheme({ size: { sm: { height: '28px' } } });
     expect(theme.size.sm.height).toBe('28px');

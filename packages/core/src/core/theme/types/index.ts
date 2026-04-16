@@ -35,6 +35,8 @@ export type {
   RadiusScale,
   ShadowScale,
   BreakpointScale,
+  TransitionDurationScale,
+  TransitionEasingScale,
 } from "./token-scale.types";
 
 export type {

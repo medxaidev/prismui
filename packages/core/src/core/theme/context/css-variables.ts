@@ -265,6 +265,22 @@ export function generateCSSVariables(
     vars[`--prismui-shadow-${scale}`] = String(value);
   }
 
+  // ── Transition Duration ──────────────────────────────────────────────────
+  for (const [scale, value] of Object.entries(theme.transition.duration)) {
+    vars[`--prismui-duration-${scale}`] = String(value);
+  }
+
+  // ── Transition Easing ────────────────────────────────────────────────────
+  for (const [scale, value] of Object.entries(theme.transition.easing)) {
+    vars[`--prismui-ease-${scale}`] = String(value);
+  }
+
+  // ── Transition Shorthand (CSS var composition) ──────────────────────────
+  for (const scale of Object.keys(theme.transition.duration)) {
+    vars[`--prismui-transition-${scale}`] =
+      `var(--prismui-duration-${scale}) var(--prismui-ease-standard)`;
+  }
+
   // ── Typography ────────────────────────────────────────────────────────────
   for (const [scale, value] of Object.entries(theme.typography.fontSize)) {
     vars[`--prismui-font-size-${scale}`] = String(value);

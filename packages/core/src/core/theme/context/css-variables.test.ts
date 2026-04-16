@@ -159,6 +159,33 @@ describe("generateCSSVariables", () => {
     expect(vars["--prismui-radius-full"]).toBe("9999px");
   });
 
+  it("generates transition duration variables", () => {
+    const vars = generateCSSVariables(defaultTheme, "light");
+    expect(vars["--prismui-duration-fast"]).toBe("120ms");
+    expect(vars["--prismui-duration-base"]).toBe("150ms");
+    expect(vars["--prismui-duration-slow"]).toBe("200ms");
+  });
+
+  it("generates transition easing variables", () => {
+    const vars = generateCSSVariables(defaultTheme, "light");
+    expect(vars["--prismui-ease-standard"]).toBe("cubic-bezier(0.4, 0, 0.2, 1)");
+    expect(vars["--prismui-ease-in"]).toBe("cubic-bezier(0.4, 0, 1, 1)");
+    expect(vars["--prismui-ease-out"]).toBe("cubic-bezier(0, 0, 0.2, 1)");
+  });
+
+  it("generates transition shorthand variables (CSS var composition)", () => {
+    const vars = generateCSSVariables(defaultTheme, "light");
+    expect(vars["--prismui-transition-fast"]).toBe(
+      "var(--prismui-duration-fast) var(--prismui-ease-standard)",
+    );
+    expect(vars["--prismui-transition-base"]).toBe(
+      "var(--prismui-duration-base) var(--prismui-ease-standard)",
+    );
+    expect(vars["--prismui-transition-slow"]).toBe(
+      "var(--prismui-duration-slow) var(--prismui-ease-standard)",
+    );
+  });
+
   it("generates font-size variables", () => {
     const vars = generateCSSVariables(defaultTheme, "light");
     expect(vars["--prismui-font-size-xs"]).toBe("0.75rem");

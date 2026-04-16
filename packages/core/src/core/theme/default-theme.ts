@@ -90,6 +90,20 @@ export const defaultTheme: PrismUITheme = {
     xl: 1400,
   },
 
+  // ========== Transition System ==========
+  transition: {
+    duration: {
+      fast: '120ms',
+      base: '150ms',
+      slow: '200ms',
+    },
+    easing: {
+      standard: 'cubic-bezier(0.4, 0, 0.2, 1)',
+      in:       'cubic-bezier(0.4, 0, 1, 1)',
+      out:      'cubic-bezier(0, 0, 0.2, 1)',
+    },
+  },
+
   // ========== Size System ==========
   size: defaultSizeTokens,
 

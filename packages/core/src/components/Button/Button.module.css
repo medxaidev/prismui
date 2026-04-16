@@ -25,11 +25,11 @@
   cursor: pointer;
   user-select: none;
   transition:
-    background 150ms ease,
-    border-color 150ms ease,
-    box-shadow 150ms ease,
-    transform 100ms ease,
-    opacity 150ms ease;
+    background var(--prismui-transition-fast),
+    border-color var(--prismui-transition-fast),
+    box-shadow var(--prismui-transition-fast),
+    transform var(--prismui-duration-fast) var(--prismui-ease-out),
+    opacity var(--prismui-transition-fast);
 
   /* Reset */
   appearance: none;
