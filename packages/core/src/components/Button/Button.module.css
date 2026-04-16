@@ -19,7 +19,7 @@
   background: var(--prismui-variant-bg);
   color: var(--prismui-variant-fg);
   border: 1px solid var(--prismui-variant-border);
-  border-radius: 6px;
+  border-radius: var(--prismui-radius-md);
 
   /* Interaction */
   cursor: pointer;

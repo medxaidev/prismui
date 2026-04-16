@@ -42,7 +42,7 @@ export type LineHeightScale = "xs" | "sm" | "md" | "lg" | "xl";
  *
  * 5-step border radius scale
  */
-export type RadiusScale = "xs" | "sm" | "md" | "lg" | "xl";
+export type RadiusScale = "xs" | "sm" | "md" | "lg" | "xl" | "full";
 
 /**
  * Shadow Scale

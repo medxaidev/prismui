@@ -42,12 +42,13 @@ describe('Theme System', () => {
       expect(defaultTheme.spacing.xl).toBe('2rem');
     });
 
-    it('should use rem for radius', () => {
-      expect(defaultTheme.radius.xs).toBe('0.125rem');
-      expect(defaultTheme.radius.sm).toBe('0.25rem');
+    it('should use rem for radius (and px for full)', () => {
+      expect(defaultTheme.radius.xs).toBe('0.25rem');
+      expect(defaultTheme.radius.sm).toBe('0.375rem');
       expect(defaultTheme.radius.md).toBe('0.5rem');
       expect(defaultTheme.radius.lg).toBe('0.75rem');
       expect(defaultTheme.radius.xl).toBe('1rem');
+      expect(defaultTheme.radius.full).toBe('9999px');
     });
 
     it('should have numeric breakpoints (px values as numbers)', () => {
@@ -180,11 +181,12 @@ describe('Theme System', () => {
           xl: '2rem',
         },
         radius: {
-          xs: '0.125rem',
-          sm: '0.25rem',
+          xs: '0.25rem',
+          sm: '0.375rem',
           md: '0.5rem',
           lg: '0.75rem',
           xl: '1rem',
+          full: '9999px',
         },
         shadows: {
           xs: 'none',

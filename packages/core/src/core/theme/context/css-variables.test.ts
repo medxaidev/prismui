@@ -153,8 +153,10 @@ describe("generateCSSVariables", () => {
 
   it("generates radius variables", () => {
     const vars = generateCSSVariables(defaultTheme, "light");
-    expect(vars["--prismui-radius-xs"]).toBe("0.125rem");
+    expect(vars["--prismui-radius-xs"]).toBe("0.25rem");
+    expect(vars["--prismui-radius-sm"]).toBe("0.375rem");
     expect(vars["--prismui-radius-md"]).toBe("0.5rem");
+    expect(vars["--prismui-radius-full"]).toBe("9999px");
   });
 
   it("generates font-size variables", () => {

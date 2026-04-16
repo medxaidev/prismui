@@ -93,7 +93,5 @@ export type { VariantCssVarKey, VariantCssVarName, WithVariantColorsOptions } fr
 export { useComponentDefaultProps } from './core/component';
 
 // Components (Stage 6)
-export { Badge } from "./components/Badge";
-export type { BadgeProps, BadgeStylesNames, BadgeOwnProps } from "./components/Badge";
 export { Button } from "./components/Button";
 export type { ButtonProps, ButtonStylesNames, ButtonOwnProps } from "./components/Button";
