@@ -307,6 +307,47 @@ describe("generateCSSVariables", () => {
     }
   });
 
+  it("neutral achromatic: high-bg resolves to gray.900 (solid, not alpha)", () => {
+    const vars = generateCSSVariables(defaultTheme, "light");
+    // gray.900 = #141A21 — highest contrast for achromatic filled
+    expect(vars["--prismui-color-neutral-high-bg"]).toBe("#141A21");
+    // fg is white
+    expect(vars["--prismui-color-neutral-high-fg"]).toBe("#FFFFFF");
+    // hover goes LIGHTER (float up) — gray.800
+    expect(vars["--prismui-color-neutral-high-hover-bg"]).toBe("#1C252E");
+    // active is lightest — gray.700
+    expect(vars["--prismui-color-neutral-high-active-bg"]).toBe("#454F5B");
+  });
+
+  it("neutral achromatic: low uses solid shades (not color-mix alpha)", () => {
+    const vars = generateCSSVariables(defaultTheme, "light");
+    // low.bg = shade 100 (solid), NOT color-mix
+    expect(vars["--prismui-color-neutral-low-bg"]).toBe("#F9FAFB");
+    expect(vars["--prismui-color-neutral-low-bg"]).not.toContain("color-mix");
+    // low.hoverBg = shade 200
+    expect(vars["--prismui-color-neutral-low-hover-bg"]).toBe("#F4F6F8");
+    // low.fg = shade 800 (deep text)
+    expect(vars["--prismui-color-neutral-low-fg"]).toBe("#1C252E");
+  });
+
+  it("neutral achromatic: bordered uses solid border (not alpha)", () => {
+    const vars = generateCSSVariables(defaultTheme, "light");
+    // border = shade 300 (solid)
+    expect(vars["--prismui-color-neutral-bordered-border"]).toBe("#DFE3E8");
+    expect(vars["--prismui-color-neutral-bordered-border"]).not.toContain("color-mix");
+    // hoverBorder = shade 400
+    expect(vars["--prismui-color-neutral-bordered-hover-border"]).toBe("#C4CDD5");
+    // fg = shade 800
+    expect(vars["--prismui-color-neutral-bordered-fg"]).toBe("#1C252E");
+  });
+
+  it("neutral achromatic: minimal fg = shade 700", () => {
+    const vars = generateCSSVariables(defaultTheme, "light");
+    expect(vars["--prismui-color-neutral-minimal-fg"]).toBe("#454F5B");
+    // hoverBg = shade 100 (solid)
+    expect(vars["--prismui-color-neutral-minimal-hover-bg"]).toBe("#F9FAFB");
+  });
+
   it("generates focus ring variables from defaultTheme", () => {
     const vars = generateCSSVariables(defaultTheme, "light");
     expect(vars["--prismui-focus-ring-width"]).toBe("2px");

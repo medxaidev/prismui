@@ -244,37 +244,41 @@ export const defaultLightPalette: PrismUIPalette = {
     },
   },
 
+  // ── Neutral (achromatic strategy — see NEUTRAL_VARIANT_STEP_RULES) ──────
+  // Neutral ≠ "gray button". Neutral = "de-branded complete interaction system".
+  // Hover direction: LIGHTER (float up), opposite of chromatic (press deeper).
+  // soft/outlined/plain use SOLID shades, not alpha — gray alpha on white bg is invisible.
   neutral: {
     family: "gray",
-    base: "colors.gray.600",
-    hover: "colors.gray.700",
-    active: "colors.gray.800",
+    base: "colors.gray.900",
+    hover: "colors.gray.800",
+    active: "colors.gray.700",
     high: {
-      bg:          { type: 'shade', shade: 600 },
-      hoverBg:     { type: 'shade', shade: 800 },
-      activeBg:    { type: 'shade', shade: 900 },
+      bg:          { type: 'shade', shade: 900 },   // highest contrast (≈16:1 vs white)
+      hoverBg:     { type: 'shade', shade: 800 },   // lighter = float up
+      activeBg:    { type: 'shade', shade: 700 },   // lightest = pressed
       fg:          { type: 'raw', value: '#FFFFFF' },
-      hoverShadow: { type: 'shadow', shade: 700, opacity: OPACITY_TOKENS.filledHoverShadow, offsetY: SHADOW_GEOMETRY.filledHover.offsetY, blur: SHADOW_GEOMETRY.filledHover.blur },
+      hoverShadow: { type: 'shadow', shade: 900, opacity: OPACITY_TOKENS.filledHoverShadow, offsetY: SHADOW_GEOMETRY.filledHover.offsetY, blur: SHADOW_GEOMETRY.filledHover.blur },
     },
     low: {
-      bg:       { type: 'alpha', shade: 600, alpha: OPACITY_TOKENS.softBg },
-      hoverBg:  { type: 'alpha', shade: 600, alpha: OPACITY_TOKENS.softHoverBg },
-      activeBg: { type: 'alpha', shade: 600, alpha: OPACITY_TOKENS.softActiveBg },
-      fg:       { type: 'shade', shade: 700 },
+      bg:       { type: 'shade', shade: 100 },      // solid visible form
+      hoverBg:  { type: 'shade', shade: 200 },      // solid hover
+      activeBg: { type: 'shade', shade: 300 },      // solid active
+      fg:       { type: 'shade', shade: 800 },      // deep text
     },
     bordered: {
       bg:          { type: 'raw', value: 'transparent' },
-      fg:          { type: 'shade', shade: 600 },
-      border:      { type: 'alpha', shade: 600, alpha: OPACITY_TOKENS.outlinedBorder },
-      hoverBg:     { type: 'alpha', shade: 600, alpha: OPACITY_TOKENS.hoverBg },
-      activeBg:    { type: 'alpha', shade: 600, alpha: OPACITY_TOKENS.activeBg },
-      hoverBorder: { type: 'raw', value: 'currentcolor' },
+      fg:          { type: 'shade', shade: 800 },    // deep text
+      border:      { type: 'shade', shade: 300 },    // solid visible border
+      hoverBg:     { type: 'shade', shade: 50 },     // ultra-light hover
+      activeBg:    { type: 'shade', shade: 100 },    // solid active
+      hoverBorder: { type: 'shade', shade: 400 },    // darken on hover
       hoverShadow: { type: 'raw', value: 'currentcolor 0px 0px 0px 0.75px' },
     },
     minimal: {
-      fg:       { type: 'shade', shade: 600 },
-      hoverBg:  { type: 'alpha', shade: 600, alpha: OPACITY_TOKENS.hoverBg },
-      activeBg: { type: 'alpha', shade: 600, alpha: OPACITY_TOKENS.activeBg },
+      fg:       { type: 'shade', shade: 700 },      // mid-high text
+      hoverBg:  { type: 'shade', shade: 100 },      // solid hover
+      activeBg: { type: 'shade', shade: 200 },      // solid active
     },
   },
 };
@@ -495,37 +499,40 @@ export const defaultDarkPalette: PrismUIPalette = {
     },
   },
 
+  // ── Neutral Dark (achromatic strategy — inverted for dark backgrounds) ────
+  // Dark mode: filled = near-white button on dark bg, soft = dark solid shades.
+  // Same principle: achromatic uses solid shades, not alpha.
   neutral: {
     family: "gray",
-    base: "colors.gray.400",
-    hover: "colors.gray.300",
-    active: "colors.gray.200",
+    base: "colors.gray.100",
+    hover: "colors.gray.200",
+    active: "colors.gray.300",
     high: {
-      bg:          { type: 'shade', shade: 600 },
-      hoverBg:     { type: 'shade', shade: 500 },
-      activeBg:    { type: 'shade', shade: 400 },
-      fg:          { type: 'raw', value: '#FFFFFF' },
+      bg:          { type: 'shade', shade: 50 },     // near-white on dark bg
+      hoverBg:     { type: 'shade', shade: 200 },    // slightly darker = hover
+      activeBg:    { type: 'shade', shade: 300 },    // more contrast = pressed
+      fg:          { type: 'shade', shade: 900 },    // dark text on light button
       hoverShadow: { type: 'raw', value: 'none' },
     },
     low: {
-      bg:       { type: 'alpha', shade: 400, alpha: OPACITY_TOKENS.softBg },
-      hoverBg:  { type: 'alpha', shade: 400, alpha: OPACITY_TOKENS.softHoverBg },
-      activeBg: { type: 'alpha', shade: 400, alpha: OPACITY_TOKENS.softActiveBg },
-      fg:       { type: 'shade', shade: 200 },
+      bg:       { type: 'shade', shade: 800 },       // solid dark surface
+      hoverBg:  { type: 'shade', shade: 700 },       // lighter = hover
+      activeBg: { type: 'shade', shade: 600 },       // lighter = pressed
+      fg:       { type: 'shade', shade: 100 },       // bright text
     },
     bordered: {
       bg:          { type: 'raw', value: 'transparent' },
-      fg:          { type: 'shade', shade: 300 },
-      border:      { type: 'alpha', shade: 400, alpha: OPACITY_TOKENS.outlinedBorder },
-      hoverBg:     { type: 'alpha', shade: 400, alpha: OPACITY_TOKENS.hoverBg },
-      activeBg:    { type: 'alpha', shade: 400, alpha: OPACITY_TOKENS.activeBg },
-      hoverBorder: { type: 'raw', value: 'currentcolor' },
+      fg:          { type: 'shade', shade: 100 },    // bright text
+      border:      { type: 'shade', shade: 600 },    // visible border on dark bg
+      hoverBg:     { type: 'shade', shade: 800 },    // solid hover
+      activeBg:    { type: 'shade', shade: 700 },    // solid active
+      hoverBorder: { type: 'shade', shade: 500 },    // brighten on hover
       hoverShadow: { type: 'raw', value: 'currentcolor 0px 0px 0px 0.75px' },
     },
     minimal: {
-      fg:       { type: 'shade', shade: 300 },
-      hoverBg:  { type: 'alpha', shade: 400, alpha: OPACITY_TOKENS.hoverBg },
-      activeBg: { type: 'alpha', shade: 400, alpha: OPACITY_TOKENS.activeBg },
+      fg:       { type: 'shade', shade: 200 },       // bright text
+      hoverBg:  { type: 'shade', shade: 800 },       // solid hover
+      activeBg: { type: 'shade', shade: 700 },       // solid active
     },
   },
 };

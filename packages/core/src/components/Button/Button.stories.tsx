@@ -73,7 +73,7 @@ export const AllSizes: Story = {
 export const ColorMatrix: Story = {
   render: () => {
     const variants = ['filled', 'outlined', 'soft', 'plain'] as const;
-    const colors = ['primary', 'secondary', 'success', 'warning', 'error'] as const;
+    const colors = ['primary', 'secondary', 'info', 'success', 'warning', 'error', 'neutral'] as const;
     return (
       <div style={{ fontFamily: 'sans-serif', display: 'flex', flexDirection: 'column', gap: 10 }}>
         {variants.map(v => (

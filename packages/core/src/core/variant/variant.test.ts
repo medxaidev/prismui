@@ -1,6 +1,8 @@
 import { describe, it, expect } from 'vitest';
 import { VARIANTS, THEME_COLORS } from './types';
 import type { Variant, ThemeColor } from './types';
+import { VARIANT_STEP_RULES, NEUTRAL_VARIANT_STEP_RULES, getColorStrategy, SHADE_SCALE } from './variant-step-rules';
+import type { ColorStrategy } from './variant-step-rules';
 
 describe('Variant System — Step 4.1: Variant Model', () => {
   describe('VARIANTS constant', () => {
@@ -143,6 +145,76 @@ describe('Variant System — Step 4.1: Variant Model', () => {
 
     it('default color is primary', () => {
       expect(THEME_COLORS[0]).toBe('primary');
+    });
+  });
+});
+
+describe('Color Strategy — Chromatic vs Achromatic', () => {
+  describe('getColorStrategy', () => {
+    it('returns achromatic for neutral', () => {
+      expect(getColorStrategy('neutral')).toBe('achromatic');
+    });
+
+    it('returns chromatic for all non-neutral colors', () => {
+      const chromatic = ['primary', 'secondary', 'info', 'success', 'warning', 'error'];
+      for (const color of chromatic) {
+        expect(getColorStrategy(color)).toBe('chromatic');
+      }
+    });
+
+    it('return type is ColorStrategy', () => {
+      const result: ColorStrategy = getColorStrategy('primary');
+      expect(['chromatic', 'achromatic']).toContain(result);
+    });
+  });
+
+  describe('NEUTRAL_VARIANT_STEP_RULES', () => {
+    it('covers all 4 variants', () => {
+      expect(Object.keys(NEUTRAL_VARIANT_STEP_RULES)).toHaveLength(4);
+      expect(NEUTRAL_VARIANT_STEP_RULES).toHaveProperty('filled');
+      expect(NEUTRAL_VARIANT_STEP_RULES).toHaveProperty('soft');
+      expect(NEUTRAL_VARIANT_STEP_RULES).toHaveProperty('outlined');
+      expect(NEUTRAL_VARIANT_STEP_RULES).toHaveProperty('plain');
+    });
+
+    it('filled: bg=900 (highest contrast), hover reverses direction (lighter)', () => {
+      const { bgShade, hoverShade, activeShade } = NEUTRAL_VARIANT_STEP_RULES.filled;
+      expect(SHADE_SCALE[bgShade as number]).toBe(900);
+      expect(SHADE_SCALE[hoverShade as number]).toBe(800);
+      expect(SHADE_SCALE[activeShade as number]).toBe(700);
+      // Verify: hover is LIGHTER than bg (opposite of chromatic)
+      expect(hoverShade).toBeLessThan(bgShade as number);
+    });
+
+    it('chromatic filled: hover is DARKER than bg', () => {
+      const { bgShade, hoverShade } = VARIANT_STEP_RULES.filled;
+      // chromatic: 500 → 700 (deeper)
+      expect(hoverShade).toBeGreaterThan(bgShade as number);
+    });
+
+    it('soft: uses solid shade indices (not transparent/alpha)', () => {
+      const { bgShade, hoverShade, activeShade, fgShade } = NEUTRAL_VARIANT_STEP_RULES.soft;
+      expect(typeof bgShade).toBe('number');
+      expect(typeof hoverShade).toBe('number');
+      expect(typeof activeShade).toBe('number');
+      // bg=100, hover=200, active=300 (ascending)
+      expect(SHADE_SCALE[bgShade as number]).toBe(100);
+      expect(SHADE_SCALE[hoverShade as number]).toBe(200);
+      expect(SHADE_SCALE[activeShade as number]).toBe(300);
+      // fg deeper than chromatic soft (800 vs 600)
+      expect(fgShade).toBe(8); // shade 800
+    });
+
+    it('outlined: has solid borderShade and hoverBorderShade', () => {
+      const { borderShade, hoverBorderShade, fgShade } = NEUTRAL_VARIANT_STEP_RULES.outlined;
+      expect(borderShade).toBe(3);  // shade 300
+      expect(hoverBorderShade).toBe(4);  // shade 400
+      expect(fgShade).toBe(8);  // shade 800
+    });
+
+    it('plain: fg deeper than chromatic plain', () => {
+      expect(NEUTRAL_VARIANT_STEP_RULES.plain.fgShade).toBe(7);  // shade 700
+      expect(VARIANT_STEP_RULES.plain.fgShade).toBe(6);  // shade 600
     });
   });
 });
