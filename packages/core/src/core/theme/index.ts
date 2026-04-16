@@ -14,9 +14,10 @@ export type {
   ColorSchemeProviderProps,
 } from "./color-scheme.context";
 export { defaultColorFamilies } from "./default-colors";
-export { defaultLightPalette, defaultDarkPalette, OPACITY_TOKENS } from "./default-palette";
+export { defaultLightPalette, defaultDarkPalette, OPACITY_TOKENS, SHADOW_GEOMETRY } from "./default-palette";
 export { ThemeContext, useTheme, useThemeOptional } from "./context";
 export { resolveColorRef, resolveColorExpression, generateCSSVariables, applyDiffCSSVariables } from "./context";
+export { resolveShadowExpression } from "./context";
 export { PrismUIProvider } from "./provider";
 export type { PrismUIProviderProps } from "./provider";
 export type {
@@ -39,6 +40,7 @@ export type {
   AlphaExpression,
   RawExpression,
   SemanticColorRoles,
+  ShadowExpression,
   SpacingScale,
   FontSizeScale,
   FontWeightScale,

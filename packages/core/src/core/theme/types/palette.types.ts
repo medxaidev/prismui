@@ -12,6 +12,7 @@
  */
 
 import type { ColorRef, ColorExpression, DefaultColorFamily } from "./color.types";
+import type { ShadowExpression } from "./effect.types";
 
 /**
  * Semantic Color Roles (Step 3.4)
@@ -45,7 +46,7 @@ export interface SemanticColorRoles {
     hoverBg: ColorExpression;      // hover background (shade 700)
     activeBg: ColorExpression;     // active/pressed background (shade 800)
     fg: ColorExpression;           // foreground: text / icon (near-white)
-    hoverShadow: ColorExpression;  // hover shadow (per-color glow)
+    hoverShadow: ColorExpression | ShadowExpression;  // hover shadow (per-color glow)
   };
   low: {
     bg: ColorExpression;           // subtle background (alpha 0.08)
@@ -60,7 +61,7 @@ export interface SemanticColorRoles {
     hoverBg: ColorExpression;      // hover background (alpha 0.08)
     activeBg: ColorExpression;     // active background (alpha 0.16)
     hoverBorder: ColorExpression;  // hover border (currentcolor)
-    hoverShadow: ColorExpression;  // hover shadow (currentcolor outline)
+    hoverShadow: ColorExpression | ShadowExpression;  // hover shadow (currentcolor outline)
   };
   minimal: {
     fg: ColorExpression;           // foreground (shade 600)

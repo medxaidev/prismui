@@ -5,7 +5,9 @@ import type {
   DefaultColorFamily,
   ColorShade,
   ColorExpression,
+  ShadowExpression,
 } from "../types";
+import { resolveShadowExpression } from "./effect-resolver";
 
 /**
  * resolveColorRef
@@ -99,6 +101,18 @@ export function resolveColorExpression(
     default:
       return expr satisfies never;
   }
+}
+
+/**
+ * isShadowExpression — type guard for Effect System dispatch.
+ *
+ * Used in generateCSSVariables to route hoverShadow fields
+ * to resolveShadowExpression (Effect) vs resolveColorExpression (Color).
+ */
+function isShadowExpression(
+  expr: ColorExpression | ShadowExpression,
+): expr is ShadowExpression {
+  return expr.type === 'shadow';
 }
 
 /**
@@ -207,7 +221,10 @@ export function generateCSSVariables(
     vars[`--prismui-color-${name}-high-hover-bg`] = re(token.high.hoverBg);
     vars[`--prismui-color-${name}-high-active-bg`] = re(token.high.activeBg);
     vars[`--prismui-color-${name}-high-fg`] = re(token.high.fg);
-    vars[`--prismui-color-${name}-high-hover-shadow`] = re(token.high.hoverShadow);
+    const highShadow = token.high.hoverShadow;
+    vars[`--prismui-color-${name}-high-hover-shadow`] = isShadowExpression(highShadow)
+      ? resolveShadowExpression(highShadow, family)
+      : re(highShadow);
 
     // Color roles — low emphasis (e.g. 'soft' variant)
     vars[`--prismui-color-${name}-low-bg`] = re(token.low.bg);
@@ -222,7 +239,10 @@ export function generateCSSVariables(
     vars[`--prismui-color-${name}-bordered-hover-bg`] = re(token.bordered.hoverBg);
     vars[`--prismui-color-${name}-bordered-active-bg`] = re(token.bordered.activeBg);
     vars[`--prismui-color-${name}-bordered-hover-border`] = re(token.bordered.hoverBorder);
-    vars[`--prismui-color-${name}-bordered-hover-shadow`] = re(token.bordered.hoverShadow);
+    const borderedShadow = token.bordered.hoverShadow;
+    vars[`--prismui-color-${name}-bordered-hover-shadow`] = isShadowExpression(borderedShadow)
+      ? resolveShadowExpression(borderedShadow, family)
+      : re(borderedShadow);
 
     // Color roles — minimal (e.g. 'plain' variant)
     vars[`--prismui-color-${name}-minimal-fg`] = re(token.minimal.fg);

@@ -13,6 +13,17 @@ export const OPACITY_TOKENS = {
   softBg: 0.08,
   softHoverBg: 0.16,
   softActiveBg: 0.24,
+  filledHoverShadow: 0.24,
+} as const;
+
+/**
+ * Shadow geometry tokens — structural parameters for shadow effects.
+ *
+ * Used by ShadowExpression in palette roles (Effect System).
+ * Changing a value here globally adjusts all shadow geometries that reference it.
+ */
+export const SHADOW_GEOMETRY = {
+  filledHover: { offsetY: 8, blur: 16 },
 } as const;
 
 /**
@@ -39,7 +50,7 @@ export const defaultLightPalette: PrismUIPalette = {
       hoverBg:     { type: 'shade', shade: 700 },
       activeBg:    { type: 'shade', shade: 800 },
       fg:          { type: 'raw', value: '#FFFFFF' },
-      hoverShadow: { type: 'raw', value: 'none' }, // customShadows override
+      hoverShadow: { type: 'shadow', shade: 600, opacity: OPACITY_TOKENS.filledHoverShadow, offsetY: SHADOW_GEOMETRY.filledHover.offsetY, blur: SHADOW_GEOMETRY.filledHover.blur },
     },
     low: {
       bg:       { type: 'alpha', shade: 500, alpha: OPACITY_TOKENS.softBg },
@@ -73,7 +84,7 @@ export const defaultLightPalette: PrismUIPalette = {
       hoverBg:     { type: 'shade', shade: 700 },
       activeBg:    { type: 'shade', shade: 800 },
       fg:          { type: 'raw', value: '#FFFFFF' },
-      hoverShadow: { type: 'raw', value: 'none' },
+      hoverShadow: { type: 'shadow', shade: 600, opacity: OPACITY_TOKENS.filledHoverShadow, offsetY: SHADOW_GEOMETRY.filledHover.offsetY, blur: SHADOW_GEOMETRY.filledHover.blur },
     },
     low: {
       bg:       { type: 'alpha', shade: 500, alpha: OPACITY_TOKENS.softBg },
@@ -107,7 +118,7 @@ export const defaultLightPalette: PrismUIPalette = {
       hoverBg:     { type: 'shade', shade: 700 },
       activeBg:    { type: 'shade', shade: 800 },
       fg:          { type: 'raw', value: '#FFFFFF' },
-      hoverShadow: { type: 'raw', value: 'none' },
+      hoverShadow: { type: 'shadow', shade: 600, opacity: OPACITY_TOKENS.filledHoverShadow, offsetY: SHADOW_GEOMETRY.filledHover.offsetY, blur: SHADOW_GEOMETRY.filledHover.blur },
     },
     low: {
       bg:       { type: 'alpha', shade: 500, alpha: OPACITY_TOKENS.softBg },
@@ -141,7 +152,7 @@ export const defaultLightPalette: PrismUIPalette = {
       hoverBg:     { type: 'shade', shade: 700 },
       activeBg:    { type: 'shade', shade: 800 },
       fg:          { type: 'raw', value: '#FFFFFF' },
-      hoverShadow: { type: 'raw', value: 'none' },
+      hoverShadow: { type: 'shadow', shade: 600, opacity: OPACITY_TOKENS.filledHoverShadow, offsetY: SHADOW_GEOMETRY.filledHover.offsetY, blur: SHADOW_GEOMETRY.filledHover.blur },
     },
     low: {
       bg:       { type: 'alpha', shade: 500, alpha: OPACITY_TOKENS.softBg },
@@ -175,7 +186,7 @@ export const defaultLightPalette: PrismUIPalette = {
       hoverBg:     { type: 'shade', shade: 700 },
       activeBg:    { type: 'shade', shade: 800 },
       fg:          { type: 'raw', value: '#212B36' }, // dark text for yellow
-      hoverShadow: { type: 'raw', value: 'none' },
+      hoverShadow: { type: 'shadow', shade: 600, opacity: OPACITY_TOKENS.filledHoverShadow, offsetY: SHADOW_GEOMETRY.filledHover.offsetY, blur: SHADOW_GEOMETRY.filledHover.blur },
     },
     low: {
       bg:       { type: 'alpha', shade: 500, alpha: OPACITY_TOKENS.softBg },
@@ -209,7 +220,7 @@ export const defaultLightPalette: PrismUIPalette = {
       hoverBg:     { type: 'shade', shade: 700 },
       activeBg:    { type: 'shade', shade: 800 },
       fg:          { type: 'raw', value: '#FFFFFF' },
-      hoverShadow: { type: 'raw', value: 'none' },
+      hoverShadow: { type: 'shadow', shade: 600, opacity: OPACITY_TOKENS.filledHoverShadow, offsetY: SHADOW_GEOMETRY.filledHover.offsetY, blur: SHADOW_GEOMETRY.filledHover.blur },
     },
     low: {
       bg:       { type: 'alpha', shade: 500, alpha: OPACITY_TOKENS.softBg },
@@ -243,7 +254,7 @@ export const defaultLightPalette: PrismUIPalette = {
       hoverBg:     { type: 'shade', shade: 800 },
       activeBg:    { type: 'shade', shade: 900 },
       fg:          { type: 'raw', value: '#FFFFFF' },
-      hoverShadow: { type: 'raw', value: 'none' },
+      hoverShadow: { type: 'shadow', shade: 700, opacity: OPACITY_TOKENS.filledHoverShadow, offsetY: SHADOW_GEOMETRY.filledHover.offsetY, blur: SHADOW_GEOMETRY.filledHover.blur },
     },
     low: {
       bg:       { type: 'alpha', shade: 600, alpha: OPACITY_TOKENS.softBg },

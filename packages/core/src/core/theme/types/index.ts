@@ -38,6 +38,10 @@ export type {
 } from "./token-scale.types";
 
 export type {
+  ShadowExpression,
+} from "./effect.types";
+
+export type {
   SpacingValue,
   FontSizeValue,
   FontWeightValue,

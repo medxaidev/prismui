@@ -215,6 +215,15 @@ describe("generateCSSVariables", () => {
     expect(vars["--prismui-color-primary-high-hover-bg"]).toBe(vars["--prismui-color-primary-active"]);
     // fg is raw '#FFFFFF'
     expect(vars["--prismui-color-primary-high-fg"]).toBe("#FFFFFF");
+    // hoverShadow is ShadowExpression → contains var() reference + color-mix
+    const shadow = vars["--prismui-color-primary-high-hover-shadow"];
+    expect(shadow).toContain("color-mix");
+    expect(shadow).toContain("var(--prismui-color-blue-600)");
+    expect(shadow).toContain("24%");
+    expect(shadow).toContain("8px");
+    expect(shadow).toContain("16px");
+    // Must NOT contain raw hex (ensures var() path, not hex resolution)
+    expect(shadow).not.toMatch(/#[0-9A-Fa-f]{6}/);
   });
 
   it("generates color role variables — low emphasis for primary", () => {
