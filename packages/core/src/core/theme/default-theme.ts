@@ -12,14 +12,18 @@ import { defaultStateTokens } from '../state/default-state-tokens';
  *
  * Design rationale:
  * - primary/secondary/disabled → neutral family (text hierarchy, not semantic)
+ *   IMPORTANT: must use role.fg fields that are designed to be READABLE ON THE
+ *   DEFAULT PAGE BACKGROUND — i.e. bordered.fg / minimal.fg / low.fg.
+ *   NEVER use high.fg here — `high.fg` is the foreground placed ON a filled
+ *   high-contrast button (often #FFFFFF in light mode), not body text.
  * - danger/warning/success/info → semantic `.high.bg` (high-saturation text,
  *   WCAG AA on default background per Rule 7)
  *
  * See stage-3-step-(stage-9)-8.md §3 for full spec and constraints.
  */
 export const defaultTextRoles: Record<TextRoleName, TextRoleRef> = {
-  primary:   { semantic: 'neutral', role: 'high', field: 'fg' },
-  secondary: { semantic: 'neutral', role: 'low',  field: 'fg' },
+  primary:   { semantic: 'neutral', role: 'bordered', field: 'fg' },
+  secondary: { semantic: 'neutral', role: 'minimal',  field: 'fg' },
   disabled:  { semantic: 'neutral', role: 'low',  field: 'fg' },
   danger:    { semantic: 'error',   role: 'high', field: 'bg' },
   warning:   { semantic: 'warning', role: 'high', field: 'bg' },

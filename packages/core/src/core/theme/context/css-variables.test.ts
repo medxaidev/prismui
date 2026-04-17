@@ -550,17 +550,17 @@ describe("generateCSSVariables — Text Roles", () => {
     expect(danger).toBe(directErrorBg);
   });
 
-  it("--prismui-text-primary equals resolved neutral.high.fg value", () => {
+  it("--prismui-text-primary equals resolved neutral.bordered.fg value", () => {
     const vars = generateCSSVariables(defaultTheme, "light");
     const primary = vars["--prismui-text-primary"];
-    const directNeutralFg = vars["--prismui-color-neutral-high-fg"];
+    const directNeutralFg = vars["--prismui-color-neutral-bordered-fg"];
     expect(primary).toBe(directNeutralFg);
   });
 
   it("text role variables differ between light and dark palettes", () => {
     const light = generateCSSVariables(defaultTheme, "light");
     const dark = generateCSSVariables(defaultTheme, "dark");
-    // primary (neutral.high.fg) is expected to flip between light and dark
+    // primary (neutral.bordered.fg) flips between light (gray.800) and dark (gray.100)
     expect(light["--prismui-text-primary"]).not.toBe(dark["--prismui-text-primary"]);
   });
 });

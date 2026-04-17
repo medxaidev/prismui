@@ -95,3 +95,39 @@ export { useComponentDefaultProps } from './core/component';
 // Components (Stage 6)
 export { Button } from "./components/Button";
 export type { ButtonProps, ButtonStylesNames, ButtonOwnProps } from "./components/Button";
+
+// Input (Stage 9 — Field Control)
+export { Input } from "./components/Input";
+export type {
+  InputProps,
+  InputOwnProps,
+  InputStylesNames,
+  InputVariant,
+} from "./components/Input";
+
+// Field (Headless form semantic unit — Stage 9)
+export {
+  Field,
+  FieldLabel,
+  FieldDescription,
+  FieldError,
+  FieldContext,
+  useFieldContext,
+  useFieldControlProps,
+} from "./components/Field";
+export type {
+  FieldProps,
+  FieldOwnProps,
+  FieldStylesNames,
+  FieldLabelProps,
+  FieldLabelOwnProps,
+  FieldLabelStylesNames,
+  FieldDescriptionProps,
+  FieldDescriptionOwnProps,
+  FieldDescriptionStylesNames,
+  FieldErrorProps,
+  FieldErrorOwnProps,
+  FieldErrorStylesNames,
+  FieldContextValue,
+  FieldControlPropsInput,
+} from "./components/Field";

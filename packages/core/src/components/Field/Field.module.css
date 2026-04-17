@@ -1,0 +1,64 @@
+/*
+ * Field — Headless semantic unit.
+ * Root is a flex column container; no padding/border/background.
+ * Field root does NOT enter the State System (systems: []).
+ */
+.root {
+  display: flex;
+  flex-direction: column;
+  gap: var(--prismui-spacing-xs);
+  width: 100%;
+  padding: 0;
+  border: none;
+  background: transparent;
+}
+
+/* ── Field.Label ─────────────────────────────────────────────────────────── */
+.label {
+  font-size: var(--prismui-font-size-sm);
+  font-weight: var(--prismui-font-weight-medium);
+  line-height: var(--prismui-line-height-md);
+  color: var(--prismui-text-primary);
+}
+
+/* Required marker: ::after + [data-required] — implementation-level decision
+   recorded in devdocs/components/Field/checklist.md §十一. */
+.label[data-required]::after {
+  content: ' *';
+  color: var(--prismui-text-danger);
+}
+
+.label[data-disabled] {
+  opacity: var(--prismui-state-opacity-disabled);
+  cursor: var(--prismui-state-cursor-disabled);
+}
+
+/* ── Field.Description ───────────────────────────────────────────────────── */
+.description {
+  font-size: var(--prismui-font-size-xs);
+  font-weight: var(--prismui-font-weight-regular);
+  line-height: var(--prismui-line-height-md);
+  color: var(--prismui-text-secondary);
+  margin: 0;
+}
+
+.description[data-disabled] {
+  opacity: var(--prismui-state-opacity-disabled);
+}
+
+/* ── Field.Error ─────────────────────────────────────────────────────────── */
+/*
+ * Color comes from semantic (error), NOT from state (invalid).
+ * Field.Error is a semantic component — its color is intrinsic, unaffected by invalid.
+ */
+.error {
+  font-size: var(--prismui-font-size-xs);
+  font-weight: var(--prismui-font-weight-regular);
+  line-height: var(--prismui-line-height-md);
+  color: var(--prismui-text-danger);
+  margin: 0;
+}
+
+.error[data-disabled] {
+  opacity: var(--prismui-state-opacity-disabled);
+}

@@ -1,0 +1,171 @@
+/*
+ * Input — Control component (consumes Field via useFieldControlProps).
+ *
+ * Structure (see devdocs/components/Input/design.md §3.2):
+ *   .root (div wrapper — visual)
+ *     .section[data-position="left"]?
+ *     .input (native <input> — semantic + aria)
+ *     .section[data-position="right"]?
+ *
+ * Token contract (see devdocs/components/Input/variant.md §2 Invariants):
+ * - IV-1: root/input only consume --prismui-variant-* / --prismui-text-* / --input-*
+ * - IV-3: :focus-within MUST override --prismui-variant-border with primary
+ * - IV-4: [data-variant='unstyled'] is fully token-free (no state override)
+ *
+ * State priority (§2.7): disabled > invalid > focus-within > hover > rest.
+ * Enforced via (a) declaration order rest→hover→focus→invalid, and
+ *              (b) every interactive rule explicitly negating [data-disabled].
+ */
+
+/* ── Root (wrapper) — rest baseline, driven by variant token layer ──────── */
+.root {
+  display: flex;
+  align-items: stretch;
+
+  /* sizing from size system */
+  height: var(--input-height);
+  border-radius: var(--input-radius);
+
+  /* typography — inherited by .input via `font: inherit` */
+  font-size: var(--input-font-size);
+  font-family: inherit;
+  line-height: var(--prismui-line-height-md);
+
+  /* appearance — all from Variant Token Layer (injected by varsResolver) */
+  background: var(--prismui-variant-bg);
+  color: var(--prismui-text-primary);
+  border: 1px solid var(--prismui-variant-border);
+
+  transition:
+    border-color var(--prismui-transition-fast),
+    background var(--prismui-transition-fast),
+    box-shadow var(--prismui-transition-fast),
+    color var(--prismui-transition-fast),
+    outline-color var(--prismui-transition-fast);
+}
+
+/* ── State Priority chain: rest → hover → focus → invalid ───────────────── */
+
+/* 2. hover (lower priority than focus) */
+.root:hover:not([data-disabled]):not([data-readonly]):not([data-variant='unstyled']) {
+  border-color: var(--prismui-variant-hover-border);
+  background: var(--prismui-variant-hover-bg);
+}
+
+/* 3. focus-within (overrides hover — IV-3, applies to BOTH outlined and filled) */
+.root:focus-within:not([data-disabled]):not([data-variant='unstyled']) {
+  border-color: var(--prismui-color-primary-bordered-border, var(--prismui-color-primary));
+}
+
+/* Focus ring only for keyboard users — skipped on unstyled per IV-4 */
+.root:has(> .input:focus-visible):not([data-disabled]):not([data-variant='unstyled']) {
+  outline: var(--prismui-focus-ring-width) solid var(--prismui-focus-ring-color);
+  outline-offset: var(--prismui-focus-ring-offset);
+}
+
+/* 4. invalid (overrides focus + hover — highest of the override layers) */
+.root:has(> .input[aria-invalid='true']):not([data-disabled]):not([data-variant='unstyled']) {
+  border-color: var(--prismui-text-danger);
+}
+
+.root:has(> .input[aria-invalid='true']):has(> .input:focus-visible):not([data-disabled]):not([data-variant='unstyled']) {
+  outline-color: var(--prismui-text-danger);
+}
+
+/* ── unstyled (IV-4: token-free, no state override) ─────────────────────── */
+.root[data-variant='unstyled'] {
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  transition: none;
+}
+
+.root[data-variant='unstyled'] .input {
+  padding: 0;
+}
+
+/* ── readOnly (not a state override — subtle bg shift via hover-bg token) ── */
+.root[data-readonly]:not([data-variant='unstyled']) {
+  background: var(--prismui-variant-hover-bg);
+}
+
+.root[data-readonly] .input {
+  cursor: default;
+}
+
+/* ── disabled (hard shield — all interactive rules exclude via :not) ───── */
+.root[data-disabled] {
+  opacity: var(--prismui-state-opacity-disabled);
+  cursor: var(--prismui-state-cursor-disabled);
+}
+
+.root[data-disabled] .input {
+  cursor: inherit;
+  pointer-events: none;
+}
+
+/* ── pointer ───────────────────────────────────────────────────────────── */
+.root[data-pointer] .input {
+  cursor: pointer;
+}
+
+/* ── Inner <input> (semantic target) ───────────────────────────────────── */
+.input {
+  flex: 1 1 auto;
+  min-width: 0;
+  padding-inline: var(--input-padding-x);
+
+  /* typography */
+  font: inherit;
+  line-height: inherit;
+  color: var(--prismui-text-primary);
+  caret-color: currentColor;
+
+  /* strip native styling — root carries visuals */
+  background: transparent;
+  border: none;
+  outline: none;
+  appearance: none;
+  margin: 0;
+}
+
+.input::placeholder {
+  color: var(--prismui-text-secondary);
+  opacity: 1;
+}
+
+.input:disabled {
+  /* color is inherited; native disabled bg is suppressed by transparent above */
+  color: inherit;
+}
+
+/* ── Section (left / right decorations) ────────────────────────────────── */
+.section {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--prismui-text-secondary);
+  padding-inline: var(--prismui-spacing-xs);
+  flex-shrink: 0;
+}
+
+.section[data-position='left'] {
+  padding-left: var(--input-padding-x);
+  padding-right: 0;
+  width: var(--input-left-section-width, auto);
+}
+
+.section[data-position='right'] {
+  padding-right: var(--input-padding-x);
+  padding-left: 0;
+  width: var(--input-right-section-width, auto);
+}
+
+/* When section exists, reduce input's adjacent padding to avoid double-gap */
+.section[data-position='left'] + .input {
+  padding-left: var(--prismui-spacing-xs);
+}
+
+.input:has(+ .section[data-position='right']) {
+  padding-right: var(--prismui-spacing-xs);
+}

@@ -238,6 +238,15 @@ describe('Theme System', () => {
           color: 'var(--prismui-color-primary)',
         },
         scale: 1,
+        textRoles: {
+          primary:   { semantic: 'neutral', role: 'high', field: 'fg' },
+          secondary: { semantic: 'neutral', role: 'low',  field: 'fg' },
+          disabled:  { semantic: 'neutral', role: 'low',  field: 'fg' },
+          danger:    { semantic: 'error',   role: 'high', field: 'bg' },
+          warning:   { semantic: 'warning', role: 'high', field: 'bg' },
+          success:   { semantic: 'success', role: 'high', field: 'bg' },
+          info:      { semantic: 'info',    role: 'high', field: 'bg' },
+        },
       };
 
       expect(theme).toBeDefined();
