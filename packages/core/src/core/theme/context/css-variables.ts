@@ -6,6 +6,8 @@ import type {
   ColorShade,
   ColorExpression,
   ShadowExpression,
+  TextRoleName,
+  TextRoleRef,
 } from "../types";
 import { resolveShadowExpression } from "./effect-resolver";
 
@@ -116,6 +118,64 @@ function isShadowExpression(
 }
 
 /**
+ * resolveTextRole (Step 3.8)
+ *
+ * Resolve a TextRoleRef to an actual CSS color value by traversing:
+ *   TextRoleRef → palette[semantic][role][field] → resolveColorExpression
+ *
+ * This is a pure lookup against the active palette — no runtime derivation.
+ *
+ * Failure behavior:
+ * - DEV: console.warn with the invalid ref
+ * - Returns 'transparent' (consistent with resolveColorRef)
+ *
+ * @example
+ * resolveTextRole({ semantic: 'error', role: 'high', field: 'bg' }, palette, theme)
+ *   → "#D32F2F"
+ */
+export function resolveTextRole(
+  ref: TextRoleRef,
+  palette: PrismUIPalette<string>,
+  theme: PrismUITheme<string>,
+): string {
+  const semanticToken = palette[ref.semantic];
+  if (!semanticToken) {
+    if (process.env.NODE_ENV !== "production") {
+      console.warn(
+        `[PrismUI] resolveTextRole: semantic "${ref.semantic}" not found in palette`,
+      );
+    }
+    return "transparent";
+  }
+
+  const roleBlock = semanticToken[ref.role] as
+    | Record<string, ColorExpression>
+    | undefined;
+  if (!roleBlock) {
+    if (process.env.NODE_ENV !== "production") {
+      console.warn(
+        `[PrismUI] resolveTextRole: role "${ref.role}" not found in semantic "${ref.semantic}"`,
+      );
+    }
+    return "transparent";
+  }
+
+  const expr = roleBlock[ref.field];
+  if (!expr) {
+    if (process.env.NODE_ENV !== "production") {
+      console.warn(
+        `[PrismUI] resolveTextRole: field "${ref.field}" not found in ` +
+        `"${ref.semantic}.${ref.role}". Text Roles only support fields that exist ` +
+        `on the selected role (e.g. minimal has no 'bg').`,
+      );
+    }
+    return "transparent";
+  }
+
+  return resolveColorExpression(expr, semanticToken.family, theme);
+}
+
+/**
  * selectPalette
  *
  * Indirection layer between colorScheme and palette lookup.
@@ -184,6 +244,12 @@ export function selectPalette(
  * - --prismui-focus-ring-width   → outline width for :focus-visible
  * - --prismui-focus-ring-offset  → outline offset for :focus-visible
  * - --prismui-focus-ring-color   → outline color (CSS value, not ColorRef)
+ *
+ * Text roles (Step 3.8 — Text Role Layer):
+ * - --prismui-text-{role}        → resolved from theme.textRoles[role]
+ *   Roles: primary | secondary | disabled | danger | warning | success | info
+ *   Usage: CSS `color` property ONLY. Non-text styling must use
+ *   --prismui-color-{semantic}-* instead (System Invariant Rule 3).
  *
  * Reserved (Stage 4): --prismui-component-{name}-{property}
  */
@@ -307,6 +373,21 @@ export function generateCSSVariables(
   vars['--prismui-focus-ring-width'] = String(theme.focusRing.width);
   vars['--prismui-focus-ring-offset'] = String(theme.focusRing.offset);
   vars['--prismui-focus-ring-color'] = theme.focusRing.color;
+
+  // ── Text Roles (Step 3.8) ─────────────────────────────────────────────────
+  // Structured TextRoleRef → palette lookup. See stage-3-step-(stage-9)-8.md §3.
+  //
+  // Emitted names:
+  //   --prismui-text-primary / secondary / disabled
+  //   --prismui-text-danger / warning / success / info
+  //
+  // Usage boundary (Rule 3): text color ONLY. Non-text styling must use
+  // --prismui-color-{semantic}-* instead.
+  for (const [roleName, ref] of Object.entries(theme.textRoles) as Array<
+    [TextRoleName, TextRoleRef]
+  >) {
+    vars[`--prismui-text-${roleName}`] = resolveTextRole(ref, palette, theme);
+  }
 
   // ── Custom Tokens ─────────────────────────────────────────────────────────
   // Escape hatch: inject user-defined CSS Variables.

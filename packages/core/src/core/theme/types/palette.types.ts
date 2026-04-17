@@ -153,3 +153,56 @@ export type SemanticColorName = keyof PrismUIPalette;
  * Used as a lookup key in Step 4.2's VARIANT_TO_ROLE mapping.
  */
 export type ColorRoleLevel = keyof SemanticColorRoles;
+
+/**
+ * Text Role Field
+ *
+ * Palette fields permitted as text color source.
+ * Restricted to `fg` and `bg` — other fields (border, hoverBg, activeBg)
+ * are NOT semantically meaningful as text color.
+ *
+ * See stage-3-step-(stage-9)-8.md §3 for full Text Role Layer spec.
+ */
+export type TextRoleField = 'fg' | 'bg';
+
+/**
+ * Text Role Name (Step 3.8)
+ *
+ * Abstract roles for text color usage in the UI.
+ * Each role maps to a structured TextRoleRef pointing into the semantic palette.
+ *
+ * Design rationale:
+ * - primary/secondary/disabled: neutral-based (text hierarchy)
+ * - danger/warning/success/info: semantic-based (status text)
+ *
+ * See stage-3-step-(stage-9)-8.md §3.
+ */
+export type TextRoleName =
+  | 'primary'    // main body text (Label, Heading)
+  | 'secondary'  // supporting text (Description, Caption)
+  | 'disabled'   // disabled-state text (usually combined with opacity)
+  | 'danger'     // error message text
+  | 'warning'    // warning message text
+  | 'success'    // success message text
+  | 'info';      // informational message text
+
+/**
+ * Text Role Reference (Step 3.8)
+ *
+ * Structured reference from a text role to a semantic palette slot.
+ * Replaces string DSL (e.g. `'error.high.bg'`) with a type-safe structure.
+ *
+ * Benefits over string paths:
+ * - Typo-proof (TS validates each field)
+ * - Refactorable (IDE can rename roles / fields)
+ * - Structurally bound to palette (palette shape changes are caught)
+ *
+ * Constraint (Rule 5): `semantic` MUST be a SemanticColorName; no variant tokens.
+ * Constraint (Rule 7): resolved color MUST be readable on the default background
+ *                      (WCAG AA). See stage-3-step-(stage-9)-8.md §5.
+ */
+export interface TextRoleRef {
+  semantic: SemanticColorName;
+  role: ColorRoleLevel;
+  field: TextRoleField;
+}

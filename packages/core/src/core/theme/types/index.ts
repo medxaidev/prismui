@@ -12,6 +12,9 @@ export type {
   PrismUIPalette,
   SemanticColorName,
   ColorRoleLevel,
+  TextRoleName,
+  TextRoleField,
+  TextRoleRef,
 } from "./palette.types";
 
 export type {

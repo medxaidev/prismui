@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { resolveColorRef, resolveColorExpression, selectPalette, generateCSSVariables, applyDiffCSSVariables } from "./css-variables";
+import { resolveColorRef, resolveColorExpression, resolveTextRole, selectPalette, generateCSSVariables, applyDiffCSSVariables } from "./css-variables";
 import { defaultTheme } from "../default-theme";
+import type { TextRoleRef } from "../types";
 
 // ─────────────────────────────────────────────────────────────────
 // resolveColorRef
@@ -457,5 +458,109 @@ describe("applyDiffCSSVariables", () => {
   it("treats missing prev as empty (first apply)", () => {
     applyDiffCSSVariables(element, { "--color-a": "red" });
     expect(element.style.getPropertyValue("--color-a")).toBe("red");
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────
+// resolveTextRole (Step 3.8 — Text Role Layer)
+// ─────────────────────────────────────────────────────────────────
+
+describe("resolveTextRole", () => {
+  const lightPalette = defaultTheme.palette.light;
+
+  it("resolves { neutral, high, fg } to the neutral high foreground color", () => {
+    const ref: TextRoleRef = { semantic: "neutral", role: "high", field: "fg" };
+    const result = resolveTextRole(ref, lightPalette, defaultTheme);
+    // neutral.high.fg is a ColorExpression; should NOT be 'transparent'
+    expect(result).not.toBe("transparent");
+    expect(typeof result).toBe("string");
+  });
+
+  it("resolves { error, high, bg } to the red.high.bg color (danger text)", () => {
+    const ref: TextRoleRef = { semantic: "error", role: "high", field: "bg" };
+    const result = resolveTextRole(ref, lightPalette, defaultTheme);
+    expect(result).not.toBe("transparent");
+    // error family maps to 'red', high.bg is typically shade 500
+    // we don't assert the exact hex to stay resilient to palette tuning
+    expect(result).toMatch(/^#|rgb|color-mix/);
+  });
+
+  it("returns 'transparent' for unknown semantic", () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const originalEnv = process.env.NODE_ENV;
+    process.env.NODE_ENV = "development";
+
+    const ref = { semantic: "bogus", role: "high", field: "bg" } as unknown as TextRoleRef;
+    const result = resolveTextRole(ref, lightPalette, defaultTheme);
+
+    expect(result).toBe("transparent");
+    expect(warn).toHaveBeenCalledWith(
+      expect.stringContaining('semantic "bogus" not found'),
+    );
+
+    process.env.NODE_ENV = originalEnv;
+    warn.mockRestore();
+  });
+
+  it("returns 'transparent' when field is missing on the selected role (e.g. minimal.bg)", () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const originalEnv = process.env.NODE_ENV;
+    process.env.NODE_ENV = "development";
+
+    // minimal role has fg but no bg — a deliberate misuse
+    const ref = { semantic: "neutral", role: "minimal", field: "bg" } as unknown as TextRoleRef;
+    const result = resolveTextRole(ref, lightPalette, defaultTheme);
+
+    expect(result).toBe("transparent");
+    expect(warn).toHaveBeenCalledWith(
+      expect.stringContaining('field "bg" not found'),
+    );
+
+    process.env.NODE_ENV = originalEnv;
+    warn.mockRestore();
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────
+// generateCSSVariables — Text Role output (Step 3.8)
+// ─────────────────────────────────────────────────────────────────
+
+describe("generateCSSVariables — Text Roles", () => {
+  it("emits --prismui-text-{role} for every TextRoleName in theme.textRoles", () => {
+    const vars = generateCSSVariables(defaultTheme, "light");
+    const expectedRoles = [
+      "primary",
+      "secondary",
+      "disabled",
+      "danger",
+      "warning",
+      "success",
+      "info",
+    ];
+    for (const role of expectedRoles) {
+      expect(vars[`--prismui-text-${role}`]).toBeDefined();
+      expect(vars[`--prismui-text-${role}`]).not.toBe("");
+    }
+  });
+
+  it("--prismui-text-danger equals resolved error.high.bg value", () => {
+    const vars = generateCSSVariables(defaultTheme, "light");
+    const danger = vars["--prismui-text-danger"];
+    const directErrorBg = vars["--prismui-color-error-high-bg"];
+    expect(danger).toBe(directErrorBg);
+  });
+
+  it("--prismui-text-primary equals resolved neutral.high.fg value", () => {
+    const vars = generateCSSVariables(defaultTheme, "light");
+    const primary = vars["--prismui-text-primary"];
+    const directNeutralFg = vars["--prismui-color-neutral-high-fg"];
+    expect(primary).toBe(directNeutralFg);
+  });
+
+  it("text role variables differ between light and dark palettes", () => {
+    const light = generateCSSVariables(defaultTheme, "light");
+    const dark = generateCSSVariables(defaultTheme, "dark");
+    // primary (neutral.high.fg) is expected to flip between light and dark
+    expect(light["--prismui-text-primary"]).not.toBe(dark["--prismui-text-primary"]);
   });
 });

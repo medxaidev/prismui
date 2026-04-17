@@ -24,7 +24,7 @@ import type {
   TransitionEasingScale,
 } from "./token-scale.types";
 import type { DefaultColorFamily, PrismUIColorFamilies } from "./color.types";
-import type { PrismUIPalette } from "./palette.types";
+import type { PrismUIPalette, TextRoleName, TextRoleRef } from "./palette.types";
 import type { PrismuiSizeTokens } from "../../size/types";
 import type { PrismuiStateTokens } from "../../state/types";
 
@@ -143,6 +143,19 @@ export interface PrismUITheme<
     offset: CSSLength;
     color: string;
   };
+  /**
+   * Text Role Layer (Step 3.8)
+   *
+   * Maps abstract text roles to structured palette references.
+   * Generates `--prismui-text-{role}` CSS variables at runtime.
+   *
+   * Usage boundary (System Invariant Rule 3):
+   * - Text color (CSS `color`): use `var(--prismui-text-*)`
+   * - Non-text (bg/border/icon): use `var(--prismui-color-{semantic}-*)`
+   *
+   * See stage-3-step-(stage-9)-8.md §3.
+   */
+  textRoles: Record<TextRoleName, TextRoleRef>;
   scale: number;
   /**
    * Custom CSS Variables injection (escape hatch).

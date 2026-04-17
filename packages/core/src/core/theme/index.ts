@@ -1,4 +1,4 @@
-export { defaultTheme } from "./default-theme";
+export { defaultTheme, defaultTextRoles } from "./default-theme";
 export { createTheme, deepMerge } from "./create-theme";
 export type { DeepPartial } from "./create-theme";
 export {
@@ -16,7 +16,7 @@ export type {
 export { defaultColorFamilies } from "./default-colors";
 export { defaultLightPalette, defaultDarkPalette, OPACITY_TOKENS, SHADOW_GEOMETRY } from "./default-palette";
 export { ThemeContext, useTheme, useThemeOptional } from "./context";
-export { resolveColorRef, resolveColorExpression, generateCSSVariables, applyDiffCSSVariables } from "./context";
+export { resolveColorRef, resolveColorExpression, resolveTextRole, generateCSSVariables, applyDiffCSSVariables } from "./context";
 export { resolveShadowExpression } from "./context";
 export { PrismUIProvider } from "./provider";
 export type { PrismUIProviderProps } from "./provider";
@@ -29,6 +29,10 @@ export type {
   SemanticColorToken,
   PrismUIPalette,
   SemanticColorName,
+  ColorRoleLevel,
+  TextRoleName,
+  TextRoleField,
+  TextRoleRef,
   ColorShade,
   ColorValue,
   ColorScale,

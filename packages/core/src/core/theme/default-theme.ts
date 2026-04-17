@@ -1,8 +1,31 @@
-import type { PrismUITheme } from './types';
+import type { PrismUITheme, TextRoleName, TextRoleRef } from './types';
 import { defaultColorFamilies } from './default-colors';
 import { defaultLightPalette, defaultDarkPalette } from './default-palette';
 import { defaultSizeTokens } from '../size/default-size-tokens';
 import { defaultStateTokens } from '../state/default-state-tokens';
+
+/**
+ * Default Text Roles (Stage 3 — Step 8)
+ *
+ * Maps abstract text roles to structured palette references.
+ * Uses TextRoleRef (NOT string DSL) for type safety and refactorability.
+ *
+ * Design rationale:
+ * - primary/secondary/disabled → neutral family (text hierarchy, not semantic)
+ * - danger/warning/success/info → semantic `.high.bg` (high-saturation text,
+ *   WCAG AA on default background per Rule 7)
+ *
+ * See stage-3-step-(stage-9)-8.md §3 for full spec and constraints.
+ */
+export const defaultTextRoles: Record<TextRoleName, TextRoleRef> = {
+  primary:   { semantic: 'neutral', role: 'high', field: 'fg' },
+  secondary: { semantic: 'neutral', role: 'low',  field: 'fg' },
+  disabled:  { semantic: 'neutral', role: 'low',  field: 'fg' },
+  danger:    { semantic: 'error',   role: 'high', field: 'bg' },
+  warning:   { semantic: 'warning', role: 'high', field: 'bg' },
+  success:   { semantic: 'success', role: 'high', field: 'bg' },
+  info:      { semantic: 'info',    role: 'high', field: 'bg' },
+};
 
 /**
  * Default PrismUI Theme
@@ -116,6 +139,9 @@ export const defaultTheme: PrismUITheme = {
     offset: '2px',
     color: 'var(--prismui-color-primary)',
   },
+
+  // ========== Text Role System (Step 3.8) ==========
+  textRoles: defaultTextRoles,
 
   // ========== Global Config ==========
   scale: 1,
