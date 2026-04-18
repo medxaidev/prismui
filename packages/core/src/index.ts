@@ -81,9 +81,11 @@ export type { PrismuiSize, SizeScale, PrismuiSizeTokens } from "./core/size";
 export { defaultSizeTokens, withSizeVars, SIZE_CSS_VARS } from "./core/size";
 export type { WithSizeVarsOptions, SizeCssVarKey, SizeCssVarName } from "./core/size";
 
-// Action Surface Behavior (Stage 3 Step 10 · A-2 / B-1 / B-2)
+// Action Surface Behavior (Stage 3 Step 10 · A-2 / B-2)
 // Consolidates polymorphic render-behavior (event swallow + tab bypass +
-// type="button" default + role="button" injection) for all Action components.
+// role="button" a11y contract) for all Action components. `type="button"`
+// default (B-1) lives at the component layer — see Button.tsx — because it
+// is a pure HTML attribute default with no state / handler coupling.
 export { resolvePolymorphicActionBehavior } from "./core/action";
 export type {
   ResolvePolymorphicActionInputs,

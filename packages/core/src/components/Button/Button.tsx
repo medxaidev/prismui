@@ -155,13 +155,19 @@ export const Button = factory<ButtonOwnProps>(
       'action',
     );
 
-    // B-4 · single destructure for every domProp the Action Surface hook
-    // may override or re-route. The remainder (`passthroughDomProps`) is
-    // spread onto the root element unchanged.
+    // B-4 · single destructure for every domProp the component overrides or
+    // re-routes. The remainder (`passthroughDomProps`) is spread onto the root
+    // element unchanged.
     //
-    // `children` is extracted separately from the Action Surface inputs to
-    // avoid the React footgun where `...domProps` silently overrides JSX
-    // children (we place `userChildren` explicitly inside `<Button.Label>`).
+    // `children` is extracted separately (never forwarded to the Action
+    // Surface inputs) to avoid the React footgun where `...domProps` silently
+    // overrides JSX children (we place `userChildren` explicitly inside
+    // `<Button.Label>`).
+    //
+    // `type` is destructured here — NOT passed to the Action Surface hook.
+    // Rationale: `type="button"` default is a static HTML attribute concern
+    // with zero dependency on the Action predicate or event handlers, so it
+    // stays at the component layer (see Audit Log 2026-04-18 v0.6).
     //
     // `href` is READ-ONLY — forwarded to the hook so it can classify `<a href>`
     // as a genuine link (no role="button" injection); we still let it flow
@@ -186,11 +192,14 @@ export const Button = factory<ButtonOwnProps>(
     };
 
     // ── A-2 · Action Surface behavior (delegated to core/action) ──────────
-    // Consolidates four otherwise copy-pastable concerns:
+    // Three BEHAVIORAL concerns — all coupled to the event handlers we install:
     //   1. Event swallow (click + Enter/Space blocked when interactive-disabled)
     //   2. Tab-focus parity (tabIndex=-1 on polymorphic non-disableable)
-    //   3. type="button" default (B-1)
-    //   4. role="button" injection (B-2)
+    //   3. role="button" injection (B-2 · a11y contract of the Enter/Space
+    //      wrappers installed in (1))
+    //
+    // `type="button"` default (B-1) is NOT here — see `effectiveButtonType`
+    // below. It is a pure HTML attribute default with no state coupling.
     //
     // Design choice — user-supplied `tabIndex` is deliberately overridden on
     // the polymorphic + interactive-disabled branch. Rationale lives in
@@ -207,10 +216,29 @@ export const Button = factory<ButtonOwnProps>(
       onClick: userOnClick,
       onKeyDown: userOnKeyDown,
       tabIndex: userTabIndex,
-      type: userType,
       role: userRole,
       href: passthroughDomProps.href as string | undefined,
     });
+
+    // ── B-1 · default `type="button"` on native <button> ────────────────
+    // A bare `<button>` nested in a `<form>` defaults to `type="submit"` per
+    // HTML spec — a classic footgun: `<Button onClick={openModal}>` inside a
+    // form will submit the form. Every major design system (Mantine / Radix
+    // / Ariakit / Ark) defaults `type="button"` to neutralize this. We only
+    // inject the default when:
+    //   (a) the resolved Element is the literal `'button'` tag, AND
+    //   (b) the user did not pass an explicit `type`.
+    // Polymorphic `<a>` / `<div>` / custom components do not get a type
+    // attribute — it would either be meaningless (`<a type="button">`) or
+    // collide with unrelated semantics (`<input type="...">`).
+    //
+    // Layering rationale: this lives in the component — NOT in
+    // `resolvePolymorphicActionBehavior` — because `type` is a pure HTML
+    // attribute default with zero coupling to the Action predicate or event
+    // handlers. A hook named `*Behavior` must not silently mutate unrelated
+    // HTML semantics. See Audit Log 2026-04-18 v0.6.
+    const effectiveButtonType =
+      Element === 'button' && userType === undefined ? 'button' : userType;
 
     // ── a11y DEV warning · icon-only button must have accessible name ──────
     // Once-per-mount warn when the button has NO text children and the user
@@ -247,6 +275,7 @@ export const Button = factory<ButtonOwnProps>(
         {...styles.getRootProps()}
         {...passthroughDomProps}
         {...actionBehavior}
+        {...(effectiveButtonType !== undefined ? { type: effectiveButtonType } : {})}
         {...rootDataAttrs}
         {...systemDataAttrs}
         {...disabilityAttrs}

@@ -5,9 +5,16 @@ import { isNativeDisableable } from '../component/collect-system-data-attrs';
  * Inputs to `resolvePolymorphicActionBehavior`.
  *
  * Captures the subset of DOM / ARIA props the Action Surface hook may need to
- * override (onClick / onKeyDown / tabIndex / type / role). Callers extract
- * these from `domProps` by destructuring, pass them in, and spread the
- * returned object back onto the root element.
+ * override (onClick / onKeyDown / tabIndex / role). Callers extract these
+ * from `domProps` by destructuring, pass them in, and spread the returned
+ * object back onto the root element.
+ *
+ * **Intentionally excluded** — `type` (the HTML `<button type>` default):
+ * it is a pure static attribute default with zero dependency on the Action
+ * Surface predicate or event handlers, so it lives in the component render
+ * body where it originally belonged. Keeping it out of this hook preserves
+ * the rule "a hook named `*Behavior` only adjusts behavior, never silently
+ * mutates unrelated HTML semantics." See Audit Log 2026-04-18 v0.6.
  *
  * `href` is read (not written) — purely for link-vs-button classification on
  * the `<a>` tag (`<a href>` is a link → keep role="link"; `<a>` without href
@@ -26,8 +33,6 @@ export interface ResolvePolymorphicActionInputs {
   onKeyDown?: React.KeyboardEventHandler;
   /** User-supplied tabIndex. Overridden to `-1` when polymorphic non-disableable and interactive-disabled. */
   tabIndex?: number;
-  /** User-supplied `type`. Consumed only when `Element === 'button'`. */
-  type?: React.ButtonHTMLAttributes<HTMLButtonElement>['type'];
   /** User-supplied `role`. Respected if set; otherwise may inject 'button' for polymorphic non-button non-link. */
   role?: React.AriaRole;
   /** User-supplied `href`. Controls `<a>` link-vs-button role classification. */
@@ -50,19 +55,18 @@ export interface ResolvePolymorphicActionResult {
   onKeyDown: React.KeyboardEventHandler;
   /** Present only when the component should inject or override tabIndex. */
   tabIndex?: number;
-  /** Present only when the component should inject or override `type`. */
-  type?: React.ButtonHTMLAttributes<HTMLButtonElement>['type'];
   /** Present only when the component should inject or override `role`. */
   role?: React.AriaRole;
 }
 
 /**
- * `resolvePolymorphicActionBehavior` · Stage 3 Step 10 · A-2 / B-1 / B-2.
+ * `resolvePolymorphicActionBehavior` · Stage 3 Step 10 · A-2 / B-2.
  *
- * The single source of truth for Action Surface rendering behavior on a
- * polymorphic root element. Consolidates four concerns that every Action
- * component (Button / IconButton / ToggleButton / ActionIcon / …) otherwise
- * copy-pastes verbatim:
+ * The single source of truth for Action Surface rendering **behavior** on a
+ * polymorphic root element. Consolidates three concerns — all tightly coupled
+ * to the event handlers the hook installs — that every Action component
+ * (Button / IconButton / ToggleButton / ActionIcon / …) would otherwise
+ * copy-paste verbatim:
  *
  *   (1) Event swallow — click + Enter/Space blocked when interactive-disabled
  *       (§2.4 R-D4 Phase 2). This fixes the "aria-disabled is a visual lie"
@@ -74,17 +78,19 @@ export interface ResolvePolymorphicActionResult {
  *       Surface is interactive-disabled, we mirror native `<button disabled>`
  *       behavior by overriding tabIndex to -1 (§2.4 R-D4 part 2).
  *
- *   (3) `type="button"` default — a native `<button>` nested in a `<form>`
- *       defaults to `type="submit"` (HTML spec), causing a classic footgun
- *       where `<Button onClick={openModal}>` inadvertently submits the form.
- *       We inject `type="button"` only when Element is the literal `'button'`
- *       tag AND the user did not supply one.
- *
- *   (4) `role="button"` injection — polymorphic non-button non-link elements
+ *   (3) `role="button"` injection — polymorphic non-button non-link elements
  *       (`<div>` / `<span>` / `<a>` without href / custom components) carry
  *       no native button semantics. We inject `role="button"` so screen
- *       readers announce them as buttons. Native `<button>` already carries
- *       the role, and `<a href>` is genuinely a link — those are skipped.
+ *       readers announce them as buttons. This is the a11y public contract
+ *       of the Enter/Space event wrappers installed in (1) — if we listen
+ *       for Enter/Space on a `<div>`, AT users must be told it acts as a
+ *       button. Native `<button>` already carries the role, and `<a href>`
+ *       is genuinely a link — those are skipped.
+ *
+ * **NOT in scope** — `type="button"` default: it is a static HTML attribute
+ * default with no state / handler coupling, so it is applied in the component
+ * render body (Button.tsx) rather than here. Putting it here would violate
+ * "a *Behavior hook must not silently mutate unrelated HTML semantics."
  *
  * Polymorphic-detection caveat (same as §2.4 R-D4 note):
  *   `isNativeDisableable(Element)` only sees string tag names. Custom React
@@ -103,10 +109,10 @@ export interface ResolvePolymorphicActionResult {
  *     onClick: userOnClick,
  *     onKeyDown: userOnKeyDown,
  *     tabIndex: userTabIndex,
- *     type: userType,
  *     role: userRole,
  *     href: userHref,
  *   });
+ *   // `type` default applied separately in the render body (see Button.tsx)
  *   return <Element {...passthroughDomProps} {...actionProps} />;
  */
 export function resolvePolymorphicActionBehavior(
@@ -118,7 +124,6 @@ export function resolvePolymorphicActionBehavior(
     onClick: userOnClick,
     onKeyDown: userOnKeyDown,
     tabIndex: userTabIndex,
-    type: userType,
     role: userRole,
     href,
   } = inputs;
@@ -151,13 +156,7 @@ export function resolvePolymorphicActionBehavior(
     isInteractiveDisabled && isPolymorphicNonDisableable;
   const effectiveTabIndex = polymorphicNeedsTabBypass ? -1 : userTabIndex;
 
-  // (3) `type="button"` default — only for literal `'button'` tag, only when
-  // user didn't supply one. Polymorphic `<a>` / `<div>` / custom must not
-  // receive a type attribute (meaningless or semantically collision-prone).
-  const effectiveType =
-    Element === 'button' && userType === undefined ? 'button' : userType;
-
-  // (4) `role="button"` injection — respect user-supplied role first, then
+  // (3) `role="button"` injection — respect user-supplied role first, then
   // skip native `<button>` (has role implicitly) and `<a href>` (is a link).
   // Everything else in the polymorphic space (`<a>` without href, `<div>`,
   // `<span>`, custom components) receives role="button".
@@ -173,7 +172,6 @@ export function resolvePolymorphicActionBehavior(
   // Build result with only-defined-keys pattern so spread ordering is safe.
   const result: ResolvePolymorphicActionResult = { onClick, onKeyDown };
   if (effectiveTabIndex !== undefined) result.tabIndex = effectiveTabIndex;
-  if (effectiveType !== undefined) result.type = effectiveType;
   if (effectiveRole !== undefined) result.role = effectiveRole;
   return result;
 }

@@ -1,16 +1,19 @@
 /**
- * Stage 3 Step 10 · A-2 / B-1 / B-2 — Action Surface polymorphic behavior hook.
+ * Stage 3 Step 10 · A-2 / B-2 — Action Surface polymorphic behavior hook.
  *
  * Test matrix axes:
  *   • Element kind:   native-button | a+href (link) | a (no href) | div | custom component
  *   • Interactive:    false | true
- *   • User overrides: onClick / onKeyDown / tabIndex / type / role  — passed or omitted
+ *   • User overrides: onClick / onKeyDown / tabIndex / role  — passed or omitted
  *
  * Contracts verified:
  *   (1) Event swallow:     click + Enter/Space blocked iff isInteractiveDisabled
  *   (2) Tab-focus parity:  tabIndex=-1 only on polymorphic non-disableable + interactive-disabled
- *   (3) type="button":     injected only for literal <button> when user type absent
- *   (4) role="button":     injected only for polymorphic non-button non-link when user role absent
+ *   (3) role="button":     injected only for polymorphic non-button non-link when user role absent
+ *
+ * NOT verified here (deliberately):
+ *   • type="button" default (B-1) — migrated back to component layer (see
+ *     Button.test.tsx "B-1" block). The hook no longer touches `type`.
  */
 import { describe, it, expect, vi } from 'vitest';
 import { resolvePolymorphicActionBehavior } from './resolve-polymorphic-action-behavior';
@@ -157,57 +160,7 @@ describe('resolvePolymorphicActionBehavior', () => {
   });
 
   // ────────────────────────────────────────────────────────────────────────
-  // (3) type="button" default (B-1)
-  // ────────────────────────────────────────────────────────────────────────
-  describe('type="button" default (B-1)', () => {
-    it('native <button> without user type → injects type="button"', () => {
-      const result = resolvePolymorphicActionBehavior('button', {
-        isInteractiveDisabled: false,
-      });
-      expect(result.type).toBe('button');
-    });
-
-    it('native <button> with user type="submit" → preserved', () => {
-      const result = resolvePolymorphicActionBehavior('button', {
-        isInteractiveDisabled: false,
-        type: 'submit',
-      });
-      expect(result.type).toBe('submit');
-    });
-
-    it('native <button> with user type="reset" → preserved', () => {
-      const result = resolvePolymorphicActionBehavior('button', {
-        isInteractiveDisabled: false,
-        type: 'reset',
-      });
-      expect(result.type).toBe('reset');
-    });
-
-    it('polymorphic <a> → type key omitted', () => {
-      const result = resolvePolymorphicActionBehavior('a', {
-        isInteractiveDisabled: false,
-        href: '/x',
-      });
-      expect('type' in result).toBe(false);
-    });
-
-    it('polymorphic <div> → type key omitted', () => {
-      const result = resolvePolymorphicActionBehavior('div', {
-        isInteractiveDisabled: false,
-      });
-      expect('type' in result).toBe(false);
-    });
-
-    it('custom component → type key omitted', () => {
-      const result = resolvePolymorphicActionBehavior(CustomComp, {
-        isInteractiveDisabled: false,
-      });
-      expect('type' in result).toBe(false);
-    });
-  });
-
-  // ────────────────────────────────────────────────────────────────────────
-  // (4) role="button" injection (B-2)
+  // (3) role="button" injection (B-2)
   // ────────────────────────────────────────────────────────────────────────
   describe('role="button" injection (B-2)', () => {
     it('native <button> → role key omitted (has implicit role)', () => {
@@ -278,11 +231,12 @@ describe('resolvePolymorphicActionBehavior', () => {
       const result = resolvePolymorphicActionBehavior('button', {
         isInteractiveDisabled: false,
       });
-      // Only onClick + onKeyDown + type should be defined for a plain <button>.
-      expect(Object.keys(result).sort()).toEqual(['onClick', 'onKeyDown', 'type'].sort());
+      // Only onClick + onKeyDown should be defined for a plain <button>.
+      // `type` is NOT in scope for this hook — handled at the component layer.
+      expect(Object.keys(result).sort()).toEqual(['onClick', 'onKeyDown'].sort());
     });
 
-    it('<div> fully-unused → onClick + onKeyDown + role (tabIndex/type omitted)', () => {
+    it('<div> fully-unused → onClick + onKeyDown + role (tabIndex omitted)', () => {
       const result = resolvePolymorphicActionBehavior('div', {
         isInteractiveDisabled: false,
       });
