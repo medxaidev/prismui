@@ -51,34 +51,48 @@ function mergeWithDefaults<P extends Record<string, any>>(
 /**
  * Hook: resolves theme.components[componentName].defaultProps and merges with props.
  *
- * DEV guards:
- * - Warns if defaultProps contains `styles` or `classNames` (must use Styling Engine instead).
- * - Warns if defaultProps contains keys not in componentPropKeys (unknown prop, will have no effect).
- *   Only active when componentPropKeys is provided; legacy components without it are silent.
+ * Merge priority (lowest → highest, Step 10 · A-2):
  *
- * @param componentName - Stable system ID (from payload.componentName ?? payload.displayName)
- * @param props - Raw props received by the component
- * @param componentPropKeys - Declared component prop keys from payload (optional, DEV warn only)
+ * ```text
+ *   payloadDefaults  (component author)
+ *     ← themeDefaults  (user theme override)
+ *       ← props        (call-site)
+ * ```
+ *
+ * Implementation note: both levels reuse `mergeWithDefaults`, which only fills
+ * `undefined` slots — user props always win, theme always overrides component.
+ *
+ * DEV guards:
+ * - Warns if theme defaultProps contains `styles` or `classNames` (must use Styling Engine instead).
+ * - Warns if theme defaultProps contains keys not in componentPropKeys (unknown prop, will have no effect).
+ *   Only active when componentPropKeys is provided; legacy components without it are silent.
+ * - Component-layer payloadDefaults is trusted (compile-time typed) and not warned.
+ *
+ * @param componentName      - Stable system ID (from payload.componentName ?? payload.displayName)
+ * @param props              - Raw props received by the component
+ * @param componentPropKeys  - Declared component prop keys from payload (optional, DEV warn only)
+ * @param payloadDefaults    - Component-declared static defaults (Step 10 · A-2), lowest priority
  */
 export function useComponentDefaultProps<P extends Record<string, any>>(
   componentName: string,
   props: P,
   componentPropKeys?: readonly (keyof P)[],
+  payloadDefaults?: Partial<P>,
 ): P {
   const theme = useThemeOptional();
-  const defaults = (theme.components?.[componentName]?.defaultProps ?? {}) as Partial<P>;
+  const themeDefaults = (theme.components?.[componentName]?.defaultProps ?? {}) as Partial<P>;
 
   if (process.env.NODE_ENV !== 'production') {
-    if ('styles' in defaults || 'classNames' in defaults) {
+    if ('styles' in themeDefaults || 'classNames' in themeDefaults) {
       console.warn(
         `[PrismUI] Do not use "styles" or "classNames" in theme.components["${componentName}"].defaultProps. ` +
         `Use the Styling Engine classNames/styles override instead.`,
       );
     }
 
-    if (componentPropKeys && Object.keys(defaults).length > 0) {
+    if (componentPropKeys && Object.keys(themeDefaults).length > 0) {
       const validPropKeys = new Set(componentPropKeys.map(String));
-      for (const key in defaults) {
+      for (const key in themeDefaults) {
         if (!validPropKeys.has(key)) {
           console.warn(
             `[PrismUI] theme.components.${componentName}.defaultProps key "${key}" ` +
@@ -90,5 +104,15 @@ export function useComponentDefaultProps<P extends Record<string, any>>(
     }
   }
 
-  return mergeWithDefaults(defaults, props);
+  // Priority chain: payloadDefaults (lowest) ← themeDefaults ← props (highest).
+  // `mergeWithDefaults` is monotonic in "fill undefined" — higher-priority
+  // sources never clobber lower-priority concrete values.
+  let merged: P = props;
+  if (Object.keys(themeDefaults).length > 0) {
+    merged = mergeWithDefaults(themeDefaults, merged);
+  }
+  if (payloadDefaults && Object.keys(payloadDefaults).length > 0) {
+    merged = mergeWithDefaults(payloadDefaults as Partial<P>, merged);
+  }
+  return merged;
 }

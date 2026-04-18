@@ -1,5 +1,6 @@
 import * as React from 'react';
 import { factory, ensureClasses, defineSlots } from '../../core/component';
+import { resolveInteractive } from '../../core/state';
 import type { SlotNames } from '../../core/component';
 import type { VarsResolver, StylesOverride } from '../../core/styles';
 import type { PolymorphicSystemProps } from '../../core/props';
@@ -93,6 +94,18 @@ export const Button = factory(
       'fullWidth',
       'loading',
     ] as const,
+    // Step 10 · A-2 · single-writer hierarchy for data-attrs:
+    // declaring defaults here (instead of render-body destructuring or hidden
+    // inside `withVariantColors`) lets factory's systemDataAttrs see them,
+    // so `<Button>` with no props still emits data-variant="filled" /
+    // data-color="primary" / data-size="md" on root. `radius` is a CSS-var
+    // only default (no corresponding data-attr in v1).
+    defaultProps: {
+      variant: 'filled',
+      color: 'primary',
+      size: 'md',
+      radius: 'md',
+    } satisfies Partial<ButtonOwnProps>,
     systems: [
       'variant',
       'size',
@@ -144,7 +157,15 @@ export const Button = factory(
     //
     // Rationale for keeping this in the component (not factory): see §5.7.
     // factory's job is attrs; event lifecycle is domain behavior.
-    const interactive = disabled || loading;
+    //
+    // A-3 · single predicate: `resolveInteractive` is the same function the
+    // `state` system uses to produce `data-interactive-disabled`. Reusing it
+    // here guarantees CSS visual state and JS event behavior stay in lock-step
+    // — no local `disabled || loading` duplication.
+    const interactive = resolveInteractive(
+      { disabled, loading },
+      'action',
+    );
     const userOnClick = (domProps as any).onClick as React.MouseEventHandler | undefined;
     const userOnKeyDown = (domProps as any).onKeyDown as React.KeyboardEventHandler | undefined;
 

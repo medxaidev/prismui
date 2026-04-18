@@ -26,7 +26,16 @@ export interface StateDataAttrsOptions {
   interactiveStrategy?: InteractiveDisabledStrategy;
 }
 
-function resolveInteractive(
+/**
+ * Single source of truth for the "non-interactive" predicate used by both
+ * `data-interactive-disabled` (CSS hook) and component-level event guards
+ * (e.g. Button's polymorphic onClick / onKeyDown swallow — §2.4 R-D4).
+ *
+ * Stage 3 Step 10 · A-3: exported so components can reuse the exact predicate
+ * that produced the data-attr, eliminating drift between visual and behavioral
+ * disabling.
+ */
+export function resolveInteractive(
   props: Record<string, any>,
   strategy: InteractiveDisabledStrategy,
 ): boolean {

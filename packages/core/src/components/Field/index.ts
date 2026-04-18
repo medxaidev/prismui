@@ -19,6 +19,9 @@ export type { FieldContextValue } from './FieldContext';
 export { useFieldControlProps } from './useFieldControlProps';
 export type { FieldControlPropsInput } from './useFieldControlProps';
 
+export { useFieldDataAttrs } from './useFieldDataAttrs';
+export type { FieldAwareStateProps } from './useFieldDataAttrs';
+
 export type { FieldProps, FieldOwnProps, FieldStylesNames } from './Field';
 export type { FieldLabelProps, FieldLabelOwnProps, FieldLabelStylesNames } from './FieldLabel';
 export type {

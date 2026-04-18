@@ -31,6 +31,20 @@ export type ComponentSystemEntry =
       enabled?: (props: any) => boolean;
       /** System-specific options (e.g. state's `interactiveStrategy`). */
       options?: Record<string, any>;
+      /**
+       * Opt out of the system's **CSS vars middleware** while keeping its
+       * **data-attrs contribution** active (Step 10 · SR-7.1).
+       *
+       * Use this when a component participates in a system's *identity*
+       * (e.g. needs `data-variant` emitted by the single writer) but uses a
+       * different token vocabulary and wires vars manually in its own
+       * `varsResolver`. Example: Input declares variant-system ownership of
+       * `data-variant` (SR-7.1 rule 1) without inheriting Button's
+       * `--prismui-variant-*` auto-injection.
+       *
+       * @default true
+       */
+      vars?: boolean;
     };
 
 /**
@@ -138,6 +152,34 @@ export type ComponentPayload<Props = any, Names extends string = string> = {
       varsResolver?: VarsResolver<Props>;
     };
   };
+
+  /**
+   * Component-declared static default prop values (Stage 3 Step 10 · A-2).
+   *
+   * Single-writer hierarchy for data-\* attrs (§6.5, A-6):
+   *
+   * ```text
+   *   payload.defaultProps           (lowest  — component author declares)
+   *     ← theme.components[X].defaultProps  (theme override)
+   *     ← user-passed props                  (highest — call-site)
+   * ```
+   *
+   * Why this exists: component-level defaults previously lived only in
+   * render-body destructuring (e.g. `const { size = 'md' } = componentProps`),
+   * which is invisible to factory's `collectSystemDataAttrs`. Systems were
+   * therefore forced to either (a) re-declare defaults inside their resolvers
+   * (duplicate truth), or (b) component-local fallbacks had to self-emit the
+   * attr (SR-7 carve-out). Declaring defaults here makes the merged props the
+   * single source of truth for **both** CSS var resolvers **and** data-attr
+   * resolvers.
+   *
+   * DEV: keys not present in `componentPropKeys` emit a warning via
+   * `useComponentDefaultProps`.
+   *
+   * @example
+   * defaultProps: { variant: 'filled', color: 'primary', size: 'md', radius: 'md' }
+   */
+  defaultProps?: Partial<Props>;
 
   /**
    * Component-specific prop keys for prop isolation.

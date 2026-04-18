@@ -4,6 +4,7 @@ import type { SlotNames } from '../../core/component';
 import type { VarsResolver, StylesOverride } from '../../core/styles';
 import type { PrismuiSize } from '../../core/size';
 import { useFieldControlProps } from '../Field/useFieldControlProps';
+import { useFieldDataAttrs } from '../Field/useFieldDataAttrs';
 import { variantColorResolver, VARIANT_CSS_VARS } from '../../core/variant';
 import type { Variant } from '../../core/variant';
 import classes from './Input.module.css';
@@ -144,7 +145,22 @@ export const Input = factory(
     defaultElement: 'div',
     slots: inputSlots,
     componentPropKeys: inputComponentPropKeys,
+    // Step 10 · A-2 · single-writer defaults.
+    defaultProps: {
+      variant: 'outlined',
+      size: 'md',
+      radius: 'md',
+    } satisfies Partial<InputOwnProps>,
     systems: [
+      // Step 10 · SR-7.1 rule 1 (Key Ownership): `data-variant` has exactly
+      // ONE owning writer — the variant system. Even though Input's variant
+      // vocabulary (outlined/filled/unstyled) differs from Button's, Input
+      // still declares variant-system participation (`vars: false` opts out
+      // of Button's `--prismui-variant-*` auto-injection while keeping the
+      // `data-variant` attribute sourced from the single writer). `color`
+      // is v1-locked to `neutral` inside `varsResolver`, so the variant
+      // system's `data-color` emits nothing (absent → omitted).
+      { name: 'variant', vars: false },
       'size',
       // Step 10 §2.7: Control Surface — disabled || readOnly drives data-interactive-disabled.
       { name: 'state', options: { interactiveStrategy: 'control' } },
@@ -156,9 +172,10 @@ export const Input = factory(
     },
   },
   ({ ref, componentProps, domProps, styles, systemDataAttrs }) => {
+    // No render-body defaults (Step 10 · A-2). `variant` / `size` / `radius`
+    // come pre-filled from `payload.defaultProps` via the single-writer chain.
     const {
-      size = 'md',
-      variant = 'outlined',
+      variant,
       leftSection,
       rightSection,
       pointer = false,
@@ -173,39 +190,35 @@ export const Input = factory(
     const sectionSlotStyles = styles.getStyles('section');
 
     // ── Step 10 §6.4 component-local data-attrs ────────────────────────────
-    // Input does NOT declare the `variant` system (it uses an InputVariant
-    // enum mapped via an adapter, not the shared Button variants). Therefore
-    // factory does not auto-emit `data-variant`, and Input is responsible for
-    // the attr + its default. Same pattern holds for `data-size`'s default:
-    // factory's size system only emits when a value is present in props, so
-    // the 'md' default must be supplied here.
-    const rootDataAttrs: Record<string, string> = {
-      'data-variant': variant,
-      'data-size': size,
-    };
+    // SR-7.1 compliance: `data-variant` is owned by the variant system (see
+    // `systems` declaration above, `{ name: 'variant', vars: false }`). Input
+    // emits ONLY genuinely component-local keys here — `data-pointer` is an
+    // interaction-mode escape hatch slated to migrate to a future
+    // `interaction` system (§6.4 placeholder).
+    const rootDataAttrs: Record<string, string> = {};
     if (pointer) rootDataAttrs['data-pointer'] = 'true';
+    // `variant` remains destructured for downstream logic (CSS via data-variant
+    // spread after merge, plus future render branches).
+    void variant;
 
-    // ── Step 10 §6.4 Field-aware state override ────────────────────────────
-    // `disabled` / `readOnly` flow through Field context at render time via
-    // useFieldControlProps, so the MERGED state (not the raw prop) is the
-    // truth. We rebuild the state keys here to reflect the merged result and
-    // deliberately spread AFTER systemDataAttrs to override them.
-    const fieldAwareStateAttrs: Record<string, string | undefined> = {
-      'data-disabled': mergedInputProps.disabled ? 'true' : undefined,
-      'data-readonly': mergedInputProps.readOnly ? 'true' : undefined,
-      // Control strategy: interactive = disabled || readOnly
-      'data-interactive-disabled':
-        mergedInputProps.disabled || mergedInputProps.readOnly ? 'true' : undefined,
-    };
+    // ── Step 10 · A-1 / A-6 · Field-aware overlay on systemDataAttrs ───────
+    // The `state` system produces base `data-disabled` / `data-readonly` /
+    // `data-interactive-disabled` from RAW props (factory-time view). Field
+    // context merges `disabled` / `readOnly` at render-time, so the final
+    // state may differ. `useFieldDataAttrs` is the single authorized overlay
+    // provider (§6.5 single-writer hierarchy): spread AFTER systemDataAttrs.
+    // `mergedInputProps` already reflects Field merge, so pass it directly.
+    // eslint-disable-next-line react-hooks/rules-of-hooks
+    const fieldAwareStateAttrs = useFieldDataAttrs(mergedInputProps as any, {
+      interactiveStrategy: 'control',
+    });
 
     return (
       <div
         {...styles.getRootProps()}
         {...rootDataAttrs}
         {...systemDataAttrs}
-        {...Object.fromEntries(
-          Object.entries(fieldAwareStateAttrs).filter(([, v]) => v !== undefined),
-        )}
+        {...fieldAwareStateAttrs}
       >
         {leftSection != null && (
           <div

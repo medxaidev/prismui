@@ -9,7 +9,7 @@
  *   - factory → FactoryRenderContext.systemDataAttrs / disabilityAttrs
  */
 import * as React from 'react';
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { render } from '@testing-library/react';
 
 import { factory } from './factory';
@@ -17,6 +17,8 @@ import { defineSlots } from './define-slots';
 import {
   collectSystemDataAttrs,
   resolveDisabilityAttrs,
+  warnSystemDataAttrOverrides,
+  __resetSystemDataAttrOverrideWarnings,
 } from './collect-system-data-attrs';
 import { variantDataAttrs } from '../variant/variant-data-attrs';
 import { sizeDataAttrs } from '../size/size-data-attrs';
@@ -280,8 +282,66 @@ describe('factory · disability attrs (§2.4)', () => {
 });
 
 // ───────────────────────────────────────────────────────────────────────────
-// DEV warning: interactiveStrategy omitted but loading / readOnly props present
+// Step 10 · A-2 — payload.defaultProps feeds system resolvers (single writer)
 // ───────────────────────────────────────────────────────────────────────────
+
+const DefaultedButton = factory(
+  {
+    displayName: 'DefaultedButton',
+    componentName: 'DefaultedButton',
+    defaultElement: 'button',
+    slots: defineSlots({ root: 'button' }),
+    componentPropKeys: ['variant', 'color', 'size', 'disabled'] as const,
+    defaultProps: {
+      variant: 'filled',
+      color: 'primary',
+      size: 'md',
+    },
+    systems: [
+      'variant',
+      'size',
+      { name: 'state', options: { interactiveStrategy: 'action' } },
+    ],
+    styling: {
+      structure: { stylesNames: ['root'] as const },
+      resources: { classes: { root: 'root' } },
+      logic: { varsResolver: () => ({}) },
+    },
+  },
+  ({ Element, ref, domProps, styles, systemDataAttrs, disabilityAttrs }) => (
+    <Element
+      ref={ref}
+      {...styles.getRootProps()}
+      {...domProps}
+      {...systemDataAttrs}
+      {...disabilityAttrs}
+    />
+  ),
+);
+
+describe('factory · payload.defaultProps → systemDataAttrs (A-2)', () => {
+  it('bare component emits data-* from payload.defaultProps (no user props)', () => {
+    const { container } = render(<DefaultedButton />);
+    const root = container.firstElementChild as HTMLElement;
+    expect(root.getAttribute('data-variant')).toBe('filled');
+    expect(root.getAttribute('data-color')).toBe('primary');
+    expect(root.getAttribute('data-size')).toBe('md');
+  });
+
+  it('user prop overrides payload default', () => {
+    const { container } = render(<DefaultedButton variant="outlined" />);
+    const root = container.firstElementChild as HTMLElement;
+    expect(root.getAttribute('data-variant')).toBe('outlined');
+    // untouched defaults still apply
+    expect(root.getAttribute('data-color')).toBe('primary');
+  });
+
+  it('user undefined is treated as "not passed" → default applies', () => {
+    const { container } = render(<DefaultedButton variant={undefined as any} />);
+    const root = container.firstElementChild as HTMLElement;
+    expect(root.getAttribute('data-variant')).toBe('filled');
+  });
+});
 
 describe('state system DEV warn', () => {
   it('warns when loading prop seen but strategy absent', () => {
@@ -303,5 +363,177 @@ describe('state system DEV warn', () => {
     stateDataAttrs({ disabled: true });
     expect(warnSpy).not.toHaveBeenCalled();
     warnSpy.mockRestore();
+  });
+});
+
+// ───────────────────────────────────────────────────────────────────────────
+// Phase 3 — SR-7 single-writer DEV warnings (warnSystemDataAttrOverrides)
+// ───────────────────────────────────────────────────────────────────────────
+
+describe('warnSystemDataAttrOverrides (Phase 3 · SR-7)', () => {
+  beforeEach(() => {
+    __resetSystemDataAttrOverrideWarnings();
+  });
+
+  it('warns once when user passes explicit data-variant on variant-system component', () => {
+    const errSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    warnSystemDataAttrOverrides('Foo', ['variant'], { 'data-variant': 'x' });
+    expect(errSpy).toHaveBeenCalledTimes(1);
+    expect(errSpy.mock.calls[0][0]).toMatch(/Foo/);
+    expect(errSpy.mock.calls[0][0]).toMatch(/data-variant/);
+    expect(errSpy.mock.calls[0][0]).toMatch(/SR-7/);
+    errSpy.mockRestore();
+  });
+
+  it('fingerprints by (component, attr) — no re-warn on same pair', () => {
+    const errSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    warnSystemDataAttrOverrides('Foo', ['variant'], { 'data-variant': 'a' });
+    warnSystemDataAttrOverrides('Foo', ['variant'], { 'data-variant': 'b' });
+    warnSystemDataAttrOverrides('Foo', ['variant'], { 'data-variant': 'c' });
+    expect(errSpy).toHaveBeenCalledTimes(1);
+    errSpy.mockRestore();
+  });
+
+  it('different components warn independently for the same attr', () => {
+    const errSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    warnSystemDataAttrOverrides('Foo', ['variant'], { 'data-variant': 'x' });
+    warnSystemDataAttrOverrides('Bar', ['variant'], { 'data-variant': 'x' });
+    expect(errSpy).toHaveBeenCalledTimes(2);
+    errSpy.mockRestore();
+  });
+
+  it('warns per attr for multi-key violations', () => {
+    const errSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    warnSystemDataAttrOverrides(
+      'Foo',
+      ['variant', 'state'],
+      { 'data-variant': 'x', 'data-disabled': true, 'data-loading': true },
+    );
+    expect(errSpy).toHaveBeenCalledTimes(3);
+    errSpy.mockRestore();
+  });
+
+  it('no-op when systems is empty / undefined', () => {
+    const errSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    warnSystemDataAttrOverrides('Foo', undefined, { 'data-variant': 'x' });
+    warnSystemDataAttrOverrides('Foo', [], { 'data-variant': 'x' });
+    expect(errSpy).not.toHaveBeenCalled();
+    errSpy.mockRestore();
+  });
+
+  it('no-op when user does NOT pass any managed data-*', () => {
+    const errSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    warnSystemDataAttrOverrides('Foo', ['variant', 'size', 'state'], {
+      variant: 'filled',
+      size: 'md',
+      disabled: true,
+    });
+    expect(errSpy).not.toHaveBeenCalled();
+    errSpy.mockRestore();
+  });
+
+  it('does not warn for a managed key whose system is NOT declared', () => {
+    // Foo declares only `variant` → data-size is unmanaged for Foo
+    const errSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    warnSystemDataAttrOverrides('Foo', ['variant'], { 'data-size': 'md' });
+    expect(errSpy).not.toHaveBeenCalled();
+    errSpy.mockRestore();
+  });
+});
+
+// ───────────────────────────────────────────────────────────────────────────
+// SR-7.1 · `vars: false` — data-attrs participation without vars middleware
+// ───────────────────────────────────────────────────────────────────────────
+
+describe('ComponentSystemEntry · vars: false (SR-7.1 Key Ownership)', () => {
+  const CustomVariantBox = factory(
+    {
+      displayName: 'CustomVariantBox',
+      componentName: 'CustomVariantBox',
+      defaultElement: 'div',
+      slots: defineSlots({ root: 'div' }),
+      componentPropKeys: ['variant'] as const,
+      defaultProps: { variant: 'alpha' },
+      // Variant system declared for data-attr ownership (SR-7.1 rule 1) —
+      // vars middleware opted out because 'alpha' is not Button's vocabulary.
+      systems: [{ name: 'variant', vars: false }],
+      styling: {
+        structure: { stylesNames: ['root'] as const },
+        resources: { classes: { root: 'root' } },
+        logic: {
+          varsResolver: (props: any) => ({
+            '--box-custom': `box-${props.variant}`,
+          }),
+        },
+      },
+    },
+    ({ Element, ref, domProps, styles, systemDataAttrs }) => (
+      <Element ref={ref} {...styles.getRootProps()} {...domProps} {...systemDataAttrs} />
+    ),
+  );
+
+  it('emits data-variant from the variant system (single writer)', () => {
+    const { container } = render(<CustomVariantBox />);
+    const root = container.firstElementChild as HTMLElement;
+    expect(root.getAttribute('data-variant')).toBe('alpha');
+  });
+
+  it('does NOT emit --prismui-variant-* vars (middleware opted out)', () => {
+    const { container } = render(<CustomVariantBox />);
+    const root = container.firstElementChild as HTMLElement;
+    // Component's own var still present (proves varsResolver ran):
+    expect(root.style.getPropertyValue('--box-custom')).toBe('box-alpha');
+    // Button-world color vars absent (proves withVariantColors did NOT wrap):
+    expect(root.style.getPropertyValue('--prismui-variant-bg')).toBe('');
+    expect(root.style.getPropertyValue('--prismui-variant-fg')).toBe('');
+  });
+});
+
+describe('Input · SR-7.1 regression', () => {
+  it('data-variant is sourced from the variant system, not self-emitted', async () => {
+    // Import lazily to avoid hoisting issues with top-of-file imports.
+    const { Input } = await import('../../components/Input/Input');
+    const { container } = render(<Input aria-label="x" variant="filled" />);
+    const root = container.firstElementChild as HTMLElement;
+    expect(root.getAttribute('data-variant')).toBe('filled');
+    // Regression guard: we should NOT be double-emitting (single writer).
+    // There is no public API to detect double-emit at DOM level (last wins),
+    // so we assert the value still matches the user prop (system saw it).
+  });
+
+  it('bare <Input /> still gets data-variant from payload.defaultProps', async () => {
+    const { Input } = await import('../../components/Input/Input');
+    const { container } = render(<Input aria-label="y" />);
+    const root = container.firstElementChild as HTMLElement;
+    expect(root.getAttribute('data-variant')).toBe('outlined');
+  });
+});
+
+describe('factory · Phase 3 integration (SR-7 DEV warn)', () => {
+  beforeEach(() => {
+    __resetSystemDataAttrOverrideWarnings();
+  });
+
+  it('warns when user spreads data-disabled on a state-system component', () => {
+    const errSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    render(<DefaultedButton {...({ 'data-disabled': true } as any)} />);
+    const match = errSpy.mock.calls.find(
+      (c) =>
+        typeof c[0] === 'string' &&
+        c[0].includes('data-disabled') &&
+        c[0].includes('SR-7'),
+    );
+    expect(match).toBeDefined();
+    errSpy.mockRestore();
+  });
+
+  it('does NOT warn on a well-behaved usage', () => {
+    const errSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    render(<DefaultedButton variant="outlined" disabled />);
+    const sr7Calls = errSpy.mock.calls.filter(
+      (c) => typeof c[0] === 'string' && c[0].includes('SR-7'),
+    );
+    expect(sr7Calls).toHaveLength(0);
+    errSpy.mockRestore();
   });
 });

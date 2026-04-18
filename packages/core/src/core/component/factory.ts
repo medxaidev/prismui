@@ -11,6 +11,7 @@ import { withStateVars } from '../state/with-state-vars';
 import {
   collectSystemDataAttrs,
   resolveDisabilityAttrs,
+  warnSystemDataAttrOverrides,
 } from './collect-system-data-attrs';
 import { useThemeOptional } from '../theme/context/theme.context';
 import { useComponentDefaultProps } from './use-component-default-props';
@@ -201,13 +202,19 @@ export function factory<Payload extends ComponentPayload>(
   }
 
   const Component = React.forwardRef<any, any>((props: any, ref) => {
-    // ── Stage 7.4: resolve theme defaultProps before any other logic ──
-    // Stage 8.3: pass componentPropKeys for DEV warn on unknown defaultProps keys.
+    // ── Stage 7.4 + Step 10 · A-2: resolve defaults before any other logic ──
+    // Priority (lowest → highest): payload.defaultProps ← theme.defaultProps ← user props.
+    // This makes the merged `resolvedProps` the SINGLE WRITER (A-6) seen by:
+    //   • varsResolver / system vars middleware
+    //   • collectSystemDataAttrs (root `data-*`)
+    //   • component render body
+    // No further defaulting via destructuring fallback is needed or encouraged.
     // eslint-disable-next-line react-hooks/rules-of-hooks
     const resolvedProps = useComponentDefaultProps(
       payload.componentName ?? payload.displayName,
       props,
       payload.componentPropKeys as readonly (keyof typeof props)[] | undefined,
+      payload.defaultProps as Partial<typeof props> | undefined,
     );
 
     // CRITICAL: Extract styling props to prevent leakage to DOM.
@@ -255,6 +262,12 @@ export function factory<Payload extends ComponentPayload>(
         for (const entry of payload.systems) {
           const name = typeof entry === 'string' ? entry : entry.name;
           const opts = typeof entry === 'string' ? undefined : { enabled: entry.enabled };
+          // Step 10 · SR-7.1 · `vars: false` participates in data-attrs only.
+          // Component provides its own vars wiring (e.g. Input consumes a
+          // different variant vocabulary and wires --prismui-variant-* in its
+          // own varsResolver). Default is `true` for back-compat.
+          const varsEnabled = typeof entry === 'string' ? true : entry.vars !== false;
+          if (!varsEnabled) continue;
           if (name === 'variant') {
             if (!(resolver as any)[SYSTEM_MARKS.variant]) {
               resolver = withVariantColors(resolver, opts);
@@ -318,6 +331,18 @@ export function factory<Payload extends ComponentPayload>(
       // HTML-compatible attrs that reach every component via rest).
       const systemDataAttrs = collectSystemDataAttrs(payload.systems, rest as Record<string, any>);
       const disabilityAttrs = resolveDisabilityAttrs(Element, rest as Record<string, any>);
+
+      // ── Phase 3 · SR-7 enforcement (DEV only) ──
+      // Warn when user / component-authored props collide with a key that a
+      // declared system is the single writer for. Fingerprinted per
+      // (component × attr) pair to avoid render-loop spam. No-op in prod.
+      if (process.env.NODE_ENV !== 'production') {
+        warnSystemDataAttrOverrides(
+          payload.componentName ?? payload.displayName,
+          payload.systems,
+          props as Record<string, any>,
+        );
+      }
 
       // Custom render (multi-slot support)
       if (render) {
