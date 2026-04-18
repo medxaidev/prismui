@@ -1,8 +1,8 @@
 import * as React from 'react';
 import { factory, ensureClasses, defineSlots } from '../../core/component';
-import { isNativeDisableable } from '../../core/component/collect-system-data-attrs';
 import { resolveInteractive } from '../../core/state';
 import { resolveRadiusToken, type Radius } from '../../core/radius';
+import { resolvePolymorphicActionBehavior } from '../../core/action';
 import type { SlotNames } from '../../core/component';
 import type { VarsResolver, StylesOverride } from '../../core/styles';
 import type { PolymorphicSystemProps } from '../../core/props';
@@ -143,46 +143,36 @@ export const Button = factory<ButtonOwnProps>(
     const rootDataAttrs: Record<string, string> = {};
     if (fullWidth) rootDataAttrs['data-full-width'] = 'true';
 
-    // ── Step 10 §2.4 R-D4 · Phase 2 · polymorphic event swallow ───────────
-    // When the root element is not native-disableable (polymorphic <a> / <div>
-    // / custom component), the browser does NOT block click / keyboard
-    // activation on its own — factory only sets `aria-disabled`, which is a
-    // visual/a11y flag without behavior. The component layer must swallow
-    // click + Enter/Space to avoid "aria-disabled is a visual lie".
+    // ── Step 10 §2.4 R-D4 · Action Surface polymorphic behavior ────────────
+    // A-3 · shared predicate: `resolveInteractive('action')` is the exact
+    // function the state system uses to derive `data-interactive-disabled`,
+    // so CSS visual state and JS event behavior stay in lock-step.
     //
-    // `loading` is included in the interactive-disabled predicate (Action
-    // strategy): a loading button must not double-click while async is in
-    // flight, even if the caller didn't pass `disabled`.
-    //
-    // Rationale for keeping this in the component (not factory): see §5.7.
-    // factory's job is attrs; event lifecycle is domain behavior.
-    //
-    // A-3 · single predicate: `resolveInteractive` is the same function the
-    // `state` system uses to produce `data-interactive-disabled`. Reusing it
-    // here guarantees CSS visual state and JS event behavior stay in lock-step
-    // — no local `disabled || loading` duplication.
-    //
-    // Naming · variable holds "is this Button currently interactively disabled?"
-    // Keep the name aligned with its polarity to prevent `!interactive` bugs
-    // in future edits.
+    // `loading` enters the predicate per Action strategy — a loading button
+    // must not double-click while async is in flight.
     const isInteractiveDisabled = resolveInteractive(
       { disabled, loading },
       'action',
     );
 
-    // B-4 · single destructure for all domProps we need to override or re-route:
-    //   - onClick / onKeyDown → we wrap to support the event-swallow predicate
-    //   - children           → placed inside `<Button.Label>` (prevents the
-    //                          spread vs JSX children footgun)
-    //   - tabIndex           → may be overridden by the polymorphic tab bypass
-    //   - type               → inspected for the `<button>` default injection
-    // The remaining `passthroughDomProps` spreads onto the root element.
+    // B-4 · single destructure for every domProp the Action Surface hook
+    // may override or re-route. The remainder (`passthroughDomProps`) is
+    // spread onto the root element unchanged.
+    //
+    // `children` is extracted separately from the Action Surface inputs to
+    // avoid the React footgun where `...domProps` silently overrides JSX
+    // children (we place `userChildren` explicitly inside `<Button.Label>`).
+    //
+    // `href` is READ-ONLY — forwarded to the hook so it can classify `<a href>`
+    // as a genuine link (no role="button" injection); we still let it flow
+    // through `passthroughDomProps` onto the `<a>` element.
     const {
       onClick: userOnClick,
       onKeyDown: userOnKeyDown,
       children: userChildren,
       tabIndex: userTabIndex,
       type: userType,
+      role: userRole,
       ...passthroughDomProps
     } = domProps as {
       onClick?: React.MouseEventHandler;
@@ -190,70 +180,37 @@ export const Button = factory<ButtonOwnProps>(
       children?: React.ReactNode;
       tabIndex?: number;
       type?: React.ButtonHTMLAttributes<HTMLButtonElement>['type'];
+      role?: React.AriaRole;
+      href?: string;
       [key: string]: unknown;
     };
 
-    const handleClick: React.MouseEventHandler = (e) => {
-      if (isInteractiveDisabled) {
-        e.preventDefault();
-        e.stopPropagation();
-        return;
-      }
-      userOnClick?.(e);
-    };
-    const handleKeyDown: React.KeyboardEventHandler = (e) => {
-      if (isInteractiveDisabled && (e.key === 'Enter' || e.key === ' ')) {
-        e.preventDefault();
-        // do NOT stop propagation — a parent dialog may still want Escape etc.
-        return;
-      }
-      userOnKeyDown?.(e);
-    };
-
-    // ── R-D4 part 2 · tab-focus parity for polymorphic interactive-disabled ─
-    // Native `<button disabled>` is auto-removed from tab order by the browser.
-    // Polymorphic `<a>` / `<div>` with `aria-disabled` stays focusable by
-    // default — which means a keyboard user can tab INTO a visually "disabled"
-    // button and press Enter, only to find the key swallowed. That mismatch
-    // between visual and behavior is the exact "aria-disabled is a lie"
-    // symptom we're trying to root out. Mirror native behavior on polymorphic
-    // elements: remove from tab order when interactively-disabled.
+    // ── A-2 · Action Surface behavior (delegated to core/action) ──────────
+    // Consolidates four otherwise copy-pastable concerns:
+    //   1. Event swallow (click + Enter/Space blocked when interactive-disabled)
+    //   2. Tab-focus parity (tabIndex=-1 on polymorphic non-disableable)
+    //   3. type="button" default (B-1)
+    //   4. role="button" injection (B-2)
     //
-    // Design choice (NOT bug) · tabIndex hard override when disabled/loading:
-    //   User-supplied `tabIndex` is DELIBERATELY overridden to -1 in the
-    //   interactive-disabled branch. Rationale: the Action Surface contract
-    //   treats `disabled || loading` as a complete keyboard-activation block
-    //   (§2.4 R-D4 + §2.7 Action strategy). Accepting a user tabIndex here
-    //   would reintroduce the "focusable but key events swallowed" dead-end
-    //   we are trying to eliminate. Users who genuinely need focusability on
-    //   a disabled button should not pass `disabled` at all and should
-    //   manage inert semantics themselves.
+    // Design choice — user-supplied `tabIndex` is deliberately overridden on
+    // the polymorphic + interactive-disabled branch. Rationale lives in
+    // `resolvePolymorphicActionBehavior`'s docstring. Accepting a user
+    // tabIndex there would reintroduce the "focusable but key events
+    // swallowed" dead-end we are trying to eliminate.
     //
-    // Polymorphic-detection caveat (§2.4 R-D4 note):
-    //   `isNativeDisableable(Element)` only sees static HTML tag names
-    //   (`'button'` / `'input'` / …). When a user passes a custom React
-    //   component (`component={CustomLink}` that internally renders `<a>`
-    //   or `<button>`), we cannot introspect its output and default to
-    //   "polymorphic" → conservative tab override. This matches every other
-    //   React headless library — the contract on users is: polymorphic
-    //   semantics are judged by the TAG NAME passed to `component`.
-    const polymorphicNeedsTabBypass =
-      isInteractiveDisabled && !isNativeDisableable(Element);
-    const effectiveTabIndex = polymorphicNeedsTabBypass ? -1 : userTabIndex;
-
-    // ── B-1 · default `type="button"` on native <button> ──────────────────
-    // A bare `<button>` nested in a `<form>` defaults to `type="submit"` per
-    // HTML spec — a classic footgun: `<Button onClick={openModal}>` inside a
-    // form will submit the form. Every major design system (Mantine / Radix
-    // / Ariakit / Ark) defaults `type="button"` to neutralize this. We only
-    // inject the default when:
-    //   (a) the resolved Element is the literal `'button'` tag, AND
-    //   (b) the user did not pass an explicit `type`.
-    // Polymorphic `<a>` / `<div>` / custom components do not get a type
-    // attribute — it would either be meaningless (`<a type="button">`) or
-    // collide with unrelated semantics (`<input type="...">`).
-    const effectiveButtonType =
-      Element === 'button' && userType === undefined ? 'button' : userType;
+    // Polymorphic-detection caveat (unchanged from §2.4 R-D4 note): custom
+    // React components (`component={CustomLink}`) can't be introspected and
+    // default to conservative polymorphic handling. Semantics are judged by
+    // the tag name passed to `component`.
+    const actionBehavior = resolvePolymorphicActionBehavior(Element, {
+      isInteractiveDisabled,
+      onClick: userOnClick,
+      onKeyDown: userOnKeyDown,
+      tabIndex: userTabIndex,
+      type: userType,
+      role: userRole,
+      href: passthroughDomProps.href as string | undefined,
+    });
 
     // ── a11y DEV warning · icon-only button must have accessible name ──────
     // Once-per-mount warn when the button has NO text children and the user
@@ -289,10 +246,7 @@ export const Button = factory<ButtonOwnProps>(
         ref={ref}
         {...styles.getRootProps()}
         {...passthroughDomProps}
-        onClick={handleClick}
-        onKeyDown={handleKeyDown}
-        tabIndex={effectiveTabIndex}
-        {...(effectiveButtonType !== undefined ? { type: effectiveButtonType } : {})}
+        {...actionBehavior}
         {...rootDataAttrs}
         {...systemDataAttrs}
         {...disabilityAttrs}

@@ -763,4 +763,62 @@ describe('Button', () => {
     });
   });
 
+  // ─────────────────────────────────────────────────────────────────────────
+  // B-2 — role="button" injection for polymorphic non-button non-link
+  //
+  // Screen readers announce semantic buttons based on the element's implicit
+  // or explicit ARIA role. Native <button> has role="button" implicitly;
+  // <a href> is announced as a link; polymorphic <div> / <span> / <a> without
+  // href have no button semantics unless we inject `role="button"`. This
+  // block verifies every branch + the user-override escape hatch.
+  // ─────────────────────────────────────────────────────────────────────────
+  describe('Polymorphic role="button" injection (B-2)', () => {
+    it('native <button> does NOT receive a role attribute (implicit role)', () => {
+      const { container } = render(<Button>X</Button>);
+      expect(container.querySelector('button')!.hasAttribute('role')).toBe(false);
+    });
+
+    it('<a href> does NOT receive role="button" (is a genuine link)', () => {
+      const { container } = render(
+        <Button component="a" href="/x">X</Button>,
+      );
+      expect(container.querySelector('a')!.hasAttribute('role')).toBe(false);
+    });
+
+    it('<a> WITHOUT href gets role="button" (no link semantics)', () => {
+      const { container } = render(
+        <Button component="a">X</Button>,
+      );
+      expect(container.querySelector('a')!.getAttribute('role')).toBe('button');
+    });
+
+    it('<div> gets role="button"', () => {
+      const { container } = render(
+        <Button component="div">X</Button>,
+      );
+      expect(container.querySelector('div')!.getAttribute('role')).toBe('button');
+    });
+
+    it('<span> gets role="button"', () => {
+      const { container } = render(
+        <Button component="span">X</Button>,
+      );
+      expect(container.querySelector('span')!.getAttribute('role')).toBe('button');
+    });
+
+    it('user-supplied role overrides injection (e.g. role="menuitem" on <div>)', () => {
+      const { container } = render(
+        <Button component="div" role="menuitem">X</Button>,
+      );
+      expect(container.querySelector('div')!.getAttribute('role')).toBe('menuitem');
+    });
+
+    it('user-supplied role="button" on <a href> is preserved (explicit intent wins over link)', () => {
+      const { container } = render(
+        <Button component="a" href="/x" role="button">X</Button>,
+      );
+      expect(container.querySelector('a')!.getAttribute('role')).toBe('button');
+    });
+  });
+
 });
