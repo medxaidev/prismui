@@ -22,6 +22,12 @@ const meta = {
       options: ['primary', 'secondary', 'info', 'success', 'warning', 'error', 'neutral'],
     },
     disabled: { control: 'boolean' },
+    radius: {
+      control: 'select',
+      options: ['xs', 'sm', 'md', 'lg', 'xl', 'full'],
+    },
+    fullWidth: { control: 'boolean' },
+    loading: { control: 'boolean' },
   },
 } satisfies Meta<typeof Button>;
 
@@ -237,6 +243,133 @@ export const ThemeThreeChannel: Story = {
       </div>
     );
   },
+};
+
+// 11.5 Sections — Issue #1 + Size v3 (slotSize / innerGap)
+const IconPlus = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M12 5v14M5 12h14" />
+  </svg>
+);
+const IconChevron = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+    <path d="m6 9 6 6 6-6" />
+  </svg>
+);
+
+export const WithSections: Story = {
+  render: () => (
+    <div style={{ fontFamily: 'sans-serif', maxWidth: 600 }}>
+      <h4 style={{ margin: '0 0 8px', fontSize: 14, fontWeight: 700 }}>
+        Sections — driven by Size System v3 tokens
+      </h4>
+      <p style={{ margin: '0 0 12px', fontSize: 12, color: '#637381' }}>
+        <code>leftSection</code> / <code>rightSection</code> render as{' '}
+        <code>&lt;span data-position&gt;</code> with <code>--prismui-size-slot-size</code>{' '}
+        (via <code>--button-slot-size</code>); inner gap from{' '}
+        <code>--prismui-size-inner-gap</code>.
+      </p>
+      <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', alignItems: 'center' }}>
+        <Button leftSection={<IconPlus />}>Add Item</Button>
+        <Button rightSection={<IconChevron />}>Menu</Button>
+        <Button leftSection={<IconPlus />} rightSection={<IconChevron />}>Both</Button>
+        <Button variant="outlined" leftSection={<IconPlus />}>Outlined</Button>
+        <Button variant="soft" leftSection={<IconPlus />}>Soft</Button>
+      </div>
+    </div>
+  ),
+};
+
+export const SectionsAcrossSizes: Story = {
+  render: () => (
+    <div style={{ fontFamily: 'sans-serif', maxWidth: 600 }}>
+      <h4 style={{ margin: '0 0 8px', fontSize: 14, fontWeight: 700 }}>
+        Sections auto-scale with size (Size v3 §3)
+      </h4>
+      <p style={{ margin: '0 0 12px', fontSize: 12, color: '#637381' }}>
+        Slot square scales: xs=14 → sm=16 → md=18 → lg=20 → xl=22 (step +2).
+        Inner gap scales: xs=4 → sm=6 → md=8 → lg=10 → xl=12 (step +2).
+      </p>
+      <div style={{ display: 'flex', gap: 12, alignItems: 'center', flexWrap: 'wrap' }}>
+        {(['xs', 'sm', 'md', 'lg', 'xl'] as const).map((s) => (
+          <Button key={s} size={s} leftSection={<IconPlus />} rightSection={<IconChevron />}>
+            {s}
+          </Button>
+        ))}
+      </div>
+    </div>
+  ),
+};
+
+// 11.6 Radius scale
+export const RadiusScale: Story = {
+  render: () => (
+    <div style={{ fontFamily: 'sans-serif', maxWidth: 600 }}>
+      <h4 style={{ margin: '0 0 8px', fontSize: 14, fontWeight: 700 }}>Radius scale</h4>
+      <p style={{ margin: '0 0 12px', fontSize: 12, color: '#637381' }}>
+        Accepts theme scale (<code>xs / sm / md / lg / xl / full</code>) or any CSS length.
+      </p>
+      <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+        {(['xs', 'sm', 'md', 'lg', 'xl', 'full'] as const).map((r) => (
+          <Button key={r} radius={r}>{r}</Button>
+        ))}
+        <Button radius="4px">4px</Button>
+        <Button radius="9999px">9999px</Button>
+      </div>
+    </div>
+  ),
+};
+
+// 11.7 FullWidth
+export const FullWidthDemo: Story = {
+  render: () => (
+    <div style={{ fontFamily: 'sans-serif', maxWidth: 480, display: 'flex', flexDirection: 'column', gap: 12 }}>
+      <h4 style={{ margin: 0, fontSize: 14, fontWeight: 700 }}>fullWidth</h4>
+      <Button>Natural width</Button>
+      <Button fullWidth>Full width</Button>
+      <Button fullWidth variant="outlined" leftSection={<IconPlus />}>Full width with section</Button>
+    </div>
+  ),
+};
+
+// 11.8 Loading
+export const LoadingStates: Story = {
+  render: () => (
+    <div style={{ fontFamily: 'sans-serif', maxWidth: 600 }}>
+      <h4 style={{ margin: '0 0 8px', fontSize: 14, fontWeight: 700 }}>Loading</h4>
+      <p style={{ margin: '0 0 12px', fontSize: 12, color: '#637381' }}>
+        Built-in spinner replaces <code>leftSection</code>; root gets{' '}
+        <code>aria-busy="true"</code> + <code>data-loading="true"</code>. Pointer
+        events are disabled while loading; combine with <code>disabled</code> to
+        also block keyboard activation.
+      </p>
+      <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', alignItems: 'center' }}>
+        <Button loading>Saving…</Button>
+        <Button loading variant="outlined">Outlined</Button>
+        <Button loading variant="soft">Soft</Button>
+        <Button loading rightSection={<IconChevron />}>With right</Button>
+        <Button loading size="xs">xs</Button>
+        <Button loading size="xl">xl</Button>
+      </div>
+    </div>
+  ),
+};
+
+// 11.9 Reduced Motion (visual — requires OS setting)
+export const ReducedMotionHint: Story = {
+  render: () => (
+    <div style={{ fontFamily: 'sans-serif', maxWidth: 600 }}>
+      <h4 style={{ margin: '0 0 8px', fontSize: 14, fontWeight: 700 }}>prefers-reduced-motion (IV-A5)</h4>
+      <p style={{ margin: '0 0 12px', fontSize: 12, color: '#637381' }}>
+        Toggle OS "Reduce motion" accessibility setting to verify: transitions
+        disappear, <code>:active</code> no longer scales, spinner stops rotating.
+      </p>
+      <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', alignItems: 'center' }}>
+        <Button>Hover / Click me</Button>
+        <Button loading>Loading…</Button>
+      </div>
+    </div>
+  ),
 };
 
 // 12. Custom focusRing theme

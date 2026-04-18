@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { render } from '@testing-library/react';
 import { Button } from './Button';
 import { PrismUIProvider } from '../../core/theme/provider/PrismUIProvider';
@@ -371,6 +371,246 @@ describe('Button', () => {
         );
         expect(container.querySelector('button')).toHaveStyle({ '--button-height': '120px' });
       });
+    });
+  });
+
+  describe('Sections (Size v3 + Issue #1)', () => {
+    it('renders no section when leftSection / rightSection are absent', () => {
+      const { container } = render(<Button>Plain</Button>);
+      expect(container.querySelector('[data-position="left"]')).toBeNull();
+      expect(container.querySelector('[data-position="right"]')).toBeNull();
+    });
+
+    it('renders left section with data-position="left"', () => {
+      const { container } = render(
+        <Button leftSection={<span data-testid="lsi">L</span>}>Go</Button>,
+      );
+      const left = container.querySelector('[data-position="left"]');
+      expect(left).toBeInTheDocument();
+      expect(left?.getAttribute('aria-hidden')).toBe('true');
+      expect(left?.querySelector('[data-testid="lsi"]')).toBeInTheDocument();
+    });
+
+    it('renders right section with data-position="right"', () => {
+      const { container } = render(
+        <Button rightSection={<span data-testid="rsi">R</span>}>Go</Button>,
+      );
+      const right = container.querySelector('[data-position="right"]');
+      expect(right).toBeInTheDocument();
+      expect(right?.getAttribute('aria-hidden')).toBe('true');
+      expect(right?.querySelector('[data-testid="rsi"]')).toBeInTheDocument();
+    });
+
+    it('renders both sections flanking the label', () => {
+      const { container } = render(
+        <Button leftSection="L" rightSection="R">Label</Button>,
+      );
+      const inner = container.querySelector('button')!.firstElementChild!;
+      const [first, middle, last] = Array.from(inner.children);
+      expect(first.getAttribute('data-position')).toBe('left');
+      expect(middle.getAttribute('data-position')).toBeNull(); // label
+      expect(last.getAttribute('data-position')).toBe('right');
+    });
+
+    it('does NOT leak leftSection / rightSection as DOM attributes on root', () => {
+      const { container } = render(
+        <Button leftSection="L" rightSection="R">Go</Button>,
+      );
+      const btn = container.querySelector('button')!;
+      expect(btn.hasAttribute('leftsection')).toBe(false);
+      expect(btn.hasAttribute('rightsection')).toBe(false);
+    });
+
+    it('emits Size v3 component-alias CSS vars on root', () => {
+      const { container } = render(<Button>X</Button>);
+      const btn = container.querySelector('button')!;
+      const style = btn.getAttribute('style') ?? '';
+      expect(style).toContain('--button-slot-size');
+      expect(style).toContain('--button-inner-gap');
+    });
+
+    it('leftSection={null} does not render a section element', () => {
+      const { container } = render(<Button leftSection={null}>X</Button>);
+      expect(container.querySelector('[data-position="left"]')).toBeNull();
+    });
+
+    it('leftSection={0} renders (0 is a valid ReactNode)', () => {
+      const { container } = render(<Button leftSection={0}>X</Button>);
+      expect(container.querySelector('[data-position="left"]')).toBeInTheDocument();
+    });
+  });
+
+  describe('Radius prop', () => {
+    it('defaults to md → injects var(--prismui-radius-md) via --button-radius', () => {
+      const { container } = render(<Button>X</Button>);
+      const btn = container.querySelector('button')!;
+      const style = btn.getAttribute('style') ?? '';
+      expect(style).toContain('--button-radius');
+      expect(style).toContain('var(--prismui-radius-md)');
+    });
+
+    it.each(['xs', 'sm', 'md', 'lg', 'xl', 'full'] as const)(
+      'radius="%s" → var(--prismui-radius-<scale>)',
+      (scale) => {
+        const { container } = render(<Button radius={scale}>X</Button>);
+        const style = container.querySelector('button')!.getAttribute('style') ?? '';
+        expect(style).toContain(`var(--prismui-radius-${scale})`);
+      },
+    );
+
+    it('radius="9999px" → passes through CSS length verbatim', () => {
+      const { container } = render(<Button radius="9999px">X</Button>);
+      const style = container.querySelector('button')!.getAttribute('style') ?? '';
+      expect(style).toContain('--button-radius: 9999px');
+    });
+
+    it('does NOT leak radius as a DOM attribute', () => {
+      const { container } = render(<Button radius="lg">X</Button>);
+      expect(container.querySelector('button')!.hasAttribute('radius')).toBe(false);
+    });
+  });
+
+  describe('fullWidth prop', () => {
+    it('default: no data-full-width attribute', () => {
+      const { container } = render(<Button>X</Button>);
+      expect(container.querySelector('button')!.hasAttribute('data-full-width')).toBe(false);
+    });
+
+    it('fullWidth={true} → data-full-width="true"', () => {
+      const { container } = render(<Button fullWidth>X</Button>);
+      expect(container.querySelector('button')!.getAttribute('data-full-width')).toBe('true');
+    });
+
+    it('does NOT leak fullWidth as a DOM attribute', () => {
+      const { container } = render(<Button fullWidth>X</Button>);
+      expect(container.querySelector('button')!.hasAttribute('fullwidth')).toBe(false);
+    });
+  });
+
+  describe('Loading prop', () => {
+    it('default: no loading indicators', () => {
+      const { container } = render(<Button>X</Button>);
+      const btn = container.querySelector('button')!;
+      expect(btn.hasAttribute('data-loading')).toBe(false);
+      expect(btn.hasAttribute('aria-busy')).toBe(false);
+      expect(container.querySelector('[data-loader="true"]')).toBeNull();
+    });
+
+    it('loading={true} → data-loading + aria-busy + loader section', () => {
+      const { container } = render(<Button loading>Submitting</Button>);
+      const btn = container.querySelector('button')!;
+      expect(btn.getAttribute('data-loading')).toBe('true');
+      expect(btn.getAttribute('aria-busy')).toBe('true');
+      const loader = container.querySelector('[data-loader="true"]');
+      expect(loader).toBeInTheDocument();
+      expect(loader?.getAttribute('data-position')).toBe('left');
+      expect(loader?.querySelector('svg')).toBeInTheDocument();
+    });
+
+    it('loading replaces leftSection (single left slot occupied by spinner)', () => {
+      const { container } = render(
+        <Button loading leftSection={<span data-testid="should-be-hidden">I</span>}>
+          X
+        </Button>,
+      );
+      const lefts = container.querySelectorAll('[data-position="left"]');
+      expect(lefts).toHaveLength(1); // only spinner, no duplicate
+      expect(container.querySelector('[data-testid="should-be-hidden"]')).toBeNull();
+      expect(lefts[0].getAttribute('data-loader')).toBe('true');
+    });
+
+    it('loading preserves rightSection', () => {
+      const { container } = render(
+        <Button loading rightSection={<span data-testid="rsi">R</span>}>
+          X
+        </Button>,
+      );
+      expect(container.querySelector('[data-testid="rsi"]')).toBeInTheDocument();
+    });
+
+    it('label text remains visible while loading', () => {
+      const { getByText } = render(<Button loading>Submitting</Button>);
+      expect(getByText('Submitting')).toBeInTheDocument();
+    });
+
+    it('does NOT leak loading as a DOM attribute', () => {
+      const { container } = render(<Button loading>X</Button>);
+      expect(container.querySelector('button')!.hasAttribute('loading')).toBe(false);
+    });
+  });
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // Stage 3 Step 10 · Phase 2 — polymorphic event swallow (§2.4 R-D4)
+  // ─────────────────────────────────────────────────────────────────────────
+  describe('Polymorphic event swallow (disabled/loading)', () => {
+    it('polymorphic <a disabled>: sets aria-disabled + data-disabled, no native disabled', () => {
+      const { container } = render(
+        <Button component="a" href="/x" disabled>X</Button>,
+      );
+      const a = container.querySelector('a') as HTMLAnchorElement;
+      expect(a.getAttribute('aria-disabled')).toBe('true');
+      expect(a.getAttribute('data-disabled')).toBe('true');
+      expect(a.hasAttribute('disabled')).toBe(false);
+    });
+
+    it('polymorphic <a disabled>: swallows click (onClick NOT fired)', () => {
+      const onClick = vi.fn();
+      const { container } = render(
+        <Button component="a" href="/x" disabled onClick={onClick}>X</Button>,
+      );
+      const a = container.querySelector('a') as HTMLAnchorElement;
+      a.click();
+      expect(onClick).not.toHaveBeenCalled();
+    });
+
+    it('polymorphic <a loading>: swallows click (Action strategy includes loading)', () => {
+      const onClick = vi.fn();
+      const { container } = render(
+        <Button component="a" href="/x" loading onClick={onClick}>X</Button>,
+      );
+      (container.querySelector('a') as HTMLAnchorElement).click();
+      expect(onClick).not.toHaveBeenCalled();
+    });
+
+    it('polymorphic <a> (enabled): onClick fires normally', () => {
+      const onClick = vi.fn();
+      const { container } = render(
+        <Button component="a" href="/x" onClick={onClick}>X</Button>,
+      );
+      (container.querySelector('a') as HTMLAnchorElement).click();
+      expect(onClick).toHaveBeenCalledTimes(1);
+    });
+
+    it('polymorphic <a disabled>: swallows Enter/Space keydown', () => {
+      const onKeyDown = vi.fn();
+      const { container } = render(
+        <Button component="a" href="/x" disabled onKeyDown={onKeyDown}>X</Button>,
+      );
+      const a = container.querySelector('a') as HTMLAnchorElement;
+      a.focus();
+      a.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+      a.dispatchEvent(new KeyboardEvent('keydown', { key: ' ', bubbles: true }));
+      expect(onKeyDown).not.toHaveBeenCalled();
+    });
+
+    it('polymorphic <a disabled>: does NOT swallow non-activation keys', () => {
+      const onKeyDown = vi.fn();
+      const { container } = render(
+        <Button component="a" href="/x" disabled onKeyDown={onKeyDown}>X</Button>,
+      );
+      const a = container.querySelector('a') as HTMLAnchorElement;
+      a.focus();
+      a.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+      expect(onKeyDown).toHaveBeenCalledTimes(1);
+    });
+
+    it('native <button disabled>: browser already blocks click (no double handling needed)', () => {
+      const onClick = vi.fn();
+      const { container } = render(
+        <Button disabled onClick={onClick}>X</Button>,
+      );
+      (container.querySelector('button') as HTMLButtonElement).click();
+      expect(onClick).not.toHaveBeenCalled();
     });
   });
 });

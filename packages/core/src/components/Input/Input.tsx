@@ -144,14 +144,18 @@ export const Input = factory(
     defaultElement: 'div',
     slots: inputSlots,
     componentPropKeys: inputComponentPropKeys,
-    systems: ['size', 'state'],
+    systems: [
+      'size',
+      // Step 10 §2.7: Control Surface — disabled || readOnly drives data-interactive-disabled.
+      { name: 'state', options: { interactiveStrategy: 'control' } },
+    ],
     styling: {
       structure: { stylesNames },
       resources: { classes: validatedClasses },
       logic: { varsResolver },
     },
   },
-  ({ ref, componentProps, domProps, styles }) => {
+  ({ ref, componentProps, domProps, styles, systemDataAttrs }) => {
     const {
       size = 'md',
       variant = 'outlined',
@@ -168,18 +172,41 @@ export const Input = factory(
     const inputSlotStyles = styles.getStyles('input');
     const sectionSlotStyles = styles.getStyles('section');
 
-    // Root data-* attributes reflect the MERGED state (Field + user overrides),
-    // so CSS selectors on root see the effective state.
+    // ── Step 10 §6.4 component-local data-attrs ────────────────────────────
+    // Input does NOT declare the `variant` system (it uses an InputVariant
+    // enum mapped via an adapter, not the shared Button variants). Therefore
+    // factory does not auto-emit `data-variant`, and Input is responsible for
+    // the attr + its default. Same pattern holds for `data-size`'s default:
+    // factory's size system only emits when a value is present in props, so
+    // the 'md' default must be supplied here.
     const rootDataAttrs: Record<string, string> = {
       'data-variant': variant,
       'data-size': size,
     };
-    if (mergedInputProps.disabled) rootDataAttrs['data-disabled'] = 'true';
-    if (mergedInputProps.readOnly) rootDataAttrs['data-readonly'] = 'true';
     if (pointer) rootDataAttrs['data-pointer'] = 'true';
 
+    // ── Step 10 §6.4 Field-aware state override ────────────────────────────
+    // `disabled` / `readOnly` flow through Field context at render time via
+    // useFieldControlProps, so the MERGED state (not the raw prop) is the
+    // truth. We rebuild the state keys here to reflect the merged result and
+    // deliberately spread AFTER systemDataAttrs to override them.
+    const fieldAwareStateAttrs: Record<string, string | undefined> = {
+      'data-disabled': mergedInputProps.disabled ? 'true' : undefined,
+      'data-readonly': mergedInputProps.readOnly ? 'true' : undefined,
+      // Control strategy: interactive = disabled || readOnly
+      'data-interactive-disabled':
+        mergedInputProps.disabled || mergedInputProps.readOnly ? 'true' : undefined,
+    };
+
     return (
-      <div {...styles.getRootProps()} {...rootDataAttrs}>
+      <div
+        {...styles.getRootProps()}
+        {...rootDataAttrs}
+        {...systemDataAttrs}
+        {...Object.fromEntries(
+          Object.entries(fieldAwareStateAttrs).filter(([, v]) => v !== undefined),
+        )}
+      >
         {leftSection != null && (
           <div
             className={sectionSlotStyles.className}

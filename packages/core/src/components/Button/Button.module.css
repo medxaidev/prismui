@@ -19,7 +19,9 @@
   background: var(--prismui-variant-bg);
   color: var(--prismui-variant-fg);
   border: 1px solid var(--prismui-variant-border);
-  border-radius: var(--prismui-radius-md);
+  /* Radius: component alias --button-radius injected by varsResolver
+   * (defaults to var(--prismui-radius-md); user-override via `radius` prop). */
+  border-radius: var(--button-radius);
 
   /* Interaction */
   cursor: pointer;
@@ -36,23 +38,28 @@
   text-decoration: none;
 }
 
-.root:hover:not(:disabled) {
+/* Step 10 §3.2 S-1: hover / active use the unified :not([data-interactive-disabled])
+ * (disabled || loading for Action), so loading also blocks visual feedback.     */
+.root:hover:not([data-interactive-disabled]) {
   background: var(--prismui-variant-hover-bg);
   border-color: var(--prismui-variant-hover-border);
   box-shadow: var(--prismui-variant-hover-shadow);
 }
 
-.root:active:not(:disabled) {
+.root:active:not([data-interactive-disabled]) {
   background: var(--prismui-variant-active-bg);
   transform: scale(0.98);
 }
 
-.root:focus-visible {
+/* Step 10 §3.2 S-4: focus-visible uses the narrow guard; readOnly is not a
+ * concern for Action, but disabled / loading both suppress the focus ring. */
+.root:focus-visible:not([data-disabled]):not([data-loading]) {
   outline: var(--prismui-focus-ring-width) solid var(--prismui-focus-ring-color);
   outline-offset: var(--prismui-focus-ring-offset);
 }
 
-.root:disabled {
+/* Single-state visual — driven by data-disabled (polymorphic-safe).           */
+.root[data-disabled='true'] {
   opacity: var(--prismui-state-opacity-disabled);
   cursor: var(--prismui-state-cursor-disabled);
 }
@@ -60,10 +67,75 @@
 .inner {
   display: flex;
   align-items: center;
-  justify-content: center;
-  gap: 8px;
+  /* Size System v3 — replaces the v1 hardcoded `gap: 8px` */
+  gap: var(--button-inner-gap);
 }
 
 .label {
   /* Typography handled by root */
+}
+
+/* ── Section (left / right decorations) ─────────────────────────────────
+ * Multi-instance slot — rendered twice with [data-position="left"|"right"].
+ * Size driven by Size System v3 (--prismui-size-slot-size → --button-slot-size).
+ * Width + height form a square container; contents inherit the button's fontSize
+ * so inline SVG icons scale via `width: 1em` naturally.
+ */
+.section {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width:  var(--button-slot-size);
+  height: var(--button-slot-size);
+  /* Icon content convention: 1em tracks fontSize, not slotSize */
+  font-size: inherit;
+  line-height: 1;
+}
+
+/* Icon content scales with slot square (fits inside the container). */
+.section > svg {
+  width:  100%;
+  height: 100%;
+}
+
+/* ── fullWidth — stretch to container width ──────────────────────────── */
+.root[data-full-width='true'] {
+  width: 100%;
+}
+
+/* ── Loading — aria-busy + spinner in left section slot ──────────────── */
+/* Busy visual: slightly dimmed + pointer disabled so stacked clicks cannot
+ * fire while an async action is in flight. Keyboard focus is preserved
+ * (screen-reader users still hear the aria-busy state). */
+.root[data-loading='true'] {
+  cursor: var(--prismui-state-cursor-disabled);
+  pointer-events: none;
+}
+
+/* Spinner rotation — applied to the SVG inside the loader section. */
+@keyframes prismui-button-spinner-rotate {
+  to { transform: rotate(360deg); }
+}
+.section[data-loader='true'] > svg {
+  animation: prismui-button-spinner-rotate 0.8s linear infinite;
+  transform-origin: 50% 50%;
+}
+
+/* ── Reduced Motion (a11y: IV-A5) ────────────────────────────────────────
+ * Users with prefers-reduced-motion: reduce receive:
+ *   - No transitions on color / border / shadow / transform / opacity
+ *   - No active-press scale(0.98)
+ *   - No spinner rotation animation (still visible, just static)
+ */
+@media (prefers-reduced-motion: reduce) {
+  .root {
+    transition: none;
+  }
+  .root:active:not([data-interactive-disabled]) {
+    transform: none;
+  }
+  .section[data-loader='true'] > svg {
+    animation: none;
+  }
 }

@@ -8,6 +8,10 @@ import { SYSTEM_MARKS } from './system-marks';
 import { withVariantColors } from '../variant/with-variant-colors';
 import { withSizeVars } from '../size/with-size-vars';
 import { withStateVars } from '../state/with-state-vars';
+import {
+  collectSystemDataAttrs,
+  resolveDisabilityAttrs,
+} from './collect-system-data-attrs';
 import { useThemeOptional } from '../theme/context/theme.context';
 import { useComponentDefaultProps } from './use-component-default-props';
 import { useComponentStylingInput } from './use-component-styling-input';
@@ -62,6 +66,31 @@ export type FactoryRenderContext<Props, Names extends string> = {
   Element: React.ElementType;
   /** Styling Engine Instance */
   styles: StylingContext<Names>;
+  /**
+   * System-managed root `data-*` attrs (Step 10 §5.3).
+   *
+   * Derived from declared `systems` (variant / size / state / ...). MUST be
+   * spread on the root element, AFTER any component-local data-attrs, so that
+   * system values hard-override component misdeclarations (SR-7 / IV-DC5).
+   *
+   * Example spread order inside a custom render:
+   * ```tsx
+   * <Element
+   *   {...styles.getRootProps()}
+   *   {...rootDataAttrs}        // component-local (data-full-width / data-pointer / ...)
+   *   {...systemDataAttrs}      // ← MUST be last (hard override)
+   *   {...disabilityAttrs}
+   *   {...domProps}
+   * />
+   * ```
+   */
+  systemDataAttrs: Record<string, string>;
+  /**
+   * Disability attrs: native `disabled` or `aria-disabled` + `aria-busy`
+   * derived by §2.4 decision table and §5.4. Spread on the root (see example
+   * above in `systemDataAttrs`).
+   */
+  disabilityAttrs: Record<string, any>;
 };
 
 /**
@@ -282,6 +311,14 @@ export function factory<Payload extends ComponentPayload>(
         theme,
       );
 
+      // ── Step 10 §5.3: collect system-managed root data-* attrs ──
+      // Built from `rest` (resolvedProps minus styling props) so the state
+      // system sees disabled / loading / readOnly regardless of whether the
+      // component declared them in componentPropKeys (they are universal
+      // HTML-compatible attrs that reach every component via rest).
+      const systemDataAttrs = collectSystemDataAttrs(payload.systems, rest as Record<string, any>);
+      const disabilityAttrs = resolveDisabilityAttrs(Element, rest as Record<string, any>);
+
       // Custom render (multi-slot support)
       if (render) {
         // ✅ Split props into componentProps + domProps for type safety
@@ -289,14 +326,29 @@ export function factory<Payload extends ComponentPayload>(
           ? pickComponentProps(rest, payload.componentPropKeys as any)
           : ({} as any); // fallback: empty (legacy)
 
-        return render({ componentProps, domProps, ref, Element, styles }) as any;
+        return render({
+          componentProps,
+          domProps,
+          ref,
+          Element,
+          styles,
+          systemDataAttrs,
+          disabilityAttrs,
+        }) as any;
       }
 
       // Default render (root-only)
       // ✅ getRootProps() encapsulates style merge rule
       // ✅ domProps = rest minus component props (correct direction)
+      // ✅ systemDataAttrs + disabilityAttrs spread AFTER domProps → hard override
       const rootProps = styles.getRootProps();
-      return React.createElement(Element, { ref, ...rootProps, ...domProps });
+      return React.createElement(Element, {
+        ref,
+        ...rootProps,
+        ...domProps,
+        ...systemDataAttrs,
+        ...disabilityAttrs,
+      });
     }
 
     // Fallback: no styling system, pass className/style directly

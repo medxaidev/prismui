@@ -14,13 +14,24 @@ export type ComponentSystem = 'variant' | 'size' | 'state';
  * A single system entry in the factory payload.
  * Can be a plain string (always inject) or an object with per-system options.
  *
+ * `options` is passed through to the system's `dataAttrsResolver` (Step 10 §5.2).
+ * For example, the `state` system reads `options.interactiveStrategy`
+ * ('action' | 'control' | 'disabled' | predicate) to derive
+ * `data-interactive-disabled`.
+ *
  * @example
  * systems: ['variant']
  * systems: [{ name: 'variant', enabled: (props) => props.variant !== undefined }]
+ * systems: [{ name: 'state', options: { interactiveStrategy: 'action' } }]
  */
 export type ComponentSystemEntry =
   | ComponentSystem
-  | { name: ComponentSystem; enabled?: (props: any) => boolean };
+  | {
+      name: ComponentSystem;
+      enabled?: (props: any) => boolean;
+      /** System-specific options (e.g. state's `interactiveStrategy`). */
+      options?: Record<string, any>;
+    };
 
 /**
  * Styling-specific props.

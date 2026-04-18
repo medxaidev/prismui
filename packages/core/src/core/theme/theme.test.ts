@@ -223,11 +223,11 @@ describe('Theme System', () => {
           },
         },
         size: {
-          xs: { height: '24px', paddingX: '8px',  fontSize: '12px' },
-          sm: { height: '30px', paddingX: '10px', fontSize: '13px' },
-          md: { height: '36px', paddingX: '12px', fontSize: '14px' },
-          lg: { height: '42px', paddingX: '14px', fontSize: '15px' },
-          xl: { height: '48px', paddingX: '16px', fontSize: '16px' },
+          xs: { height: '24px', paddingX:  '8px', fontSize: '12px', slotSize: '14px', innerGap:  '4px' },
+          sm: { height: '30px', paddingX: '10px', fontSize: '13px', slotSize: '16px', innerGap:  '6px' },
+          md: { height: '36px', paddingX: '12px', fontSize: '14px', slotSize: '18px', innerGap:  '8px' },
+          lg: { height: '42px', paddingX: '14px', fontSize: '15px', slotSize: '20px', innerGap: '10px' },
+          xl: { height: '48px', paddingX: '16px', fontSize: '16px', slotSize: '22px', innerGap: '12px' },
         },
         state: {
           disabled: { opacity: 0.5, cursor: 'not-allowed' },
