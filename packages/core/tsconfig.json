@@ -1,37 +1,18 @@
 {
+  "//": "IDE-default config. For production emits use tsconfig.build.json.",
+  "extends": "./tsconfig.build.json",
   "compilerOptions": {
-    "target": "ES2022",
-    "module": "ESNext",
-    "moduleResolution": "Bundler",
-    "lib": [
-      "ES2022",
-      "DOM",
-      "DOM.Iterable"
-    ],
+    "noEmit": true,
+    "emitDeclarationOnly": false,
+    "declaration": false,
+    "declarationMap": false,
+    "sourceMap": false,
     "types": [
       "node",
-      "react"
-    ],
-    "jsx": "react-jsx",
-    "outDir": "./dist/lib",
-    "rootDir": "src",
-    "strict": true,
-    "noUnusedLocals": true,
-    "noImplicitReturns": true,
-    "noFallthroughCasesInSwitch": true,
-    "forceConsistentCasingInFileNames": true,
-    "declaration": true,
-    "declarationMap": true,
-    "esModuleInterop": true,
-    "allowSyntheticDefaultImports": true,
-    "isolatedModules": true,
-    "resolveJsonModule": true,
-    "allowJs": false,
-    "skipLibCheck": true,
-    "sourceMap": true,
-    "noEmit": false,
-    "emitDeclarationOnly": true,
-    "newLine": "lf"
+      "react",
+      "vitest/globals",
+      "@testing-library/jest-dom"
+    ]
   },
   "include": [
     "src/**/*.ts",
@@ -40,10 +21,6 @@
   ],
   "exclude": [
     "node_modules",
-    "**/dist/*",
-    "**/*.test.ts",
-    "**/*.test.tsx",
-    "**/*.stories.tsx",
-    "src/__mocks__/**/*"
+    "**/dist/*"
   ]
 }

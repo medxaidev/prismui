@@ -105,12 +105,14 @@
 }
 
 /* ── Loading — aria-busy + spinner in left section slot ──────────────── */
-/* Busy visual: slightly dimmed + pointer disabled so stacked clicks cannot
- * fire while an async action is in flight. Keyboard focus is preserved
- * (screen-reader users still hear the aria-busy state). */
+/* Busy visual: cursor-disabled to signal the button is inert while an async
+ * action is in flight. We intentionally do NOT apply `pointer-events: none`
+ * here — the component render layer (`handleClick` in Button.tsx) swallows
+ * clicks via the `resolveInteractive` predicate (Step 10 §5.7, A-3). That
+ * keeps tooltip / popover / analytics pointer events working while the
+ * button is busy, and avoids the "CSS stops events silently" footgun. */
 .root[data-loading='true'] {
   cursor: var(--prismui-state-cursor-disabled);
-  pointer-events: none;
 }
 
 /* Spinner rotation — applied to the SVG inside the loader section. */

@@ -81,6 +81,10 @@ export type { PrismuiSize, SizeScale, PrismuiSizeTokens } from "./core/size";
 export { defaultSizeTokens, withSizeVars, SIZE_CSS_VARS } from "./core/size";
 export type { WithSizeVarsOptions, SizeCssVarKey, SizeCssVarName } from "./core/size";
 
+// Radius System (Stage 3 Step 10 · post-Button/Input DRY extraction)
+export type { PrismuiRadius, Radius } from "./core/radius";
+export { RADIUS_SCALE, resolveRadiusToken } from "./core/radius";
+
 // Variant System (Stage 4)
 export type { Variant, ThemeColor } from "./core/variant";
 export { VARIANTS, THEME_COLORS } from "./core/variant";

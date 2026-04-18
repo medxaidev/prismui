@@ -149,9 +149,33 @@ export type FactoryRenderContext<Props, Names extends string> = {
  * );
  * ```
  */
-export function factory<Payload extends ComponentPayload>(
+/**
+ * `Props` generic · B-3 (hygienic typing).
+ *
+ * Defaults to `any` for backward-compatibility — all existing call sites that
+ * did not pass an explicit Props generic continue to work exactly as before
+ * (Props = any → componentProps: any, same as the historical `as SomeProps`
+ * cast they were using inside the render body).
+ *
+ * Opt-in usage (recommended for new components):
+ *
+ *   factory<ButtonOwnProps>({...}, ({ componentProps }) => {
+ *     // componentProps is `ButtonOwnProps` — no cast needed
+ *   });
+ *
+ * Why Props is a separate generic (not inferred from Payload):
+ *   `ComponentPayload<Props = any>` has a structural Props slot, but nothing
+ *   in the payload argument pins Props down at the type level (defaultProps
+ *   and componentPropKeys only constrain a small subset). Accepting Props as
+ *   its own parameter lets the author opt into the strict typing they want
+ *   without having to re-declare the Props shape inside the payload.
+ */
+export function factory<
+  Props extends Record<string, any> = Record<string, any>,
+  Payload extends ComponentPayload<Props> = ComponentPayload<Props>,
+>(
   payload: Payload,
-  render?: (ctx: FactoryRenderContext<any, ResolvedNames<Payload>>) => React.ReactNode,
+  render?: (ctx: FactoryRenderContext<Props, ResolvedNames<Payload>>) => React.ReactNode,
 ) {
   // ── Stage 9: slots.root > defaultElement resolution ──
   // slots is the structure source of truth; defaultElement is legacy fallback.

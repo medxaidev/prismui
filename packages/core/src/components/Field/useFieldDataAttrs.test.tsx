@@ -14,7 +14,6 @@
  *   4. strategy honored   → 'control' includes readOnly in interactive-disabled.
  *   5. Produces no keys other than the 3 state keys (subset restriction).
  */
-import * as React from 'react';
 import { describe, expect, it } from 'vitest';
 import { render } from '@testing-library/react';
 

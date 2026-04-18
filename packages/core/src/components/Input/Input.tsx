@@ -3,6 +3,7 @@ import { factory, ensureClasses, defineSlots } from '../../core/component';
 import type { SlotNames } from '../../core/component';
 import type { VarsResolver, StylesOverride } from '../../core/styles';
 import type { PrismuiSize } from '../../core/size';
+import { resolveRadiusToken, type Radius } from '../../core/radius';
 import { useFieldControlProps } from '../Field/useFieldControlProps';
 import { useFieldDataAttrs } from '../Field/useFieldDataAttrs';
 import { variantColorResolver, VARIANT_CSS_VARS } from '../../core/variant';
@@ -27,8 +28,11 @@ export interface InputOwnProps {
   size?: PrismuiSize;
   /** Visual variant. @default 'outlined' */
   variant?: InputVariant;
-  /** Border radius (theme scale or CSS length). @default 'sm' */
-  radius?: 'xs' | 'sm' | 'md' | 'lg' | 'xl' | 'full' | (string & {});
+  /**
+   * Border radius (theme scale or CSS length). @default 'sm'
+   * @see Radius System — `core/radius`
+   */
+  radius?: Radius;
   /** Left decoration (icon / prefix). */
   leftSection?: React.ReactNode;
   /** Right decoration (icon / clear button). */
@@ -81,7 +85,11 @@ const varsResolver: VarsResolver<InputOwnProps> = (props) => {
     '--input-height': 'var(--prismui-size-height)',
     '--input-padding-x': 'var(--prismui-size-padding-x)',
     '--input-font-size': 'var(--prismui-size-font-size)',
-    '--input-radius': radiusToToken(props.radius ?? 'sm'),
+    // Radius — resolved via Radius System (`core/radius`). Default 'sm' for
+    // Input comes from `payload.defaultProps.radius`; `?? 'sm'` here is a
+    // belt-and-suspenders fallback that also preserves v1 behavior when the
+    // component is used without factory defaults applied (edge case in tests).
+    '--input-radius': resolveRadiusToken(props.radius ?? 'sm'),
   };
   if (props.leftSectionWidth != null) {
     vars['--input-left-section-width'] = String(props.leftSectionWidth);
@@ -108,14 +116,6 @@ const varsResolver: VarsResolver<InputOwnProps> = (props) => {
   return vars;
 };
 
-function radiusToToken(r: NonNullable<InputOwnProps['radius']>): string {
-  // Theme scale → CSS var; otherwise pass through as-is (CSS length).
-  if (r === 'xs' || r === 'sm' || r === 'md' || r === 'lg' || r === 'xl' || r === 'full') {
-    return `var(--prismui-radius-${r})`;
-  }
-  return r;
-}
-
 const stylesNames = Object.keys(inputSlots) as (keyof typeof inputSlots)[];
 const validatedClasses = ensureClasses(stylesNames, classes);
 
@@ -138,7 +138,7 @@ const inputComponentPropKeys = [
  *
  * Structure: `<div.root>` wrapper + `<input.input>` (semantic target, ref target).
  */
-export const Input = factory(
+export const Input = factory<InputOwnProps>(
   {
     displayName: 'Input',
     componentName: 'Input',
@@ -174,12 +174,13 @@ export const Input = factory(
   ({ ref, componentProps, domProps, styles, systemDataAttrs }) => {
     // No render-body defaults (Step 10 · A-2). `variant` / `size` / `radius`
     // come pre-filled from `payload.defaultProps` via the single-writer chain.
+    // B-3 · `factory<InputOwnProps>` above types `componentProps` directly.
     const {
       variant,
       leftSection,
       rightSection,
       pointer = false,
-    } = componentProps as InputOwnProps;
+    } = componentProps;
 
     // Merge Field context into <input> props (id / aria-* / disabled / readOnly).
     // Field is optional — without it, merged === domProps (pass-through).

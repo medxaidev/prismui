@@ -381,23 +381,25 @@ describe('Button', () => {
       expect(container.querySelector('[data-position="right"]')).toBeNull();
     });
 
-    it('renders left section with data-position="left"', () => {
+    it('renders left section with data-position="left" and NO aria-hidden (user content may carry semantics)', () => {
       const { container } = render(
-        <Button leftSection={<span data-testid="lsi">L</span>}>Go</Button>,
+        <Button leftSection={<span data-testid="lsi" aria-label="icon">L</span>}>Go</Button>,
       );
       const left = container.querySelector('[data-position="left"]');
       expect(left).toBeInTheDocument();
-      expect(left?.getAttribute('aria-hidden')).toBe('true');
+      // Phase 2-bis (SR-7.1 bundle): user-provided sections are NOT aria-hidden
+      // — otherwise accessible icon labels would be silently discarded.
+      expect(left?.getAttribute('aria-hidden')).toBeNull();
       expect(left?.querySelector('[data-testid="lsi"]')).toBeInTheDocument();
     });
 
-    it('renders right section with data-position="right"', () => {
+    it('renders right section with data-position="right" and NO aria-hidden', () => {
       const { container } = render(
-        <Button rightSection={<span data-testid="rsi">R</span>}>Go</Button>,
+        <Button rightSection={<span data-testid="rsi" aria-label="icon">R</span>}>Go</Button>,
       );
       const right = container.querySelector('[data-position="right"]');
       expect(right).toBeInTheDocument();
-      expect(right?.getAttribute('aria-hidden')).toBe('true');
+      expect(right?.getAttribute('aria-hidden')).toBeNull();
       expect(right?.querySelector('[data-testid="rsi"]')).toBeInTheDocument();
     });
 
@@ -613,4 +615,152 @@ describe('Button', () => {
       expect(onClick).not.toHaveBeenCalled();
     });
   });
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // R-D4 part 2 — tab-focus parity (polymorphic interactive-disabled)
+  // ─────────────────────────────────────────────────────────────────────────
+  describe('Polymorphic tab-focus parity (R-D4 part 2)', () => {
+    it('polymorphic <a disabled>: tabIndex is -1 (mirrors native disabled tab bypass)', () => {
+      const { container } = render(
+        <Button component="a" href="/x" disabled>X</Button>,
+      );
+      expect((container.querySelector('a') as HTMLAnchorElement).tabIndex).toBe(-1);
+    });
+
+    it('polymorphic <a loading>: tabIndex is -1 (Action strategy includes loading)', () => {
+      const { container } = render(
+        <Button component="a" href="/x" loading>X</Button>,
+      );
+      expect((container.querySelector('a') as HTMLAnchorElement).tabIndex).toBe(-1);
+    });
+
+    it('polymorphic <a> (enabled): tabIndex is NOT forced (defaults to 0 for focusable <a href>)', () => {
+      const { container } = render(
+        <Button component="a" href="/x">X</Button>,
+      );
+      // Not -1 — user/browser default wins.
+      expect((container.querySelector('a') as HTMLAnchorElement).tabIndex).not.toBe(-1);
+    });
+
+    it('native <button disabled>: tabIndex is NOT forced to -1 (browser already removes it from tab order)', () => {
+      const { container } = render(<Button disabled>X</Button>);
+      // We intentionally do not override tabIndex on native-disableable
+      // elements — the browser enforces the behavior. Expect the browser's
+      // default of 0 (present, not negative).
+      expect((container.querySelector('button') as HTMLButtonElement).tabIndex).not.toBe(-1);
+    });
+
+    it('polymorphic <a> (enabled): preserves user-supplied tabIndex', () => {
+      const { container } = render(
+        <Button component="a" href="/x" tabIndex={3}>X</Button>,
+      );
+      expect((container.querySelector('a') as HTMLAnchorElement).tabIndex).toBe(3);
+    });
+  });
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // a11y DEV warn — icon-only button without accessible name
+  // ─────────────────────────────────────────────────────────────────────────
+  describe('Icon-only a11y DEV warn', () => {
+    it('warns when no children + no aria-label / aria-labelledby / title', async () => {
+      const { __resetButtonIconOnlyWarning } = await import('./Button');
+      __resetButtonIconOnlyWarning();
+      const spy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+      render(<Button leftSection={<span data-testid="icon">i</span>} />);
+      const match = spy.mock.calls.find(
+        (c) => typeof c[0] === 'string' && c[0].includes('accessible name'),
+      );
+      expect(match).toBeDefined();
+      spy.mockRestore();
+    });
+
+    it('does NOT warn when aria-label is provided', async () => {
+      const { __resetButtonIconOnlyWarning } = await import('./Button');
+      __resetButtonIconOnlyWarning();
+      const spy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+      render(
+        <Button aria-label="Save" leftSection={<span data-testid="icon">i</span>} />,
+      );
+      const match = spy.mock.calls.find(
+        (c) => typeof c[0] === 'string' && c[0].includes('accessible name'),
+      );
+      expect(match).toBeUndefined();
+      spy.mockRestore();
+    });
+
+    it('does NOT warn when children carry text', async () => {
+      const { __resetButtonIconOnlyWarning } = await import('./Button');
+      __resetButtonIconOnlyWarning();
+      const spy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+      render(<Button>Save</Button>);
+      const match = spy.mock.calls.find(
+        (c) => typeof c[0] === 'string' && c[0].includes('accessible name'),
+      );
+      expect(match).toBeUndefined();
+      spy.mockRestore();
+    });
+
+    it('only fires once per process (latched)', async () => {
+      const { __resetButtonIconOnlyWarning } = await import('./Button');
+      __resetButtonIconOnlyWarning();
+      const spy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+      render(<Button />);
+      render(<Button />);
+      render(<Button />);
+      const iconOnlyCalls = spy.mock.calls.filter(
+        (c) => typeof c[0] === 'string' && c[0].includes('accessible name'),
+      );
+      expect(iconOnlyCalls).toHaveLength(1);
+      spy.mockRestore();
+    });
+  });
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // B-1 — default type="button" on native <button> to avoid form-submit footgun
+  // ─────────────────────────────────────────────────────────────────────────
+  describe('Native <button>: type="button" default (B-1)', () => {
+    it('native <button> without explicit `type` gets type="button" (avoids form-submit footgun)', () => {
+      const { container } = render(<Button>Click</Button>);
+      expect(container.querySelector('button')!.getAttribute('type')).toBe('button');
+    });
+
+    it('native <button> preserves user-supplied type="submit"', () => {
+      const { container } = render(<Button type="submit">Submit</Button>);
+      expect(container.querySelector('button')!.getAttribute('type')).toBe('submit');
+    });
+
+    it('native <button> preserves user-supplied type="reset"', () => {
+      const { container } = render(<Button type="reset">Reset</Button>);
+      expect(container.querySelector('button')!.getAttribute('type')).toBe('reset');
+    });
+
+    it('does NOT fire onClick on a nested <form> submit when Button has default type (regression)', () => {
+      const onSubmit = vi.fn((e: React.FormEvent) => e.preventDefault());
+      const onClick = vi.fn();
+      const { container } = render(
+        <form onSubmit={onSubmit}>
+          <Button onClick={onClick}>Open modal</Button>
+        </form>,
+      );
+      (container.querySelector('button') as HTMLButtonElement).click();
+      expect(onClick).toHaveBeenCalledTimes(1);
+      // Critical: type="button" means the click MUST NOT trigger form submit.
+      expect(onSubmit).not.toHaveBeenCalled();
+    });
+
+    it('polymorphic <a> does NOT receive a type attribute', () => {
+      const { container } = render(
+        <Button component="a" href="/x">X</Button>,
+      );
+      expect(container.querySelector('a')!.hasAttribute('type')).toBe(false);
+    });
+
+    it('polymorphic <div> does NOT receive a type attribute', () => {
+      const { container } = render(
+        <Button component="div">X</Button>,
+      );
+      expect(container.querySelector('div')!.hasAttribute('type')).toBe(false);
+    });
+  });
+
 });

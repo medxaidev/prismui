@@ -8,7 +8,6 @@
  *   - InteractiveDisabledStrategy: 'action' / 'control' (§2.7)
  *   - factory → FactoryRenderContext.systemDataAttrs / disabilityAttrs
  */
-import * as React from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { render } from '@testing-library/react';
 
