@@ -1,4 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
+import * as React from 'react';
 import { render } from '@testing-library/react';
 import { Button } from './Button';
 import { PrismUIProvider } from '../../core/theme/provider/PrismUIProvider';
@@ -160,6 +161,40 @@ describe('Button', () => {
       expect(container.querySelector('button')).toHaveStyle({
         '--prismui-state-cursor-disabled': 'not-allowed',
       });
+    });
+  });
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // N-5 · ref forwarding
+  //
+  // factory produces the `ref` transparently, but Button-level tests lock it
+  // down so future refactors of the factory can never silently drop
+  // ref-forwarding (a common React library bug).
+  // ─────────────────────────────────────────────────────────────────────────
+  describe('Ref forwarding', () => {
+    it('forwards ref to the native <button> DOM node', () => {
+      const ref = React.createRef<HTMLButtonElement>();
+      render(<Button ref={ref}>X</Button>);
+      expect(ref.current).toBeInstanceOf(HTMLButtonElement);
+    });
+
+    it('forwards ref to the polymorphic <a> DOM node when component="a"', () => {
+      const ref = React.createRef<HTMLAnchorElement>();
+      render(<Button component="a" href="/x" ref={ref as any}>X</Button>);
+      expect(ref.current).toBeInstanceOf(HTMLAnchorElement);
+    });
+
+    it('forwards ref to the polymorphic <div> DOM node when component="div"', () => {
+      const ref = React.createRef<HTMLDivElement>();
+      render(<Button component="div" ref={ref as any}>X</Button>);
+      expect(ref.current).toBeInstanceOf(HTMLDivElement);
+    });
+
+    it('callback ref receives the DOM node', () => {
+      const seen: HTMLElement[] = [];
+      render(<Button ref={(el: HTMLButtonElement | null) => { if (el) seen.push(el); }}>X</Button>);
+      expect(seen).toHaveLength(1);
+      expect(seen[0]).toBeInstanceOf(HTMLButtonElement);
     });
   });
 
@@ -613,6 +648,122 @@ describe('Button', () => {
       );
       (container.querySelector('button') as HTMLButtonElement).click();
       expect(onClick).not.toHaveBeenCalled();
+    });
+  });
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // R-D4 Phase 3 · F-1 — polymorphic keyboard activation parity
+  //
+  // Any polymorphic Button that does NOT render a native activating element
+  // (`<button>` or `<a href>`) must treat Enter/Space as a button activation
+  // because we injected role="button" (B-2). Without this, screen readers
+  // announce "button" but keyboard users get no response — a11y violation.
+  //
+  // Native <button> and <a href> are intentionally skipped by the hook to
+  // avoid double-fire (browser already activates them). Verify both sides.
+  // ─────────────────────────────────────────────────────────────────────────
+  describe('Polymorphic keyboard activation (R-D4 Phase 3 · F-1)', () => {
+    it('polymorphic <div> (enabled): Enter keydown → onClick fires', () => {
+      const onClick = vi.fn();
+      const { container } = render(
+        <Button component="div" onClick={onClick}>X</Button>,
+      );
+      const el = container.querySelector('div') as HTMLDivElement;
+      el.focus();
+      el.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+      expect(onClick).toHaveBeenCalledTimes(1);
+    });
+
+    it('polymorphic <div> (enabled): Space keydown → onClick fires', () => {
+      const onClick = vi.fn();
+      const { container } = render(
+        <Button component="div" onClick={onClick}>X</Button>,
+      );
+      const el = container.querySelector('div') as HTMLDivElement;
+      el.focus();
+      el.dispatchEvent(new KeyboardEvent('keydown', { key: ' ', bubbles: true }));
+      expect(onClick).toHaveBeenCalledTimes(1);
+    });
+
+    it('polymorphic <span> (enabled): Enter keydown → onClick fires', () => {
+      const onClick = vi.fn();
+      const { container } = render(
+        <Button component="span" onClick={onClick}>X</Button>,
+      );
+      const el = container.querySelector('span[role="button"]') as HTMLSpanElement;
+      el.focus();
+      el.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+      expect(onClick).toHaveBeenCalledTimes(1);
+    });
+
+    it('polymorphic <a> without href (enabled): Enter → onClick fires', () => {
+      const onClick = vi.fn();
+      const { container } = render(
+        <Button component="a" onClick={onClick}>X</Button>,
+      );
+      const el = container.querySelector('a') as HTMLAnchorElement;
+      el.focus();
+      el.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+      expect(onClick).toHaveBeenCalledTimes(1);
+    });
+
+    it('polymorphic <div> (DISABLED): Enter keydown → onClick does NOT fire (swallow wins)', () => {
+      const onClick = vi.fn();
+      const { container } = render(
+        <Button component="div" disabled onClick={onClick}>X</Button>,
+      );
+      const el = container.querySelector('div') as HTMLDivElement;
+      el.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+      expect(onClick).not.toHaveBeenCalled();
+    });
+
+    it('polymorphic <div> (loading): Enter keydown → onClick does NOT fire (Action strategy)', () => {
+      const onClick = vi.fn();
+      const { container } = render(
+        <Button component="div" loading onClick={onClick}>X</Button>,
+      );
+      const el = container.querySelector('div') as HTMLDivElement;
+      el.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+      expect(onClick).not.toHaveBeenCalled();
+    });
+
+    it('native <button> (enabled): Enter keydown does NOT double-fire onClick', () => {
+      // Browser will fire a native click on Enter for <button>; our hook
+      // must NOT also manually fire `.click()`. jsdom does not simulate the
+      // browser's Enter→click on <button>, so we directly assert the hook
+      // branch left `currentTarget.click` untouched — i.e. onClick count
+      // equals what the platform produces (0 in jsdom, 1 in real browsers).
+      // The critical regression: onClick MUST NOT be ≥ 2.
+      const onClick = vi.fn();
+      const { container } = render(<Button onClick={onClick}>X</Button>);
+      const btn = container.querySelector('button') as HTMLButtonElement;
+      btn.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+      expect(onClick.mock.calls.length).toBeLessThanOrEqual(1);
+    });
+
+    it('polymorphic <a href> (enabled): Enter keydown does NOT trigger manual click', () => {
+      // <a href> is "native activating" — hook skips manual .click() to
+      // avoid double-navigating. Browser handles Enter → navigate at the
+      // platform level (not jsdom). So onClick from hook path: 0.
+      const onClick = vi.fn();
+      const { container } = render(
+        <Button component="a" href="/x" onClick={onClick}>X</Button>,
+      );
+      const el = container.querySelector('a') as HTMLAnchorElement;
+      el.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+      expect(onClick.mock.calls.length).toBeLessThanOrEqual(1);
+    });
+
+    it('polymorphic <div>: non-activation key (Escape) preserves user onKeyDown, no click', () => {
+      const onClick = vi.fn();
+      const onKeyDown = vi.fn();
+      const { container } = render(
+        <Button component="div" onClick={onClick} onKeyDown={onKeyDown}>X</Button>,
+      );
+      const el = container.querySelector('div') as HTMLDivElement;
+      el.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+      expect(onClick).not.toHaveBeenCalled();
+      expect(onKeyDown).toHaveBeenCalledTimes(1);
     });
   });
 

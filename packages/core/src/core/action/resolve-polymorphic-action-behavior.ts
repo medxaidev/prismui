@@ -2,6 +2,90 @@ import type * as React from 'react';
 import { isNativeDisableable } from '../component/collect-system-data-attrs';
 
 /**
+ * `isActivationKey` — Action system primitive.
+ *
+ * Returns true when `key` is one of the two WAI-ARIA "activation keys" that
+ * trigger a button: `Enter` or `Space` (the space character `' '`). Promoted
+ * to a named exported helper (rather than an inline string check) because:
+ *
+ *   • Multiple future hooks — Pointer-style `resolvePolymorphicActionBehavior`
+ *     today, Menu.Item / Tabs.Trigger / SegmentedControl.Item tomorrow — all
+ *     need the same predicate. A typo (`'Space'` vs `' '`) in any copy
+ *     silently breaks keyboard activation.
+ *   • `' '` (U+0020) is a tricky string literal; the named helper removes the
+ *     opportunity to get it wrong.
+ *   • Future extensions (e.g. allow modifier-less Space only, exclude
+ *     repeat-key events) can be added centrally without chasing call sites.
+ *
+ * Not gated on `e.repeat` — callers decide whether to block key-repeat,
+ * because Menu.Item arrow navigation etc. legitimately wants repeat.
+ */
+export function isActivationKey(key: string): boolean {
+  return key === 'Enter' || key === ' ';
+}
+
+/**
+ * `isNativeActivating` — does this element natively convert Enter/Space into
+ * a click event without JS help?
+ *
+ *   • `<button>` — yes (both Enter and Space)
+ *   • `<a href>`  — yes for Enter (navigates); Space does NOT navigate but
+ *                    this helper still returns true because browsers treat
+ *                    the element as "activating" and firing `.click()`
+ *                    ourselves would duplicate navigation.
+ *   • Everything else (`<a>` without href, `<div>`, `<span>`, custom
+ *                    component) — no; we must simulate activation.
+ *
+ * Kept local to this module because the predicate only makes sense inside
+ * the Action keyboard model. If a future Selection / Disclosure model needs
+ * a similar predicate, promote to a shared helper at that time.
+ */
+function isNativeActivating(
+  Element: React.ElementType,
+  href: string | undefined,
+): boolean {
+  if (Element === 'button') return true;
+  if (Element === 'a' && typeof href === 'string') return true;
+  return false;
+}
+
+/**
+ * `ActionSurfaceDomProps` — the union of DOM/ARIA props that any Action Surface
+ * component needs to destructure out of `domProps` before spreading the rest
+ * back onto the root. Centralized here so Button / IconButton / ToggleButton /
+ * ActionIcon / Menu.Item / Tabs.Trigger / SegmentedControl.Item do not each
+ * re-declare the same 6-field inline cast.
+ *
+ * Every field is OPTIONAL — a raw `<Button>` without `onClick` / `type` / etc.
+ * should still satisfy the type. The `[key: string]: unknown` index signature
+ * preserves the "anything else passes through" escape hatch for arbitrary
+ * `aria-*` / `data-*` / native HTML attributes the component does not need to
+ * intercept.
+ *
+ * Why a shared named type (instead of each component casting inline):
+ *   • Single source of truth for "which DOM keys does the Action Behavior
+ *     model care about". If F-1-style additions happen (e.g. adding
+ *     `onPointerDown` wrappers later), the new field lands in ONE place.
+ *   • Removes the opportunity for typos (`onkeydown` vs `onKeyDown`) in six
+ *     different components.
+ *   • Matches the "Action Core layer" mental model established in Audit Log
+ *     v0.7 — the keyboard activation fix proved this layer is real.
+ *
+ * Kept intentionally minimal: only fields the hook actively reads or wraps.
+ * `children` is NOT in this shape — it is a render-body concern (see Button's
+ * `userChildren` destructure), not an Action Surface one.
+ */
+export interface ActionSurfaceDomProps {
+  onClick?: React.MouseEventHandler;
+  onKeyDown?: React.KeyboardEventHandler;
+  tabIndex?: number;
+  type?: React.ButtonHTMLAttributes<HTMLButtonElement>['type'];
+  role?: React.AriaRole;
+  href?: string;
+  [key: string]: unknown;
+}
+
+/**
  * Inputs to `resolvePolymorphicActionBehavior`.
  *
  * Captures the subset of DOM / ARIA props the Action Surface hook may need to
@@ -60,32 +144,45 @@ export interface ResolvePolymorphicActionResult {
 }
 
 /**
- * `resolvePolymorphicActionBehavior` · Stage 3 Step 10 · A-2 / B-2.
+ * `resolvePolymorphicActionBehavior` · Stage 3 Step 10 · A-2 / B-2 / F-1.
  *
  * The single source of truth for Action Surface rendering **behavior** on a
- * polymorphic root element. Consolidates three concerns — all tightly coupled
- * to the event handlers the hook installs — that every Action component
- * (Button / IconButton / ToggleButton / ActionIcon / …) would otherwise
- * copy-paste verbatim:
+ * polymorphic root element. The Action Behavior model has four concerns,
+ * all tightly coupled to the event handlers the hook installs, that every
+ * Action component (Button / IconButton / ToggleButton / ActionIcon / …)
+ * would otherwise copy-paste verbatim:
  *
- *   (1) Event swallow — click + Enter/Space blocked when interactive-disabled
- *       (§2.4 R-D4 Phase 2). This fixes the "aria-disabled is a visual lie"
- *       anti-pattern on polymorphic elements where the browser does NOT
- *       automatically block activation.
+ *     Action Behavior  =  Pointer (click swallow)
+ *                      +  Keyboard (Enter/Space swallow + activation)
+ *                      +  Disabled guard (tab-focus parity)
+ *                      +  ARIA role injection
  *
- *   (2) Tab-focus parity — polymorphic non-disableable elements (`<a>` /
+ *   (1) Pointer swallow — click blocked when interactive-disabled (§2.4 R-D4
+ *       Phase 2). Fixes the "aria-disabled is a visual lie" anti-pattern on
+ *       polymorphic elements where the browser does NOT auto-block activation.
+ *
+ *   (2) Keyboard — two-sided parity (§2.4 R-D4 Phase 2 + Phase 3 / F-1):
+ *         (2a) Swallow: Enter/Space blocked when interactive-disabled.
+ *         (2b) Activate: on enabled polymorphic non-native elements
+ *              (`<div>` / `<span>` / `<a>` without href / custom), convert
+ *              Enter/Space keydown into a `.click()` to honor the
+ *              `role="button"` contract injected in (4). Native `<button>`
+ *              and `<a href>` are skipped — the browser handles activation
+ *              there, and a manual click would double-fire (or double-
+ *              navigate). `.click()` (not `dispatchEvent`) is used so React
+ *              synthetic-event subscribers receive the call.
+ *
+ *   (3) Tab-focus parity — polymorphic non-disableable elements (`<a>` /
  *       `<div>` / custom components) stay focusable by default. When the
  *       Surface is interactive-disabled, we mirror native `<button disabled>`
  *       behavior by overriding tabIndex to -1 (§2.4 R-D4 part 2).
  *
- *   (3) `role="button"` injection — polymorphic non-button non-link elements
+ *   (4) `role="button"` injection — polymorphic non-button non-link elements
  *       (`<div>` / `<span>` / `<a>` without href / custom components) carry
  *       no native button semantics. We inject `role="button"` so screen
- *       readers announce them as buttons. This is the a11y public contract
- *       of the Enter/Space event wrappers installed in (1) — if we listen
- *       for Enter/Space on a `<div>`, AT users must be told it acts as a
- *       button. Native `<button>` already carries the role, and `<a href>`
- *       is genuinely a link — those are skipped.
+ *       readers announce them as buttons. The activation branch in (2b) is
+ *       what makes this role announcement honest — "AT says button, keyboard
+ *       behaves like button" must be a biconditional.
  *
  * **NOT in scope** — `type="button"` default: it is a static HTML attribute
  * default with no state / handler coupling, so it is applied in the component
@@ -128,10 +225,12 @@ export function resolvePolymorphicActionBehavior(
     href,
   } = inputs;
 
-  // (1) Event swallow wrappers — always wrap so CSS-visual and JS-behavioral
-  // disabling stay in lock-step. When `isInteractiveDisabled` is false the
-  // wrappers are pass-through; the allocation cost is negligible (parent
-  // re-renders per prop change anyway).
+  // (1) Pointer swallow + (2) Keyboard swallow+activate — always wrap so
+  // CSS-visual and JS-behavioral disabling stay in lock-step, and so the
+  // role="button" contract is honest on polymorphic non-native elements.
+  // When `isInteractiveDisabled` is false the pointer wrapper is
+  // pass-through; the allocation cost is negligible (parent re-renders per
+  // prop change anyway).
   const onClick: React.MouseEventHandler = (e) => {
     if (isInteractiveDisabled) {
       e.preventDefault();
@@ -141,22 +240,36 @@ export function resolvePolymorphicActionBehavior(
     userOnClick?.(e);
   };
   const onKeyDown: React.KeyboardEventHandler = (e) => {
-    if (isInteractiveDisabled && (e.key === 'Enter' || e.key === ' ')) {
-      e.preventDefault();
-      // Do NOT stopPropagation — a parent dialog may still want Escape etc.
-      return;
+    if (isActivationKey(e.key)) {
+      // (2a) Disabled → swallow the activation key, don't call user handler.
+      if (isInteractiveDisabled) {
+        e.preventDefault();
+        // Do NOT stopPropagation — a parent dialog may still want Escape etc.
+        return;
+      }
+      // (2b) Enabled + polymorphic non-native → simulate click so the
+      // role="button" contract is honest. Space would otherwise scroll; Enter
+      // on a <div> would otherwise be inert. `.click()` dispatches a native
+      // click event that React synthetic-event listeners (`onClick` etc.) DO
+      // receive — prefer this over `dispatchEvent(new MouseEvent(...))` which
+      // can bypass React's event plugin. We fall through to `userOnKeyDown`
+      // afterwards so the user can still observe raw keydown if they want.
+      if (!isNativeActivating(Element, href)) {
+        e.preventDefault();
+        (e.currentTarget as HTMLElement).click();
+      }
     }
     userOnKeyDown?.(e);
   };
 
-  // (2) Tab-focus parity — only override for polymorphic non-disableable.
+  // (3) Tab-focus parity — only override for polymorphic non-disableable.
   // Native `<button disabled>` is auto-removed by the browser; no override.
   const isPolymorphicNonDisableable = !isNativeDisableable(Element);
   const polymorphicNeedsTabBypass =
     isInteractiveDisabled && isPolymorphicNonDisableable;
   const effectiveTabIndex = polymorphicNeedsTabBypass ? -1 : userTabIndex;
 
-  // (3) `role="button"` injection — respect user-supplied role first, then
+  // (4) `role="button"` injection — respect user-supplied role first, then
   // skip native `<button>` (has role implicitly) and `<a href>` (is a link).
   // Everything else in the polymorphic space (`<a>` without href, `<div>`,
   // `<span>`, custom components) receives role="button".

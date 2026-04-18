@@ -2,7 +2,10 @@ import * as React from 'react';
 import { factory, ensureClasses, defineSlots } from '../../core/component';
 import { resolveInteractive } from '../../core/state';
 import { resolveRadiusToken, type Radius } from '../../core/radius';
-import { resolvePolymorphicActionBehavior } from '../../core/action';
+import {
+  resolvePolymorphicActionBehavior,
+  type ActionSurfaceDomProps,
+} from '../../core/action';
 import type { SlotNames } from '../../core/component';
 import type { VarsResolver, StylesOverride } from '../../core/styles';
 import type { PolymorphicSystemProps } from '../../core/props';
@@ -56,11 +59,16 @@ export interface ButtonOwnProps extends PolymorphicSystemProps {
 export type ButtonProps = ButtonOwnProps & StylesOverride<ButtonStylesNames>;
 
 const varsResolver: VarsResolver<ButtonOwnProps> = (props) => ({
-  // External box (Size v2 legacy)
+  // External box sizing (height / padding-x / font-size) — component aliases
+  // pointing to Size System tokens. Naming "external" because these drive the
+  // button's outer bounding box and typographic metric, independent of the
+  // internal left/right section scaling handled below.
   '--button-height':      'var(--prismui-size-height)',
   '--button-padding-x':   'var(--prismui-size-padding-x)',
   '--button-font-size':   'var(--prismui-size-font-size)',
-  // Internal layout (Size v3) — component aliases pointing to system vars
+  // Internal layout (Size System v3 slot scaling) — component aliases pointing
+  // to the shared slot-sizing tokens so leftSection / rightSection icons stay
+  // visually proportional to the button across all 5 sizes.
   '--button-slot-size':   'var(--prismui-size-slot-size)',
   '--button-inner-gap':   'var(--prismui-size-inner-gap)',
   // Radius — resolved via Radius System (`core/radius`). Default 'md' for
@@ -172,6 +180,11 @@ export const Button = factory<ButtonOwnProps>(
     // `href` is READ-ONLY — forwarded to the hook so it can classify `<a href>`
     // as a genuine link (no role="button" injection); we still let it flow
     // through `passthroughDomProps` onto the `<a>` element.
+    //
+    // Shape: `ActionSurfaceDomProps` (from `core/action`) captures every DOM
+    // field the Action Behavior model reads/wraps — shared with IconButton /
+    // ToggleButton / Menu.Item / etc. `children` is picked off separately
+    // because it is a render concern, not an Action Surface one.
     const {
       onClick: userOnClick,
       onKeyDown: userOnKeyDown,
@@ -180,23 +193,18 @@ export const Button = factory<ButtonOwnProps>(
       type: userType,
       role: userRole,
       ...passthroughDomProps
-    } = domProps as {
-      onClick?: React.MouseEventHandler;
-      onKeyDown?: React.KeyboardEventHandler;
-      children?: React.ReactNode;
-      tabIndex?: number;
-      type?: React.ButtonHTMLAttributes<HTMLButtonElement>['type'];
-      role?: React.AriaRole;
-      href?: string;
-      [key: string]: unknown;
-    };
+    } = domProps as ActionSurfaceDomProps & { children?: React.ReactNode };
 
     // ── A-2 · Action Surface behavior (delegated to core/action) ──────────
-    // Three BEHAVIORAL concerns — all coupled to the event handlers we install:
-    //   1. Event swallow (click + Enter/Space blocked when interactive-disabled)
-    //   2. Tab-focus parity (tabIndex=-1 on polymorphic non-disableable)
-    //   3. role="button" injection (B-2 · a11y contract of the Enter/Space
-    //      wrappers installed in (1))
+    // Four BEHAVIORAL concerns (Action Behavior model, post-F-1 v0.7) — all
+    // coupled to the event handlers the hook installs:
+    //   1. Pointer swallow (click blocked when interactive-disabled)
+    //   2. Keyboard — two-sided:
+    //        (2a) Enter/Space swallow when interactive-disabled
+    //        (2b) Enter/Space → `.click()` activation on polymorphic non-native
+    //             elements (F-1 · honors the role="button" contract from (4))
+    //   3. Tab-focus parity (tabIndex=-1 on polymorphic non-disableable)
+    //   4. role="button" injection (B-2 · a11y contract tied to (2b))
     //
     // `type="button"` default (B-1) is NOT here — see `effectiveButtonType`
     // below. It is a pure HTML attribute default with no state coupling.
@@ -269,6 +277,37 @@ export const Button = factory<ButtonOwnProps>(
     // if a user overlays extra visual elements inside a customized section).
     const isBuiltInSpinner = !!loading;
     const leftContent = isBuiltInSpinner ? <BuiltInSpinner /> : leftSection;
+    // ── B-7 · Root spread ordering contract ────────────────────────
+    // JSX spread precedence is "later wins." The order below encodes six
+    // deliberate contracts — changing it silently breaks a11y / behavior.
+    //
+    //   1. `ref`                       — non-spread, set first so all spread
+    //                                    layers cannot clobber it.
+    //   2. `styles.getRootProps()`     — theme / vars / root className baseline.
+    //   3. `passthroughDomProps`       — user's arbitrary props (`aria-*`,
+    //                                    `data-*`, event handlers we don't
+    //                                    wrap). MAY override theme className
+    //                                    via `className=` (intentional escape
+    //                                    hatch; theme is a default, not a law).
+    //   4. `actionBehavior`            — Pointer/Keyboard/tabIndex/role from
+    //                                    the Action Behavior hook. MUST win
+    //                                    over (3): if user provided a bare
+    //                                    onClick on a disabled button, the
+    //                                    wrapped swallow-aware version replaces
+    //                                    it. This is how disabled stays honest.
+    //   5. `type` default              — only when Element === 'button' AND
+    //                                    user didn't pass one (B-1).
+    //   6. `rootDataAttrs`             — component-local data-attrs
+    //                                    (`data-full-width`).
+    //   7. `systemDataAttrs`           — the 7 system-owned data-attrs
+    //                                    (SR-7 single-writer chain). MUST win
+    //                                    over everything: users / themes must
+    //                                    not be able to fake `data-variant`.
+    //   8. `disabilityAttrs`           — native `disabled` / `aria-disabled` /
+    //                                    `aria-busy`. Last because these are
+    //                                    the load-bearing a11y contract.
+    //
+    // The rule of thumb: user ≺ component ≺ system.
     return (
       <Element
         ref={ref}

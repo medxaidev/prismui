@@ -1,5 +1,5 @@
 /**
- * Stage 3 Step 10 · A-2 / B-2 — Action Surface polymorphic behavior hook.
+ * Stage 3 Step 10 · A-2 / B-2 / F-1 — Action Surface polymorphic behavior hook.
  *
  * Test matrix axes:
  *   • Element kind:   native-button | a+href (link) | a (no href) | div | custom component
@@ -7,23 +7,35 @@
  *   • User overrides: onClick / onKeyDown / tabIndex / role  — passed or omitted
  *
  * Contracts verified:
- *   (1) Event swallow:     click + Enter/Space blocked iff isInteractiveDisabled
- *   (2) Tab-focus parity:  tabIndex=-1 only on polymorphic non-disableable + interactive-disabled
- *   (3) role="button":     injected only for polymorphic non-button non-link when user role absent
+ *   (1) Pointer swallow:    click blocked iff isInteractiveDisabled
+ *   (2) Keyboard two-sided:
+ *         (2a) swallow:     Enter/Space blocked iff isInteractiveDisabled
+ *         (2b) activate:    Enter/Space → .click() on polymorphic non-native
+ *                           elements (F-1 · honors role="button" contract)
+ *   (3) Tab-focus parity:   tabIndex=-1 only on polymorphic non-disableable + interactive-disabled
+ *   (4) role="button":      injected only for polymorphic non-button non-link when user role absent
+ *   (5) isActivationKey:    exported predicate for future Action hooks
  *
  * NOT verified here (deliberately):
  *   • type="button" default (B-1) — migrated back to component layer (see
  *     Button.test.tsx "B-1" block). The hook no longer touches `type`.
  */
 import { describe, it, expect, vi } from 'vitest';
-import { resolvePolymorphicActionBehavior } from './resolve-polymorphic-action-behavior';
+import {
+  resolvePolymorphicActionBehavior,
+  isActivationKey,
+} from './resolve-polymorphic-action-behavior';
 
 const CustomComp: React.ComponentType = () => null;
 
 function mkEvent(extra: Partial<Event> = {}): any {
+  // `currentTarget.click` stub is provided by default so the F-1 keyboard
+  // activation branch (which calls `e.currentTarget.click()` on polymorphic
+  // non-native elements) doesn't throw in tests that don't care about it.
   return {
     preventDefault: vi.fn(),
     stopPropagation: vi.fn(),
+    currentTarget: { click: vi.fn() },
     ...extra,
   };
 }
@@ -220,6 +232,159 @@ describe('resolvePolymorphicActionBehavior', () => {
         role: 'button',
       });
       expect(result.role).toBe('button');
+    });
+  });
+
+  // ────────────────────────────────────────────────────────────────────────
+  // (2b) Keyboard activation parity (R-D4 Phase 3 · F-1)
+  //
+  // On polymorphic non-native elements (`<div>` / `<span>` / `<a>` without
+  // href / custom components) the hook must convert Enter/Space into a
+  // `.click()` call so the injected `role="button"` contract is honest.
+  // Native `<button>` and `<a href>` are skipped — the browser already
+  // handles keyboard activation there; firing `.click()` would double.
+  // ────────────────────────────────────────────────────────────────────────
+  describe('keyboard activation (R-D4 Phase 3 · F-1)', () => {
+    function mkKeyEvent(key: string, click: () => void) {
+      return {
+        key,
+        preventDefault: vi.fn(),
+        stopPropagation: vi.fn(),
+        currentTarget: { click },
+      } as any;
+    }
+
+    it('<div> + Enter (enabled) → simulates click + preventDefault', () => {
+      const click = vi.fn();
+      const userOnKeyDown = vi.fn();
+      const result = resolvePolymorphicActionBehavior('div', {
+        isInteractiveDisabled: false,
+        onKeyDown: userOnKeyDown,
+      });
+      const e = mkKeyEvent('Enter', click);
+      result.onKeyDown(e);
+      expect(click).toHaveBeenCalledTimes(1);
+      expect(e.preventDefault).toHaveBeenCalledTimes(1);
+      // User keydown still fires — activation is additive, not replacing.
+      expect(userOnKeyDown).toHaveBeenCalledTimes(1);
+    });
+
+    it('<div> + Space (enabled) → simulates click + preventDefault (scroll guard)', () => {
+      const click = vi.fn();
+      const result = resolvePolymorphicActionBehavior('div', {
+        isInteractiveDisabled: false,
+      });
+      const e = mkKeyEvent(' ', click);
+      result.onKeyDown(e);
+      expect(click).toHaveBeenCalledTimes(1);
+      // Space preventDefault is critical — otherwise the page scrolls.
+      expect(e.preventDefault).toHaveBeenCalledTimes(1);
+    });
+
+    it('<span> + Enter (enabled) → simulates click', () => {
+      const click = vi.fn();
+      const result = resolvePolymorphicActionBehavior('span', {
+        isInteractiveDisabled: false,
+      });
+      result.onKeyDown(mkKeyEvent('Enter', click));
+      expect(click).toHaveBeenCalledTimes(1);
+    });
+
+    it('<a> without href + Enter (enabled) → simulates click', () => {
+      const click = vi.fn();
+      const result = resolvePolymorphicActionBehavior('a', {
+        isInteractiveDisabled: false,
+      });
+      result.onKeyDown(mkKeyEvent('Enter', click));
+      expect(click).toHaveBeenCalledTimes(1);
+    });
+
+    it('custom component + Enter (enabled) → simulates click (conservative polymorphic)', () => {
+      const click = vi.fn();
+      const result = resolvePolymorphicActionBehavior(CustomComp, {
+        isInteractiveDisabled: false,
+      });
+      result.onKeyDown(mkKeyEvent('Enter', click));
+      expect(click).toHaveBeenCalledTimes(1);
+    });
+
+    it('native <button> + Enter (enabled) → NO simulated click (browser handles it)', () => {
+      const click = vi.fn();
+      const result = resolvePolymorphicActionBehavior('button', {
+        isInteractiveDisabled: false,
+      });
+      result.onKeyDown(mkKeyEvent('Enter', click));
+      expect(click).not.toHaveBeenCalled();
+    });
+
+    it('<a href> + Enter (enabled) → NO simulated click (browser navigates)', () => {
+      const click = vi.fn();
+      const result = resolvePolymorphicActionBehavior('a', {
+        isInteractiveDisabled: false,
+        href: '/x',
+      });
+      result.onKeyDown(mkKeyEvent('Enter', click));
+      expect(click).not.toHaveBeenCalled();
+    });
+
+    it('<div> + Enter (DISABLED) → swallows; no click, no user handler', () => {
+      const click = vi.fn();
+      const userOnKeyDown = vi.fn();
+      const result = resolvePolymorphicActionBehavior('div', {
+        isInteractiveDisabled: true,
+        onKeyDown: userOnKeyDown,
+      });
+      const e = mkKeyEvent('Enter', click);
+      result.onKeyDown(e);
+      expect(click).not.toHaveBeenCalled();
+      expect(userOnKeyDown).not.toHaveBeenCalled();
+      expect(e.preventDefault).toHaveBeenCalledTimes(1);
+    });
+
+    it('<div> + non-activation key (Escape) → no click, user handler fires', () => {
+      const click = vi.fn();
+      const userOnKeyDown = vi.fn();
+      const result = resolvePolymorphicActionBehavior('div', {
+        isInteractiveDisabled: false,
+        onKeyDown: userOnKeyDown,
+      });
+      const e = mkKeyEvent('Escape', click);
+      result.onKeyDown(e);
+      expect(click).not.toHaveBeenCalled();
+      expect(userOnKeyDown).toHaveBeenCalledTimes(1);
+      expect(e.preventDefault).not.toHaveBeenCalled();
+    });
+
+    it('<div> activation then user-provided onKeyDown both observe the event', () => {
+      const click = vi.fn();
+      const userOnKeyDown = vi.fn();
+      const result = resolvePolymorphicActionBehavior('div', {
+        isInteractiveDisabled: false,
+        onKeyDown: userOnKeyDown,
+      });
+      result.onKeyDown(mkKeyEvent(' ', click));
+      expect(click).toHaveBeenCalledTimes(1);
+      expect(userOnKeyDown).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  // ────────────────────────────────────────────────────────────────────────
+  // (5) isActivationKey — exported Action-system primitive
+  // ────────────────────────────────────────────────────────────────────────
+  describe('isActivationKey', () => {
+    it('returns true for Enter', () => {
+      expect(isActivationKey('Enter')).toBe(true);
+    });
+    it('returns true for Space (single-char " ")', () => {
+      expect(isActivationKey(' ')).toBe(true);
+    });
+    it('returns false for "Space" string literal (common typo footgun)', () => {
+      expect(isActivationKey('Space')).toBe(false);
+    });
+    it('returns false for other navigation/action keys', () => {
+      for (const k of ['Escape', 'Tab', 'ArrowDown', 'ArrowUp', 'a', '', 'Meta']) {
+        expect(isActivationKey(k)).toBe(false);
+      }
     });
   });
 
