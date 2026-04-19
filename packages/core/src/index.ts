@@ -118,6 +118,14 @@ export { useComponentDefaultProps } from './core/component';
 export { Button } from "./components/Button";
 export type { ButtonProps, ButtonStylesNames, ButtonOwnProps } from "./components/Button";
 
+// IconButton (Stage 9+ · second Action Surface consumer validating §3.7 ROI)
+export { IconButton } from "./components/IconButton";
+export type {
+  IconButtonProps,
+  IconButtonStylesNames,
+  IconButtonOwnProps,
+} from "./components/IconButton";
+
 // Input (Stage 9 — Field Control)
 export { Input } from "./components/Input";
 export type {

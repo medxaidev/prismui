@@ -1,0 +1,136 @@
+/* ─────────────────────────────────────────────────────────────────────────
+ * IconButton · Action Surface · square / single-icon
+ * Contract refs: component-contract §3.7 (Action Behavior) · §3.2-3.6
+ *                SR-5/SR-8 (CSS var prefix isolation) · SR-9 + Typography
+ *                Contract §一 (hard boundary — zero typography consumption).
+ *
+ * ── Design Invariants enforced in CSS ────────────────────────────────────
+ *  D-1 · width === height (square)
+ *  D-6 · ZERO typography consumption — this file MUST NOT declare any of:
+ *            font-size / font-weight / line-height / letter-spacing.
+ *        Icon sizing is driven exclusively through width / height on the
+ *        inline svg, decoupled from parent font-size inheritance (prevents
+ *        the `em`-inheritance pollution documented in design.md §五.4).
+ *  D-8 · Loading spinner renders at the exact icon size (same var), so the
+ *        children→spinner swap produces zero layout shift.
+ * ─────────────────────────────────────────────────────────────────────── */
+
+.root {
+  /* Layout — flex-center lets the single child sit in the middle without
+     intermediate .inner / .label wrappers (Button has those; IconButton's
+     slot tree is intentionally one layer shallower — see design.md §三). */
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+
+  /* Sizing · D-1 — square. Both dimensions pull from the same size alias,
+     which itself aliases Size System v3 height. Padding deliberately omitted:
+     the icon is centered by flex, not nudged by padding. */
+  width:  var(--icon-button-size);
+  height: var(--icon-button-size);
+
+  /* Appearance — consumes variant / radius system tokens exactly as Button
+     does, so theme palette overrides applied to the shared color scales
+     propagate unchanged. */
+  background: var(--prismui-variant-bg);
+  color: var(--prismui-variant-fg);
+  border: 1px solid var(--prismui-variant-border);
+  border-radius: var(--icon-button-radius);
+
+  /* Interaction */
+  cursor: pointer;
+  user-select: none;
+  transition:
+    background var(--prismui-transition-fast),
+    border-color var(--prismui-transition-fast),
+    box-shadow var(--prismui-transition-fast),
+    transform var(--prismui-duration-fast) var(--prismui-ease-out),
+    opacity var(--prismui-transition-fast);
+
+  /* Reset */
+  appearance: none;
+  text-decoration: none;
+  padding: 0;
+
+  /* ⚠️ D-6 · NO font-size / font-weight / line-height / letter-spacing here.
+     If a future variant needs a text fallback, it has outgrown IconButton
+     and should use Button instead (documented upgrade path). */
+}
+
+/* Icon sizing · D-6 — drive the inline SVG directly by width/height so the
+ * rendered icon size is completely independent of any ambient `font-size`
+ * inherited from ancestors. `em`-based sizing would silently inflate inside
+ * a `.toolbar { font-size: 20px }` container; explicit px-resolved vars avoid
+ * that class of bug entirely. */
+.root > svg {
+  width:  var(--icon-button-icon-size);
+  height: var(--icon-button-icon-size);
+  flex-shrink: 0;
+}
+
+/* Non-svg single child (e.g. <Icon /> component wrapping an svg) — same rule
+ * applied one level deeper so consumers aren't forced to use a bare svg. */
+.root > :not(svg) > svg {
+  width:  var(--icon-button-icon-size);
+  height: var(--icon-button-icon-size);
+}
+
+/* ── Interaction states — mirror Button exactly, using the same Action-
+ * aware [data-interactive-disabled] guard so disabled || loading both
+ * suppress hover/active visuals in lock-step with the JS predicate. */
+.root:hover:not([data-interactive-disabled]) {
+  background: var(--prismui-variant-hover-bg);
+  border-color: var(--prismui-variant-hover-border);
+  box-shadow: var(--prismui-variant-hover-shadow);
+}
+
+.root:active:not([data-interactive-disabled]) {
+  background: var(--prismui-variant-active-bg);
+  transform: scale(0.96);
+}
+
+.root:focus-visible:not([data-disabled]):not([data-loading]) {
+  outline: var(--prismui-focus-ring-width) solid var(--prismui-focus-ring-color);
+  outline-offset: var(--prismui-focus-ring-offset);
+}
+
+/* ── Disability — polymorphic-safe visual via data-disabled (Action state) */
+.root[data-disabled='true'] {
+  opacity: var(--prismui-state-opacity-disabled);
+  cursor: var(--prismui-state-cursor-disabled);
+}
+
+/* ── Loading — D-8 visual contract:
+ *    - cursor becomes disabled-cursor (advisory of inert state)
+ *    - click/key swallow is enforced at the JS layer (same as Button)
+ *    - spinner dimensions === icon dimensions (rule embedded in the JS
+ *      render — BuiltInSpinner is an svg so it hits `.root > svg` above)
+ */
+.root[data-loading='true'] {
+  cursor: var(--prismui-state-cursor-disabled);
+}
+
+/* Spinner rotation — identical keyframes family as Button; scoped to
+ * [data-loader='true'] so a user-provided icon with animation class of their
+ * own isn't accidentally stopped or overridden. */
+@keyframes prismui-icon-button-spinner-rotate {
+  to { transform: rotate(360deg); }
+}
+.root[data-loader='true'] > svg {
+  animation: prismui-icon-button-spinner-rotate 0.8s linear infinite;
+  transform-origin: 50% 50%;
+}
+
+/* ── Reduced Motion (IV-A5) ──────────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  .root {
+    transition: none;
+  }
+  .root:active:not([data-interactive-disabled]) {
+    transform: none;
+  }
+  .root[data-loader='true'] > svg {
+    animation: none;
+  }
+}
