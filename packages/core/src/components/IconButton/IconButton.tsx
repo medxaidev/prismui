@@ -214,22 +214,21 @@ export const IconButton = factory<IconButtonOwnProps>(
     //   (2) `BuiltInSpinner` is an inline <svg> so it hits `.root > svg`
     //       in the CSS, receiving width/height === --icon-button-icon-size.
     //       That's the zero-layout-shift guarantee (design.md §5.5).
-    //   (3) `data-loader='true'` on the root enables the rotation keyframes
-    //       (scoped selector — won't animate arbitrary user svgs on non-
-    //       loading renders).
+    //   (3) Rotation keyframes are CSS-scoped via `.root[data-loading='true']
+    //       > svg` — the state system (single-writer per SR-7) already emits
+    //       `data-loading`, so IconButton does NOT emit a separate
+    //       `data-loader` attr. Button uses `data-loader` on its `.section`
+    //       because Button has a real section subtree; IconButton's single-
+    //       slot design makes that extra marker redundant.
     const content = loading ? <BuiltInSpinner /> : userChildren;
-    const rootLoaderAttrs: Record<string, string> = loading
-      ? { 'data-loader': 'true' }
-      : {};
 
     // ── Root spread ordering contract (identical to Button's B-7) ────────
     // Order: ref → styles baseline → user passthrough → action behavior →
-    //        type default → component data-attrs → system data-attrs →
-    //        disability attrs. Later wins — "user ≺ component ≺ system."
-    // See Button.tsx for full rationale. IconButton has no component-local
-    // data-attrs (no fullWidth / no round sentinel — OQ-IB6 decided not to
-    // add one since radius is already expressed via the CSS var), so the
-    // `rootDataAttrs` position in the chain is empty here.
+    //        type default → system data-attrs → disability attrs. Later wins
+    //        — "user ≺ system." See Button.tsx for full rationale. IconButton
+    // has no component-local data-attrs (no fullWidth / no round sentinel —
+    // OQ-IB6 decided not to add one since radius is already expressed via
+    // the CSS var; and per the consolidation above, no `data-loader` either).
     return (
       <Element
         ref={ref}
@@ -237,7 +236,6 @@ export const IconButton = factory<IconButtonOwnProps>(
         {...passthroughDomProps}
         {...actionBehavior}
         {...(effectiveButtonType !== undefined ? { type: effectiveButtonType } : {})}
-        {...rootLoaderAttrs}
         {...systemDataAttrs}
         {...disabilityAttrs}
       >

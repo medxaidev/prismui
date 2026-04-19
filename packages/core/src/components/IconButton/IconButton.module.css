@@ -111,16 +111,30 @@
   cursor: var(--prismui-state-cursor-disabled);
 }
 
-/* Spinner rotation — identical keyframes family as Button; scoped to
- * [data-loader='true'] so a user-provided icon with animation class of their
- * own isn't accidentally stopped or overridden. */
+/* Spinner rotation — identical keyframes family as Button. Scoped to
+ * [data-loading='true'] (the single-writer state-system attr) because in
+ * the loading branch the JS swaps user children for `<BuiltInSpinner />`,
+ * so `.root > svg` during loading is GUARANTEED to be the spinner — a
+ * dedicated `data-loader` marker would be redundant (SR-7 single-writer).
+ * Button places `data-loader` on its `.section` because Button has a real
+ * section subtree; IconButton's single-slot design makes that unnecessary. */
 @keyframes prismui-icon-button-spinner-rotate {
   to { transform: rotate(360deg); }
 }
-.root[data-loader='true'] > svg {
+.root[data-loading='true'] > svg {
   animation: prismui-icon-button-spinner-rotate 0.8s linear infinite;
   transform-origin: 50% 50%;
 }
+
+/* ── Icon-size nesting support ──────────────────────────────────────────
+ * The `.root > svg` + `.root > :not(svg) > svg` pair covers the two
+ * common shapes:
+ *   1. <IconButton><svg/></IconButton>                         (bare)
+ *   2. <IconButton><Icon><svg/></Icon></IconButton>            (1-wrap)
+ * Deeper wrappers (e.g. `<motion.div><Icon><svg/></Icon></motion.div>`,
+ * 3+ levels) fall through to the browser's default svg sizing. Authors
+ * who need deep wrappers should either (a) flatten to 1 wrap level, or
+ * (b) style their own svg explicitly. Documented in design.md §五.5. */
 
 /* ── Reduced Motion (IV-A5) ──────────────────────────────────────────── */
 @media (prefers-reduced-motion: reduce) {
@@ -130,7 +144,7 @@
   .root:active:not([data-interactive-disabled]) {
     transform: none;
   }
-  .root[data-loader='true'] > svg {
+  .root[data-loading='true'] > svg {
     animation: none;
   }
 }

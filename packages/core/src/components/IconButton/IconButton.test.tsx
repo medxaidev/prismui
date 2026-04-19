@@ -427,6 +427,25 @@ describe('IconButton', () => {
       );
       expect(ariaLabelWarnings).toHaveLength(0);
     });
+
+    it('STILL warns when only `title` is provided (title does NOT satisfy D-3)', () => {
+      // Locks the IconButton-specific decision: unlike Button (where visible
+      // text children naturally supply the accessible name and `title` can
+      // act as a tooltip fallback), IconButton requires an EXPLICIT
+      // aria-label / aria-labelledby. `title` is a hover-only affordance
+      // and is not reliably announced by every screen reader — accepting
+      // it would weaken D-3. This test prevents a well-intentioned "parity
+      // with Button" refactor from silently relaxing the contract.
+      render(
+        <IconButton title="save">
+          <Icon />
+        </IconButton>,
+      );
+      const ariaLabelWarnings = spy.mock.calls.filter((c: unknown[]) =>
+        /requires an accessible name/.test(String(c[0])),
+      );
+      expect(ariaLabelWarnings.length).toBeGreaterThan(0);
+    });
   });
 
   // ───────────────────────────────────────────────────────────────────────
@@ -500,13 +519,19 @@ describe('IconButton', () => {
       expect(container.querySelector('button > svg')).not.toBeNull();
     });
 
-    it('applies data-loader="true" on root when loading', () => {
+    it('does NOT emit a separate data-loader attr (uses single-writer data-loading only)', () => {
+      // M-1 consolidation: the rotation animation CSS is scoped to
+      // `.root[data-loading='true'] > svg`, so IconButton relies on the
+      // state-system's single-writer `data-loading` (SR-7). Emitting an
+      // extra `data-loader` would be redundant and drift from SR-7.
       const { container } = render(
         <IconButton aria-label="x" loading>
           <Icon />
         </IconButton>,
       );
-      expect(container.querySelector('button')!.getAttribute('data-loader')).toBe('true');
+      const btn = container.querySelector('button')!;
+      expect(btn.getAttribute('data-loading')).toBe('true');
+      expect(btn.hasAttribute('data-loader')).toBe(false);
     });
 
     it('root preserves --icon-button-size across loading toggle (no layout shift)', () => {
@@ -590,10 +615,7 @@ describe('IconButton', () => {
       // and the factory writes the merged map onto it. This asserts the
       // user's override wins over the varsResolver default for the same key.
       const { container } = render(
-        <IconButton
-          aria-label="x"
-          vars={{ '--icon-button-size': '48px' } as Record<string, string>}
-        >
+        <IconButton aria-label="x" vars={{ '--icon-button-size': '48px' }}>
           <Icon />
         </IconButton>,
       );
