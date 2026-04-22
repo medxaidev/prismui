@@ -114,6 +114,12 @@ export type { VariantCssVarKey, VariantCssVarName, WithVariantColorsOptions } fr
 // Component Factory System (Stage 6 + Stage 7.4)
 export { useComponentDefaultProps } from './core/component';
 
+// Hooks (first React-hook module — precursor to ToggleButton / Switch /
+// Checkbox / RadioGroup / Select / Dialog / … controllable state needs)
+// Design: @/devdocs/hooks/use-controllable-state.md v0.2
+export { useControllableState } from './hooks';
+export type { ControllableSetter, UseControllableStateOptions } from './hooks';
+
 // Components (Stage 6)
 export { Button } from "./components/Button";
 export type { ButtonProps, ButtonStylesNames, ButtonOwnProps } from "./components/Button";
