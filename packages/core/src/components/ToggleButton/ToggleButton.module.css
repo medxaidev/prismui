@@ -1,0 +1,205 @@
+/* ─────────────────────────────────────────────────────────────────────────
+ * ToggleButton · Action Surface · persistent pressed state
+ * Contract refs: component-contract §3.7 (Action Behavior) · SR-5/SR-8
+ *                (CSS var prefix isolation) · SR-9 + Typography Contract
+ *                (consumes same 5 typography tokens as Button).
+ *
+ * ── Design Invariants enforced in CSS ────────────────────────────────────
+ *  T-3 · pressed ≠ :active (**dedicated visual channel**)
+ *        `data-pressed` reads the component-local `--toggle-button-pressed-*`
+ *        family; `:active` still reads the system `--prismui-variant-active-*`.
+ *        The two NEVER share the same CSS variable, so theming one cannot
+ *        silently change the other. The component-local aliases currently
+ *        fall through to `--prismui-variant-hover-*` in varsResolver (v1
+ *        interim — see design.md §六.2 "Scheme A" resolution note): when
+ *        the variant system grows a `pressed` token family, flip those
+ *        aliases in one place; this file is unaffected.
+ *
+ *  T-6 · disabled / loading do NOT clear pressed visual
+ *        The pressed rule intentionally OMITS the `:not([data-interactive-
+ *        disabled])` guard that hover / active carry. Result: pressed still
+ *        shows under the disability opacity, so the user sees the state
+ *        that will be restored once the button becomes interactive again.
+ *
+ *  T-8 · tri-state `'mixed'` uses the same fill as `true` plus a dashed
+ *        border — minimal, additive indicator.
+ * ─────────────────────────────────────────────────────────────────── */
+
+.root {
+  /* Layout — flex-center matches Button (ToggleButton shares Button's
+     5-slot silhouette per design §三 — only ARIA / data-pressed differ). */
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  /* Sizing — same `height / padding-x` mapping as Button. */
+  height: var(--toggle-button-height);
+  padding-left: var(--toggle-button-padding-x);
+  padding-right: var(--toggle-button-padding-x);
+
+  /* Typography — consumes --toggle-button-font-size (aliased to Size
+     System v3 in varsResolver). 500 weight / line-height 1 match Button
+     so toolbar mixes of `<Button>` + `<ToggleButton>` read as one family. */
+  font-size: var(--toggle-button-font-size);
+  font-weight: 500;
+  line-height: 1;
+  font-family: inherit;
+
+  /* Appearance — variant system palette (unchanged on press=false). */
+  background: var(--prismui-variant-bg);
+  color: var(--prismui-variant-fg);
+  border: 1px solid var(--prismui-variant-border);
+  border-radius: var(--toggle-button-radius);
+
+  /* Interaction */
+  cursor: pointer;
+  user-select: none;
+  transition:
+    background var(--prismui-transition-fast),
+    border-color var(--prismui-transition-fast),
+    box-shadow var(--prismui-transition-fast),
+    transform var(--prismui-duration-fast) var(--prismui-ease-out),
+    opacity var(--prismui-transition-fast);
+
+  /* Reset */
+  appearance: none;
+  text-decoration: none;
+}
+
+/* ── Hover (pressed=false path) ────────────────────────────────────────
+ * Explicit `:not([data-pressed='true']):not([data-pressed='mixed'])` guard
+ * so the hover visual doesn't OVERRIDE the pressed fill. The alternative —
+ * bumping pressed rule's specificity — would work equally well, but this
+ * phrasing makes the semantic (hover only applies when NOT pressed) legible
+ * without having to chase specificity in your head. */
+.root:hover:not([data-interactive-disabled]):not([data-pressed='true']):not([data-pressed='mixed']) {
+  background: var(--prismui-variant-hover-bg);
+  border-color: var(--prismui-variant-hover-border);
+  box-shadow: var(--prismui-variant-hover-shadow);
+}
+
+/* ── Pressed visual (T-3 · dedicated channel) ──────────────────────────
+ * No `:not([data-interactive-disabled])` guard — T-6 requires pressed
+ * visual to persist under disabled / loading. The opacity dimming below
+ * handles the "this is frozen" visual distinctly from "this is unpressed."
+ */
+.root[data-pressed='true'],
+.root[data-pressed='mixed'] {
+  background: var(--toggle-button-pressed-bg);
+  color: var(--toggle-button-pressed-fg);
+  border-color: var(--toggle-button-pressed-border);
+}
+
+/* ── Mixed tri-state indicator (T-8) ───────────────────────────────────
+ * Dashed border on top of the pressed fill — communicates indeterminate
+ * without relying on additional color tokens. Minimal by design; richer
+ * indicators (diagonal stripes, dot badges) are a consumer concern via
+ * `classNames` override. */
+.root[data-pressed='mixed'] {
+  border-style: dashed;
+}
+
+/* ── :active — momentary pointer feedback (T-3 · system channel) ──────
+ * Intentionally placed LAST so `:active` overrides pressed fill during the
+ * "press → release" animation window even on an already-pressed toggle.
+ * This is why T-3's contract matters: the data-pressed state shows the
+ * logical value, `:active` shows that the current keystroke/click is being
+ * registered — two independent channels multiplexed onto the same element. */
+.root:active:not([data-interactive-disabled]) {
+  background: var(--prismui-variant-active-bg);
+  transform: scale(0.98);
+}
+
+/* ── Focus ring — unchanged from Button / IconButton. */
+.root:focus-visible:not([data-disabled]):not([data-loading]) {
+  outline: var(--prismui-focus-ring-width) solid var(--prismui-focus-ring-color);
+  outline-offset: var(--prismui-focus-ring-offset);
+}
+
+/* ── Disability — polymorphic-safe visual via data-disabled (Action state).
+ * Applies to the entire element INCLUDING the pressed fill — T-6: the
+ * pressed state remains visible, just dimmed, so the user can see what the
+ * toggle will restore to when re-enabled. */
+.root[data-disabled='true'] {
+  opacity: var(--prismui-state-opacity-disabled);
+  cursor: var(--prismui-state-cursor-disabled);
+}
+
+/* ── Inner flex row (matches Button) ───────────────────────────────────
+ * Hosts left / label / right sections. Gap is Size System v3-driven so
+ * every size tier stays visually proportional. */
+.inner {
+  display: flex;
+  align-items: center;
+  gap: var(--toggle-button-inner-gap);
+}
+
+.label {
+  /* Typography handled by .root. `min-width: 0` is a defensive declaration
+     allowing the label to shrink below its content's intrinsic min-size
+     when the toggle is in a constrained flex container (prevents runaway
+     overflow of long labels on narrow toolbars). */
+  min-width: 0;
+}
+
+/* ── Section (left / right decorations · multi-instance slot) ────────────
+ * Identical to Button's section — same Size System v3 slot-sizing so icons
+ * stay visually proportional across all 5 sizes. Separating the slot class
+ * from the `.inner` gap rule keeps styles composable when consumers target
+ * `classNames.section` vs `classNames.inner`. */
+.section {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width:  var(--toggle-button-slot-size);
+  height: var(--toggle-button-slot-size);
+  font-size: inherit;
+  line-height: 1;
+}
+
+.section > svg {
+  width:  100%;
+  height: 100%;
+}
+
+/* ── fullWidth — stretch to container width ──────────────────────────── */
+.root[data-full-width='true'] {
+  width: 100%;
+}
+
+/* ── Loading — aria-busy + spinner in left section slot ──────────────────
+ * Same strategy as Button: the component layer swallows clicks/keyboard via
+ * resolveInteractive('action'), so we do NOT apply pointer-events: none at
+ * the CSS layer. Cursor becomes disabled-cursor to advise the user the
+ * button is inert. */
+.root[data-loading='true'] {
+  cursor: var(--prismui-state-cursor-disabled);
+}
+
+/* Spinner rotation — scoped to `[data-loader='true']` on the section, same
+ * as Button. Unique keyframe name (`prismui-toggle-button-spinner-rotate`)
+ * avoids collision with Button's rule should a page render both. */
+@keyframes prismui-toggle-button-spinner-rotate {
+  to { transform: rotate(360deg); }
+}
+.section[data-loader='true'] > svg {
+  animation: prismui-toggle-button-spinner-rotate 0.8s linear infinite;
+  transform-origin: 50% 50%;
+}
+
+/* ── Reduced Motion (a11y · IV-A5) ─────────────────────────────────────
+ * Consistent with Button / IconButton: disable all transitions, the active
+ * scale(), and the loader rotation. Pressed / hover / disabled visuals
+ * remain — they are state indicators, not motion. */
+@media (prefers-reduced-motion: reduce) {
+  .root {
+    transition: none;
+  }
+  .root:active:not([data-interactive-disabled]) {
+    transform: none;
+  }
+  .section[data-loader='true'] > svg {
+    animation: none;
+  }
+}

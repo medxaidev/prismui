@@ -132,6 +132,17 @@ export type {
   IconButtonOwnProps,
 } from "./components/IconButton";
 
+// ToggleButton (Stage 9+ · third Action Surface consumer · first persistent-
+// state component · first useControllableState consumer)
+// Design: @/devdocs/components/ToggleButton/design.md v0.1
+export { ToggleButton } from "./components/ToggleButton";
+export type {
+  ToggleButtonProps,
+  ToggleButtonStylesNames,
+  ToggleButtonOwnProps,
+  ToggleButtonPressedState,
+} from "./components/ToggleButton";
+
 // Input (Stage 9 — Field Control)
 export { Input } from "./components/Input";
 export type {
