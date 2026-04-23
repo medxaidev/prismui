@@ -1,0 +1,308 @@
+/* ─────────────────────────────────────────────────────────────────────────
+ * Checkbox · Control Surface · C-2 Abstract · three-state checked
+ *
+ * Design reference: `@/devdocs/components/Checkbox/design.md` v0.1.1 (Round 1)
+ * Contract references:
+ *   - `component-contract.md` §二 SR-1~9 (shared rules) + §3.7 (Action Behavior)
+ *   - `control-surface.md` §2.3 C-2 + §四 FCP-1~6 + §五 FI-0~5
+ *   - `focus-behavior.md` v1.2 §4.3 C-2 mode-B variant (Switch v1.0.1 token
+ *     `theme.focusPointerHalo` is consumed here for cross-component
+ *     consistency — see CB-5).
+ *   - `typography.md` (zero consumption — Checkbox has no text)
+ *
+ * ── Design Invariants enforced in CSS ────────────────────────────────────
+ *   CB-1 · role=checkbox + aria-checked='true' / 'false' / 'mixed' drive every
+ *          visual. No fallback to `[aria-pressed]` or `[data-pressed]` —
+ *          those channels belong to ToggleButton.
+ *
+ *   CB-5 · Focus mode B TRUE TWO-CHANNEL (🔴 second carrier after Switch).
+ *          Checkbox consumes the SAME `--prismui-focus-pointer-halo-*` tokens
+ *          that Switch v1.0.1 registered in theme — this is the first
+ *          cross-component token re-use. CSS selectors below are MUTUALLY
+ *          EXCLUSIVE (FE-2) — `:focus:not(:focus-visible)` never co-fires
+ *          with `:focus-visible`.
+ *          ⚠️ Official default + official theme preset MUST preserve halo.
+ *              User overrides via `classNames` / `styles` / `vars` are SR-1
+ *              rights and are NOT runtime-blocked and NOT in test scope.
+ *
+ *   CB-7 · disabled / loading FREEZE the visual — the checked selectors
+ *          below intentionally OMIT any `:not([data-interactive-disabled])`
+ *          guard (matches Switch S-7 / ToggleButton T-6 "freeze don't reset"
+ *          philosophy). The opacity dimming on the disabled root still
+ *          communicates "inert" without clearing the checked position.
+ *
+ *   CB-8 · CSS namespace `--checkbox-*` (no cross-consumption of
+ *          `--switch-*` / `--toggle-button-*` / `--input-*`). Size tokens +
+ *          color tokens arrive via `data-size` / `data-color` attribute
+ *          selectors below.
+ *
+ *   CB-9 · v1 has no `variant` prop — no `[data-variant]` branches.
+ *
+ *   FE-1 halo + ring · two distinct visual channels (mode B真分轨)
+ *   FE-2 anti-duplicate-signal · selectors exclusive by construction
+ *   FE-3 invalid × focus · outline-color swap only, no added channels
+ * ─────────────────────────────────────────────────────────────────── */
+
+/* ── Root (the <button role="checkbox">) ────────────────────────────────── */
+.root {
+  /* Structural baseline — root is the hit-target + focus-host; box lives
+   * inside. Button reset is exhaustive because polymorphic hosts (`<div>` /
+   * `<span>`) do NOT need these resets but harmlessly receive them. */
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+
+  /* Geometry: root is exactly the box — box fills 100%/100%. Any extra
+   * outer spacing is a layout concern of the consumer (e.g. Field row). */
+  width:  var(--checkbox-box-size);
+  height: var(--checkbox-box-size);
+
+  padding: 0;
+  margin: 0;
+  border: none;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+
+  /* Interaction */
+  cursor: pointer;
+  user-select: none;
+  vertical-align: middle;
+
+  /* Reset browser default — `<button>` native focus ring is superseded by
+   * our `:focus-visible` rule below. Non-button hosts harmless. */
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  outline: none;
+
+  /* Radius — comes from radius system via varsResolver. Default 'sm' (small
+   * rounded square — the checkbox metaphor). */
+  border-radius: var(--checkbox-box-radius);
+
+  /* Transition — box-shadow (halo) + opacity only on root; box's own
+   * background / border / border-color transitions live on .box itself. */
+  transition:
+    box-shadow var(--checkbox-transition-duration) var(--checkbox-transition-easing),
+    opacity    var(--checkbox-transition-duration) var(--checkbox-transition-easing);
+}
+
+/* ── Box (outer frame — background + border layer) ───────────────────────
+ * Sits at 100%/100% inside root; data-checked drives bg + border. */
+.box {
+  display: block;
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border-radius: inherit;
+  box-sizing: border-box;
+
+  background: var(--checkbox-box-bg-off);
+  border: var(--checkbox-box-border-width) solid var(--checkbox-box-border-off);
+
+  transition:
+    background   var(--checkbox-transition-duration) var(--checkbox-transition-easing),
+    border-color var(--checkbox-transition-duration) var(--checkbox-transition-easing);
+}
+
+/* ── Indicator (inner mark — check / minus / spinner host) ───────────────
+ * Centered inside box; CSS scales to ~60% of box-size. Default state is
+ * invisible (off-state). Transition opacity + transform so the mark
+ * "pops in" when checked/mixed takes effect. */
+.indicator {
+  display: block;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width:  var(--checkbox-indicator-size);
+  height: var(--checkbox-indicator-size);
+
+  color: var(--checkbox-indicator-color);
+
+  /* Default OFF: transparent, slightly shrunk (CB-5.3 micro-interaction). */
+  opacity: 0;
+  transform: translate(-50%, -50%) scale(0.8);
+
+  transition:
+    opacity   var(--checkbox-transition-duration) var(--checkbox-transition-easing),
+    transform var(--checkbox-transition-duration) var(--checkbox-transition-easing);
+}
+
+/* The inner SVG takes 100% of the indicator; stroke comes from the
+ * component layer's `currentColor` + `--checkbox-indicator-stroke`. */
+.indicator > svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  stroke-width: var(--checkbox-indicator-stroke);
+  stroke: currentColor;
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* ── Checked state (aria-checked='true' / data-checked='true') ────────────
+ * Box flips to `on` bg + border (color-prop driven). Indicator fades in.
+ *
+ * CB-7: these rules OMIT `:not([data-interactive-disabled])` so disabled +
+ * loading preserve the checked visual. Opacity on the root dims the whole
+ * thing uniformly. */
+.root[data-checked='true']  .box,
+.root[data-checked='mixed'] .box {
+  background: var(--checkbox-box-bg-on);
+  border-color: var(--checkbox-box-border-on);
+}
+
+.root[data-checked='true']  .indicator,
+.root[data-checked='mixed'] .indicator {
+  opacity: 1;
+  transform: translate(-50%, -50%) scale(1);
+}
+
+/* ── CB-5 · Focus mode B真分轨 (TWO-CHANNEL · contract-enforced) ──────────
+ *
+ * Pointer focus (weak signal — halo):
+ *   `:focus:not(:focus-visible)` fires when focus was gained via pointer
+ *   input (mousedown / touchend). `<button>` is NOT in the UA text-input
+ *   list (focus-behavior.md §2.3), so UA does NOT force `:focus-visible`
+ *   and this selector genuinely matches in Chromium / Firefox / WebKit.
+ *   Halo is drawn as `box-shadow` spread (fills the outside of the box
+ *   radius without extending root layout).
+ *
+ * Keyboard focus (strong signal — outline ring):
+ *   `:focus-visible` matches when focus was gained via Tab or matching
+ *   heuristics. Outline is drawn one step outside the radius.
+ *
+ * The two selectors are MUTUALLY EXCLUSIVE by spec (`:focus-visible` and
+ * `:focus:not(:focus-visible)` cannot both match simultaneously) — FE-2
+ * anti-duplicate-signal guaranteed.
+ *
+ * 🔴 Cross-component consistency (CB-5 core value): Checkbox consumes the
+ * SAME `--prismui-focus-pointer-halo-*` tokens that Switch v1.0.1 registered
+ * in `theme.focusPointerHalo`. A fallback value is kept for robustness in
+ * the (unlikely) case a consumer overrode the theme and forgot halo; this
+ * does NOT replace the token, it only hardens against mis-configuration. */
+.root:focus:not(:focus-visible):not([data-disabled]) {
+  box-shadow:
+    0 0 0 var(--prismui-focus-pointer-halo-width, 2px)
+    var(--prismui-focus-pointer-halo-color, rgba(0, 0, 0, 0.16));
+}
+
+.root:focus-visible:not([data-disabled]) {
+  outline: var(--prismui-focus-ring-width) solid var(--prismui-focus-ring-color);
+  outline-offset: var(--prismui-focus-ring-offset);
+}
+
+/* ── FE-3 · Invalid × focus (outline-color swap only, no added channel) ─── */
+.root[aria-invalid='true']:focus-visible:not([data-disabled]) {
+  outline-color: var(--prismui-text-danger);
+}
+
+/* Invalid at rest — subtle danger tint on the OFF-box border.
+ * On-/mixed-box doesn't need the tint (filled bg already carries the
+ * danger role via color prop in that theme context); user-override hook is
+ * the .box classNames path. OQ-CB-7 landed strategy A (minimum FE-3 · no
+ * bg change on on/mixed). */
+.root[aria-invalid='true']:not([data-checked='true']):not([data-checked='mixed']) .box {
+  border-color: var(--prismui-text-danger);
+}
+
+/* ── Disability · root opacity dim (CB-7) ────────────────────────────────
+ * The checked selectors above INTENTIONALLY don't carry a
+ * `:not([data-disabled])` guard — checked visual remains visible, only
+ * dimmed. This matches Switch S-7 / ToggleButton T-6 "freeze don't reset". */
+.root[data-disabled] {
+  opacity: var(--prismui-state-opacity-disabled);
+  cursor: var(--prismui-state-cursor-disabled);
+}
+
+.root[data-loading='true'] {
+  cursor: var(--prismui-state-cursor-disabled);
+}
+
+/* ── Hover (only when NOT interactive-disabled) ─────────────────────────
+ * Very light bg bump on OFF-box; ON/MIXED-box stays color-prop driven so
+ * color-hover can be user-themed independently via `--checkbox-box-bg-on-hover`.
+ * Hover selector keeps interactive-disabled guard so disabled / loading
+ * checkboxes never show the hover bump. */
+.root:hover:not([data-interactive-disabled]):not([data-checked='true']):not([data-checked='mixed']) .box {
+  background: var(--checkbox-box-bg-off-hover);
+}
+
+.root:hover:not([data-interactive-disabled])[data-checked='true'] .box,
+.root:hover:not([data-interactive-disabled])[data-checked='mixed'] .box {
+  background: var(--checkbox-box-bg-on-hover);
+}
+
+/* ── Size tiers (data-size ← size system) ────────────────────────────────
+ * OQ-CB-4 landed strategy A: locked px values per tier so small-size check
+ * glyphs stay legible. Indicator-size ≈ 62% of box-size; stroke scales
+ * slightly with size so corners stay crisp. */
+.root[data-size='xs'] {
+  --checkbox-box-size:        14px;
+  --checkbox-box-border-width: 1.25px;
+  --checkbox-indicator-size:   9px;
+  --checkbox-indicator-stroke: 2px;
+}
+
+.root[data-size='sm'] {
+  --checkbox-box-size:        16px;
+  --checkbox-box-border-width: 1.5px;
+  --checkbox-indicator-size:  10px;
+  --checkbox-indicator-stroke: 2px;
+}
+
+.root[data-size='md'] {
+  --checkbox-box-size:        18px;
+  --checkbox-box-border-width: 1.5px;
+  --checkbox-indicator-size:  11px;
+  --checkbox-indicator-stroke: 2.25px;
+}
+
+.root[data-size='lg'] {
+  --checkbox-box-size:        22px;
+  --checkbox-box-border-width: 1.75px;
+  --checkbox-indicator-size:  14px;
+  --checkbox-indicator-stroke: 2.5px;
+}
+
+.root[data-size='xl'] {
+  --checkbox-box-size:        26px;
+  --checkbox-box-border-width: 2px;
+  --checkbox-indicator-size:  16px;
+  --checkbox-indicator-stroke: 2.75px;
+}
+
+/* ── Loading spinner (rendered inside indicator · OQ-CB-8 strategy A) ────
+ * Spinner replaces check / minus; indicator stays in its position (no
+ * layout shift). aria-busy is set on root from the component render path.
+ * Keyframe is Checkbox-scoped to avoid collision with Button / IconButton /
+ * ToggleButton / Switch spinners. */
+@keyframes prismui-checkbox-spinner-rotate {
+  to { transform: translate(-50%, -50%) rotate(360deg); }
+}
+
+/* Loading: force indicator visible even when data-checked='false', and
+ * apply the rotate animation. `transform` is overridden to include the
+ * translate origin centering (`-50%, -50%`) so rotate pivots on center. */
+.root[data-loading='true'] .indicator {
+  opacity: 1;
+  transform: translate(-50%, -50%) rotate(0deg);
+  animation: prismui-checkbox-spinner-rotate 0.8s linear infinite;
+}
+
+/* ── Reduced Motion (a11y · IV-A5) ──────────────────────────────────────
+ * Checked transitions (positional state) stay — they're state changes,
+ * not motion — but the easing curve + loader spin are suppressed. */
+@media (prefers-reduced-motion: reduce) {
+  .root,
+  .box,
+  .indicator {
+    transition: none;
+  }
+  .root[data-loading='true'] .indicator {
+    animation: none;
+  }
+}
