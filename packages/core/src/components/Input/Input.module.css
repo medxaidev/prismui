@@ -9,7 +9,13 @@
  *
  * Token contract (see devdocs/components/Input/variant.md §2 Invariants):
  * - IV-1: root/input only consume --prismui-variant-* / --prismui-text-* / --input-*
- * - IV-3: :focus-within MUST override --prismui-variant-border with primary
+ * - IV-3: focus expression governed by focus-behavior.md FE-1/FE-2/FE-3 (v1.1).
+ *         Control C-1 书写模式 B (pointer-border + keyboard-ring) · 运行退化为模式 A (ring-only):
+ *           pointer focus rule → border color override (forward-compatible · UA Reality 下不激活)
+ *           keyboard focus rule → outline ring (主信号 · 强制 · text-input 下所有 focus 都激活)
+ *         UA Reality (focus-behavior.md §2.3): 所有主流 UA 对 text-input 元素强制
+ *         :focus-visible = true (无论鼠标还是键盘) · :not(:focus-visible) 永为 false
+ *         · pointer rule 为 forward-compatible (未来 UA 行为改变或非 text-input Control 复用时自动启用)
  * - IV-4: [data-variant='unstyled'] is fully token-free (no state override)
  *
  * State priority (§2.7): disabled > invalid > focus-within > hover > rest.
@@ -52,12 +58,19 @@
   background: var(--prismui-variant-hover-bg);
 }
 
-/* 3. focus-within (overrides hover — IV-3, applies to BOTH outlined and filled) */
-.root:focus-within:not([data-disabled]):not([data-variant='unstyled']) {
+/* 3a. Pointer focus only — border → primary (弱信号 · FE-1 可选通道).
+ *     Scope narrowed via :has(> .input:not(:focus-visible)) so keyboard focus
+ *     doesn't also trigger this layer (FE-2 anti-duplicate-signal).
+ *     ⚠️  UA Reality (focus-behavior.md §2.3): 主流 UA 对 text-input 元素强制
+ *         :focus-visible = true · :not(:focus-visible) 永为 false · 本 rule 实际不激活。
+ *         保留作为 forward-compatible 代码 · 体现书写模式 B 合约 · 符合系统"接纳 UA Reality"原则。*/
+.root:focus-within:has(> .input:not(:focus-visible)):not([data-disabled]):not([data-variant='unstyled']) {
   border-color: var(--prismui-color-primary-bordered-border, var(--prismui-color-primary));
 }
 
-/* Focus ring only for keyboard users — skipped on unstyled per IV-4 */
+/* 3b. Keyboard focus — outline ring (主信号 · FE-1 强制通道).
+ *     This is the ONLY visual signal when focus is keyboard-origin; border
+ *     stays at rest/hover color to uphold "one state = one main channel". */
 .root:has(> .input:focus-visible):not([data-disabled]):not([data-variant='unstyled']) {
   outline: var(--prismui-focus-ring-width) solid var(--prismui-focus-ring-color);
   outline-offset: var(--prismui-focus-ring-offset);

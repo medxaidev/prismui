@@ -46,6 +46,27 @@ if (process.env.NODE_ENV !== 'production') {
  *
  * Returns `null` if called outside a `<Field>` — callers MUST handle this case.
  * This is intentional: Control components must remain usable without Field.
+ *
+ * ⚠️ **FCP-6 — Control components MUST NOT call this hook directly.**
+ *
+ * (See `@/devdocs/system/control-surface.md` §4.1 FCP-6 · "anti-window-breaking".)
+ *
+ * Allowed callers:
+ * - `useFieldControlProps` / `useFieldDataAttrs` (official indirect entries)
+ * - Field-owned Compound Components (`Field.Label` / `Field.Description` /
+ *   `Field.Error`) and user-authored `Field.*` compounds that are part of the
+ *   Field API surface
+ *
+ * Forbidden caller:
+ * - Any Control Surface component (Input / Textarea / Switch / Checkbox /
+ *   Select / …). A Control reading FieldContext directly would bypass
+ *   FCP-2 priority (Control prop > Field ctx), FCP-4 aria-describedby
+ *   concatenation, and the SR-7 single-writer chain — all of which
+ *   `useFieldControlProps` + `useFieldDataAttrs` enforce.
+ *
+ * Runtime enforcement is intentionally deferred (see OQ-6). This JSDoc warning
+ * is the first line of defense; reviewers must reject Control PRs that call
+ * `useFieldContext` directly.
  */
 export function useFieldContext(): FieldContextValue | null {
   return React.useContext(FieldContext);

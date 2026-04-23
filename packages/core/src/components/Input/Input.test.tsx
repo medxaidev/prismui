@@ -1,4 +1,6 @@
 import * as React from 'react';
+import * as fs from 'node:fs';
+import * as path from 'node:path';
 import { describe, it, expect, vi } from 'vitest';
 import '@testing-library/jest-dom/vitest';
 import { render, fireEvent } from '@testing-library/react';
@@ -306,6 +308,70 @@ describe('Input', () => {
       expect(rootA.style.getPropertyValue('--prismui-variant-border')).toBe(
         rootB.style.getPropertyValue('--prismui-variant-border'),
       );
+    });
+  });
+
+  // ── Focus Behavior Contract (focus-behavior.md FE-1 / FE-2 / FE-3 · v1.1) ──
+  //
+  // These are STRUCTURAL assertions on the CSS source. jsdom cannot reliably
+  // simulate the UA heuristics that drive `:focus-visible` across pointer
+  // vs. keyboard input, so the CSS selector shape IS the contract here. Any
+  // edit that reverts `:focus-within` → primary-border to its bare (un-scoped)
+  // form would re-introduce the FE-2 "duplicate signal" bug and must fail.
+  //
+  // ⚠️ UA Reality note (focus-behavior.md §2.3): mainstream UAs force
+  // `:focus-visible = true` on text-input elements regardless of input modality,
+  // so the pointer-border rule below is a *forward-compatible* contract artifact
+  // that does NOT actually activate in the browser. These assertions guard the
+  // BOOKKEEPING (Pattern B declaration) rather than runtime activation. Input's
+  // runtime visual = Pattern A ring-only (by UA enforcement), which still
+  // satisfies FE-1 (keyboard ring mandatory) + FE-2 (≤1 channel per focus event).
+  describe('Focus Behavior Contract (FE-1 / FE-2 / FE-3)', () => {
+    const cssPath = path.resolve(__dirname, './Input.module.css');
+    const css = fs.readFileSync(cssPath, 'utf8');
+
+    it('FE-2 · pointer-focus border rule is narrowed to non-:focus-visible (forward-compatible guard · UA Reality §2.3)', () => {
+      expect(css).toMatch(
+        /\.root:focus-within:has\(\s*>\s*\.input:not\(:focus-visible\)\s*\)[^{]*\{[^}]*border-color\s*:/,
+      );
+    });
+
+    it('FE-1 · keyboard-focus layer uses :focus-visible + outline (ring is the mandatory channel)', () => {
+      expect(css).toMatch(
+        /\.root:has\(\s*>\s*\.input:focus-visible\s*\)[^{]*\{[^}]*outline\s*:/,
+      );
+    });
+
+    it('FE-2 regression guard · every ".root:focus-within" border-color rule is pointer-scoped', () => {
+      // Collect every rule whose selector starts with ".root:focus-within"
+      // AND whose body sets `border-color`. Every such rule MUST carry the
+      // `:has(> .input:not(:focus-visible))` pointer-scope filter.
+      const ruleRegex = /\.root:focus-within[^{]*\{[^}]*\}/g;
+      const rules = css.match(ruleRegex) ?? [];
+      const bordered = rules.filter((r) => /border-color\s*:/.test(r));
+      // At least one such rule must exist (pointer channel is kept), and all
+      // of them must be pointer-scoped.
+      expect(bordered.length).toBeGreaterThan(0);
+      for (const rule of bordered) {
+        expect(rule).toMatch(/:has\(\s*>\s*\.input:not\(:focus-visible\)\s*\)/);
+      }
+    });
+
+    it('FE-3 · invalid + keyboard focus preserves ring channel (outline-color → danger), not an added border', () => {
+      expect(css).toMatch(
+        /aria-invalid[^{]*:focus-visible[^{]*\{[^}]*outline-color\s*:[^;}]*--prismui-text-danger/,
+      );
+    });
+
+    it('FE-1 · keyboard-focus ring respects disabled + unstyled guards', () => {
+      // The keyboard-focus rule must still honor the two universal exclusions.
+      const ringRule = css.match(
+        /\.root:has\(\s*>\s*\.input:focus-visible\s*\)[^{]*\{/,
+      );
+      expect(ringRule).not.toBeNull();
+      const ringSelector = ringRule![0];
+      expect(ringSelector).toMatch(/:not\(\[data-disabled\]\)/);
+      expect(ringSelector).toMatch(/:not\(\[data-variant='unstyled'\]\)/);
     });
   });
 });
