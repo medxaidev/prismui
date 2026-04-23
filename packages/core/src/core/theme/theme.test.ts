@@ -232,6 +232,10 @@ describe('Theme System', () => {
         state: {
           disabled: { opacity: 0.5, cursor: 'not-allowed' },
         },
+        focusPointerHalo: {
+          width: '2px',
+          color: 'rgba(0, 0, 0, 0.16)',
+        },
         focusRing: {
           width: '2px',
           offset: '2px',

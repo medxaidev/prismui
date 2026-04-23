@@ -144,6 +144,36 @@ export interface PrismUITheme<
     color: string;
   };
   /**
+   * Focus Pointer-Halo tokens (Switch v1.0 OQ-S-7 · focus-behavior.md §4.3).
+   *
+   * Controls the appearance of the pointer-focus "halo" — the weak-signal
+   * channel in the mode-B真分轨 focus contract. Applied via `box-shadow`
+   * on `:focus:not(:focus-visible)` when the element is non-text-input
+   * (UA does NOT force `:focus-visible` for <button role="switch"> etc.,
+   * so the selector genuinely matches pointer focus).
+   *
+   * Injected as CSS Variables:
+   *   --prismui-focus-pointer-halo-width  → box-shadow spread radius
+   *   --prismui-focus-pointer-halo-color  → halo color (CSS color value)
+   *
+   * Contract scope (see `focus-behavior.md` §4.3 / Switch `design.md` §11.1):
+   * PrismUI's official default + official theme preset MUST preserve the
+   * halo channel for components that declare mode-B真分轨 (currently only
+   * Switch carries this contract). Users who override via
+   * `classNames` / `styles` / `vars` retain that SR-1 right; the runtime
+   * does NOT block such overrides and they are not in the test scope.
+   *
+   * Separate from `focusRing` because the two channels have intentionally
+   * different visual weights:
+   *   - focusRing  — strong-signal (keyboard a11y · WCAG 2.4.7 mandatory)
+   *   - focusPointerHalo — weak-signal (pointer confirmation · optional
+   *                        per Surface, mandatory on C-2 mode-B carriers)
+   */
+  focusPointerHalo: {
+    width: CSSLength;
+    color: string;
+  };
+  /**
    * Text Role Layer (Step 3.8)
    *
    * Maps abstract text roles to structured palette references.

@@ -245,6 +245,10 @@ export function selectPalette(
  * - --prismui-focus-ring-offset  → outline offset for :focus-visible
  * - --prismui-focus-ring-color   → outline color (CSS value, not ColorRef)
  *
+ * Focus pointer-halo (Switch v1.0 OQ-S-7 · focus-behavior.md §4.3):
+ * - --prismui-focus-pointer-halo-width  → box-shadow spread for :focus:not(:focus-visible)
+ * - --prismui-focus-pointer-halo-color  → halo color (CSS value)
+ *
  * Text roles (Step 3.8 — Text Role Layer):
  * - --prismui-text-{role}        → resolved from theme.textRoles[role]
  *   Roles: primary | secondary | disabled | danger | warning | success | info
@@ -373,6 +377,15 @@ export function generateCSSVariables(
   vars['--prismui-focus-ring-width'] = String(theme.focusRing.width);
   vars['--prismui-focus-ring-offset'] = String(theme.focusRing.offset);
   vars['--prismui-focus-ring-color'] = theme.focusRing.color;
+
+  // ── Focus Pointer-Halo (mode-B真分轨 weak-signal channel) ─────────────────
+  // Companion to focusRing; consumed by Switch and future non-text-input
+  // C-2 Abstract controls on the `:focus:not(:focus-visible)` selector.
+  // See `focus-behavior.md` §4.3 and Switch `design.md` §11.1 for scope.
+  vars['--prismui-focus-pointer-halo-width'] = String(
+    theme.focusPointerHalo.width,
+  );
+  vars['--prismui-focus-pointer-halo-color'] = theme.focusPointerHalo.color;
 
   // ── Text Roles (Step 3.8) ─────────────────────────────────────────────────
   // Structured TextRoleRef → palette lookup. See stage-3-step-(stage-9)-8.md §3.

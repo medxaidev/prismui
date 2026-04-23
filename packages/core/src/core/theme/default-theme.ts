@@ -144,6 +144,22 @@ export const defaultTheme: PrismUITheme = {
     color: 'var(--prismui-color-primary)',
   },
 
+  // ========== Focus Pointer-Halo System (mode-B真分轨) ==========
+  // Weak-signal companion to `focusRing`. Currently consumed ONLY by
+  // Switch (the sole mode-B真分轨 carrier in v1). Future non-text-input
+  // C-2 Abstract controls (Checkbox button-host, custom Switch variants)
+  // will reuse this token pair via `var(--prismui-focus-pointer-halo-*)`.
+  //
+  // Default color is a low-alpha neutral overlay that reads on any theme
+  // background — intentionally NOT tied to primary color, so the halo
+  // visually separates from the (strong) keyboard ring which uses primary.
+  // Themes may override to taste; the contract lives in focus-behavior.md
+  // §4.3 and Switch design.md §11.1.
+  focusPointerHalo: {
+    width: '2px',
+    color: 'rgba(0, 0, 0, 0.16)',
+  },
+
   // ========== Text Role System (Step 3.8) ==========
   textRoles: defaultTextRoles,
 

@@ -370,6 +370,29 @@ describe("generateCSSVariables", () => {
     expect(vars["--prismui-focus-ring-offset"]).toBe("4px");
     expect(vars["--prismui-focus-ring-color"]).toBe("#0055ff");
   });
+
+  it("generates focus pointer-halo variables from defaultTheme", () => {
+    const vars = generateCSSVariables(defaultTheme, "light");
+    expect(vars["--prismui-focus-pointer-halo-width"]).toBe("2px");
+    expect(vars["--prismui-focus-pointer-halo-color"]).toBe(
+      "rgba(0, 0, 0, 0.16)",
+    );
+  });
+
+  it("generates focus pointer-halo variables from custom focusPointerHalo override", () => {
+    const customTheme = {
+      ...defaultTheme,
+      focusPointerHalo: {
+        width: '4px' as const,
+        color: 'rgba(0, 85, 255, 0.25)',
+      },
+    };
+    const vars = generateCSSVariables(customTheme, "light");
+    expect(vars["--prismui-focus-pointer-halo-width"]).toBe("4px");
+    expect(vars["--prismui-focus-pointer-halo-color"]).toBe(
+      "rgba(0, 85, 255, 0.25)",
+    );
+  });
 });
 
 // ─────────────────────────────────────────────────────────────────
