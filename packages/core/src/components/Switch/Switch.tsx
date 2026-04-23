@@ -15,6 +15,7 @@ import { useControllableState } from '../../hooks';
 import { useFieldControlProps } from '../Field/useFieldControlProps';
 import { useFieldDataAttrs } from '../Field/useFieldDataAttrs';
 import {
+  warnAHrefHost,
   warnAriaPressedOverride,
   warnButtonTypeOverride,
   warnIndeterminate,
@@ -261,18 +262,31 @@ export const Switch = factory<SwitchOwnProps>(
       value,
     } = componentProps;
 
-    // ── DEV invariants (S-1a / S-10 / S-11) ──────────────────────────────
-    // All three short-circuit in production builds inside the helper
-    // module. We probe domProps BEFORE the destructure so filtered keys
-    // (aria-pressed) are still detected.
+    // ── DEV invariants (S-1a / S-10 / S-10a / S-11) ───────────────────
+    // All short-circuit in production builds inside the helper module. We
+    // probe domProps BEFORE the destructure so filtered keys (aria-pressed)
+    // are still detected.
+    const rawHref = (domProps as Record<string, unknown>).href;
     if (process.env.NODE_ENV !== 'production') {
       warnAriaPressedOverride(domProps as Record<string, unknown>);
       warnIndeterminate(domProps as Record<string, unknown>);
-      warnButtonTypeOverride(
-        Element,
-        (domProps as Record<string, unknown>).type,
-      );
+      warnAHrefHost(Element, rawHref !== undefined);
+      // S-11 warn is deferred below so it can use the EffectiveElement
+      // after the S-10a fallback resolves (same pattern as Checkbox).
     }
+
+    // ── S-10a · Host whitelist + blacklist (🔴 Round 1 audit closure) ─────
+    // `<a href>` combination is the ONLY blacklisted polymorphic form.
+    // Fallback strategy A (mirrors Checkbox CB-10 / OQ-CB-12): silently
+    // switch to <button>, strip href. All other hosts (button / a without
+    // href / div / span / custom) pass through unchanged. The DEV warn
+    // has already fired above.
+    const shouldFallbackToButton = Element === 'a' && rawHref !== undefined;
+    // JSX convention requires capitalized identifiers for dynamic element
+    // types — lower-case `element` would be parsed as a DOM tag literal.
+    const EffectiveElement: React.ElementType = shouldFallbackToButton
+      ? 'button'
+      : Element;
 
     // ── Checked state (S-2) ──────────────────────────────────────────────
     // Strictly binary `boolean` generic (no 'mixed') — differentiates Switch
@@ -294,21 +308,23 @@ export const Switch = factory<SwitchOwnProps>(
       'action',
     );
 
-    // ── Destructure DOM props ────────────────────────────────────────────
-    // Shape matches ActionSurfaceDomProps plus the three keys we filter:
+    // ── Destructure DOM props ────────────────────────────────
+    // Shape matches ActionSurfaceDomProps plus the keys we filter:
     //   - `aria-pressed`    — S-1a: semantic conflict, discarded
     //   - `indeterminate`   — S-1:  binary only, discarded (DEV warn above)
     //   - `role`            — component forces `role="switch"`
+    //   - `href`            — S-10a fallback: discarded when Element was 'a'
     //
     // Spread order at render bottom: passthrough → actionBehavior → our
     // own role / aria-checked / type → field-derived attrs → data-attrs.
-    // This preserves "component > user" for the S-1 / S-1a / S-11 triad.
+    // This preserves "component > user" for the S-1 / S-1a / S-10a / S-11 quartet.
     const {
       onClick: userOnClick,
       onKeyDown: userOnKeyDown,
       children: userChildren,
       tabIndex: userTabIndex,
       type: userType,
+      href: userHref,
       role: _discardedUserRole,
       'aria-pressed': _discardedAriaPressed,
       indeterminate: _discardedIndeterminate,
@@ -317,10 +333,23 @@ export const Switch = factory<SwitchOwnProps>(
       children?: React.ReactNode;
       'aria-pressed'?: unknown;
       indeterminate?: unknown;
+      href?: string;
     };
     void _discardedUserRole;
     void _discardedAriaPressed;
     void _discardedIndeterminate;
+
+    // S-11 DEV warn uses the post-fallback element (if a user passed
+    // component="a" + href AND type="submit", both warnings should fire).
+    if (process.env.NODE_ENV !== 'production') {
+      warnButtonTypeOverride(EffectiveElement, userType);
+    }
+
+    // S-10a fallback: when falling back from 'a' to 'button', we must NOT
+    // re-inject href (stripped above). When the user supplied component="a"
+    // WITHOUT href, userHref is undefined and we pass the original 'a' host
+    // through. Non-fallback hosts carry userHref in their passthrough.
+    const shouldPreserveHref = !shouldFallbackToButton && userHref !== undefined;
 
     // ── handleClick · the ONLY component-layer extension to Action Behavior
     // Ordering (load-bearing):
@@ -422,25 +451,28 @@ export const Switch = factory<SwitchOwnProps>(
     // Hook handles pointer swallow, keyboard swallow, keyboard activation
     // (Space on polymorphic non-button), tab-focus parity, and role='button'
     // injection (which we override to 'switch' in the spread below).
-    const actionBehavior = resolvePolymorphicActionBehavior(Element, {
+    const actionBehavior = resolvePolymorphicActionBehavior(EffectiveElement, {
       isInteractiveDisabled,
       onClick: handleClick,
       onKeyDown: userOnKeyDown,
       tabIndex: userTabIndex,
       // User `role` was discarded above — Switch always emits role="switch".
       role: undefined,
-      href: passthroughDomProps.href as string | undefined,
+      // When we fell back, href is already stripped; otherwise pass-through.
+      href: shouldPreserveHref ? userHref : undefined,
     });
 
     // ── S-11 · type="button" UNCONDITIONAL override on <button> host ─────
     // Even if userType === 'submit' / 'reset', we override to 'button'.
     // The DEV warn above (warnButtonTypeOverride) already flagged the
-    // intent mismatch; here we quietly prevent the bug.
+    // intent mismatch; here we quietly prevent the bug. Uses the
+    // EffectiveElement (post S-10a fallback) so a fell-back <a href>
+    // also enforces type="button".
     //
     // Polymorphic non-button hosts don't receive `type` at all — `<div>`
-    // and `<a>` either ignore or conflict with it.
+    // and `<a>` (without href) either ignore or conflict with it.
     const effectiveButtonType =
-      Element === 'button' ? 'button' : userType;
+      EffectiveElement === 'button' ? 'button' : userType;
 
     // ── S-1 · aria-checked / data-checked serialization ──────────────────
     // Always a concrete string — never undefined, never empty, never
@@ -497,7 +529,7 @@ export const Switch = factory<SwitchOwnProps>(
     //  10. fieldAwareStateAttrs        — Field-aware overlay on state attrs
     //  11. disabilityAttrs             — a11y boundary (last)
     return (
-      <Element
+      <EffectiveElement
         ref={ref}
         {...styles.getRootProps()}
         {...passthroughDomProps}
@@ -533,7 +565,7 @@ export const Switch = factory<SwitchOwnProps>(
             collide with the sliding knob. In Field scenarios children
             should be empty — labels belong to Field.Label. */}
         {userChildren}
-      </Element>
+      </EffectiveElement>
     );
   },
 );

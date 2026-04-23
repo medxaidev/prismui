@@ -22,6 +22,18 @@ import type * as React from 'react';
  *          the TypeScript layer already refuses the prop, so this branch only
  *          catches JS / `as any` escape hatches.
  *
+ *   S-10a · user-supplied `component="a"` + `href` is rejected
+ *           🔴 Round 1 audit closure (landed together with Checkbox v1.0).
+ *           `resolvePolymorphicActionBehavior` treats `<a href>` as "native
+ *           activating" — it simulates neither Space nor preventDefault on
+ *           the anchor, relying on the browser's native Enter-to-navigate
+ *           behavior. But Space on `<a href>` only scrolls the page in UA,
+ *           which violates S-10's Space-activation contract. Combined with
+ *           `role="switch"` this also introduces a semantic conflict
+ *           (switch vs link). Component DEV-warns + falls back to
+ *           `<button>` host (strips `href`). Mirrors Checkbox CB-10 /
+ *           OQ-CB-12 strategy A (see Checkbox/design.md §CB-10 / §10).
+ *
  *   S-11 · user-supplied `type="submit"` / `type="reset"` overridden to "button"
  *          🔴 MOST DANGEROUS silent bug: a Switch inside a <form> that renders
  *          as <button type="submit"> will trigger form submission on click,
@@ -46,6 +58,8 @@ const _state =
         warnedAriaPressedOverride: false,
         /** S-10 — user tried to pass indeterminate / aria-checked="mixed" */
         warnedIndeterminate: false,
+        /** S-10a — user tried to combine component="a" with href */
+        warnedAHrefHost: false,
         /** S-11 — user tried to pass type="submit" / "reset" on a <button> host */
         warnedButtonTypeOverride: false,
       }
@@ -98,6 +112,40 @@ export function warnIndeterminate(domProps: Record<string, unknown>): void {
 }
 
 /**
+ * S-10a · warn once if the user combined `component="a"` with `href`.
+ * 🔴 Round 1 audit closure. Component falls back to `<button>` host
+ * (strategy A · mirrors Checkbox CB-10 / OQ-CB-12) — `href` is stripped,
+ * role="switch" is emitted on the button, and Space activation works
+ * normally.
+ *
+ * @param Element  — resolved polymorphic host element
+ * @param hasHref  — `true` when domProps contains `href` (any value,
+ *                   including `""` — any presence triggers the escape)
+ */
+export function warnAHrefHost(
+  Element: React.ElementType,
+  hasHref: boolean,
+): void {
+  if (process.env.NODE_ENV === 'production') return;
+  if (_state!.warnedAHrefHost) return;
+  if (Element !== 'a') return;
+  if (!hasHref) return;
+  _state!.warnedAHrefHost = true;
+  console.error(
+    '[PrismUI] <Switch component="a" href="..."> is not supported — ' +
+      '`<a href>` is treated as "native activating" by the polymorphic ' +
+      'action hook, which means Space does NOT simulate click (it only ' +
+      'scrolls the page in UA). This would silently break S-10\'s Space ' +
+      'activation contract and conflicts with `role="switch"` (switch vs ' +
+      'link semantics). Switch has fallen back to `<button>` host — ' +
+      '`href` is stripped, `role="switch"` is emitted, Space works. To ' +
+      'use <a> as the Switch host, omit `href`. To navigate on toggle, ' +
+      'call `router.push` / `history.push` from `onCheckedChange`. This ' +
+      'error is shown once per process.',
+  );
+}
+
+/**
  * S-11 · warn once if the user passed `type="submit"` / `type="reset"` on a
  * Switch rendered as a `<button>`. The component UNCONDITIONALLY overrides
  * to `type="button"` to prevent silent form submission. Polymorphic hosts
@@ -132,6 +180,7 @@ export function __resetSwitchInvariantWarnings(): void {
   if (!_state) return;
   _state.warnedAriaPressedOverride = false;
   _state.warnedIndeterminate = false;
+  _state.warnedAHrefHost = false;
   _state.warnedButtonTypeOverride = false;
 }
 

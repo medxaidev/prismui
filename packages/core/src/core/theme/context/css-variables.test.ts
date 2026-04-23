@@ -371,12 +371,29 @@ describe("generateCSSVariables", () => {
     expect(vars["--prismui-focus-ring-color"]).toBe("#0055ff");
   });
 
-  it("generates focus pointer-halo variables from defaultTheme", () => {
+  it("generates focus pointer-halo variables from defaultTheme (dark-mode adaptive)", () => {
+    // 🔴 v1.0.2 Round 1 cleanup: halo color is `color-mix` of currentColor,
+    // which self-adapts to the ambient text color (invisible fixed-black
+    // default was replaced). See `default-theme.ts` focusPointerHalo comment
+    // block for the dark-mode gap reasoning.
     const vars = generateCSSVariables(defaultTheme, "light");
     expect(vars["--prismui-focus-pointer-halo-width"]).toBe("2px");
     expect(vars["--prismui-focus-pointer-halo-color"]).toBe(
-      "rgba(0, 0, 0, 0.16)",
+      "color-mix(in srgb, currentColor 16%, transparent)",
     );
+  });
+
+  it("halo color default is NOT a hardcoded rgb/hex literal (self-adapts to theme)", () => {
+    // Regression guard for the Round 1 cleanup: if the default ever regresses
+    // back to `rgba(0,0,0,...)` or `#xxx` literals, the halo is light-mode-only
+    // and becomes invisible in dark mode. Any future refactor that hardcodes a
+    // color here should be accompanied by either (a) per-palette halo tokens
+    // or (b) an explicit waiver in focus-behavior.md.
+    const vars = generateCSSVariables(defaultTheme, "light");
+    const haloColor = vars["--prismui-focus-pointer-halo-color"];
+    // Allow color-mix() / var() / hsl() / oklch() — reject bare rgb/rgba/hex.
+    expect(haloColor).not.toMatch(/^rgba?\(\s*\d/);
+    expect(haloColor).not.toMatch(/^#[0-9a-f]{3,8}$/i);
   });
 
   it("generates focus pointer-halo variables from custom focusPointerHalo override", () => {

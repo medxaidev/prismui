@@ -145,19 +145,36 @@ export const defaultTheme: PrismUITheme = {
   },
 
   // ========== Focus Pointer-Halo System (mode-B真分轨) ==========
-  // Weak-signal companion to `focusRing`. Currently consumed ONLY by
-  // Switch (the sole mode-B真分轨 carrier in v1). Future non-text-input
-  // C-2 Abstract controls (Checkbox button-host, custom Switch variants)
-  // will reuse this token pair via `var(--prismui-focus-pointer-halo-*)`.
+  // Weak-signal companion to `focusRing`. Consumed by C-2 Abstract controls
+  // that are genuine mode-B carriers — Switch (v1.0 registered this token)
+  // and Checkbox (v1.0 is the second cross-component carrier). Future
+  // non-text-input C-2 Abstracts will reuse this token pair via
+  // `var(--prismui-focus-pointer-halo-*)`.
   //
-  // Default color is a low-alpha neutral overlay that reads on any theme
-  // background — intentionally NOT tied to primary color, so the halo
-  // visually separates from the (strong) keyboard ring which uses primary.
-  // Themes may override to taste; the contract lives in focus-behavior.md
-  // §4.3 and Switch design.md §11.1.
+  // 🔴 Dark-mode adaptivity (v1.0.2 Round 1 cleanup closure):
+  //   The halo color uses `color-mix(in srgb, currentColor 16%, transparent)`
+  //   so it AUTOMATICALLY inherits the ambient text color — dark text on
+  //   light backgrounds yields a dark halo; light text on dark backgrounds
+  //   yields a light halo. This replaces the original `rgba(0, 0, 0, 0.16)`
+  //   hardcoded black, which was invisible on dark-mode surfaces.
+  //
+  //   `currentColor` resolves to the component's `color` property, which
+  //   inherits from the page's text color — a semantic signal that is
+  //   always theme-appropriate. The 16% alpha keeps the halo visually
+  //   weaker than the (strong) keyboard ring, preserving the mode-B
+  //   visual hierarchy mandated by focus-behavior.md §4.3.
+  //
+  //   Intentionally NOT tied to primary color: the ring already carries
+  //   primary, so keeping the halo neutral avoids double-signaling the same
+  //   channel and reserves the primary color for strong focus indication.
+  //
+  //   Browser support: `color-mix()` is CSS Color Module Level 5 — Chrome
+  //   111+, Safari 16.2+, Firefox 113+. All browsers in PrismUI's target
+  //   matrix (modern evergreen + Next.js SSR). Themes may override to a
+  //   legacy `rgba(...)` value if older browser support is required.
   focusPointerHalo: {
     width: '2px',
-    color: 'rgba(0, 0, 0, 0.16)',
+    color: 'color-mix(in srgb, currentColor 16%, transparent)',
   },
 
   // ========== Text Role System (Step 3.8) ==========

@@ -356,8 +356,12 @@ describe('Switch', () => {
       expect(root.getAttribute('role')).toBe('switch');
     });
 
-    it('polymorphic <a href> carries role="switch" (overrides link role)', () => {
-      const { container } = render(<Switch component="a" href="#x" />);
+    it('polymorphic <a> (no href) carries role="switch"', () => {
+      // 🔴 S-10a Round 1 audit closure: <a href> is blacklisted (falls back
+      // to <button>) so this test now uses <a> WITHOUT href, which is the
+      // whitelisted form. The fallback path is covered by its own describe
+      // block below ("S-10a <a href> blacklist").
+      const { container } = render(<Switch component="a" />);
       const root = container.firstElementChild as HTMLElement;
       expect(root.tagName).toBe('A');
       expect(root.getAttribute('role')).toBe('switch');
@@ -666,8 +670,10 @@ describe('Switch', () => {
       expect(container.firstElementChild!.tagName).toBe('BUTTON');
     });
 
-    it('renders <a> when component="a"', () => {
-      const { container } = render(<Switch component="a" href="#x" />);
+    it('renders <a> when component="a" (no href · S-10a whitelist)', () => {
+      // 🔴 S-10a Round 1 audit closure: <a href> falls back to <button>;
+      // bare <a> is the only whitelisted anchor form for Switch.
+      const { container } = render(<Switch component="a" />);
       expect(container.firstElementChild!.tagName).toBe('A');
     });
 
@@ -692,6 +698,41 @@ describe('Switch', () => {
       const { container } = render(<Switch component="div" />);
       const root = container.firstElementChild as HTMLElement;
       expect(root.getAttribute('role')).toBe('switch');
+    });
+  });
+
+  // ─────────────────────────────────────────────────────────────────────
+  // 15a · S-10a <a href> blacklist (🔴 Round 1 audit closure) (3)
+  //
+  // Mirrors Checkbox CB-10 blacklist (design.md Round 1 P0-1). Encodes the
+  // fact that `resolvePolymorphicActionBehavior` treats `<a href>` as
+  // native-activating (no Space simulation), which silently breaks S-10's
+  // Space contract. Fallback strategy A: switch to `<button>` host, strip
+  // `href`, emit `role="switch"`. DEV warn fires once per process.
+  // ─────────────────────────────────────────────────────────────────────
+  describe('S-10a <a href> blacklist (🔴 Round 1 audit closure)', () => {
+    it('component="a" + href triggers DEV warn (once per process)', () => {
+      render(<Switch component="a" href="/x" />);
+      expect(errorSpy).toHaveBeenCalled();
+      const first = errorSpy.mock.calls.length;
+      render(<Switch component="a" href="/y" />);
+      expect(errorSpy.mock.calls.length).toBe(first);
+    });
+
+    it('component="a" + href falls back to <button> host (strategy A)', () => {
+      const { container } = render(<Switch component="a" href="/x" />);
+      // Fallback: rendered as <button> (not <a>). href is stripped.
+      expect(container.querySelector('button[role="switch"]')).toBeInTheDocument();
+      expect(container.querySelector('a')).toBeNull();
+    });
+
+    it('post-fallback click activation works (S-10 contract restored)', () => {
+      const handler = vi.fn();
+      const { container } = render(
+        <Switch component="a" href="/x" onCheckedChange={handler} />,
+      );
+      fireEvent.click(container.querySelector('button[role="switch"]')!);
+      expect(handler).toHaveBeenCalledWith(true);
     });
   });
 
