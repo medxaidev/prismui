@@ -1,3 +1,39 @@
+/**
+ * `@prismui/core` public API barrel.
+ *
+ * Layering rule (strictly hierarchical · never reach past one level):
+ *
+ * ```
+ * packages/core/src/index.ts                         ← THIS FILE (package root)
+ *   ├── ./core/index.ts                              ← core systems aggregator
+ *   │     └── ./core/{theme|state|props|size|action|radius|variant|
+ *   │                component|styles|polymorphic}/index.ts
+ *   ├── ./components/index.ts                        ← components aggregator
+ *   │     └── ./components/{Button|IconButton|ToggleButton|Input|Field|Switch}/index.ts
+ *   └── ./hooks/index.ts                             ← hooks aggregator
+ * ```
+ *
+ * Each level may ONLY re-export from its immediate children. Skipping levels
+ * (e.g. the root importing directly from `./core/theme`) is forbidden —
+ * routing everything through the aggregator gives us:
+ *
+ *   1. **Single source of truth** — the sub-barrel decides what is public.
+ *      A refactor inside a system can add / rename internal files freely
+ *      as long as the sub-barrel's surface is preserved; the package
+ *      root is unaffected.
+ *   2. **Centralized collision detection** — any cross-system name clash
+ *      produces a TS duplicate-export error at the aggregator that owns
+ *      both offenders, exactly where humans look when resolving it.
+ *   3. **Predictable layering** — new features land in exactly ONE place
+ *      (the sub-barrel). The aggregators are boring "one line per child"
+ *      files that almost never change.
+ *
+ * The small legacy helpers (`CoreConfig` / `hello`) are kept at the root
+ * because they are not owned by any specific system — they predate the
+ * current layering and are scheduled for removal once the demo / docs
+ * site drops its dependency on them.
+ */
+
 export interface CoreConfig {
   name: string;
 }
@@ -6,175 +42,7 @@ export const hello = () => {
   console.log('Hello from core!');
 };
 
-// Theme System (Stage 3 + Stage 2 Extension)
-export {
-  defaultTheme,
-  defaultColorFamilies,
-  defaultLightPalette,
-  defaultDarkPalette,
-  // Theme Runtime (Stage 2 extension)
-  ThemeContext,
-  useTheme,
-  useThemeOptional,
-  PrismUIProvider,
-  resolveColorRef,
-  generateCSSVariables,
-  applyDiffCSSVariables,
-  // Theme Override Model (Stage 7.2)
-  createTheme,
-  deepMerge,
-  // Color Scheme Management (Stage 7.3)
-  ColorSchemeContext,
-  ColorSchemeProvider,
-  useColorScheme,
-  useColorSchemeOptional,
-} from "./core/theme";
-export type { DeepPartial } from "./core/theme";
-export type {
-  ColorScheme,
-  ColorSchemeStrategy,
-  ColorSchemeContextValue,
-  ColorSchemeProviderProps,
-} from "./core/theme";
-export type { PrismUIProviderProps } from "./core/theme";
-export type {
-  CSSLength,
-  CSSVarKey,
-  TokenRef,
-  PrismUITheme,
-  PrismUIComponentConfig,
-  SemanticColorToken,
-  PrismUIPalette,
-  SemanticColorName,
-  ColorShade,
-  ColorValue,
-  ColorScale,
-  DefaultColorFamily,
-  PrismUIColorFamilies,
-  ColorRef,
-  SpacingScale,
-  FontSizeScale,
-  FontWeightScale,
-  LineHeightScale,
-  RadiusScale,
-  ShadowScale,
-  BreakpointScale,
-  SpacingValue,
-  FontSizeValue,
-  FontWeightValue,
-  LineHeightValue,
-  RadiusValue,
-  ShadowValue,
-  BreakpointValue,
-} from "./core/theme";
-
-// State System (Stage 5.4)
-export type { PrismuiStateTokens } from "./core/state";
-export { defaultStateTokens, withStateVars, STATE_CSS_VARS } from "./core/state";
-export type { WithStateVarsOptions, StateCssVarKey, StateCssVarName } from "./core/state";
-
-// Props Contract (Stage 5.3)
-export type { VariantProps, SizeProps, DisabledProps, PolymorphicSystemProps } from "./core/props";
-
-// Size System (Stage 5.2)
-export type { PrismuiSize, SizeScale, PrismuiSizeTokens } from "./core/size";
-export { defaultSizeTokens, withSizeVars, SIZE_CSS_VARS } from "./core/size";
-export type { WithSizeVarsOptions, SizeCssVarKey, SizeCssVarName } from "./core/size";
-
-// Action Surface Behavior (Stage 3 Step 10 · A-2 / B-2 / F-1)
-// Consolidates polymorphic render-behavior — Pointer (click swallow) +
-// Keyboard (Enter/Space swallow + activation) + Tab-focus parity +
-// role="button" a11y contract — for all Action components.
-// `type="button"` default (B-1) lives at the component layer
-// (see Button.tsx) — a pure HTML attribute default with no state coupling.
-// `isActivationKey` is exported as an Action-system primitive for use by
-// other keyboard-aware Action hooks (Menu.Item / Tabs.Trigger / ...).
-export {
-  resolvePolymorphicActionBehavior,
-  isActivationKey,
-} from "./core/action";
-export type {
-  ResolvePolymorphicActionInputs,
-  ResolvePolymorphicActionResult,
-  ActionSurfaceDomProps,
-} from "./core/action";
-
-// Radius System (Stage 3 Step 10 · post-Button/Input DRY extraction)
-export type { PrismuiRadius, Radius } from "./core/radius";
-export { RADIUS_SCALE, resolveRadiusToken } from "./core/radius";
-
-// Variant System (Stage 4)
-export type { Variant, ThemeColor } from "./core/variant";
-export { VARIANTS, THEME_COLORS } from "./core/variant";
-export { variantColorResolver, VARIANT_TO_ROLE } from "./core/variant";
-export type { VariantColorResolverInput, VariantColorOutput } from "./core/variant";
-export { withVariantColors, VARIANT_CSS_VARS } from "./core/variant";
-export type { VariantCssVarKey, VariantCssVarName, WithVariantColorsOptions } from "./core/variant";
-
-// Component Factory System (Stage 6 + Stage 7.4)
-export { useComponentDefaultProps } from './core/component';
-
-// Hooks (first React-hook module — precursor to ToggleButton / Switch /
-// Checkbox / RadioGroup / Select / Dialog / … controllable state needs)
-// Design: @/devdocs/hooks/use-controllable-state.md v0.2
-export { useControllableState } from './hooks';
-export type { ControllableSetter, UseControllableStateOptions } from './hooks';
-
-// Components (Stage 6)
-export { Button } from "./components/Button";
-export type { ButtonProps, ButtonStylesNames, ButtonOwnProps } from "./components/Button";
-
-// IconButton (Stage 9+ · second Action Surface consumer validating §3.7 ROI)
-export { IconButton } from "./components/IconButton";
-export type {
-  IconButtonProps,
-  IconButtonStylesNames,
-  IconButtonOwnProps,
-} from "./components/IconButton";
-
-// ToggleButton (Stage 9+ · third Action Surface consumer · first persistent-
-// state component · first useControllableState consumer)
-// Design: @/devdocs/components/ToggleButton/design.md v0.1
-export { ToggleButton } from "./components/ToggleButton";
-export type {
-  ToggleButtonProps,
-  ToggleButtonStylesNames,
-  ToggleButtonOwnProps,
-  ToggleButtonPressedState,
-} from "./components/ToggleButton";
-
-// Input (Stage 9 — Field Control)
-export { Input } from "./components/Input";
-export type {
-  InputProps,
-  InputOwnProps,
-  InputStylesNames,
-  InputVariant,
-} from "./components/Input";
-
-// Field (Headless form semantic unit — Stage 9)
-export {
-  Field,
-  FieldLabel,
-  FieldDescription,
-  FieldError,
-  FieldContext,
-  useFieldContext,
-  useFieldControlProps,
-} from "./components/Field";
-export type {
-  FieldProps,
-  FieldOwnProps,
-  FieldStylesNames,
-  FieldLabelProps,
-  FieldLabelOwnProps,
-  FieldLabelStylesNames,
-  FieldDescriptionProps,
-  FieldDescriptionOwnProps,
-  FieldDescriptionStylesNames,
-  FieldErrorProps,
-  FieldErrorOwnProps,
-  FieldErrorStylesNames,
-  FieldContextValue,
-  FieldControlPropsInput,
-} from "./components/Field";
+// ── Aggregators (one level down · never reach past) ────────────────────────
+export * from './core';
+export * from './components';
+export * from './hooks';

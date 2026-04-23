@@ -1,0 +1,300 @@
+/* ─────────────────────────────────────────────────────────────────────────
+ * Switch · Control Surface · C-2 Abstract · persistent checked state
+ *
+ * Design reference: `@/devdocs/components/Switch/design.md` v0.1.2 Round 3.1
+ * Contract references:
+ *   - `component-contract.md` §二 SR-1~9 (shared rules) + §3.7 (Action Behavior)
+ *   - `control-surface.md` §2.3 C-2 + §四 FCP-1~6 + §五 FI-0~5
+ *   - `focus-behavior.md` v1.1 §4.3 C-2 mode-B variant
+ *   - `typography.md` (zero consumption — Switch has no text)
+ *
+ * ── Design Invariants enforced in CSS ────────────────────────────────────
+ *   S-1 · role=switch + aria-checked='true' / 'false' drive every visual.
+ *         No fallback to `[aria-pressed]` or `[data-pressed]` — those
+ *         channels belong to ToggleButton.
+ *
+ *   S-5 · Focus mode B TRUE TWO-CHANNEL (🔴 contract enforced — halo +
+ *         ring must coexist on this component or mode B has no provable
+ *         carrier in PrismUI's entire system). CSS selectors below are
+ *         MUTUALLY EXCLUSIVE (FE-2) — `:focus:not(:focus-visible)` never
+ *         co-fires with `:focus-visible`.
+ *         ⚠️ Official default + official theme preset MUST preserve halo.
+ *             User overrides via `classNames` / `styles` / `vars` are SR-1
+ *             rights and are NOT runtime-blocked and NOT in test scope.
+ *
+ *   S-7 · disabled / loading FREEZE the visual — the pressed-state selectors
+ *         below intentionally OMIT the `:not([data-interactive-disabled])`
+ *         guard that hover / active carry. The opacity dimming on the
+ *         disabled root still communicates "inert" without clearing the
+ *         checked position.
+ *
+ *   S-8 · CSS namespace `--switch-*` (no cross-consumption of
+ *         `--toggle-button-*` / `--input-*`). Size tokens + color tokens
+ *         arrive via `data-size` / `data-color` attribute selectors below.
+ *
+ *   S-9 · v1 has no `variant` prop — no `[data-variant]` branches.
+ *
+ *   FE-1 halo + ring · two distinct visual channels (mode B真分轨)
+ *   FE-2 anti-duplicate-signal · selectors exclusive by construction
+ *   FE-3 invalid × focus · outline-color swap only, no added channels
+ * ─────────────────────────────────────────────────────────────────── */
+
+/* ── Root (the <button role="switch">) ──────────────────────────────────── */
+.root {
+  /* Structural baseline — root is the hit-target + focus-host; track lives
+   * inside. Button reset is exhaustive because polymorphic hosts (`<a>` /
+   * `<div>`) do NOT need these resets but harmlessly receive them. */
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+
+  /* Geometry: root is exactly the track box — track fills 100%/100%. Any
+   * extra outer spacing is a layout concern of the consumer (e.g. Field row). */
+  width:  var(--switch-track-width);
+  height: var(--switch-track-height);
+
+  padding: 0;
+  margin: 0;
+  border: none;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+
+  /* Interaction */
+  cursor: pointer;
+  user-select: none;
+  vertical-align: middle;
+
+  /* Reset browser default — `<button>` native focus ring is superseded by
+   * our `:focus-visible` rule below. Non-button hosts harmless. */
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  outline: none;
+
+  /* Radius — comes from radius system via varsResolver. Default 'full'. */
+  border-radius: var(--switch-track-radius);
+
+  /* Transition — bg / box-shadow / opacity; no `transform` on root.
+   * Thumb transform lives on .thumb itself. */
+  transition:
+    box-shadow var(--switch-transition-duration) var(--switch-transition-easing),
+    opacity    var(--switch-transition-duration) var(--switch-transition-easing);
+}
+
+/* ── Track (outer rail — background layer) ───────────────────────────────
+ * Sits beneath .thumb at full width/height; `data-checked` drives bg. */
+.track {
+  display: block;
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border-radius: inherit;
+  box-sizing: border-box;
+
+  background: var(--switch-track-bg-off);
+  border: var(--switch-track-border-width) solid var(--switch-track-border-off);
+
+  transition:
+    background   var(--switch-transition-duration) var(--switch-transition-easing),
+    border-color var(--switch-transition-duration) var(--switch-transition-easing);
+}
+
+/* ── Thumb (inner sliding knob) ──────────────────────────────────────────
+ * Absolutely positioned so `translateX` drives off→on motion. `will-change`
+ * is intentionally absent — thumb transforms are low-frequency interactive
+ * events, not scroll-driven; adding it would waste a composited layer. */
+.thumb {
+  display: block;
+  position: absolute;
+  top: 50%;
+  left: var(--switch-track-padding);
+  width:  var(--switch-thumb-size);
+  height: var(--switch-thumb-size);
+
+  border-radius: var(--switch-thumb-radius);
+  background: var(--switch-thumb-bg);
+  box-shadow: var(--switch-thumb-shadow);
+
+  /* Resting position — translateY centers on the track. The X translate
+   * flips below via `[data-checked='true']`. */
+  transform: translate(0, -50%);
+
+  transition:
+    transform  var(--switch-transition-duration) var(--switch-transition-easing),
+    background var(--switch-transition-duration) var(--switch-transition-easing),
+    box-shadow var(--switch-transition-duration) var(--switch-transition-easing);
+}
+
+/* ── Checked state (aria-checked='true' / data-checked='true') ────────────
+ * Thumb translates by exactly `--switch-thumb-translate` — the resolver
+ * derives this from (track-width - thumb-size - 2×padding) so the thumb
+ * lands flush against the right edge on any size.
+ *
+ * S-7: these rules OMIT `:not([data-interactive-disabled])` so disabled +
+ * loading preserve the checked visual. Opacity on the root dims the whole
+ * thing uniformly. */
+.root[data-checked='true'] .track {
+  background: var(--switch-track-bg-on);
+  border-color: var(--switch-track-border-on);
+}
+
+.root[data-checked='true'] .thumb {
+  transform: translate(var(--switch-thumb-translate), -50%);
+}
+
+/* ── S-5 · Focus mode B真分轨 (TWO-CHANNEL · contract-enforced) ────────────
+ *
+ * Pointer focus (weak signal — halo):
+ *   `:focus:not(:focus-visible)` fires when focus was gained via pointer
+ *   input (mousedown / touchend). `<button>` is NOT in the UA text-input
+ *   list (focus-behavior.md §2.3), so UA does NOT force `:focus-visible`
+ *   and this selector genuinely matches in Chromium / Firefox / WebKit.
+ *   Halo is drawn as `box-shadow` spread (fills the outside of the track
+ *   radius without extending root layout).
+ *
+ * Keyboard focus (strong signal — outline ring):
+ *   `:focus-visible` matches when focus was gained via Tab or matching
+ *   heuristics. Outline is drawn one step outside the radius.
+ *
+ * The two selectors are MUTUALLY EXCLUSIVE by spec (`:focus-visible` and
+ * `:focus:not(:focus-visible)` cannot both match simultaneously) — FE-2
+ * anti-duplicate-signal guaranteed.
+ *
+ * The fallback chain for the halo color prefers a theme-provided token
+ * (`--prismui-focus-pointer-halo-*`, not yet registered in theme) and
+ * falls back to a neutral alpha overlay.  The fallback preserves the
+ * contract even if the theme layer has not yet shipped OQ-S-7's two new
+ * system tokens (recorded in design.md §10 OQ-S-7). */
+.root:focus:not(:focus-visible):not([data-disabled]) {
+  box-shadow:
+    0 0 0 var(--prismui-focus-pointer-halo-width, 2px)
+    var(--prismui-focus-pointer-halo-color, rgba(0, 0, 0, 0.16));
+}
+
+.root:focus-visible:not([data-disabled]) {
+  outline: var(--prismui-focus-ring-width) solid var(--prismui-focus-ring-color);
+  outline-offset: var(--prismui-focus-ring-offset);
+}
+
+/* ── FE-3 · Invalid × focus (outline-color swap only, no added channel) ─── */
+.root[aria-invalid='true']:focus-visible:not([data-disabled]) {
+  outline-color: var(--prismui-text-danger);
+}
+
+/* Invalid at rest — subtle danger tint on the OFF-track border.
+ * On track doesn't need the tint (filled bg already carries the danger
+ * role via color prop in that theme context); user-override hook is the
+ * track classNames path. */
+.root[aria-invalid='true']:not([data-checked='true']) .track {
+  border-color: var(--prismui-text-danger);
+}
+
+/* ── Disability · root opacity dim (S-7) ─────────────────────────────────
+ * The pressed-state selectors above INTENTIONALLY don't carry a
+ * `:not([data-disabled])` guard — checked visual remains visible, only
+ * dimmed. This matches ToggleButton's T-6 "freeze don't reset" philosophy. */
+.root[data-disabled] {
+  opacity: var(--prismui-state-opacity-disabled);
+  cursor: var(--prismui-state-cursor-disabled);
+}
+
+.root[data-loading='true'] {
+  cursor: var(--prismui-state-cursor-disabled);
+}
+
+/* ── Hover (only when NOT interactive-disabled) ─────────────────────────
+ * Very light bg bump on the OFF track; ON track stays color-prop driven
+ * so color-hover can be user-themed independently via track-bg-on.
+ * Hover selector keeps interactive-disabled guard so disabled / loading
+ * Switches never show the hover bump (matches ToggleButton). */
+.root:hover:not([data-interactive-disabled]):not([data-checked='true']) .track {
+  background: var(--switch-track-bg-off-hover);
+}
+
+.root:hover:not([data-interactive-disabled])[data-checked='true'] .track {
+  background: var(--switch-track-bg-on-hover);
+}
+
+/* ── Size tiers (data-size ← size system) ────────────────────────────────
+ * Locks specific px values per OQ-S-5 signoff choice A. Track height
+ * tracks the 5-tier Size System v3 scale; track width ≈ height × 1.75 for
+ * the classic physical-switch aspect; thumb = height − 2×padding. */
+.root[data-size='xs'] {
+  --switch-track-height:    14px;
+  --switch-track-width:     26px;
+  --switch-track-padding:    2px;
+  --switch-thumb-size:      10px;
+  --switch-thumb-translate: 12px; /* 26 − 10 − 2×2 */
+  --switch-track-border-width: 1px;
+}
+
+.root[data-size='sm'] {
+  --switch-track-height:    16px;
+  --switch-track-width:     30px;
+  --switch-track-padding:    2px;
+  --switch-thumb-size:      12px;
+  --switch-thumb-translate: 14px; /* 30 − 12 − 2×2 */
+  --switch-track-border-width: 1px;
+}
+
+.root[data-size='md'] {
+  --switch-track-height:    20px;
+  --switch-track-width:     36px;
+  --switch-track-padding:    2px;
+  --switch-thumb-size:      16px;
+  --switch-thumb-translate: 16px; /* 36 − 16 − 2×2 */
+  --switch-track-border-width: 1px;
+}
+
+.root[data-size='lg'] {
+  --switch-track-height:    24px;
+  --switch-track-width:     44px;
+  --switch-track-padding:    2px;
+  --switch-thumb-size:      20px;
+  --switch-thumb-translate: 20px; /* 44 − 20 − 2×2 */
+  --switch-track-border-width: 1px;
+}
+
+.root[data-size='xl'] {
+  --switch-track-height:    28px;
+  --switch-track-width:     52px;
+  --switch-track-padding:    2px;
+  --switch-thumb-size:      24px;
+  --switch-thumb-translate: 24px; /* 52 − 24 − 2×2 */
+  --switch-track-border-width: 1px;
+}
+
+/* ── Loading spinner (rendered inside thumb · S-7/OQ-S-9 picked A) ──────
+ * Spinner replaces thumb content; thumb stays in its current position
+ * (no layout shift). Aria-busy is set on root from the component render
+ * path — the keyframe name is Switch-scoped to avoid collision with
+ * Button / IconButton / ToggleButton spinners. */
+@keyframes prismui-switch-spinner-rotate {
+  to { transform: rotate(360deg); }
+}
+
+.thumb[data-loader='true'] > svg {
+  width: 60%;
+  height: 60%;
+  display: block;
+  margin: auto;
+  animation: prismui-switch-spinner-rotate 0.8s linear infinite;
+  transform-origin: 50% 50%;
+}
+
+/* ── Reduced Motion (a11y · IV-A5) ──────────────────────────────────────
+ * Thumb translate still happens (positional state is not motion); what
+ * we disable is the transition curve + loader spin. */
+@media (prefers-reduced-motion: reduce) {
+  .root,
+  .track,
+  .thumb {
+    transition: none;
+  }
+  .thumb[data-loader='true'] > svg {
+    animation: none;
+  }
+}
