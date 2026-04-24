@@ -1,0 +1,43 @@
+/*
+ * Stage-10 · L4 Feedback · ripple visual styles
+ *
+ * Source of truth: `@/devdocs/system/feedback-contract.md` v0.2 §10.2
+ *
+ * Global `.prismui-ripple` class (not CSS-module-scoped) so the same
+ * stylesheet covers every press target regardless of which component
+ * mounts it. Keep this file minimal — geometry variables are injected
+ * at runtime by `rippleFeedback.start(...)`.
+ */
+
+.prismui-ripple {
+  position: absolute;
+  left: calc(var(--ripple-x) - var(--ripple-size) / 2);
+  top: calc(var(--ripple-y) - var(--ripple-size) / 2);
+  width: var(--ripple-size);
+  height: var(--ripple-size);
+  border-radius: 50%;
+  background: currentColor;
+  opacity: 0.3;
+  pointer-events: none;
+  transform: scale(0);
+  animation: prismui-ripple-expand 600ms ease-out forwards;
+}
+
+@keyframes prismui-ripple-expand {
+  to {
+    transform: scale(1);
+    opacity: 0;
+  }
+}
+
+/*
+ * FB-ARCH-2 defense-in-depth layer (§9.1) · NOT the contract's main
+ * reduced-motion guarantee (that lives in `FeedbackController` · matchMedia
+ * gate). This CSS rule only covers the hypothetical path where a ripple
+ * element appears outside the Feedback system wiring.
+ */
+@media (prefers-reduced-motion: reduce) {
+  .prismui-ripple {
+    animation: none;
+  }
+}
