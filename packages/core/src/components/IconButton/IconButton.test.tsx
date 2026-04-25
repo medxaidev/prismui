@@ -12,10 +12,11 @@
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import * as React from 'react';
-import { render } from '@testing-library/react';
+import { render, fireEvent, act } from '@testing-library/react';
 import { IconButton, __resetIconButtonInvariantWarnings } from './index';
 import { PrismUIProvider } from '../../core/theme/provider/PrismUIProvider';
 import { createTheme } from '../../core/theme/create-theme';
+import { glowFeedback } from '../../feedbacks/glow/glow-feedback';
 
 // Shared icon fixture — decorative SVG used across rendering tests.
 const Icon = (props: React.SVGProps<SVGSVGElement>) => (
@@ -731,6 +732,634 @@ describe('IconButton', () => {
       expect(btn.style.getPropertyValue('--button-slot-size')).toBe('');
       // Negative — confirm the old non-kebab candidate was not reintroduced.
       expect(btn.style.getPropertyValue('--iconbutton-size')).toBe('');
+    });
+  });
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // Stage 10 · Phase 5 · Feedback integration (mirrors Button v0.6 Phase 4.1)
+  //
+  // Contract: `@/devdocs/system/feedback-contract.md` v0.6 §10 (rippleFeedback)
+  // + §11 (glowFeedback) + §12.2 (theme path) + §6.4 (focus singleton) + L-F5
+  // (identity guard).
+  //
+  // These tests prove the IconButton wires together L2 `usePress` (press
+  // ingress) + L4 `useFeedback([rippleFeedback, glowFeedback])` (instance
+  // lifecycle) + L3 Action Surface (semantic activation) without collapsing
+  // any of the three contracts into another. The test plan is a 1:1 port of
+  // Button.test.tsx Phase 3 + Phase 4.1 — same 26 cases, adapted to
+  // IconButton's single-slot tree (root + child icon, no inner / label /
+  // section). Passing this matrix proves `COMPONENT_DEFAULT_FEEDBACKS` is a
+  // re-usable pattern, not a Button-specific recipe (Phase 5 acceptance).
+  // ─────────────────────────────────────────────────────────────────────────
+  describe('Phase 5 · Feedback integration', () => {
+    /**
+     * Helper: ripple factory reads `event.width` / `event.height` from the
+     * PressEvent (L2 derives via `getBoundingClientRect()`). jsdom returns
+     * zeros by default, so we stub a fixed rect for deterministic
+     * `--ripple-size` values across test runs.
+     */
+    function stubRect(el: Element, rect: Partial<DOMRect> = {}) {
+      const full: DOMRect = {
+        width: 40,
+        height: 40,
+        left: 0,
+        top: 0,
+        right: 40,
+        bottom: 40,
+        x: 0,
+        y: 0,
+        toJSON: () => ({}),
+        ...rect,
+      } as DOMRect;
+      el.getBoundingClientRect = () => full;
+    }
+
+    describe('Visual feedback lifecycle (ripple)', () => {
+      it('pointerdown creates a .prismui-ripple node inside the press target', () => {
+        const { container } = render(
+          <IconButton aria-label="x"><Icon /></IconButton>,
+        );
+        const btn = container.querySelector('button')!;
+        stubRect(btn);
+
+        expect(btn.querySelector('.prismui-ripple')).toBeNull();
+        fireEvent.pointerDown(btn, {
+          pointerId: 1,
+          pointerType: 'mouse',
+          clientX: 10,
+          clientY: 10,
+        });
+        expect(btn.querySelector('.prismui-ripple')).not.toBeNull();
+      });
+
+      it('pointerup → animationend removes the ripple (success path)', () => {
+        const { container } = render(
+          <IconButton aria-label="x"><Icon /></IconButton>,
+        );
+        const btn = container.querySelector('button')!;
+        stubRect(btn);
+
+        fireEvent.pointerDown(btn, {
+          pointerId: 1,
+          pointerType: 'mouse',
+          clientX: 10,
+          clientY: 10,
+        });
+        const ripple = btn.querySelector<HTMLSpanElement>('.prismui-ripple')!;
+        act(() => {
+          fireEvent.pointerUp(btn, { pointerId: 1, pointerType: 'mouse' });
+        });
+        expect(btn.querySelector('.prismui-ripple')).not.toBeNull();
+
+        ripple.dispatchEvent(new Event('animationend'));
+        expect(btn.querySelector('.prismui-ripple')).toBeNull();
+      });
+
+      it('presscancel path (pointer leaves, outside pointerup) removes ripple immediately', () => {
+        const { container } = render(
+          <IconButton aria-label="x"><Icon /></IconButton>,
+        );
+        const btn = container.querySelector('button')!;
+        stubRect(btn);
+
+        fireEvent.pointerDown(btn, {
+          pointerId: 1,
+          pointerType: 'mouse',
+          clientX: 10,
+          clientY: 10,
+        });
+        expect(btn.querySelector('.prismui-ripple')).not.toBeNull();
+
+        fireEvent.pointerLeave(btn, { pointerId: 1, pointerType: 'mouse' });
+        act(() => {
+          const evt = new PointerEvent('pointerup', { pointerId: 1, bubbles: true });
+          window.dispatchEvent(evt);
+        });
+        expect(btn.querySelector('.prismui-ripple')).toBeNull();
+      });
+    });
+
+    describe('Interactive-disabled gating (shares predicate with Action Surface)', () => {
+      it('<IconButton disabled>: pointerdown does NOT create a ripple', () => {
+        const { container } = render(
+          <IconButton aria-label="x" disabled><Icon /></IconButton>,
+        );
+        const btn = container.querySelector('button')!;
+        stubRect(btn);
+
+        fireEvent.pointerDown(btn, { pointerId: 1, pointerType: 'mouse' });
+        expect(btn.querySelector('.prismui-ripple')).toBeNull();
+      });
+
+      it('<IconButton loading>: pointerdown does NOT create a ripple (Action strategy includes loading)', () => {
+        const { container } = render(
+          <IconButton aria-label="x" loading><Icon /></IconButton>,
+        );
+        const btn = container.querySelector('button')!;
+        stubRect(btn);
+
+        fireEvent.pointerDown(btn, { pointerId: 1, pointerType: 'mouse' });
+        expect(btn.querySelector('.prismui-ripple')).toBeNull();
+      });
+
+      it('polymorphic <div disabled>: pointerdown does NOT create a ripple', () => {
+        const { container } = render(
+          <IconButton aria-label="x" component="div" disabled><Icon /></IconButton>,
+        );
+        const el = container.querySelector('div')!;
+        stubRect(el);
+
+        fireEvent.pointerDown(el, { pointerId: 1, pointerType: 'mouse' });
+        expect(el.querySelector('.prismui-ripple')).toBeNull();
+      });
+    });
+
+    describe('FB-1 Polymorphic lifecycle trace (§7.2)', () => {
+      function captureRippleShape(el: HTMLElement) {
+        const ripple = el.querySelector<HTMLSpanElement>('.prismui-ripple');
+        if (!ripple) return { exists: false };
+        return {
+          exists: true,
+          class: ripple.className,
+          x: ripple.style.getPropertyValue('--ripple-x'),
+          y: ripple.style.getPropertyValue('--ripple-y'),
+          size: ripple.style.getPropertyValue('--ripple-size'),
+        };
+      }
+
+      function traceHost(
+        ui: React.ReactElement,
+        query: string,
+      ): ReturnType<typeof captureRippleShape> {
+        const { container, unmount } = render(ui);
+        const el = container.querySelector<HTMLElement>(query)!;
+        stubRect(el, { width: 40, height: 40 });
+        fireEvent.pointerDown(el, {
+          pointerId: 1,
+          pointerType: 'mouse',
+          clientX: 10,
+          clientY: 10,
+        });
+        const shape = captureRippleShape(el);
+        act(() => {
+          fireEvent.pointerUp(el, { pointerId: 1, pointerType: 'mouse' });
+        });
+        const ripple = el.querySelector<HTMLSpanElement>('.prismui-ripple');
+        ripple?.dispatchEvent(new Event('animationend'));
+        unmount();
+        return shape;
+      }
+
+      it('native <button>: baseline lifecycle trace', () => {
+        const shape = traceHost(<IconButton aria-label="x"><Icon /></IconButton>, 'button');
+        expect(shape).toEqual({
+          exists: true,
+          class: 'prismui-ripple',
+          x: '10px',
+          y: '10px',
+          size: '80px',
+        });
+      });
+
+      it('<a href>: lifecycle trace equals <button> baseline (field-level diff empty)', () => {
+        const baseline = traceHost(<IconButton aria-label="x"><Icon /></IconButton>, 'button');
+        const anchor = traceHost(
+          <IconButton aria-label="x" component="a" href="/x"><Icon /></IconButton>,
+          'a',
+        );
+        expect(anchor).toEqual(baseline);
+      });
+
+      it('<div role="button">: lifecycle trace equals <button> baseline (field-level diff empty)', () => {
+        const baseline = traceHost(<IconButton aria-label="x"><Icon /></IconButton>, 'button');
+        const div = traceHost(
+          <IconButton aria-label="x" component="div"><Icon /></IconButton>,
+          'div',
+        );
+        expect(div).toEqual(baseline);
+      });
+    });
+
+    describe('Parallel wiring with Action Surface', () => {
+      it('click → both onClick (Action Surface) and ripple feedback fire', () => {
+        const onClick = vi.fn();
+        const { container } = render(
+          <IconButton aria-label="x" onClick={onClick}><Icon /></IconButton>,
+        );
+        const btn = container.querySelector('button')!;
+        stubRect(btn);
+
+        fireEvent.pointerDown(btn, {
+          pointerId: 1,
+          pointerType: 'mouse',
+          clientX: 10,
+          clientY: 10,
+        });
+        expect(btn.querySelector('.prismui-ripple')).not.toBeNull();
+
+        fireEvent.click(btn);
+        expect(onClick).toHaveBeenCalledTimes(1);
+      });
+
+      it('user onPointerDown runs BEFORE the press feedback ingress (chainHandlers order)', () => {
+        const order: string[] = [];
+        const onPointerDown = vi.fn(() => {
+          order.push(
+            document.querySelector('.prismui-ripple') ? 'after-ripple' : 'before-ripple',
+          );
+        });
+        const { container } = render(
+          <IconButton aria-label="x" onPointerDown={onPointerDown}><Icon /></IconButton>,
+        );
+        const btn = container.querySelector('button')!;
+        stubRect(btn);
+
+        fireEvent.pointerDown(btn, {
+          pointerId: 1,
+          pointerType: 'mouse',
+          clientX: 10,
+          clientY: 10,
+        });
+        expect(onPointerDown).toHaveBeenCalledTimes(1);
+        expect(order).toEqual(['before-ripple']);
+        expect(btn.querySelector('.prismui-ripple')).not.toBeNull();
+      });
+
+      it('polymorphic <div> keyboard activation: press.onKeyDown runs before actionBehavior.onKeyDown', () => {
+        const onClick = vi.fn();
+        const { container } = render(
+          <IconButton aria-label="x" component="div" onClick={onClick}><Icon /></IconButton>,
+        );
+        const el = container.querySelector('div') as HTMLDivElement;
+        el.focus();
+        act(() => {
+          el.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+        });
+        expect(onClick).toHaveBeenCalledTimes(1);
+      });
+    });
+
+    describe('Press unmount cleanup (L-F1)', () => {
+      it('unmount during active press disposes the ripple node synchronously', () => {
+        const { container, unmount } = render(
+          <IconButton aria-label="x"><Icon /></IconButton>,
+        );
+        const btn = container.querySelector('button')!;
+        stubRect(btn);
+
+        fireEvent.pointerDown(btn, {
+          pointerId: 1,
+          pointerType: 'mouse',
+          clientX: 10,
+          clientY: 10,
+        });
+        expect(btn.querySelector('.prismui-ripple')).not.toBeNull();
+
+        unmount();
+        expect(btn.querySelector('.prismui-ripple')).toBeNull();
+      });
+    });
+
+    // ─── Phase 4.1 · Focus Feedback (glow) — adapted to IconButton ───────
+    describe('Focus Feedback (glow) lifecycle', () => {
+      const GLOW_CLASS = 'prismui-glow-active';
+
+      function installFocusVisibleMatches(value: boolean): () => void {
+        const original = HTMLElement.prototype.matches;
+        HTMLElement.prototype.matches = function patched(
+          this: HTMLElement,
+          selectors: string,
+        ): boolean {
+          if (selectors === ':focus-visible') return value;
+          return original.call(this, selectors);
+        } as typeof HTMLElement.prototype.matches;
+        return () => {
+          HTMLElement.prototype.matches = original;
+        };
+      }
+
+      it('onFocus with :focus-visible → adds `prismui-glow-active` class', () => {
+        const restore = installFocusVisibleMatches(true);
+        try {
+          const { container } = render(
+            <IconButton aria-label="x"><Icon /></IconButton>,
+          );
+          const btn = container.querySelector('button')!;
+
+          expect(btn.classList.contains(GLOW_CLASS)).toBe(false);
+          fireEvent.focus(btn);
+          expect(btn.classList.contains(GLOW_CLASS)).toBe(true);
+        } finally {
+          restore();
+        }
+      });
+
+      it('onBlur removes the glow class (via finish → transition trigger)', () => {
+        const restore = installFocusVisibleMatches(true);
+        try {
+          const { container } = render(
+            <IconButton aria-label="x"><Icon /></IconButton>,
+          );
+          const btn = container.querySelector('button')!;
+          fireEvent.focus(btn);
+          expect(btn.classList.contains(GLOW_CLASS)).toBe(true);
+
+          fireEvent.blur(btn);
+          expect(btn.classList.contains(GLOW_CLASS)).toBe(false);
+        } finally {
+          restore();
+        }
+      });
+
+      it('mouse-focused (focusVisible=false) never adds the glow class', () => {
+        const restore = installFocusVisibleMatches(false);
+        try {
+          const { container } = render(
+            <IconButton aria-label="x"><Icon /></IconButton>,
+          );
+          const btn = container.querySelector('button')!;
+          fireEvent.focus(btn);
+          expect(btn.classList.contains(GLOW_CLASS)).toBe(false);
+        } finally {
+          restore();
+        }
+      });
+
+      it('disabled IconButton: data-disabled=true gates the visual via host CSS', () => {
+        const restore = installFocusVisibleMatches(true);
+        try {
+          const { container } = render(
+            <IconButton aria-label="x" disabled><Icon /></IconButton>,
+          );
+          const btn = container.querySelector('button')!;
+          fireEvent.focus(btn);
+          expect(btn.getAttribute('data-disabled')).toBe('true');
+        } finally {
+          restore();
+        }
+      });
+
+      it('loading IconButton: data-loading=true gates the visual via host CSS', () => {
+        const restore = installFocusVisibleMatches(true);
+        try {
+          const { container } = render(
+            <IconButton aria-label="x" loading><Icon /></IconButton>,
+          );
+          const btn = container.querySelector('button')!;
+          fireEvent.focus(btn);
+          expect(btn.getAttribute('data-loading')).toBe('true');
+        } finally {
+          restore();
+        }
+      });
+    });
+
+    describe('User handler chaining (§5.2 order, focus chain)', () => {
+      const GLOW_CLASS = 'prismui-glow-active';
+
+      function installFocusVisibleMatches(value: boolean): () => void {
+        const original = HTMLElement.prototype.matches;
+        HTMLElement.prototype.matches = function patched(
+          this: HTMLElement,
+          selectors: string,
+        ): boolean {
+          if (selectors === ':focus-visible') return value;
+          return original.call(this, selectors);
+        } as typeof HTMLElement.prototype.matches;
+        return () => {
+          HTMLElement.prototype.matches = original;
+        };
+      }
+
+      it('user onFocus runs before feedback ingress adds the class', () => {
+        const restore = installFocusVisibleMatches(true);
+        try {
+          let classWhenUserRan = '';
+          const userOnFocus = vi.fn((e: React.FocusEvent<HTMLButtonElement>) => {
+            classWhenUserRan = e.currentTarget.className;
+          });
+          const { container } = render(
+            <IconButton aria-label="x" onFocus={userOnFocus}><Icon /></IconButton>,
+          );
+          const btn = container.querySelector('button')!;
+          fireEvent.focus(btn);
+
+          expect(userOnFocus).toHaveBeenCalledTimes(1);
+          expect(classWhenUserRan).not.toContain(GLOW_CLASS);
+          expect(btn.classList.contains(GLOW_CLASS)).toBe(true);
+        } finally {
+          restore();
+        }
+      });
+
+      it('user onBlur still fires even though press.onBlur + focus.onBlur also run', () => {
+        const restore = installFocusVisibleMatches(true);
+        try {
+          const userOnBlur = vi.fn();
+          const { container } = render(
+            <IconButton aria-label="x" onBlur={userOnBlur}><Icon /></IconButton>,
+          );
+          const btn = container.querySelector('button')!;
+          fireEvent.focus(btn);
+          fireEvent.blur(btn);
+          expect(userOnBlur).toHaveBeenCalledTimes(1);
+          expect(btn.classList.contains(GLOW_CLASS)).toBe(false);
+        } finally {
+          restore();
+        }
+      });
+    });
+
+    describe('D-1 Resolution priority · props > theme > module default', () => {
+      const GLOW_CLASS = 'prismui-glow-active';
+
+      function installFocusVisibleMatches(value: boolean): () => void {
+        const original = HTMLElement.prototype.matches;
+        HTMLElement.prototype.matches = function patched(
+          this: HTMLElement,
+          selectors: string,
+        ): boolean {
+          if (selectors === ':focus-visible') return value;
+          return original.call(this, selectors);
+        } as typeof HTMLElement.prototype.matches;
+        return () => {
+          HTMLElement.prototype.matches = original;
+        };
+      }
+
+      it('feedbacks={[]} (explicit opt-out) suppresses both ripple AND glow', () => {
+        const restore = installFocusVisibleMatches(true);
+        try {
+          const { container } = render(
+            <IconButton aria-label="x" feedbacks={[]}><Icon /></IconButton>,
+          );
+          const btn = container.querySelector('button')!;
+
+          fireEvent.focus(btn);
+          expect(btn.classList.contains(GLOW_CLASS)).toBe(false);
+          fireEvent.blur(btn);
+
+          fireEvent.pointerDown(btn, { pointerId: 1, pointerType: 'mouse' });
+          expect(btn.querySelector('.prismui-ripple')).toBeNull();
+        } finally {
+          restore();
+        }
+      });
+
+      it('theme.components.IconButton.defaultFeedbacks overrides module default', () => {
+        const restore = installFocusVisibleMatches(true);
+        try {
+          const theme = createTheme({
+            components: { IconButton: { defaultFeedbacks: [] } },
+          });
+          const { container } = renderWithTheme(
+            theme,
+            <IconButton aria-label="x"><Icon /></IconButton>,
+          );
+          const btn = container.querySelector('button')!;
+
+          fireEvent.focus(btn);
+          expect(btn.classList.contains(GLOW_CLASS)).toBe(false);
+        } finally {
+          restore();
+        }
+      });
+
+      it('props.feedbacks wins over theme.components.IconButton.defaultFeedbacks', () => {
+        const restore = installFocusVisibleMatches(true);
+        try {
+          const theme = createTheme({
+            components: { IconButton: { defaultFeedbacks: [] } },
+          });
+          const { container } = renderWithTheme(
+            theme,
+            <IconButton aria-label="x" feedbacks={[glowFeedback]}><Icon /></IconButton>,
+          );
+          const btn = container.querySelector('button')!;
+
+          fireEvent.focus(btn);
+          expect(btn.classList.contains(GLOW_CLASS)).toBe(true);
+        } finally {
+          restore();
+        }
+      });
+    });
+
+    describe('L-F5 blur-refocus identity guard (§6.5 P0-2)', () => {
+      const GLOW_CLASS = 'prismui-glow-active';
+
+      function installFocusVisibleMatches(value: boolean): () => void {
+        const original = HTMLElement.prototype.matches;
+        HTMLElement.prototype.matches = function patched(
+          this: HTMLElement,
+          selectors: string,
+        ): boolean {
+          if (selectors === ':focus-visible') return value;
+          return original.call(this, selectors);
+        } as typeof HTMLElement.prototype.matches;
+        return () => {
+          HTMLElement.prototype.matches = original;
+        };
+      }
+
+      it('blur → immediate refocus keeps the glow class visible (no stale clear)', () => {
+        const restore = installFocusVisibleMatches(true);
+        try {
+          const { container } = render(
+            <IconButton aria-label="x"><Icon /></IconButton>,
+          );
+          const btn = container.querySelector('button')!;
+
+          fireEvent.focus(btn);
+          expect(btn.classList.contains(GLOW_CLASS)).toBe(true);
+
+          fireEvent.blur(btn);
+          expect(btn.classList.contains(GLOW_CLASS)).toBe(false);
+
+          fireEvent.focus(btn);
+          expect(btn.classList.contains(GLOW_CLASS)).toBe(true);
+        } finally {
+          restore();
+        }
+      });
+    });
+
+    describe('Dual-source coexistence (press ⨯ focus)', () => {
+      const GLOW_CLASS = 'prismui-glow-active';
+
+      function installFocusVisibleMatches(value: boolean): () => void {
+        const original = HTMLElement.prototype.matches;
+        HTMLElement.prototype.matches = function patched(
+          this: HTMLElement,
+          selectors: string,
+        ): boolean {
+          if (selectors === ':focus-visible') return value;
+          return original.call(this, selectors);
+        } as typeof HTMLElement.prototype.matches;
+        return () => {
+          HTMLElement.prototype.matches = original;
+        };
+      }
+
+      it('pressing a focused IconButton keeps the glow class while the ripple plays', () => {
+        const restore = installFocusVisibleMatches(true);
+        try {
+          const { container } = render(
+            <IconButton aria-label="x"><Icon /></IconButton>,
+          );
+          const btn = container.querySelector('button')!;
+
+          fireEvent.focus(btn);
+          expect(btn.classList.contains(GLOW_CLASS)).toBe(true);
+
+          fireEvent.pointerDown(btn, {
+            pointerId: 1,
+            pointerType: 'mouse',
+            clientX: 5,
+            clientY: 5,
+          });
+          expect(btn.querySelector('.prismui-ripple')).not.toBeNull();
+          expect(btn.classList.contains(GLOW_CLASS)).toBe(true);
+        } finally {
+          restore();
+        }
+      });
+    });
+
+    describe('Focus unmount cleanup (L-F1 focus source)', () => {
+      const GLOW_CLASS = 'prismui-glow-active';
+
+      function installFocusVisibleMatches(value: boolean): () => void {
+        const original = HTMLElement.prototype.matches;
+        HTMLElement.prototype.matches = function patched(
+          this: HTMLElement,
+          selectors: string,
+        ): boolean {
+          if (selectors === ':focus-visible') return value;
+          return original.call(this, selectors);
+        } as typeof HTMLElement.prototype.matches;
+        return () => {
+          HTMLElement.prototype.matches = original;
+        };
+      }
+
+      it('unmount during active focus disposes the glow instance synchronously', () => {
+        const restore = installFocusVisibleMatches(true);
+        try {
+          const { container, unmount } = render(
+            <IconButton aria-label="x"><Icon /></IconButton>,
+          );
+          const btn = container.querySelector('button')!;
+          fireEvent.focus(btn);
+          expect(btn.classList.contains(GLOW_CLASS)).toBe(true);
+
+          const savedBtn = btn;
+          unmount();
+          expect(savedBtn.classList.contains(GLOW_CLASS)).toBe(false);
+        } finally {
+          restore();
+        }
+      });
     });
   });
 });

@@ -51,14 +51,33 @@
   border: 1px solid var(--prismui-variant-border);
   border-radius: var(--toggle-button-radius);
 
+  /* Stage 10 · Phase 5 · Feedback ripple host (mirrors Button §10.4 host CSS).
+   * `position: relative` makes the press target a positioned containing block
+   * so `.prismui-ripple` (position: absolute, --ripple-x/y in border-box
+   * coordinates) lands inside the ToggleButton instead of the viewport.
+   * `overflow: hidden` clips the expanding ripple circle to the rounded
+   * border — a content clip that does NOT affect the outside `box-shadow`
+   * painted by `:hover` / `:focus-visible` / glow (those layers live outside
+   * the border box and are unaffected by overflow). */
+  position: relative;
+  overflow: hidden;
+
   /* Interaction */
   cursor: pointer;
   user-select: none;
+  /* Stage 10 · Phase 5 post-delivery · transform transition removed.
+   * The original design used `transform: scale(0.98)` on :active to give a
+   * tactile press feel. With the L4 ripple feedback now active (Phase 5)
+   * the scale channel is redundant (ripple = spatial "where", bg shift =
+   * whole-button "state"). Matches the Button v0.4.1 + IconButton v0.7.1
+   * decisions. If a future visual spec wants the scale back, it will land
+   * as a `scaleFeedback` FeedbackFactory so it participates in the Controller
+   * (reduced-motion gating, concurrent press lifecycle) rather than a CSS
+   * `:active` side-channel. See feedback-contract Audit Log v0.7.1. */
   transition:
     background var(--prismui-transition-fast),
     border-color var(--prismui-transition-fast),
     box-shadow var(--prismui-transition-fast),
-    transform var(--prismui-duration-fast) var(--prismui-ease-out),
     opacity var(--prismui-transition-fast);
 
   /* Reset */
@@ -104,16 +123,53 @@
  * "press → release" animation window even on an already-pressed toggle.
  * This is why T-3's contract matters: the data-pressed state shows the
  * logical value, `:active` shows that the current keystroke/click is being
- * registered — two independent channels multiplexed onto the same element. */
+ * registered — two independent channels multiplexed onto the same element.
+ *
+ * Phase 5 post-delivery follow-up: the `transform: scale(0.98)` was removed
+ * (mirrors Button v0.4.1 + IconButton v0.7.1). Ripple carries the spatial
+ * press semantic, bg shift carries the whole-button state. The pressed-
+ * pipeline contract (T-3 channel separation) is unchanged. See feedback-
+ * contract Audit Log v0.7.1 for the full rationale. */
 .root:active:not([data-interactive-disabled]) {
   background: var(--prismui-variant-active-bg);
-  transform: scale(0.98);
 }
 
 /* ── Focus ring — unchanged from Button / IconButton. */
 .root:focus-visible:not([data-disabled]):not([data-loading]) {
   outline: var(--prismui-focus-ring-width) solid var(--prismui-focus-ring-color);
   outline-offset: var(--prismui-focus-ring-offset);
+}
+
+/* ── Stage 10 · Phase 5 · glow feedback host visual (mirrors Button §11.4) ──
+ * Contract: `@/devdocs/system/feedback-contract.md` v0.6 §11.4 Host CSS
+ * prerequisites. `glowFeedback` factory toggles a literal `prismui-glow-active`
+ * class on the focused host — a GLOBAL class under CSS Modules, hence `:global(...)`.
+ *
+ * Guarded the same way as `:focus-visible` above (disabled / loading suppressed)
+ * so the glow tracks the same a11y boundary. The factory already only fires on
+ * `:focus-visible === true` (Controller-derived) so mouse-only focus never reaches
+ * this rule; the CSS guard here defends against manual class injection.
+ *
+ * Visual stack (matches Button v0.6.1):
+ *   · layer 1 — native `outline` (offset / width / primary color) above paints a
+ *     crisp suspended ring in the 2→4px border zone.
+ *   · layer 2 — this rule paints a translucent halo via `box-shadow` with
+ *     `color-mix(... 32%, transparent)`. Low alpha lets the outline gap show
+ *     through, so layered "ring + halo" rather than a thick glued ring.
+ *
+ * Dynamic: `box-shadow` participates in `transition: box-shadow var(--prismui-
+ * transition-fast)` (declared on `.root` above), so glow class toggle fades in/out
+ * while the outline is painted instantly by the UA. P0-3 dual-path cleanup in the
+ * factory guarantees `dispose()` even when transitions are zeroed.
+ *
+ * Toggle-pressed coexistence: when ToggleButton is `data-pressed='true'`, the
+ * pressed visual fills the bg from `--toggle-button-pressed-bg` (T-3 channel).
+ * The glow halo is an OUTSIDE-of-border-box layer — it co-exists with the pressed
+ * fill cleanly; no specificity conflict because they target different CSS
+ * properties (background vs box-shadow). */
+.root:global(.prismui-glow-active):not([data-disabled]):not([data-loading]) {
+  box-shadow: 0 0 0 6px
+    color-mix(in srgb, var(--prismui-focus-ring-color) 32%, transparent);
 }
 
 /* ── Disability — polymorphic-safe visual via data-disabled (Action state).
@@ -189,15 +245,14 @@
 }
 
 /* ── Reduced Motion (a11y · IV-A5) ─────────────────────────────────────
- * Consistent with Button / IconButton: disable all transitions, the active
- * scale(), and the loader rotation. Pressed / hover / disabled visuals
- * remain — they are state indicators, not motion. */
+ * Consistent with Button / IconButton: disable all transitions and the
+ * loader rotation. Pressed / hover / disabled visuals remain — they are
+ * state indicators, not motion. Phase 5 post-delivery: the `:active scale()`
+ * override was removed alongside the `:active` transform itself, so this
+ * block no longer needs a transform reset. */
 @media (prefers-reduced-motion: reduce) {
   .root {
     transition: none;
-  }
-  .root:active:not([data-interactive-disabled]) {
-    transform: none;
   }
   .section[data-loader='true'] > svg {
     animation: none;

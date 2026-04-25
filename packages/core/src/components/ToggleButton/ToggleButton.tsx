@@ -6,6 +6,12 @@ import {
   resolvePolymorphicActionBehavior,
   type ActionSurfaceDomProps,
 } from '../../core/action';
+import { usePress } from '../../core/interaction-events';
+import { useFeedback, type FeedbackFactory } from '../../core/feedback';
+import { useThemeOptional } from '../../core/theme';
+import { chainHandlers } from '../../core/utils';
+import { rippleFeedback } from '../../feedbacks/ripple';
+import { glowFeedback } from '../../feedbacks/glow';
 import { useControllableState } from '../../hooks';
 import type { SlotNames } from '../../core/component';
 import type { VarsResolver, StylesOverride } from '../../core/styles';
@@ -15,6 +21,27 @@ import {
   warnAriaPressedOverride,
 } from './toggle-button-invariants';
 import classes from './ToggleButton.module.css';
+
+// Stage 10 · Phase 5 Feedback integration · dual-source default (mirrors Button v0.6).
+//
+// Module-level constant keeps the array identity stable across every
+// `<ToggleButton>` render — see Button.tsx / IconButton.tsx for the same
+// rationale (`useFeedback` wants stable factory list per OQ-FB-4).
+//
+// Phase 5 D-1 / D-3 decisions: the default ships BOTH ripple (press source)
+// and glow (focus source) so out-of-the-box `<ToggleButton>` gets the
+// dual-source treatment, matching Button + IconButton. Resolution priority:
+//   props.feedbacks  ←  theme.components.ToggleButton.defaultFeedbacks
+//                    ←  TOGGLE_BUTTON_DEFAULT_FEEDBACKS
+// Replacement semantics — `feedbacks={[...]}` fully substitutes the default;
+// `feedbacks={[]}` is the explicit opt-out path.
+//
+// Note on toggle interaction: feedback factories are PURELY visual. They do
+// NOT participate in the pressed-state toggle pipeline (`handleClick` below).
+// `usePress` here serves only as a press-feedback ingress — it sees onPointerDown
+// / onPointerUp / onPointerCancel etc. but does not call onClick or setPressed.
+// The L3 Action Behavior contract still owns the click → toggle path.
+export const TOGGLE_BUTTON_DEFAULT_FEEDBACKS: FeedbackFactory[] = [rippleFeedback, glowFeedback];
 
 /**
  * ToggleButton · Action Surface · persistent pressed state
@@ -124,6 +151,23 @@ export interface ToggleButtonOwnProps extends PolymorphicSystemProps {
    * @default false
    */
   loading?: boolean;
+  /**
+   * L4 Feedback factory list (Phase 5 · D-1 replacement semantics · mirrors Button).
+   *
+   * Resolution priority (highest first):
+   *   1. this prop (`feedbacks={[...]}`) — full substitution
+   *   2. `theme.components.ToggleButton.defaultFeedbacks` — theme override
+   *   3. `TOGGLE_BUTTON_DEFAULT_FEEDBACKS` — `[rippleFeedback, glowFeedback]`
+   *
+   * Pass `feedbacks={[]}` to opt out of all visual feedback. The pressed-state
+   * pipeline (T-1 ARIA / T-7 toggle order) is independent of feedback factories
+   * — opting out only suppresses ripple / glow visuals.
+   *
+   * NOTE: array identity matters less than its contents; `useFeedback` sees
+   * factory list updates via `updateFactories` (§6.6 OQ-FB-12 policy). For
+   * maximum stability, hoist your override array to a module constant.
+   */
+  feedbacks?: FeedbackFactory[];
   children?: React.ReactNode;
 }
 
@@ -186,6 +230,7 @@ export const ToggleButton = factory<ToggleButtonOwnProps>(
       'pressed',
       'defaultPressed',
       'onPressedChange',
+      'feedbacks',
     ] as const,
     // SR-7 single-writer — factory sees these defaults so a bare
     // `<ToggleButton />` emits data-variant='outlined' (§2.5 rationale) /
@@ -226,7 +271,32 @@ export const ToggleButton = factory<ToggleButtonOwnProps>(
       pressed: pressedProp,
       defaultPressed,
       onPressedChange,
+      feedbacks: propsFeedbacks,
     } = componentProps;
+
+    // ── Phase 5 · Feedback factory list resolution (D-1) ─────────────────
+    // Priority chain (highest → lowest):
+    //   1. `props.feedbacks`                                  — call-site
+    //   2. `theme.components.ToggleButton.defaultFeedbacks`   — theme override
+    //   3. `TOGGLE_BUTTON_DEFAULT_FEEDBACKS`                  — module default
+    //
+    // `feedbacks={[]}` is a valid opt-out that short-circuits theme/module.
+    // `useThemeOptional()` returns the default theme without ThemeProvider, so
+    // `theme.components?.ToggleButton?.defaultFeedbacks` is always safe.
+    // eslint-disable-next-line react-hooks/rules-of-hooks
+    const theme = useThemeOptional();
+    const themeFeedbacks =
+      (theme.components?.ToggleButton?.defaultFeedbacks as FeedbackFactory[] | undefined);
+    const resolvedFeedbacks: FeedbackFactory[] =
+      propsFeedbacks ?? themeFeedbacks ?? TOGGLE_BUTTON_DEFAULT_FEEDBACKS;
+
+    // ── Phase 5 · Feedback wiring (L4 · dual-source) ─────────────────────
+    // Stable controller across renders (OQ-FB-4). Two ingress adapters:
+    //   · `feedback.pressHandlers`  — spread into `usePress({...})` options
+    //   · `feedback.focusHandlers`  — chained onto host `onFocus`/`onBlur`
+    // Business onClick (the toggle pipeline) is NOT routed through feedback;
+    // it goes through actionBehavior — see `handleClick` below.
+    const feedback = useFeedback(resolvedFeedbacks);
 
     // Multi-instance slot (same as Button) — we grab the generated
     // className/style bundle once and apply it twice (left + right) inside
@@ -344,6 +414,79 @@ export const ToggleButton = factory<ToggleButtonOwnProps>(
       href: passthroughDomProps.href as string | undefined,
     });
 
+    // ── Phase 5 · usePress ingesting feedback.pressHandlers ──────────────
+    // `usePress` shares the SAME `isInteractiveDisabled` predicate as the
+    // Action Behavior above — keeping CSS visual state / JS swallow logic /
+    // Feedback gating in lock-step. On flip `false → true` mid-press the
+    // L2 FSM cancels every live pointerId synchronously (C-2), which
+    // propagates through `feedback.pressHandlers.onPressCancel` into every
+    // active ripple as an immediate `cancel()` (C-F2).
+    //
+    // Toggle interaction: usePress observes pointer events purely as a press
+    // FEEDBACK ingress — it does not call onClick / setPressed. The L3 Action
+    // Behavior pipeline (which receives `handleClick`) still owns the toggle.
+    const press = usePress({
+      isInteractiveDisabled,
+      ...feedback.pressHandlers,
+    });
+
+    // ── Phase 5 · handler chaining (contract §5.2 order) ────────────────
+    // Pointer + keyup + blur: user first → press second.
+    const {
+      onPointerDown: userOnPointerDown,
+      onPointerEnter: userOnPointerEnter,
+      onPointerLeave: userOnPointerLeave,
+      onKeyUp: userOnKeyUp,
+      onBlur: userOnBlur,
+      onFocus: userOnFocus,
+      ...passthroughRest
+    } = passthroughDomProps as ActionSurfaceDomProps & Record<string, unknown>;
+
+    const chainedPointerHandlers = {
+      onPointerDown: chainHandlers<Parameters<React.PointerEventHandler>>(
+        userOnPointerDown as React.PointerEventHandler | undefined,
+        press.pressProps.onPointerDown,
+      ),
+      onPointerEnter: chainHandlers<Parameters<React.PointerEventHandler>>(
+        userOnPointerEnter as React.PointerEventHandler | undefined,
+        press.pressProps.onPointerEnter,
+      ),
+      onPointerLeave: chainHandlers<Parameters<React.PointerEventHandler>>(
+        userOnPointerLeave as React.PointerEventHandler | undefined,
+        press.pressProps.onPointerLeave,
+      ),
+      onKeyUp: chainHandlers<Parameters<React.KeyboardEventHandler>>(
+        userOnKeyUp as React.KeyboardEventHandler | undefined,
+        press.pressProps.onKeyUp,
+      ),
+      // onBlur: user → press.onBlur (L2 press cancel if live) → focus.onBlur
+      // (Phase 4.1 · finish glow). chainHandlers runs all three in order.
+      onBlur: chainHandlers<Parameters<React.FocusEventHandler<HTMLElement>>>(
+        userOnBlur as React.FocusEventHandler<HTMLElement> | undefined,
+        press.pressProps.onBlur as React.FocusEventHandler<HTMLElement> | undefined,
+        feedback.focusHandlers.onBlur,
+      ),
+      // onFocus: user → focus.onFocus (Phase 4.1 · glow start).
+      onFocus: chainHandlers<Parameters<React.FocusEventHandler<HTMLElement>>>(
+        userOnFocus as React.FocusEventHandler<HTMLElement> | undefined,
+        feedback.focusHandlers.onFocus,
+      ),
+    };
+
+    // Keyboard activation: press (visual) first → actionBehavior (semantic
+    // activation) second. actionBehavior.onKeyDown already wraps userOnKeyDown
+    // (swallow on interactive-disabled, pass-through on non-activation keys,
+    // .click() on polymorphic activation keys), so chaining press +
+    // actionBehavior keeps the Action Surface contract untouched while adding
+    // the press feedback observer in front of it.
+    const mergedActionBehavior = {
+      ...actionBehavior,
+      onKeyDown: chainHandlers<Parameters<React.KeyboardEventHandler>>(
+        press.pressProps.onKeyDown,
+        actionBehavior.onKeyDown,
+      ),
+    };
+
     // ── HTML button type default (same rule as Button / IconButton) ──────
     // `<button>` in a `<form>` defaults to `type="submit"` per HTML spec.
     // Neutralize that when (a) Element === 'button' AND (b) user didn't
@@ -396,8 +539,9 @@ export const ToggleButton = factory<ToggleButtonOwnProps>(
       <Element
         ref={ref}
         {...styles.getRootProps()}
-        {...passthroughDomProps}
-        {...actionBehavior}
+        {...passthroughRest}
+        {...chainedPointerHandlers}
+        {...mergedActionBehavior}
         {...(effectiveButtonType !== undefined ? { type: effectiveButtonType } : {})}
         aria-pressed={pressedAttr}
         {...rootDataAttrs}

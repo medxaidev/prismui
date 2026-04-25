@@ -368,6 +368,52 @@ export const D6TypographyIsolation: Story = {
   ),
 };
 
+// 14.5 · FocusFeedback — A/B compare native outline vs glowFeedback (Phase 5)
+// `feedbacks={[]}` opt-out leaves only the `:focus-visible` outline; default
+// adds the soft halo via `box-shadow color-mix(... 32%, transparent)` plus
+// the press source `rippleFeedback`. Tab to compare; do not click — `:focus-
+// visible` only triggers on keyboard focus.
+export const FocusFeedback: Story = {
+  render: () => (
+    <div style={{ fontFamily: 'sans-serif', maxWidth: 640 }}>
+      <h4 style={{ margin: '0 0 8px', fontSize: 14, fontWeight: 700 }}>
+        Focus Feedback — glowFeedback A/B (Phase 5)
+      </h4>
+      <p style={{ margin: '0 0 12px', fontSize: 12, color: '#637381' }}>
+        Tab into each IconButton (do <strong>not</strong> click — <code>:focus-
+        visible</code> only triggers on keyboard focus). The left has{' '}
+        <code>feedbacks={'{[]}'}</code> — native <code>:focus-visible</code>{' '}
+        outline only. The right has the default{' '}
+        <code>[rippleFeedback, glowFeedback]</code> — outline + soft halo via{' '}
+        <code>box-shadow</code> with <code>color-mix(... 32%, transparent)</code>,
+        fading via <code>transition: box-shadow var(--prismui-transition-fast)</code>.
+      </p>
+      <div style={{ display: 'flex', gap: 24, alignItems: 'flex-end', flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+          <span style={{ fontSize: 11, color: '#919EAB' }}>
+            feedbacks=[] (native outline only)
+          </span>
+          <IconButton aria-label="Heart (no glow)" feedbacks={[]}>
+            <IconHeart />
+          </IconButton>
+        </div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+          <span style={{ fontSize: 11, color: '#919EAB' }}>default (ripple + glow)</span>
+          <IconButton aria-label="Heart (with glow)">
+            <IconHeart />
+          </IconButton>
+        </div>
+      </div>
+      <p style={{ marginTop: 16, fontSize: 11, color: '#919EAB' }}>
+        DevTools tip: focus the right IconButton and observe the global class{' '}
+        <code>prismui-glow-active</code> appear / disappear on the host element.
+        Class lifecycle is driven by the <code>FeedbackController</code> · Phase 5
+        ports the Button v0.6 pattern to IconButton 1:1 (contract v0.6 §11.4).
+      </p>
+    </div>
+  ),
+};
+
 // 15. Focus ring — IconButton consumes the same focusRing tokens as Button,
 // so theming a custom focus ring affects every Action Surface uniformly.
 export const FocusRing: Story = {

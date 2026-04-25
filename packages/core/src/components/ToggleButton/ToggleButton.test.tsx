@@ -18,13 +18,14 @@
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import * as React from 'react';
-import { render, fireEvent } from '@testing-library/react';
+import { render, fireEvent, act } from '@testing-library/react';
 import {
   ToggleButton,
   __resetToggleButtonInvariantWarnings,
 } from './index';
 import { PrismUIProvider } from '../../core/theme/provider/PrismUIProvider';
 import { createTheme } from '../../core/theme/create-theme';
+import { glowFeedback } from '../../feedbacks/glow/glow-feedback';
 
 function renderWithTheme(
   theme: ReturnType<typeof createTheme>,
@@ -1030,6 +1031,430 @@ describe('ToggleButton', () => {
         <ToggleButton className="user-cls">Bold</ToggleButton>,
       );
       expect(container.querySelector('button')!.className).toContain('user-cls');
+    });
+  });
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // Stage 10 · Phase 5 · Feedback integration (mirrors Button v0.6 Phase 4.1
+  // + IconButton Phase 5)
+  //
+  // Contract: `@/devdocs/system/feedback-contract.md` v0.6 §10 (rippleFeedback)
+  // + §11 (glowFeedback) + §12.2 (theme path) + §6.4 (focus singleton).
+  //
+  // ToggleButton-specific assertions: feedback factories MUST be additive to
+  // the toggle pipeline (T-1 / T-7 invariants are independent of feedback).
+  // Specifically:
+  //   · click → ripple AND setPressed both fire (visual feedback parallel
+  //     to toggle, not mutually exclusive)
+  //   · feedbacks={[]} suppresses ripple/glow but does NOT break toggle
+  //   · glow class can co-exist with data-pressed='true' (different CSS
+  //     channels — box-shadow halo vs background fill)
+  // ─────────────────────────────────────────────────────────────────────────
+  describe('Phase 5 · Feedback integration', () => {
+    function stubRect(el: Element, rect: Partial<DOMRect> = {}) {
+      const full: DOMRect = {
+        width: 80,
+        height: 36,
+        left: 0,
+        top: 0,
+        right: 80,
+        bottom: 36,
+        x: 0,
+        y: 0,
+        toJSON: () => ({}),
+        ...rect,
+      } as DOMRect;
+      el.getBoundingClientRect = () => full;
+    }
+
+    describe('Visual feedback lifecycle (ripple)', () => {
+      it('pointerdown creates a .prismui-ripple node inside the press target', () => {
+        const { container } = render(<ToggleButton>Bold</ToggleButton>);
+        const btn = container.querySelector('button')!;
+        stubRect(btn);
+
+        expect(btn.querySelector('.prismui-ripple')).toBeNull();
+        fireEvent.pointerDown(btn, {
+          pointerId: 1,
+          pointerType: 'mouse',
+          clientX: 10,
+          clientY: 10,
+        });
+        expect(btn.querySelector('.prismui-ripple')).not.toBeNull();
+      });
+
+      it('pointerup → animationend removes the ripple (success path)', () => {
+        const { container } = render(<ToggleButton>Bold</ToggleButton>);
+        const btn = container.querySelector('button')!;
+        stubRect(btn);
+
+        fireEvent.pointerDown(btn, {
+          pointerId: 1,
+          pointerType: 'mouse',
+          clientX: 10,
+          clientY: 10,
+        });
+        const ripple = btn.querySelector<HTMLSpanElement>('.prismui-ripple')!;
+        act(() => {
+          fireEvent.pointerUp(btn, { pointerId: 1, pointerType: 'mouse' });
+        });
+        expect(btn.querySelector('.prismui-ripple')).not.toBeNull();
+        ripple.dispatchEvent(new Event('animationend'));
+        expect(btn.querySelector('.prismui-ripple')).toBeNull();
+      });
+    });
+
+    describe('Interactive-disabled gating (shares predicate with Action Surface)', () => {
+      it('<ToggleButton disabled>: pointerdown does NOT create a ripple', () => {
+        const { container } = render(<ToggleButton disabled>Bold</ToggleButton>);
+        const btn = container.querySelector('button')!;
+        stubRect(btn);
+        fireEvent.pointerDown(btn, { pointerId: 1, pointerType: 'mouse' });
+        expect(btn.querySelector('.prismui-ripple')).toBeNull();
+      });
+
+      it('<ToggleButton loading>: pointerdown does NOT create a ripple (Action strategy includes loading)', () => {
+        const { container } = render(<ToggleButton loading>Bold</ToggleButton>);
+        const btn = container.querySelector('button')!;
+        stubRect(btn);
+        fireEvent.pointerDown(btn, { pointerId: 1, pointerType: 'mouse' });
+        expect(btn.querySelector('.prismui-ripple')).toBeNull();
+      });
+    });
+
+    // Toggle-specific Phase 5 invariants (T-1 / T-7 × Feedback)
+    describe('Toggle pipeline × Feedback (T-7 ordering)', () => {
+      it('click → BOTH ripple feedback AND setPressed flip happen (parallel, not mutually exclusive)', () => {
+        const onPressedChange = vi.fn();
+        const { container } = render(
+          <ToggleButton onPressedChange={onPressedChange}>Bold</ToggleButton>,
+        );
+        const btn = container.querySelector('button')!;
+        stubRect(btn);
+
+        fireEvent.pointerDown(btn, {
+          pointerId: 1,
+          pointerType: 'mouse',
+          clientX: 10,
+          clientY: 10,
+        });
+        // Press feedback ingress fired — ripple is in the DOM.
+        expect(btn.querySelector('.prismui-ripple')).not.toBeNull();
+
+        // Click — Action Surface activates handleClick → setPressed flip.
+        fireEvent.click(btn);
+        expect(onPressedChange).toHaveBeenCalledTimes(1);
+        expect(onPressedChange).toHaveBeenCalledWith(true);
+        expect(btn.getAttribute('data-pressed')).toBe('true');
+        expect(btn.getAttribute('aria-pressed')).toBe('true');
+      });
+
+      it('feedbacks={[]} (opt-out) does NOT break toggle pipeline', () => {
+        const onPressedChange = vi.fn();
+        const { container } = render(
+          <ToggleButton feedbacks={[]} onPressedChange={onPressedChange}>
+            Bold
+          </ToggleButton>,
+        );
+        const btn = container.querySelector('button')!;
+        stubRect(btn);
+
+        // Pointerdown — no ripple (feedbacks suppressed).
+        fireEvent.pointerDown(btn, { pointerId: 1, pointerType: 'mouse' });
+        expect(btn.querySelector('.prismui-ripple')).toBeNull();
+
+        // Click — toggle pipeline still works (feedback opt-out is purely visual).
+        fireEvent.click(btn);
+        expect(onPressedChange).toHaveBeenCalledWith(true);
+        expect(btn.getAttribute('aria-pressed')).toBe('true');
+      });
+
+      it('user onPointerDown runs BEFORE press feedback ingress (chainHandlers order)', () => {
+        const order: string[] = [];
+        const onPointerDown = vi.fn(() => {
+          order.push(
+            document.querySelector('.prismui-ripple') ? 'after-ripple' : 'before-ripple',
+          );
+        });
+        const { container } = render(
+          <ToggleButton onPointerDown={onPointerDown}>Bold</ToggleButton>,
+        );
+        const btn = container.querySelector('button')!;
+        stubRect(btn);
+
+        fireEvent.pointerDown(btn, {
+          pointerId: 1,
+          pointerType: 'mouse',
+          clientX: 10,
+          clientY: 10,
+        });
+        expect(onPointerDown).toHaveBeenCalledTimes(1);
+        expect(order).toEqual(['before-ripple']);
+        expect(btn.querySelector('.prismui-ripple')).not.toBeNull();
+      });
+    });
+
+    describe('Press unmount cleanup (L-F1)', () => {
+      it('unmount during active press disposes the ripple node synchronously', () => {
+        const { container, unmount } = render(<ToggleButton>Bold</ToggleButton>);
+        const btn = container.querySelector('button')!;
+        stubRect(btn);
+
+        fireEvent.pointerDown(btn, {
+          pointerId: 1,
+          pointerType: 'mouse',
+          clientX: 10,
+          clientY: 10,
+        });
+        expect(btn.querySelector('.prismui-ripple')).not.toBeNull();
+
+        unmount();
+        expect(btn.querySelector('.prismui-ripple')).toBeNull();
+      });
+    });
+
+    // ─── Phase 4.1 · Focus Feedback (glow) — adapted to ToggleButton ────────
+    describe('Focus Feedback (glow) lifecycle', () => {
+      const GLOW_CLASS = 'prismui-glow-active';
+
+      function installFocusVisibleMatches(value: boolean): () => void {
+        const original = HTMLElement.prototype.matches;
+        HTMLElement.prototype.matches = function patched(
+          this: HTMLElement,
+          selectors: string,
+        ): boolean {
+          if (selectors === ':focus-visible') return value;
+          return original.call(this, selectors);
+        } as typeof HTMLElement.prototype.matches;
+        return () => {
+          HTMLElement.prototype.matches = original;
+        };
+      }
+
+      it('onFocus with :focus-visible → adds `prismui-glow-active` class', () => {
+        const restore = installFocusVisibleMatches(true);
+        try {
+          const { container } = render(<ToggleButton>Bold</ToggleButton>);
+          const btn = container.querySelector('button')!;
+          expect(btn.classList.contains(GLOW_CLASS)).toBe(false);
+          fireEvent.focus(btn);
+          expect(btn.classList.contains(GLOW_CLASS)).toBe(true);
+        } finally {
+          restore();
+        }
+      });
+
+      it('onBlur removes the glow class', () => {
+        const restore = installFocusVisibleMatches(true);
+        try {
+          const { container } = render(<ToggleButton>Bold</ToggleButton>);
+          const btn = container.querySelector('button')!;
+          fireEvent.focus(btn);
+          expect(btn.classList.contains(GLOW_CLASS)).toBe(true);
+          fireEvent.blur(btn);
+          expect(btn.classList.contains(GLOW_CLASS)).toBe(false);
+        } finally {
+          restore();
+        }
+      });
+
+      it('mouse-focused (focusVisible=false) never adds the glow class', () => {
+        const restore = installFocusVisibleMatches(false);
+        try {
+          const { container } = render(<ToggleButton>Bold</ToggleButton>);
+          const btn = container.querySelector('button')!;
+          fireEvent.focus(btn);
+          expect(btn.classList.contains(GLOW_CLASS)).toBe(false);
+        } finally {
+          restore();
+        }
+      });
+
+      // ToggleButton-specific: glow + pressed coexistence
+      it('glow class CO-EXISTS with data-pressed (different CSS channels)', () => {
+        const restore = installFocusVisibleMatches(true);
+        try {
+          const { container } = render(
+            <ToggleButton defaultPressed={true}>Bold</ToggleButton>,
+          );
+          const btn = container.querySelector('button')!;
+
+          // Pre-focus: pressed visual is on, glow is off.
+          expect(btn.getAttribute('data-pressed')).toBe('true');
+          expect(btn.classList.contains(GLOW_CLASS)).toBe(false);
+
+          // After focus: BOTH active simultaneously.
+          fireEvent.focus(btn);
+          expect(btn.getAttribute('data-pressed')).toBe('true');
+          expect(btn.classList.contains(GLOW_CLASS)).toBe(true);
+
+          // Blur removes glow but keeps pressed.
+          fireEvent.blur(btn);
+          expect(btn.getAttribute('data-pressed')).toBe('true');
+          expect(btn.classList.contains(GLOW_CLASS)).toBe(false);
+        } finally {
+          restore();
+        }
+      });
+    });
+
+    describe('User handler chaining (§5.2 order, focus chain)', () => {
+      const GLOW_CLASS = 'prismui-glow-active';
+
+      function installFocusVisibleMatches(value: boolean): () => void {
+        const original = HTMLElement.prototype.matches;
+        HTMLElement.prototype.matches = function patched(
+          this: HTMLElement,
+          selectors: string,
+        ): boolean {
+          if (selectors === ':focus-visible') return value;
+          return original.call(this, selectors);
+        } as typeof HTMLElement.prototype.matches;
+        return () => {
+          HTMLElement.prototype.matches = original;
+        };
+      }
+
+      it('user onFocus runs before feedback ingress adds the class', () => {
+        const restore = installFocusVisibleMatches(true);
+        try {
+          let classWhenUserRan = '';
+          const userOnFocus = vi.fn((e: React.FocusEvent<HTMLButtonElement>) => {
+            classWhenUserRan = e.currentTarget.className;
+          });
+          const { container } = render(
+            <ToggleButton onFocus={userOnFocus}>Bold</ToggleButton>,
+          );
+          const btn = container.querySelector('button')!;
+          fireEvent.focus(btn);
+          expect(userOnFocus).toHaveBeenCalledTimes(1);
+          expect(classWhenUserRan).not.toContain(GLOW_CLASS);
+          expect(btn.classList.contains(GLOW_CLASS)).toBe(true);
+        } finally {
+          restore();
+        }
+      });
+
+      it('user onBlur still fires even though press.onBlur + focus.onBlur also run', () => {
+        const restore = installFocusVisibleMatches(true);
+        try {
+          const userOnBlur = vi.fn();
+          const { container } = render(
+            <ToggleButton onBlur={userOnBlur}>Bold</ToggleButton>,
+          );
+          const btn = container.querySelector('button')!;
+          fireEvent.focus(btn);
+          fireEvent.blur(btn);
+          expect(userOnBlur).toHaveBeenCalledTimes(1);
+          expect(btn.classList.contains(GLOW_CLASS)).toBe(false);
+        } finally {
+          restore();
+        }
+      });
+    });
+
+    describe('D-1 Resolution priority · props > theme > module default', () => {
+      const GLOW_CLASS = 'prismui-glow-active';
+
+      function installFocusVisibleMatches(value: boolean): () => void {
+        const original = HTMLElement.prototype.matches;
+        HTMLElement.prototype.matches = function patched(
+          this: HTMLElement,
+          selectors: string,
+        ): boolean {
+          if (selectors === ':focus-visible') return value;
+          return original.call(this, selectors);
+        } as typeof HTMLElement.prototype.matches;
+        return () => {
+          HTMLElement.prototype.matches = original;
+        };
+      }
+
+      it('feedbacks={[]} (explicit opt-out) suppresses both ripple AND glow', () => {
+        const restore = installFocusVisibleMatches(true);
+        try {
+          const { container } = render(
+            <ToggleButton feedbacks={[]}>Bold</ToggleButton>,
+          );
+          const btn = container.querySelector('button')!;
+
+          fireEvent.focus(btn);
+          expect(btn.classList.contains(GLOW_CLASS)).toBe(false);
+          fireEvent.blur(btn);
+
+          fireEvent.pointerDown(btn, { pointerId: 1, pointerType: 'mouse' });
+          expect(btn.querySelector('.prismui-ripple')).toBeNull();
+        } finally {
+          restore();
+        }
+      });
+
+      it('theme.components.ToggleButton.defaultFeedbacks overrides module default', () => {
+        const restore = installFocusVisibleMatches(true);
+        try {
+          const theme = createTheme({
+            components: { ToggleButton: { defaultFeedbacks: [] } },
+          });
+          const { container } = renderWithTheme(theme, <ToggleButton>Bold</ToggleButton>);
+          const btn = container.querySelector('button')!;
+          fireEvent.focus(btn);
+          expect(btn.classList.contains(GLOW_CLASS)).toBe(false);
+        } finally {
+          restore();
+        }
+      });
+
+      it('props.feedbacks wins over theme.components.ToggleButton.defaultFeedbacks', () => {
+        const restore = installFocusVisibleMatches(true);
+        try {
+          const theme = createTheme({
+            components: { ToggleButton: { defaultFeedbacks: [] } },
+          });
+          const { container } = renderWithTheme(
+            theme,
+            <ToggleButton feedbacks={[glowFeedback]}>Bold</ToggleButton>,
+          );
+          const btn = container.querySelector('button')!;
+          fireEvent.focus(btn);
+          expect(btn.classList.contains(GLOW_CLASS)).toBe(true);
+        } finally {
+          restore();
+        }
+      });
+    });
+
+    describe('Focus unmount cleanup (L-F1 focus source)', () => {
+      const GLOW_CLASS = 'prismui-glow-active';
+
+      function installFocusVisibleMatches(value: boolean): () => void {
+        const original = HTMLElement.prototype.matches;
+        HTMLElement.prototype.matches = function patched(
+          this: HTMLElement,
+          selectors: string,
+        ): boolean {
+          if (selectors === ':focus-visible') return value;
+          return original.call(this, selectors);
+        } as typeof HTMLElement.prototype.matches;
+        return () => {
+          HTMLElement.prototype.matches = original;
+        };
+      }
+
+      it('unmount during active focus disposes the glow instance synchronously', () => {
+        const restore = installFocusVisibleMatches(true);
+        try {
+          const { container, unmount } = render(<ToggleButton>Bold</ToggleButton>);
+          const btn = container.querySelector('button')!;
+          fireEvent.focus(btn);
+          expect(btn.classList.contains(GLOW_CLASS)).toBe(true);
+
+          const savedBtn = btn;
+          unmount();
+          expect(savedBtn.classList.contains(GLOW_CLASS)).toBe(false);
+        } finally {
+          restore();
+        }
+      });
     });
   });
 });

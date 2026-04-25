@@ -6,6 +6,12 @@ import {
   resolvePolymorphicActionBehavior,
   type ActionSurfaceDomProps,
 } from '../../core/action';
+import { usePress } from '../../core/interaction-events';
+import { useFeedback, type FeedbackFactory } from '../../core/feedback';
+import { useThemeOptional } from '../../core/theme';
+import { chainHandlers } from '../../core/utils';
+import { rippleFeedback } from '../../feedbacks/ripple';
+import { glowFeedback } from '../../feedbacks/glow';
 import type { SlotNames } from '../../core/component';
 import type { VarsResolver, StylesOverride } from '../../core/styles';
 import type { PolymorphicSystemProps } from '../../core/props';
@@ -14,6 +20,27 @@ import {
   warnChildrenInvariant,
 } from './icon-button-invariants';
 import classes from './IconButton.module.css';
+
+// Stage 10 · Phase 5 Feedback integration · dual-source default (mirrors Button v0.6).
+//
+// Module-level constant keeps the array identity stable across every
+// `<IconButton>` render, which is what `useFeedback` wants (see
+// `@/devdocs/system/feedback-contract.md` §6.6 + OQ-FB-4: stable
+// controller via useRef + updateFactories).
+//
+// Phase 5 D-1 / D-3 decisions: the default ships BOTH ripple (press source)
+// and glow (focus source) so out-of-the-box `<IconButton>` gets the dual-
+// source treatment, matching `<Button>`. Resolution priority (D-1):
+//   props.feedbacks  ←  theme.components.IconButton.defaultFeedbacks
+//                    ←  ICON_BUTTON_DEFAULT_FEEDBACKS
+// Replacement semantics — passing `feedbacks={[...]}` fully substitutes the
+// default (no merge / no concat). `feedbacks={[]}` is the explicit opt-out
+// path (no visual feedback at all).
+//
+// Naming: `ICON_BUTTON_DEFAULT_FEEDBACKS` (UPPER_SNAKE_CASE module constant)
+// keeps the `theme.components.IconButton.defaultFeedbacks` theme path distinct
+// — see Button.tsx for the same convention.
+export const ICON_BUTTON_DEFAULT_FEEDBACKS: FeedbackFactory[] = [rippleFeedback, glowFeedback];
 
 /**
  * IconButton · Action Surface · square / single-icon
@@ -59,6 +86,23 @@ export interface IconButtonOwnProps extends PolymorphicSystemProps {
    * not throw (layout degrades gracefully).
    */
   children?: React.ReactNode;
+  /**
+   * L4 Feedback factory list (Phase 5 · D-1 replacement semantics · mirrors Button).
+   *
+   * Resolution priority (highest first):
+   *   1. this prop (`feedbacks={[...]}`) — full substitution
+   *   2. `theme.components.IconButton.defaultFeedbacks` — theme override
+   *   3. `ICON_BUTTON_DEFAULT_FEEDBACKS` — `[rippleFeedback, glowFeedback]`
+   *
+   * Pass `feedbacks={[]}` to opt out of all visual feedback (e.g. for
+   * tests / SSR-frame placeholders). Pass `undefined` (or omit) to fall
+   * through to the theme / module default.
+   *
+   * NOTE: array identity matters less than its contents; `useFeedback`
+   * sees factory list updates via `updateFactories` (§6.6 OQ-FB-12 policy).
+   * For maximum stability, hoist your override array to a module constant.
+   */
+  feedbacks?: FeedbackFactory[];
 }
 
 export type IconButtonProps = IconButtonOwnProps &
@@ -104,6 +148,7 @@ export const IconButton = factory<IconButtonOwnProps>(
       'disabled',
       'radius',
       'loading',
+      'feedbacks',
     ] as const,
     // SR-7 single-writer chain — factory sees these defaults so a bare
     // `<IconButton />` emits data-variant='filled' / data-color='primary' /
@@ -135,7 +180,37 @@ export const IconButton = factory<IconButtonOwnProps>(
     },
   },
   ({ Element, ref, domProps, componentProps, styles, systemDataAttrs, disabilityAttrs }) => {
-    const { loading, disabled } = componentProps;
+    const { loading, disabled, feedbacks: propsFeedbacks } = componentProps;
+
+    // ── Phase 5 · Feedback factory list resolution (D-1) ─────────────────
+    // Priority chain (highest → lowest):
+    //   1. `props.feedbacks`                                   — call-site
+    //   2. `theme.components.IconButton.defaultFeedbacks`      — theme override
+    //   3. `ICON_BUTTON_DEFAULT_FEEDBACKS`                     — module default
+    //
+    // Replacement semantics (D-1, not merge): the first defined value wins
+    // outright. `feedbacks={[]}` is a valid explicit opt-out that still
+    // short-circuits the theme/module defaults (empty !== undefined).
+    //
+    // `useThemeOptional()` returns the default theme when no ThemeProvider
+    // is present, so reading `theme.components?.IconButton?.defaultFeedbacks`
+    // is always safe — no provider = `undefined` (handled via optional chaining).
+    // eslint-disable-next-line react-hooks/rules-of-hooks
+    const theme = useThemeOptional();
+    const themeFeedbacks =
+      (theme.components?.IconButton?.defaultFeedbacks as FeedbackFactory[] | undefined);
+    const resolvedFeedbacks: FeedbackFactory[] =
+      propsFeedbacks ?? themeFeedbacks ?? ICON_BUTTON_DEFAULT_FEEDBACKS;
+
+    // ── Phase 5 · Feedback wiring (L4 · dual-source) ─────────────────────
+    // Stable controller across renders (OQ-FB-4). Two ingress adapters:
+    //   · `feedback.pressHandlers`  — spread into `usePress({...})` options
+    //   · `feedback.focusHandlers`  — chained onto host `onFocus`/`onBlur`
+    // Business `onClick` is NOT routed through either — that would collide
+    // with the L3 Action Behavior contract which already wraps onClick /
+    // Enter-Space activation / interactive-disabled swallow. usePress + the
+    // focus ingress serve exclusively as feedback ingresses.
+    const feedback = useFeedback(resolvedFeedbacks);
 
     // ── Action Surface interactive predicate ─────────────────────────────
     // `resolveInteractive(..., 'action')` is the SAME predicate the state
@@ -196,6 +271,79 @@ export const IconButton = factory<IconButtonOwnProps>(
       href: passthroughDomProps.href as string | undefined,
     });
 
+    // ── Phase 5 · usePress ingesting feedback.pressHandlers ──────────────
+    // `usePress` shares the SAME `isInteractiveDisabled` predicate as the
+    // Action Behavior above — keeping CSS visual state / JS swallow logic /
+    // Feedback gating in lock-step. On flip `false → true` mid-press the
+    // L2 FSM cancels every live pointerId synchronously (C-2), which
+    // propagates through `feedback.pressHandlers.onPressCancel` into every
+    // active ripple as an immediate `cancel()` (C-F2).
+    const press = usePress({
+      isInteractiveDisabled,
+      ...feedback.pressHandlers,
+    });
+
+    // ── Phase 5 · handler chaining (contract §5.2 order) ────────────────
+    // Pointer + keyup + blur: user first → press second. IconButton has no
+    // user-defined pointer handler surface in the type today, but we still
+    // pull them off `passthroughDomProps` so a future addition routes
+    // through the chain rather than getting silently overridden by spread.
+    const {
+      onPointerDown: userOnPointerDown,
+      onPointerEnter: userOnPointerEnter,
+      onPointerLeave: userOnPointerLeave,
+      onKeyUp: userOnKeyUp,
+      onBlur: userOnBlur,
+      onFocus: userOnFocus,
+      ...passthroughRest
+    } = passthroughDomProps as ActionSurfaceDomProps & Record<string, unknown>;
+
+    const chainedPointerHandlers = {
+      onPointerDown: chainHandlers<Parameters<React.PointerEventHandler>>(
+        userOnPointerDown as React.PointerEventHandler | undefined,
+        press.pressProps.onPointerDown,
+      ),
+      onPointerEnter: chainHandlers<Parameters<React.PointerEventHandler>>(
+        userOnPointerEnter as React.PointerEventHandler | undefined,
+        press.pressProps.onPointerEnter,
+      ),
+      onPointerLeave: chainHandlers<Parameters<React.PointerEventHandler>>(
+        userOnPointerLeave as React.PointerEventHandler | undefined,
+        press.pressProps.onPointerLeave,
+      ),
+      onKeyUp: chainHandlers<Parameters<React.KeyboardEventHandler>>(
+        userOnKeyUp as React.KeyboardEventHandler | undefined,
+        press.pressProps.onKeyUp,
+      ),
+      // onBlur: user → press.onBlur (L2 press cancel if live) → focus.onBlur
+      // (Phase 4.1 · finish glow). `chainHandlers` runs all three in order;
+      // first throw propagates (contract §5.3 semantics).
+      onBlur: chainHandlers<Parameters<React.FocusEventHandler<HTMLElement>>>(
+        userOnBlur as React.FocusEventHandler<HTMLElement> | undefined,
+        press.pressProps.onBlur as React.FocusEventHandler<HTMLElement> | undefined,
+        feedback.focusHandlers.onBlur,
+      ),
+      // onFocus: user → focus.onFocus (Phase 4.1 · glow start).
+      onFocus: chainHandlers<Parameters<React.FocusEventHandler<HTMLElement>>>(
+        userOnFocus as React.FocusEventHandler<HTMLElement> | undefined,
+        feedback.focusHandlers.onFocus,
+      ),
+    };
+
+    // Keyboard activation: press (visual) first → actionBehavior (semantic
+    // activation) second. `actionBehavior.onKeyDown` already internally
+    // wraps `userOnKeyDown` (swallow on interactive-disabled, pass-through
+    // on non-activation keys, `.click()` on polymorphic activation keys),
+    // so chaining press + actionBehavior keeps the Action Surface contract
+    // untouched while adding the visual press feedback in front of it.
+    const mergedActionBehavior = {
+      ...actionBehavior,
+      onKeyDown: chainHandlers<Parameters<React.KeyboardEventHandler>>(
+        press.pressProps.onKeyDown,
+        actionBehavior.onKeyDown,
+      ),
+    };
+
     // ── HTML button type default (B-1, same rule as Button) ──────────────
     // `<button>` in a `<form>` defaults to `type="submit"` per HTML spec.
     // Neutralize that footgun when (a) Element === 'button' AND (b) the
@@ -233,8 +381,9 @@ export const IconButton = factory<IconButtonOwnProps>(
       <Element
         ref={ref}
         {...styles.getRootProps()}
-        {...passthroughDomProps}
-        {...actionBehavior}
+        {...passthroughRest}
+        {...chainedPointerHandlers}
+        {...mergedActionBehavior}
         {...(effectiveButtonType !== undefined ? { type: effectiveButtonType } : {})}
         {...systemDataAttrs}
         {...disabilityAttrs}

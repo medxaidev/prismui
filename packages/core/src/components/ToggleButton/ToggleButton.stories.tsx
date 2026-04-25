@@ -441,6 +441,52 @@ export const PressedVsActiveIsolation: Story = {
   ),
 };
 
+// ── 15.5 · FocusFeedback — A/B compare native outline vs glowFeedback (Phase 5)
+//        `feedbacks={[]}` opt-out leaves only the native focus outline; default
+//        adds soft halo via box-shadow color-mix. Tab to compare; do not click
+//        — `:focus-visible` only triggers on keyboard focus. The pressed state
+//        co-exists cleanly with glow (different CSS channels — bg fill vs halo).
+export const FocusFeedback: Story = {
+  render: () => (
+    <div style={{ fontFamily: 'sans-serif', maxWidth: 720 }}>
+      <h4 style={{ margin: '0 0 8px', fontSize: 14, fontWeight: 700 }}>
+        Focus Feedback — glowFeedback A/B (Phase 5)
+      </h4>
+      <p style={{ margin: '0 0 12px', fontSize: 12, color: '#637381' }}>
+        Tab into each ToggleButton (do <strong>not</strong> click — <code>:focus-
+        visible</code> only triggers on keyboard focus). Pressed-state visual
+        (data-pressed='true') and glow halo are INDEPENDENT visual channels (bg
+        fill vs box-shadow); both can be active simultaneously without conflict.
+      </p>
+      <div style={{ display: 'flex', gap: 24, alignItems: 'flex-end', flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+          <span style={{ fontSize: 11, color: '#919EAB' }}>
+            feedbacks=[] (native outline only)
+          </span>
+          <ToggleButton feedbacks={[]}>Bold (no glow)</ToggleButton>
+        </div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+          <span style={{ fontSize: 11, color: '#919EAB' }}>default (ripple + glow)</span>
+          <ToggleButton>Bold (with glow)</ToggleButton>
+        </div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+          <span style={{ fontSize: 11, color: '#919EAB' }}>
+            defaultPressed=true · default feedbacks
+          </span>
+          <ToggleButton defaultPressed>Bold (pressed + glow)</ToggleButton>
+        </div>
+      </div>
+      <p style={{ marginTop: 16, fontSize: 11, color: '#919EAB' }}>
+        DevTools tip: focus the third ToggleButton (already pressed) and confirm
+        BOTH <code>data-pressed='true'</code> AND class{' '}
+        <code>prismui-glow-active</code> are on the host element. Phase 5 invariant:
+        pressed-pipeline (T-1 / T-7) and feedback factories operate on disjoint
+        rendering channels.
+      </p>
+    </div>
+  ),
+};
+
 // ── 16 · Focus ring — same focusRing tokens as Button / IconButton.
 //       Tab through the toggles to verify the ring is consistent.
 export const FocusRing: Story = {
