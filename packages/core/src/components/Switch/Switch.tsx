@@ -11,6 +11,12 @@ import {
   type ActionSurfaceDomProps,
 } from '../../core/action';
 import { resolveInteractive } from '../../core/state';
+import { usePress } from '../../core/interaction-events';
+import { useFeedback, type FeedbackFactory } from '../../core/feedback';
+import { useThemeOptional } from '../../core/theme';
+import { chainHandlers } from '../../core/utils';
+import { rippleFeedback } from '../../feedbacks/ripple';
+import { glowFeedback } from '../../feedbacks/glow';
 import { useControllableState } from '../../hooks';
 import { useFieldControlProps } from '../Field/useFieldControlProps';
 import { useFieldDataAttrs } from '../Field/useFieldDataAttrs';
@@ -21,6 +27,30 @@ import {
   warnIndeterminate,
 } from './switch-invariants';
 import classes from './Switch.module.css';
+
+// Stage 10 · Phase 6 Feedback integration · dual-source default (mirrors Button
+// v0.6 / IconButton / ToggleButton). Switch is PrismUI's first Control Surface
+// to adopt the L4 Feedback system — proving COMPONENT_DEFAULT_FEEDBACKS is
+// reusable beyond Action Surface (Button family). Key architectural finding:
+// Switch's `.root (<button role="switch">)` geometry is IDENTICAL to `.track`
+// (`.track { inset: 0; width/height: 100% }`), so the feedback host MAY sit
+// on `.root` — no need to extend contract §11.4 with non-root-slot rules.
+//
+// Resolution priority (D-1 replacement semantics):
+//   props.feedbacks  ←  theme.components.Switch.defaultFeedbacks
+//                    ←  SWITCH_DEFAULT_FEEDBACKS
+// Pass `feedbacks={[]}` to opt out; the toggle pipeline (S-1 ARIA writes /
+// checked-state flip / Field integration) is INDEPENDENT of feedback factories.
+//
+// Coexistence with Switch's mode-B two-channel focus (S-5):
+//   · `:focus:not(:focus-visible)` pointer halo (box-shadow, Switch-native) —
+//     glow NEVER activates here (glowFeedback gates on focusVisible=true).
+//   · `:focus-visible` outline (native) + `.prismui-glow-active` box-shadow
+//     halo (Phase 6) — keyboard focus gets the "ring + halo" Button v0.6.1
+//     visual.
+// Selectors are mutually exclusive by spec (FE-2 anti-duplicate-signal), so
+// the two halo layers never coexist.
+export const SWITCH_DEFAULT_FEEDBACKS: FeedbackFactory[] = [rippleFeedback, glowFeedback];
 
 /**
  * Switch · Control Surface · C-2 Abstract · persistent checked state.
@@ -118,6 +148,26 @@ export interface SwitchOwnProps extends PolymorphicSystemProps {
   /** Paired with `name`; v2 only. @default 'on' */
   value?: string;
 
+  // ── L4 Feedback (Phase 6 · D-1 replacement semantics) ───────────────
+  /**
+   * L4 Feedback factory list (mirrors Button / IconButton / ToggleButton).
+   *
+   * Resolution priority (highest first):
+   *   1. this prop (`feedbacks={[...]}`) — full substitution
+   *   2. `theme.components.Switch.defaultFeedbacks` — theme override
+   *   3. `SWITCH_DEFAULT_FEEDBACKS` — `[rippleFeedback, glowFeedback]`
+   *
+   * Pass `feedbacks={[]}` to opt out of all visual feedback. The toggle
+   * pipeline (S-1 ARIA writes / S-2 useControllableState flip / Field
+   * integration) is independent of feedback factories — opting out only
+   * suppresses ripple / glow visuals.
+   *
+   * NOTE: Mode-B halo (S-5 `:focus:not(:focus-visible)`) is a CSS-native
+   * Switch feature and is NOT affected by this prop; feedbacks only govern
+   * the L4 ripple (press source) and glow (keyboard-focus source) channels.
+   */
+  feedbacks?: FeedbackFactory[];
+
   // ── Content ───────────────────────────────────────────────────────────
   children?: React.ReactNode;
 
@@ -195,6 +245,7 @@ const switchComponentPropKeys = [
   'checked',
   'defaultChecked',
   'onCheckedChange',
+  'feedbacks',
 ] as const;
 
 export const Switch = factory<SwitchOwnProps>(
@@ -260,7 +311,31 @@ export const Switch = factory<SwitchOwnProps>(
       required,
       name,
       value,
+      feedbacks: propsFeedbacks,
     } = componentProps;
+
+    // ── Phase 6 · Feedback factory list resolution (D-1) ───────────────
+    // Priority chain (highest → lowest):
+    //   1. `props.feedbacks`                          — call-site
+    //   2. `theme.components.Switch.defaultFeedbacks` — theme override
+    //   3. `SWITCH_DEFAULT_FEEDBACKS`                 — module default
+    //
+    // `feedbacks={[]}` is a valid opt-out. `useThemeOptional()` returns the
+    // default theme without ThemeProvider, so theme lookup is always safe.
+    // eslint-disable-next-line react-hooks/rules-of-hooks
+    const theme = useThemeOptional();
+    const themeFeedbacks =
+      (theme.components?.Switch?.defaultFeedbacks as FeedbackFactory[] | undefined);
+    const resolvedFeedbacks: FeedbackFactory[] =
+      propsFeedbacks ?? themeFeedbacks ?? SWITCH_DEFAULT_FEEDBACKS;
+
+    // ── Phase 6 · Feedback wiring (L4 · dual-source) ────────────────────
+    // Stable controller across renders (OQ-FB-4). Two ingress adapters:
+    //   · `feedback.pressHandlers`  — spread into `usePress({...})` options
+    //   · `feedback.focusHandlers`  — chained onto host `onFocus`/`onBlur`
+    // Business onClick (the toggle pipeline below) is NOT routed through
+    // feedback; it goes through actionBehavior via `handleClick`.
+    const feedback = useFeedback(resolvedFeedbacks);
 
     // ── DEV invariants (S-1a / S-10 / S-10a / S-11) ───────────────────
     // All short-circuit in production builds inside the helper module. We
@@ -462,6 +537,74 @@ export const Switch = factory<SwitchOwnProps>(
       href: shouldPreserveHref ? userHref : undefined,
     });
 
+    // ── Phase 6 · usePress ingesting feedback.pressHandlers ──────────────
+    // `usePress` shares the SAME `isInteractiveDisabled` predicate as the
+    // Action Behavior above — keeping CSS visual state / JS swallow logic /
+    // Feedback gating in lock-step. Business onClick is NOT routed through
+    // this; usePress observes pointer events purely as a press-feedback
+    // ingress.
+    const press = usePress({
+      isInteractiveDisabled,
+      ...feedback.pressHandlers,
+    });
+
+    // ── Phase 6 · handler chaining (contract §5.2 order) ────────────────
+    // Pointer + keyup + blur / focus: user first → press second → focus third.
+    const {
+      onPointerDown: userOnPointerDown,
+      onPointerEnter: userOnPointerEnter,
+      onPointerLeave: userOnPointerLeave,
+      onKeyUp: userOnKeyUp,
+      onBlur: userOnBlur,
+      onFocus: userOnFocus,
+      ...passthroughRest
+    } = passthroughDomProps as ActionSurfaceDomProps & Record<string, unknown>;
+
+    const chainedPointerHandlers = {
+      onPointerDown: chainHandlers<Parameters<React.PointerEventHandler>>(
+        userOnPointerDown as React.PointerEventHandler | undefined,
+        press.pressProps.onPointerDown,
+      ),
+      onPointerEnter: chainHandlers<Parameters<React.PointerEventHandler>>(
+        userOnPointerEnter as React.PointerEventHandler | undefined,
+        press.pressProps.onPointerEnter,
+      ),
+      onPointerLeave: chainHandlers<Parameters<React.PointerEventHandler>>(
+        userOnPointerLeave as React.PointerEventHandler | undefined,
+        press.pressProps.onPointerLeave,
+      ),
+      onKeyUp: chainHandlers<Parameters<React.KeyboardEventHandler>>(
+        userOnKeyUp as React.KeyboardEventHandler | undefined,
+        press.pressProps.onKeyUp,
+      ),
+      // onBlur: user → press.onBlur (L2 press cancel if live) → focus.onBlur
+      // (Phase 4.1 · finish glow).
+      onBlur: chainHandlers<Parameters<React.FocusEventHandler<HTMLElement>>>(
+        userOnBlur as React.FocusEventHandler<HTMLElement> | undefined,
+        press.pressProps.onBlur as React.FocusEventHandler<HTMLElement> | undefined,
+        feedback.focusHandlers.onBlur,
+      ),
+      // onFocus: user → focus.onFocus (Phase 4.1 · glow start).
+      onFocus: chainHandlers<Parameters<React.FocusEventHandler<HTMLElement>>>(
+        userOnFocus as React.FocusEventHandler<HTMLElement> | undefined,
+        feedback.focusHandlers.onFocus,
+      ),
+    };
+
+    // Keyboard activation: press (visual) first → actionBehavior (semantic
+    // activation) second. actionBehavior.onKeyDown already wraps userOnKeyDown
+    // (swallow on interactive-disabled, pass-through on non-activation keys,
+    // .click() on polymorphic activation keys), so chaining press +
+    // actionBehavior keeps the Action Surface contract untouched while adding
+    // the press feedback observer in front of it.
+    const mergedActionBehavior = {
+      ...actionBehavior,
+      onKeyDown: chainHandlers<Parameters<React.KeyboardEventHandler>>(
+        press.pressProps.onKeyDown,
+        actionBehavior.onKeyDown,
+      ),
+    };
+
     // ── S-11 · type="button" UNCONDITIONAL override on <button> host ─────
     // Even if userType === 'submit' / 'reset', we override to 'button'.
     // The DEV warn above (warnButtonTypeOverride) already flagged the
@@ -532,8 +675,9 @@ export const Switch = factory<SwitchOwnProps>(
       <EffectiveElement
         ref={ref}
         {...styles.getRootProps()}
-        {...passthroughDomProps}
-        {...actionBehavior}
+        {...passthroughRest}
+        {...chainedPointerHandlers}
+        {...mergedActionBehavior}
         {...(effectiveButtonType !== undefined
           ? { type: effectiveButtonType }
           : {})}

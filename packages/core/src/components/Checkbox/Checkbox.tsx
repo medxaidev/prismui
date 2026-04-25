@@ -11,6 +11,12 @@ import {
   type ActionSurfaceDomProps,
 } from '../../core/action';
 import { resolveInteractive } from '../../core/state';
+import { usePress } from '../../core/interaction-events';
+import { useFeedback, type FeedbackFactory } from '../../core/feedback';
+import { useThemeOptional } from '../../core/theme';
+import { chainHandlers } from '../../core/utils';
+import { rippleFeedback } from '../../feedbacks/ripple';
+import { glowFeedback } from '../../feedbacks/glow';
 import { useControllableState } from '../../hooks';
 import { useFieldControlProps } from '../Field/useFieldControlProps';
 import { useFieldDataAttrs } from '../Field/useFieldDataAttrs';
@@ -21,6 +27,36 @@ import {
   warnDefaultCheckedMixed,
 } from './checkbox-invariants';
 import classes from './Checkbox.module.css';
+
+// Stage 10 · Phase 6 Feedback integration · dual-source default (mirrors
+// Switch v0.1 · Button v0.6 · IconButton / ToggleButton Phase 5). Checkbox
+// is the second Control Surface to adopt the L4 Feedback system — proving
+// COMPONENT_DEFAULT_FEEDBACKS reusability across BOTH Control Surface
+// components. Key architectural finding (same as Switch): Checkbox's
+// `.root (<button role="checkbox">)` geometry is IDENTICAL to `.box`
+// (`.box { inset: 0; width/height: 100% }`), so the feedback host sits
+// on `.root` — no extension to contract §11.4 needed.
+//
+// Resolution priority (D-1 replacement semantics):
+//   props.feedbacks  ←  theme.components.Checkbox.defaultFeedbacks
+//                    ←  CHECKBOX_DEFAULT_FEEDBACKS
+// Pass `feedbacks={[]}` to opt out; the tri-state toggle pipeline (CB-1
+// ARIA / CB-2 checked cycle / Field integration) is INDEPENDENT of
+// feedback factories.
+//
+// Coexistence with Checkbox's mode-B two-channel focus (CB-5):
+//   · `:focus:not(:focus-visible)` pointer halo (box-shadow, Checkbox-native) —
+//     glow NEVER activates here (glowFeedback gates on focusVisible=true).
+//   · `:focus-visible` outline (native) + `.prismui-glow-active` box-shadow
+//     halo (Phase 6) — keyboard focus gets the "ring + halo" Button v0.6.1
+//     visual.
+//
+// Tri-state coexistence (Checkbox-unique · vs Switch binary):
+//   · `data-checked='mixed'` + glow — cleanly coexist. Box fills from
+//     `--checkbox-box-bg-on`, indicator renders the minus glyph, glow halo
+//     sits OUTSIDE the border box. No specificity conflict (background vs
+//     box-shadow are different CSS properties).
+export const CHECKBOX_DEFAULT_FEEDBACKS: FeedbackFactory[] = [rippleFeedback, glowFeedback];
 
 /**
  * Three-state checked value · carries WAI-ARIA semantic
@@ -147,6 +183,27 @@ export interface CheckboxOwnProps extends PolymorphicSystemProps {
   /** Paired with `name`; v2 only. @default 'on' */
   value?: string;
 
+  // ── L4 Feedback (Phase 6 · D-1 replacement semantics) ───────────────
+  /**
+   * L4 Feedback factory list (mirrors Switch / Button / IconButton / ToggleButton).
+   *
+   * Resolution priority (highest first):
+   *   1. this prop (`feedbacks={[...]}`) — full substitution
+   *   2. `theme.components.Checkbox.defaultFeedbacks` — theme override
+   *   3. `CHECKBOX_DEFAULT_FEEDBACKS` — `[rippleFeedback, glowFeedback]`
+   *
+   * Pass `feedbacks={[]}` to opt out of all visual feedback. The tri-state
+   * toggle pipeline (CB-1 ARIA / CB-2 checked cycle / Field integration)
+   * is independent of feedback factories — opting out only suppresses
+   * ripple / glow visuals.
+   *
+   * NOTE: Mode-B halo (CB-5 `:focus:not(:focus-visible)`) is a CSS-native
+   * Checkbox feature (shared with Switch via `theme.focusPointerHalo`) and
+   * is NOT affected by this prop; feedbacks only govern the L4 ripple
+   * (press source) and glow (keyboard-focus source) channels.
+   */
+  feedbacks?: FeedbackFactory[];
+
   // ── Content ───────────────────────────────────────────────────────────
   children?: React.ReactNode;
 
@@ -219,6 +276,7 @@ const checkboxComponentPropKeys = [
   'checked',
   'defaultChecked',
   'onCheckedChange',
+  'feedbacks',
 ] as const;
 
 /**
@@ -296,7 +354,31 @@ export const Checkbox = factory<CheckboxOwnProps>(
       required,
       name,
       value,
+      feedbacks: propsFeedbacks,
     } = componentProps;
+
+    // ── Phase 6 · Feedback factory list resolution (D-1) ───────────────
+    // Priority chain (highest → lowest):
+    //   1. `props.feedbacks`                            — call-site
+    //   2. `theme.components.Checkbox.defaultFeedbacks` — theme override
+    //   3. `CHECKBOX_DEFAULT_FEEDBACKS`                 — module default
+    //
+    // `feedbacks={[]}` is a valid opt-out. `useThemeOptional()` returns the
+    // default theme without ThemeProvider, so theme lookup is always safe.
+    // eslint-disable-next-line react-hooks/rules-of-hooks
+    const theme = useThemeOptional();
+    const themeFeedbacks =
+      (theme.components?.Checkbox?.defaultFeedbacks as FeedbackFactory[] | undefined);
+    const resolvedFeedbacks: FeedbackFactory[] =
+      propsFeedbacks ?? themeFeedbacks ?? CHECKBOX_DEFAULT_FEEDBACKS;
+
+    // ── Phase 6 · Feedback wiring (L4 · dual-source) ────────────────────
+    // Stable controller across renders (OQ-FB-4). Two ingress adapters:
+    //   · `feedback.pressHandlers`  — spread into `usePress({...})` options
+    //   · `feedback.focusHandlers`  — chained onto host `onFocus`/`onBlur`
+    // Business onClick (the tri-state toggle pipeline) is NOT routed through
+    // feedback; it goes through actionBehavior via `handleClick`.
+    const feedback = useFeedback(resolvedFeedbacks);
 
     // ── DEV invariants (CB-1a / CB-2 / CB-10 / CB-11) ───────────────────
     // All four short-circuit in production builds inside the helper module.
@@ -484,6 +566,74 @@ export const Checkbox = factory<CheckboxOwnProps>(
       href: shouldPreserveHref ? userHref : undefined,
     });
 
+    // ── Phase 6 · usePress ingesting feedback.pressHandlers ──────────────
+    // `usePress` shares the SAME `isInteractiveDisabled` predicate as the
+    // Action Behavior above — keeping CSS visual state / JS swallow logic /
+    // Feedback gating in lock-step. Business onClick is NOT routed through
+    // this; usePress observes pointer events purely as a press-feedback
+    // ingress.
+    const press = usePress({
+      isInteractiveDisabled,
+      ...feedback.pressHandlers,
+    });
+
+    // ── Phase 6 · handler chaining (contract §5.2 order) ────────────────
+    // Pointer + keyup + blur / focus: user first → press second → focus third.
+    const {
+      onPointerDown: userOnPointerDown,
+      onPointerEnter: userOnPointerEnter,
+      onPointerLeave: userOnPointerLeave,
+      onKeyUp: userOnKeyUp,
+      onBlur: userOnBlur,
+      onFocus: userOnFocus,
+      ...passthroughRest
+    } = passthroughDomProps as ActionSurfaceDomProps & Record<string, unknown>;
+
+    const chainedPointerHandlers = {
+      onPointerDown: chainHandlers<Parameters<React.PointerEventHandler>>(
+        userOnPointerDown as React.PointerEventHandler | undefined,
+        press.pressProps.onPointerDown,
+      ),
+      onPointerEnter: chainHandlers<Parameters<React.PointerEventHandler>>(
+        userOnPointerEnter as React.PointerEventHandler | undefined,
+        press.pressProps.onPointerEnter,
+      ),
+      onPointerLeave: chainHandlers<Parameters<React.PointerEventHandler>>(
+        userOnPointerLeave as React.PointerEventHandler | undefined,
+        press.pressProps.onPointerLeave,
+      ),
+      onKeyUp: chainHandlers<Parameters<React.KeyboardEventHandler>>(
+        userOnKeyUp as React.KeyboardEventHandler | undefined,
+        press.pressProps.onKeyUp,
+      ),
+      // onBlur: user → press.onBlur (L2 press cancel if live) → focus.onBlur
+      // (Phase 4.1 · finish glow).
+      onBlur: chainHandlers<Parameters<React.FocusEventHandler<HTMLElement>>>(
+        userOnBlur as React.FocusEventHandler<HTMLElement> | undefined,
+        press.pressProps.onBlur as React.FocusEventHandler<HTMLElement> | undefined,
+        feedback.focusHandlers.onBlur,
+      ),
+      // onFocus: user → focus.onFocus (Phase 4.1 · glow start).
+      onFocus: chainHandlers<Parameters<React.FocusEventHandler<HTMLElement>>>(
+        userOnFocus as React.FocusEventHandler<HTMLElement> | undefined,
+        feedback.focusHandlers.onFocus,
+      ),
+    };
+
+    // Keyboard activation: press (visual) first → actionBehavior (semantic
+    // activation) second. actionBehavior.onKeyDown already wraps userOnKeyDown
+    // (swallow on interactive-disabled, pass-through on non-activation keys,
+    // .click() on polymorphic activation keys), so chaining press +
+    // actionBehavior keeps the Action Surface contract untouched while adding
+    // the press feedback observer in front of it.
+    const mergedActionBehavior = {
+      ...actionBehavior,
+      onKeyDown: chainHandlers<Parameters<React.KeyboardEventHandler>>(
+        press.pressProps.onKeyDown,
+        actionBehavior.onKeyDown,
+      ),
+    };
+
     // ── CB-11 · type="button" UNCONDITIONAL override on <button> host ─────
     // Even if userType === 'submit' / 'reset', we override to 'button'.
     // The DEV warn above (warnButtonTypeOverride) already flagged the
@@ -556,8 +706,9 @@ export const Checkbox = factory<CheckboxOwnProps>(
       <EffectiveElement
         ref={ref}
         {...styles.getRootProps()}
-        {...passthroughDomProps}
-        {...actionBehavior}
+        {...passthroughRest}
+        {...chainedPointerHandlers}
+        {...mergedActionBehavior}
         {...(effectiveButtonType !== undefined
           ? { type: effectiveButtonType }
           : {})}

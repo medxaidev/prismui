@@ -417,6 +417,64 @@ export const FocusModeBDemo: Story = {
   ),
 };
 
+// ── 11.5 · FocusFeedback — L4 glow + ripple A/B (Phase 6) ──────────────
+// Tab through (keyboard focus) to see the L4 glow halo layer coexist with
+// the native :focus-visible outline (ring + halo · Button v0.6.1 parity).
+// Mouse-click triggers the CSS-only S-5 mode-B pointer halo (independent
+// channel · glow does NOT activate because focusVisible === false).
+// Pressing the Switch activates the ripple — clipped to the pill boundary.
+export const FocusFeedback: Story = {
+  render: () => (
+    <div
+      style={{
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 16,
+        fontFamily: 'sans-serif',
+        maxWidth: 720,
+      }}
+    >
+      <h4 style={{ margin: '0', fontSize: 14, fontWeight: 700 }}>
+        Focus Feedback — glow + ripple A/B (Phase 6)
+      </h4>
+      <p style={{ margin: '0', fontSize: 12, color: '#637381' }}>
+        Tab into each Switch (keyboard). The default gets the outline + soft
+        halo (ring + halo). <code>feedbacks={'{[]}'}</code> keeps the native
+        outline + mode-B halo only. Pointer-click triggers ripple + mode-B
+        halo on both — ripple is clipped to the pill boundary by{' '}
+        <code>overflow: hidden</code>.
+      </p>
+      <div style={{ display: 'flex', gap: 24, alignItems: 'center', flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+          <span style={{ fontSize: 11, color: '#919EAB' }}>
+            feedbacks=[] (native outline + mode-B halo only)
+          </span>
+          <Switch feedbacks={[]} size="lg" />
+        </div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+          <span style={{ fontSize: 11, color: '#919EAB' }}>
+            default (ripple + glow, Phase 6)
+          </span>
+          <Switch size="lg" />
+        </div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+          <span style={{ fontSize: 11, color: '#919EAB' }}>
+            defaultChecked=true · default feedbacks
+          </span>
+          <Switch defaultChecked size="lg" />
+        </div>
+      </div>
+      <p style={{ marginTop: 8, fontSize: 11, color: '#919EAB' }}>
+        DevTools tip: focus the third Switch and observe{' '}
+        <code>data-checked='true'</code> AND class{' '}
+        <code>prismui-glow-active</code> coexist on the button. Phase 6 invariant:
+        S-2 checked pipeline and feedback factories operate on disjoint
+        rendering channels (bg-fill vs box-shadow halo).
+      </p>
+    </div>
+  ),
+};
+
 // ── 12 · Silent bug defense triplet (S-1a / S-11) ─────────────────────────
 // Visually identical to Default + Label delegation stories above, but the
 // underlying invariants (S-1a aria-pressed filter · S-11 type="button"

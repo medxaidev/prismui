@@ -81,6 +81,24 @@
    * rounded square — the checkbox metaphor). */
   border-radius: var(--checkbox-box-radius);
 
+  /* Stage 10 · Phase 6 · Feedback ripple host (mirrors Button §10.4 host CSS).
+   * `.root` already has `position: relative` (line ~54) so `.prismui-ripple`
+   * (position: absolute, --ripple-x/y in border-box coordinates) lands inside
+   * the Checkbox's root rather than escaping to an ancestor.
+   *
+   * `overflow: hidden` clips the expanding ripple circle to the rounded
+   * square boundary — a content clip that does NOT affect the outside
+   * `box-shadow` painted by mode-B halo (CB-5 pointer halo) / `:focus-
+   * visible` outline / glow class. Outlines and box-shadows live in
+   * border-box-adjacent space and are unaffected by `overflow: hidden`.
+   *
+   * NOTE on CB-5 mode-B halo coexistence: Checkbox's `.root:focus:not(:focus-
+   * visible)` rule (line ~187) paints a pointer halo via box-shadow OUTSIDE
+   * the border box — unaffected by `overflow: hidden`. Same for the
+   * `:focus-visible` outline. Ripple clipping only affects the INSIDE-the-
+   * border-box animation, which is exactly what we want. */
+  overflow: hidden;
+
   /* Transition — box-shadow (halo) + opacity only on root; box's own
    * background / border / border-color transitions live on .box itself. */
   transition:
@@ -193,6 +211,42 @@
 .root:focus-visible:not([data-disabled]) {
   outline: var(--prismui-focus-ring-width) solid var(--prismui-focus-ring-color);
   outline-offset: var(--prismui-focus-ring-offset);
+}
+
+/* ── Stage 10 · Phase 6 · glow feedback host visual (mirrors Button §11.4) ──
+ * Contract: `@/devdocs/system/feedback-contract.md` v0.6 §11.4 Host CSS
+ * prerequisites. `glowFeedback` factory toggles a literal `prismui-glow-active`
+ * class on the focused host — a GLOBAL class under CSS Modules, hence
+ * `:global(...)`.
+ *
+ * Guarded the same way as `:focus-visible` above (disabled / loading suppressed)
+ * so the glow tracks the same a11y boundary. The factory already only fires on
+ * `:focus-visible === true` (Controller-derived, Z-5), so mouse-only focus never
+ * reaches this rule; the CSS guard here defends against manual class injection.
+ *
+ * Visual stack (Button v0.6.1 parity):
+ *   · layer 1 — `.root:focus-visible` outline above (crisp suspended ring).
+ *   · layer 2 — this rule paints a translucent halo via `box-shadow` with
+ *     `color-mix(... 32%, transparent)`. Low alpha lets the outline gap show
+ *     through, so "ring + halo" rather than a thick glued ring.
+ *
+ * 🔴 Mode-B coexistence (CB-5 critical check · FE-2 anti-duplicate-signal):
+ *   · `:focus:not(:focus-visible)` pointer halo (CB-5 mouse focus) — glow class
+ *     NEVER activates here because `glowFeedback` gates on `focusVisible=true`.
+ *   · `:focus-visible` keyboard focus — outline + glow halo coexist cleanly:
+ *     outline is UA-painted, glow uses `box-shadow`. Checkbox does NOT paint
+ *     its own `box-shadow` in the `:focus-visible` rule above, so glow sits
+ *     in a FREE box-shadow channel.
+ *
+ * Tri-state coexistence (CB-7 freeze · Checkbox-unique vs Switch):
+ *   `data-checked='true'` and `data-checked='mixed'` both fill box from
+ *   `--checkbox-box-bg-on` (bg + border channel). Glow halo is OUTSIDE the
+ *   border box (box-shadow channel) — three states (false / true / mixed)
+ *   all coexist with glow cleanly because they target different CSS
+ *   properties. No specificity conflict. */
+.root:global(.prismui-glow-active):not([data-disabled]):not([data-loading]) {
+  box-shadow: 0 0 0 6px
+    color-mix(in srgb, var(--prismui-focus-ring-color) 32%, transparent);
 }
 
 /* ── FE-3 · Invalid × focus (outline-color swap only, no added channel) ─── */

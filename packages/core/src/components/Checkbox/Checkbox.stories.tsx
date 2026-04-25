@@ -539,6 +539,76 @@ export const CrossComponentHaloConsistency: Story = {
   ),
 };
 
+// ── 13.5 · FocusFeedback — L4 glow + ripple A/B (Phase 6) ──────────────
+// Tab through (keyboard focus) to see the L4 glow halo layer coexist with
+// the native :focus-visible outline (ring + halo · Button v0.6.1 parity).
+// Mouse-click triggers the CSS-only CB-5 mode-B pointer halo (independent
+// channel · glow does NOT activate because focusVisible === false).
+// Pressing activates the ripple — clipped to the rounded square boundary.
+// Tri-state coexistence: Checkbox is the FIRST L4-integrated component
+// with a `mixed` state — verify `data-checked='mixed'` + glow halo render
+// on BOTH CSS channels simultaneously without conflict.
+export const FocusFeedback: Story = {
+  render: () => (
+    <div
+      style={{
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 16,
+        fontFamily: 'sans-serif',
+        maxWidth: 720,
+      }}
+    >
+      <h4 style={{ margin: '0', fontSize: 14, fontWeight: 700 }}>
+        Focus Feedback — glow + ripple A/B (Phase 6)
+      </h4>
+      <p style={{ margin: '0', fontSize: 12, color: '#637381' }}>
+        Tab into each Checkbox (keyboard). The default gets the outline + soft
+        halo (ring + halo). <code>feedbacks={'{[]}'}</code> keeps the native
+        outline + mode-B halo only. The <code>checked="mixed"</code> variant
+        proves tri-state × glow coexistence (bg fill from{' '}
+        <code>--checkbox-box-bg-on</code> + box-shadow halo on different CSS
+        channels).
+      </p>
+      <div style={{ display: 'flex', gap: 24, alignItems: 'center', flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+          <span style={{ fontSize: 11, color: '#919EAB' }}>
+            feedbacks=[] (native outline + mode-B halo only)
+          </span>
+          <Checkbox feedbacks={[]} size="lg" />
+        </div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+          <span style={{ fontSize: 11, color: '#919EAB' }}>
+            default (ripple + glow, Phase 6)
+          </span>
+          <Checkbox size="lg" />
+        </div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+          <span style={{ fontSize: 11, color: '#919EAB' }}>
+            defaultChecked=true · default feedbacks
+          </span>
+          <Checkbox defaultChecked size="lg" />
+        </div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+          <span style={{ fontSize: 11, color: '#919EAB' }}>
+            checked='mixed' · default feedbacks (tri-state × glow)
+          </span>
+          <Checkbox checked="mixed" onCheckedChange={() => {}} size="lg" />
+        </div>
+      </div>
+      <p style={{ marginTop: 8, fontSize: 11, color: '#919EAB' }}>
+        DevTools tip: focus the fourth Checkbox and confirm all THREE
+        orthogonal state channels coexist on the button:{' '}
+        <code>aria-checked='mixed'</code> (semantic) ·{' '}
+        <code>data-checked='mixed'</code> (CSS hook → box fill + minus glyph) ·{' '}
+        <code>prismui-glow-active</code> class (feedback → box-shadow halo).
+        Phase 6 invariant: CB-1/CB-2 tri-state pipeline and feedback factories
+        operate on disjoint rendering channels.
+      </p>
+    </div>
+  ),
+};
+
 // ── 14 · Silent bug defense quartet (CB-1a / CB-10 / CB-11) ──────────────
 // Visually identical to Default + Label delegation stories above, but the
 // underlying invariants (CB-1a aria-pressed filter · CB-10 <a href> fallback
