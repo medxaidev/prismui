@@ -26,6 +26,15 @@ import type {
   InteractionEventSource,
 } from '../../core/feedback';
 
+// Side-effect import of the ripple stylesheet. Consumers that import
+// `rippleFeedback` (directly or transitively through a component like
+// `<Button>`) automatically get the `.prismui-ripple` rules without having
+// to remember a separate CSS import in their app entry. This is the only
+// way the bundler knows the CSS is part of the feedback factory contract —
+// otherwise the class lands on the DOM with zero styling (Phase 3 storybook
+// regression).
+import './ripple-feedback.css';
+
 let rippleIdCounter = 0;
 
 export const rippleFeedback: FeedbackFactory = {
@@ -97,26 +106,33 @@ export const rippleFeedback: FeedbackFactory = {
 };
 
 /**
- * Placeholder instance for non-`press` source events · Phase 2 does not
- * implement hover/focus/programmatic visuals. The instance satisfies
- * `FeedbackInstance` (all methods are no-ops + idempotent) so the Controller
- * can hand it back and move on without special-casing.
+ * Placeholder instance for non-`press` source events.
+ *
+ * v0.5 Round 2 P0-1 fix · `pointerId: null` (was `-1`) — aligns with the
+ * extended contract `FeedbackInstance.pointerId: number | null` (§3.1) and
+ * the focus-source rule that every focus instance MUST carry `pointerId ===
+ * null` (§6.4). Hover-source pointerId narrowing is deferred to the Phase 6+
+ * hover adapter spec.
+ *
+ * The instance satisfies `FeedbackInstance` (all methods are no-ops +
+ * idempotent) so the Controller can hand it back and move on without
+ * special-casing the source.
  */
 function createNoOpInstance(source: InteractionEventSource): FeedbackInstance {
   let disposed = false;
   return {
     id: `ripple-noop-${++rippleIdCounter}`,
-    pointerId: -1, // sentinel · Phase 6+ will decide the real contract
+    pointerId: null, // v0.5 Round 2 P0-1 · contract `number | null` (§3.1)
     source,
     start(_e: InteractionEvent) {
       void _e;
-      /* no-op · Phase 6+ */
+      /* no-op · ripple is press-only · other sources fall through */
     },
     finish() {
-      /* no-op · Phase 6+ */
+      /* no-op */
     },
     cancel() {
-      /* no-op · Phase 6+ */
+      /* no-op */
     },
     dispose() {
       if (disposed) return;

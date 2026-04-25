@@ -266,7 +266,16 @@ export function createStylingContext<Props, Names extends string = string>(
       'children', 'id', 'role', 'tabIndex', 'title', 'aria-label', 'aria-labelledby',
       'aria-describedby', 'aria-hidden', 'aria-expanded', 'aria-controls', 'aria-selected',
       'onClick', 'onMouseEnter', 'onMouseLeave', 'onFocus', 'onBlur', 'onChange',
-      'onKeyDown', 'onKeyUp', 'onKeyPress', 'disabled', 'type', 'name', 'value',
+      'onKeyDown', 'onKeyUp', 'onKeyPress',
+      // Pointer Events (W3C) — added for Stage-10 Phase 3 Feedback integration.
+      // Omitting these caused the prop-leak guard to flag user-supplied
+      // `onPointerDown` etc. as declared-out leaks, even though they are
+      // legitimate DOM event handlers the component chains onto the press
+      // target. See feedback-contract.md §5.2 + Button Phase 3 integration.
+      'onPointerDown', 'onPointerUp', 'onPointerMove', 'onPointerCancel',
+      'onPointerEnter', 'onPointerLeave', 'onPointerOver', 'onPointerOut',
+      'onGotPointerCapture', 'onLostPointerCapture',
+      'disabled', 'type', 'name', 'value',
       'placeholder', 'autoFocus', 'autoComplete', 'required', 'readOnly', 'maxLength',
       'minLength', 'pattern', 'accept', 'multiple', 'checked', 'defaultValue',
       'defaultChecked', 'href', 'target', 'rel', 'download', 'src', 'alt', 'width',

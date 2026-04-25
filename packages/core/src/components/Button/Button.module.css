@@ -23,14 +23,35 @@
    * (defaults to var(--prismui-radius-md); user-override via `radius` prop). */
   border-radius: var(--button-radius);
 
+  /* Stage 10 · Phase 3 · Feedback ripple host.
+   * `position: relative` makes the press target a positioned containing block
+   * so `.prismui-ripple` (position: absolute, --ripple-x/y in border-box
+   * coordinates) lands inside the button instead of the viewport.
+   * `overflow: hidden` clips the expanding ripple circle to the button's
+   * rounded border — this is a content clip, it does NOT affect the outside
+   * `box-shadow` painted by `:hover` / `:focus-visible` (those layers live
+   * outside the border box and are unaffected by overflow). Same rule MUI /
+   * Mantine ship for their ripple-enabled buttons. */
+  position: relative;
+  overflow: hidden;
+
   /* Interaction */
   cursor: pointer;
   user-select: none;
+  /* Stage 10 · Phase 3 · transform transition removed.
+   * The original design used a `transform: scale(0.98)` on :active to give
+   * a tactile "press" feel. With the L4 ripple feedback now active the
+   * scale channel became redundant (ripple carries the press semantic on
+   * its own) and the concurrent transform + ripple repaint was perceived
+   * as janky. Matches the choice MUI / Mantine / Chakra / Ant / shadcn
+   * already made on their React buttons. If a future visual spec wants
+   * the scale back, it will land as a `scaleFeedback` FeedbackFactory so
+   * it participates in the Controller (reduced-motion gating, concurrent
+   * press lifecycle) rather than a CSS `:active` side-channel. */
   transition:
     background var(--prismui-transition-fast),
     border-color var(--prismui-transition-fast),
     box-shadow var(--prismui-transition-fast),
-    transform var(--prismui-duration-fast) var(--prismui-ease-out),
     opacity var(--prismui-transition-fast);
 
   /* Reset */
@@ -46,9 +67,13 @@
   box-shadow: var(--prismui-variant-hover-shadow);
 }
 
+/* Button-only decision (IconButton / ToggleButton / Switch / Checkbox still
+ * evaluate scale separately). We retain the `:active` background shift
+ * because it is a color-channel cue independent of ripple (ripple = spatial
+ * "where", bg = whole-button "state") — keeping both is aligned with MUI,
+ * Mantine, Chakra, Ant, shadcn. */
 .root:active:not([data-interactive-disabled]) {
   background: var(--prismui-variant-active-bg);
-  transform: scale(0.98);
 }
 
 /* Step 10 §3.2 S-4: focus-visible uses the narrow guard; readOnly is not a
@@ -56,6 +81,51 @@
 .root:focus-visible:not([data-disabled]):not([data-loading]) {
   outline: var(--prismui-focus-ring-width) solid var(--prismui-focus-ring-color);
   outline-offset: var(--prismui-focus-ring-offset);
+}
+
+/* ── Stage 10 · Phase 4.1 · glow feedback host visual ────────────────────
+ * Contract: `@/devdocs/system/feedback-contract.md` v0.5 §11.4 (Host CSS
+ * prerequisites). The `glowFeedback` factory toggles a literal
+ * `prismui-glow-active` class on the focused host element — which under
+ * CSS Modules is a GLOBAL class, so the selector below uses `:global(...)`.
+ *
+ * Guarded the same way as `:focus-visible` above (disabled / loading
+ * suppressed) so the glow tracks the same a11y boundary. The factory
+ * already only fires on `:focus-visible === true` (Controller-derived) so
+ * mouse-only focus never reaches this rule; still, the CSS guard here
+ * defends against manual class injection or future mis-wires.
+ *
+ * ## Soft outer-glow co-layering with `:focus-visible` outline (v0.6 Round 2)
+ *
+ * Stack:
+ *   · layer 1 — native `outline` (offset 2px, width 2px, primary color) is
+ *     untouched: it paints a crisp suspended ring in the 2→4px border zone.
+ *   · layer 2 — this rule paints a translucent outer halo via `box-shadow`
+ *     using `color-mix(..., 32%, transparent)`. Low alpha means it does NOT
+ *     fill the outline's suspended gap with opaque color (that was the v0.6
+ *     initial bug: a fully-opaque `box-shadow 3px` painted over the gap and
+ *     made the ring look thick-and-glued-to-the-button).
+ *
+ * Visual:
+ *   · Static — crisp native ring with its characteristic gap, plus a soft
+ *     halo of the same hue bleeding ~6px outward. Clear visual layering
+ *     ("ring + glow") rather than "one thick ring".
+ *   · Dynamic — `box-shadow` participates in the existing
+ *     `transition: box-shadow var(--prismui-transition-fast)` (see line 54).
+ *     On `.prismui-glow-active` toggle the halo fades in/out while the
+ *     outline is painted instantly by the UA — the layering makes the glow
+ *     entrance / exit perceptible without tampering with the focus ring itself.
+ *
+ * Theming hooks:
+ *   · Consumers can re-override this selector to swap box-shadow for a
+ *     different look. The factory contract only guarantees the class —
+ *     styling is intentionally left to CSS (D-4 decision).
+ *
+ * P0-3 dual-path cleanup in the factory guarantees `dispose()` even when
+ * transitions are zeroed. */
+.root:global(.prismui-glow-active):not([data-disabled]):not([data-loading]) {
+  box-shadow: 0 0 0 6px
+    color-mix(in srgb, var(--prismui-focus-ring-color) 32%, transparent);
 }
 
 /* Single-state visual — driven by data-disabled (polymorphic-safe).           */
@@ -71,8 +141,16 @@
   gap: var(--button-inner-gap);
 }
 
+/* `.label` slot — typography is handled by `.root`; the rule below is a
+ * deliberate no-op declaration (color inherits from `.root` already) that
+ * exists for two reasons:
+ *   1. CSS Modules must export a `label` key for `ensureClasses(stylesNames,
+ *      classes)` to type-check (see Button.tsx line 128).
+ *   2. Empty rulesets trigger `no-empty-source` / `no-empty-block` lint
+ *      warnings — `color: inherit` sidesteps that without changing visuals.
+ * Do NOT add real layout / typography rules here — they belong on `.root`. */
 .label {
-  /* Typography handled by root */
+  color: inherit;
 }
 
 /* ── Section (left / right decorations) ─────────────────────────────────
@@ -124,18 +202,20 @@
   transform-origin: 50% 50%;
 }
 
-/* ── Reduced Motion (a11y: IV-A5) ────────────────────────────────────────
+/* ── Reduced Motion (a11y: IV-A5) ───────────────────────────────────
  * Users with prefers-reduced-motion: reduce receive:
- *   - No transitions on color / border / shadow / transform / opacity
- *   - No active-press scale(0.98)
+ *   - No transitions on color / border / shadow / opacity
  *   - No spinner rotation animation (still visible, just static)
+ *
+ * Note: the L4 ripple factory's reduced-motion main guarantee lives in
+ * `FeedbackController` (matchMedia gate skips instance creation) — this
+ * stylesheet does not need to disable the `.prismui-ripple` keyframes a
+ * second time (the CSS fallback exists in `ripple-feedback.css` as pure
+ * defense-in-depth; see `@/devdocs/system/feedback-contract.md` §9.1).
  */
 @media (prefers-reduced-motion: reduce) {
   .root {
     transition: none;
-  }
-  .root:active:not([data-interactive-disabled]) {
-    transform: none;
   }
   .section[data-loader='true'] > svg {
     animation: none;

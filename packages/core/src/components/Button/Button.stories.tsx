@@ -145,6 +145,43 @@ export const FocusRing: Story = {
   ),
 };
 
+// 8.5 FocusFeedback — A/B compare native outline vs glowFeedback (Phase 4.1 visual demo)
+export const FocusFeedback: Story = {
+  render: () => (
+    <div style={{ fontFamily: 'sans-serif', maxWidth: 640 }}>
+      <h4 style={{ margin: '0 0 8px', fontSize: 14, fontWeight: 700 }}>
+        Focus Feedback — glowFeedback A/B
+      </h4>
+      <p style={{ margin: '0 0 12px', fontSize: 12, color: '#637381' }}>
+        Tab into each button (do <strong>not</strong> click — <code>:focus-visible</code> only
+        triggers on keyboard focus). The left has <code>feedbacks={'{[]}'}</code> — native{' '}
+        <code>:focus-visible</code> outline only. The right has the default{' '}
+        <code>[rippleFeedback, glowFeedback]</code> — outline plus a soft halo via{' '}
+        <code>box-shadow</code> with <code>color-mix(... 32%, transparent)</code>, fading{' '}
+        in / out via <code>transition: box-shadow var(--prismui-transition-fast)</code>.
+      </p>
+      <div style={{ display: 'flex', gap: 24, alignItems: 'flex-end', flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+          <span style={{ fontSize: 11, color: '#919EAB' }}>
+            feedbacks=[] (native outline only)
+          </span>
+          <Button feedbacks={[]}>No glow</Button>
+        </div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+          <span style={{ fontSize: 11, color: '#919EAB' }}>default (ripple + glow)</span>
+          <Button>With glow</Button>
+        </div>
+      </div>
+      <p style={{ marginTop: 16, fontSize: 11, color: '#919EAB' }}>
+        DevTools tip: focus the right button and observe the global class{' '}
+        <code>prismui-glow-active</code> appear / disappear on the host element. Class
+        lifecycle is driven by the <code>FeedbackController</code> (Phase 4.1 Delivered,
+        contract v0.6).
+      </p>
+    </div>
+  ),
+};
+
 // 9. Three-Channel Overrides (props level)
 export const ThreeChannelPropsOverride: Story = {
   render: () => (
@@ -362,7 +399,8 @@ export const ReducedMotionHint: Story = {
       <h4 style={{ margin: '0 0 8px', fontSize: 14, fontWeight: 700 }}>prefers-reduced-motion (IV-A5)</h4>
       <p style={{ margin: '0 0 12px', fontSize: 12, color: '#637381' }}>
         Toggle OS "Reduce motion" accessibility setting to verify: transitions
-        disappear, <code>:active</code> no longer scales, spinner stops rotating.
+        disappear, ripple feedback is suppressed (FeedbackController matchMedia
+        gate), spinner stops rotating.
       </p>
       <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', alignItems: 'center' }}>
         <Button>Hover / Click me</Button>

@@ -6,10 +6,38 @@ import {
   resolvePolymorphicActionBehavior,
   type ActionSurfaceDomProps,
 } from '../../core/action';
+import { usePress } from '../../core/interaction-events';
+import { useFeedback, type FeedbackFactory } from '../../core/feedback';
+import { useThemeOptional } from '../../core/theme';
+import { chainHandlers } from '../../core/utils';
+import { rippleFeedback } from '../../feedbacks/ripple';
+import { glowFeedback } from '../../feedbacks/glow';
 import type { SlotNames } from '../../core/component';
 import type { VarsResolver, StylesOverride } from '../../core/styles';
 import type { PolymorphicSystemProps } from '../../core/props';
 import classes from './Button.module.css';
+
+// Stage 10 · Phase 4.1 Feedback integration · dual-source default.
+//
+// Module-level constant keeps the array identity stable across every
+// `<Button>` render, which is what `useFeedback` wants (see
+// `@/devdocs/system/feedback-contract.md` §6.6 + OQ-FB-4: stable
+// controller via useRef + updateFactories).
+//
+// v0.5 Phase 4.1 D-1 / D-3 decisions: the default ships BOTH ripple
+// (press source) and glow (focus source) so out-of-the-box `<Button>`
+// gets the dual-source treatment. Resolution priority (D-1):
+//   props.feedbacks  ←  theme.components.Button.defaultFeedbacks
+//                    ←  BUTTON_DEFAULT_FEEDBACKS
+// Replacement semantics — passing a `feedbacks={[...]}` prop fully
+// substitutes the default (no merge / no concat). Passing `feedbacks={[]}`
+// is the explicit opt-out path (no visual feedback at all).
+//
+// Naming: `BUTTON_DEFAULT_FEEDBACKS` (UPPER_SNAKE_CASE module constant)
+// is the source-of-truth identifier the contract Audit Log v0.5 cites;
+// it stays distinct from `theme.components.Button.defaultFeedbacks` (the
+// theme path), so we never collide with the theme key.
+export const BUTTON_DEFAULT_FEEDBACKS: FeedbackFactory[] = [rippleFeedback, glowFeedback];
 
 // Stage 9: Slot System — structure declaration as source of truth
 // `section` is a multi-instance slot: rendered twice (left / right) and
@@ -53,6 +81,23 @@ export interface ButtonOwnProps extends PolymorphicSystemProps {
    * @default false
    */
   loading?: boolean;
+  /**
+   * L4 Feedback factory list (v0.5 Phase 4.1 · D-1 replacement semantics).
+   *
+   * Resolution priority (highest first):
+   *   1. this prop (`feedbacks={[...]}`) — full substitution
+   *   2. `theme.components.Button.defaultFeedbacks` — theme override
+   *   3. `BUTTON_DEFAULT_FEEDBACKS` — `[rippleFeedback, glowFeedback]`
+   *
+   * Pass `feedbacks={[]}` to opt out of all visual feedback (e.g. for
+   * tests / SSR-frame placeholders). Pass `undefined` (or omit) to fall
+   * through to the theme / module default.
+   *
+   * NOTE: array identity matters less than its contents; `useFeedback`
+   * sees factory list updates via `updateFactories` (§6.6 OQ-FB-12 policy).
+   * For maximum stability, hoist your override array to a module constant.
+   */
+  feedbacks?: FeedbackFactory[];
   children?: React.ReactNode;
 }
 
@@ -98,6 +143,7 @@ export const Button = factory<ButtonOwnProps>(
       'radius',
       'fullWidth',
       'loading',
+      'feedbacks',
     ] as const,
     // Step 10 · A-2 · single-writer hierarchy for data-attrs:
     // declaring defaults here (instead of render-body destructuring or hidden
@@ -138,7 +184,40 @@ export const Button = factory<ButtonOwnProps>(
       fullWidth,
       loading,
       disabled,
+      feedbacks: propsFeedbacks,
     } = componentProps;
+
+    // ── Stage 10 · Phase 4.1 · Feedback factory list resolution (D-1) ───
+    // Priority chain (highest → lowest):
+    //   1. `props.feedbacks`                                — call-site
+    //   2. `theme.components.Button.defaultFeedbacks`       — theme override
+    //   3. `BUTTON_DEFAULT_FEEDBACKS`                       — module default
+    //
+    // Replacement semantics (D-1, not merge): the first defined value wins
+    // outright. `feedbacks={[]}` is a valid explicit opt-out that still
+    // short-circuits the theme/module defaults (empty !== undefined).
+    //
+    // `useThemeOptional()` returns the default theme when no ThemeProvider
+    // is present, so `theme.components` may be `undefined` in that case —
+    // handled via optional chaining.
+    // eslint-disable-next-line react-hooks/rules-of-hooks
+    const theme = useThemeOptional();
+    const themeFeedbacks =
+      (theme.components?.Button?.defaultFeedbacks as FeedbackFactory[] | undefined);
+    const resolvedFeedbacks: FeedbackFactory[] =
+      propsFeedbacks ?? themeFeedbacks ?? BUTTON_DEFAULT_FEEDBACKS;
+
+    // ── Phase 4.1 · Feedback wiring (L4 · dual-source) ──────────────────
+    // Stable controller across renders (OQ-FB-4). Two ingress adapters:
+    //   · `feedback.pressHandlers`  — spread into `usePress({...})` options
+    //                                 (press source · L2 FSM)
+    //   · `feedback.focusHandlers`  — chained onto host `onFocus`/`onBlur`
+    //                                 (focus source · React synthetic)
+    // We do NOT route business `onClick` through either — that would
+    // collide with the L3 Action Behavior contract which already wraps
+    // `onClick` / Enter-Space activation / interactive-disabled swallow.
+    // `usePress` + the focus ingress serve exclusively as feedback ingresses.
+    const feedback = useFeedback(resolvedFeedbacks);
     // Multi-instance slot: raw span + data-position (mirrors Input pattern).
     // Button.Section compound is intentionally NOT used (single-instance only).
     const sectionSlot = styles.getStyles('section');
@@ -192,8 +271,32 @@ export const Button = factory<ButtonOwnProps>(
       tabIndex: userTabIndex,
       type: userType,
       role: userRole,
+      // ── Phase 3/4.1 · feedback-layer event handlers pulled out for chaining ──
+      // Press-layer events (Phase 3) + Focus-layer events (Phase 4.1). We
+      // pluck any user-supplied versions so we can deterministically chain
+      // `user → press → focus` (user first → feedback observation after),
+      // matching the contract §5.2 recipe order.
+      //
+      // `onBlur` participates in BOTH chains — blur during press triggers
+      // L2 press cancel (ripple), and blur on the focused element finishes
+      // the focus glow. The chain is user → press.onBlur → focus.onBlur so
+      // neither feedback overrides the other.
+      onPointerDown: userOnPointerDown,
+      onPointerEnter: userOnPointerEnter,
+      onPointerLeave: userOnPointerLeave,
+      onKeyUp: userOnKeyUp,
+      onFocus: userOnFocus,
+      onBlur: userOnBlur,
       ...passthroughDomProps
-    } = domProps as ActionSurfaceDomProps & { children?: React.ReactNode };
+    } = domProps as ActionSurfaceDomProps & {
+      children?: React.ReactNode;
+      onPointerDown?: React.PointerEventHandler;
+      onPointerEnter?: React.PointerEventHandler;
+      onPointerLeave?: React.PointerEventHandler;
+      onKeyUp?: React.KeyboardEventHandler;
+      onFocus?: React.FocusEventHandler<HTMLElement>;
+      onBlur?: React.FocusEventHandler<HTMLElement>;
+    };
 
     // ── A-2 · Action Surface behavior (delegated to core/action) ──────────
     // Four BEHAVIORAL concerns (Action Behavior model, post-F-1 v0.7) — all
@@ -227,6 +330,68 @@ export const Button = factory<ButtonOwnProps>(
       role: userRole,
       href: passthroughDomProps.href as string | undefined,
     });
+
+    // ── Phase 3 · usePress ingesting feedback.pressHandlers ──────────────
+    // `usePress` shares the SAME `isInteractiveDisabled` predicate as the
+    // Action Behavior above — keeping CSS visual state / JS swallow logic /
+    // Feedback gating in lock-step. On flip `false → true` mid-press the
+    // L2 FSM cancels every live pointerId synchronously (C-2), which
+    // propagates through `feedback.pressHandlers.onPressCancel` into every
+    // active ripple as an immediate `cancel()` (C-F2).
+    const press = usePress({
+      isInteractiveDisabled,
+      ...feedback.pressHandlers,
+    });
+
+    // ── Phase 3 · handler chaining (contract §5.2 order) ────────────────
+    // Pointer + keyup + blur: user first → press second. No visual-state
+    // handler on the user side exists yet, but the chain keeps user intent
+    // authoritative if someone needs pointerdown analytics etc.
+    const chainedPointerHandlers = {
+      onPointerDown: chainHandlers<Parameters<React.PointerEventHandler>>(
+        userOnPointerDown,
+        press.pressProps.onPointerDown,
+      ),
+      onPointerEnter: chainHandlers<Parameters<React.PointerEventHandler>>(
+        userOnPointerEnter,
+        press.pressProps.onPointerEnter,
+      ),
+      onPointerLeave: chainHandlers<Parameters<React.PointerEventHandler>>(
+        userOnPointerLeave,
+        press.pressProps.onPointerLeave,
+      ),
+      onKeyUp: chainHandlers<Parameters<React.KeyboardEventHandler>>(
+        userOnKeyUp,
+        press.pressProps.onKeyUp,
+      ),
+      // onBlur: user → press.onBlur (L2 press cancel if live) → focus.onBlur
+      // (Phase 4.1 · finish glow). `chainHandlers` runs all three in order;
+      // first throw propagates (contract §5.3 semantics).
+      onBlur: chainHandlers<Parameters<React.FocusEventHandler<HTMLElement>>>(
+        userOnBlur,
+        press.pressProps.onBlur as React.FocusEventHandler<HTMLElement> | undefined,
+        feedback.focusHandlers.onBlur,
+      ),
+      // onFocus: user → focus.onFocus (Phase 4.1 · glow start).
+      onFocus: chainHandlers<Parameters<React.FocusEventHandler<HTMLElement>>>(
+        userOnFocus,
+        feedback.focusHandlers.onFocus,
+      ),
+    };
+
+    // Keyboard activation: press (visual) first → actionBehavior (semantic
+    // activation) second. `actionBehavior.onKeyDown` already internally
+    // wraps `userOnKeyDown` (swallow on interactive-disabled, pass-through
+    // on non-activation keys, `.click()` on polymorphic activation keys),
+    // so chaining press + actionBehavior keeps the Action Surface contract
+    // untouched while adding the visual press feedback in front of it.
+    const mergedActionBehavior = {
+      ...actionBehavior,
+      onKeyDown: chainHandlers<Parameters<React.KeyboardEventHandler>>(
+        press.pressProps.onKeyDown,
+        actionBehavior.onKeyDown,
+      ),
+    };
 
     // ── B-1 · default `type="button"` on native <button> ────────────────
     // A bare `<button>` nested in a `<form>` defaults to `type="submit"` per
@@ -278,8 +443,15 @@ export const Button = factory<ButtonOwnProps>(
     const isBuiltInSpinner = !!loading;
     const leftContent = isBuiltInSpinner ? <BuiltInSpinner /> : leftSection;
     // ── B-7 · Root spread ordering contract ────────────────────────
-    // JSX spread precedence is "later wins." The order below encodes six
-    // deliberate contracts — changing it silently breaks a11y / behavior.
+    // JSX spread precedence is "later wins." The order below encodes the
+    // deliberate layering that makes user ≺ component ≺ system true.
+    // Changing it silently breaks a11y / behavior.
+    //
+    // Phase 3 note: the original single `actionBehavior` spread has been
+    // split into `chainedPointerHandlers` + `mergedActionBehavior` to
+    // compose L2 `usePress` (Feedback ingress) with L3 Action Surface
+    // without collapsing either contract into the other. See the handler
+    // chaining block above for the merge rationale.
     //
     //   1. `ref`                       — non-spread, set first so all spread
     //                                    layers cannot clobber it.
@@ -289,31 +461,47 @@ export const Button = factory<ButtonOwnProps>(
     //                                    wrap). MAY override theme className
     //                                    via `className=` (intentional escape
     //                                    hatch; theme is a default, not a law).
-    //   4. `actionBehavior`            — Pointer/Keyboard/tabIndex/role from
-    //                                    the Action Behavior hook. MUST win
-    //                                    over (3): if user provided a bare
-    //                                    onClick on a disabled button, the
-    //                                    wrapped swallow-aware version replaces
-    //                                    it. This is how disabled stays honest.
-    //   5. `type` default              — only when Element === 'button' AND
+    //   4. `chainedPointerHandlers`    — Phase 3 press chain +
+    //                                    Phase 4.1 focus chain:
+    //                                      onPointerDown/Enter/Leave/KeyUp:
+    //                                        user → press.X (§5.2 order)
+    //                                      onBlur:
+    //                                        user → press.onBlur → focus.onBlur
+    //                                      onFocus:
+    //                                        user → focus.onFocus
+    //                                    User runs first → feedback ingress
+    //                                    runs after (contract §5.2). MUST win
+    //                                    over (3) because passthroughDomProps
+    //                                    still carries any user-supplied
+    //                                    handler that was already chained into
+    //                                    this object.
+    //   5. `mergedActionBehavior`      — Action Surface onClick / onKeyDown
+    //                                    (chained with press.onKeyDown) /
+    //                                    tabIndex / role from the hook.
+    //                                    MUST win over (3)+(4): the press
+    //                                    layer observes, the Action Surface
+    //                                    activates — keeping swallow logic
+    //                                    in lock-step with CSS visual state.
+    //   6. `type` default              — only when Element === 'button' AND
     //                                    user didn't pass one (B-1).
-    //   6. `rootDataAttrs`             — component-local data-attrs
+    //   7. `rootDataAttrs`             — component-local data-attrs
     //                                    (`data-full-width`).
-    //   7. `systemDataAttrs`           — the 7 system-owned data-attrs
+    //   8. `systemDataAttrs`           — the 7 system-owned data-attrs
     //                                    (SR-7 single-writer chain). MUST win
     //                                    over everything: users / themes must
     //                                    not be able to fake `data-variant`.
-    //   8. `disabilityAttrs`           — native `disabled` / `aria-disabled` /
+    //   9. `disabilityAttrs`           — native `disabled` / `aria-disabled` /
     //                                    `aria-busy`. Last because these are
     //                                    the load-bearing a11y contract.
     //
-    // The rule of thumb: user ≺ component ≺ system.
+    // The rule of thumb: user ≺ press ≺ action ≺ component ≺ system.
     return (
       <Element
         ref={ref}
         {...styles.getRootProps()}
         {...passthroughDomProps}
-        {...actionBehavior}
+        {...chainedPointerHandlers}
+        {...mergedActionBehavior}
         {...(effectiveButtonType !== undefined ? { type: effectiveButtonType } : {})}
         {...rootDataAttrs}
         {...systemDataAttrs}

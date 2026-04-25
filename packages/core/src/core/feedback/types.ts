@@ -1,13 +1,19 @@
 /**
  * Stage-10 · L4 Feedback · Type Contracts
  *
- * Source of truth: `@/devdocs/system/feedback-contract.md` v0.2
- *   · §3.1 FeedbackInstance
+ * Source of truth: `@/devdocs/system/feedback-contract.md` v0.5 (Phase 4.1 ·
+ * Round 1 + Round 2 收敛 · 待签字实施)
+ *   · §3.1 FeedbackInstance     (v0.5 · `pointerId: number | null` extended)
  *   · §3.2 FeedbackFactory
- *   · §3.3 FeedbackCreateParams  (v0.2 · minimal `{ event }` form · OQ-FB-11)
- *   · §4.1 InteractionEvent      (discriminated union · OQ-FB-3)
- *   · §4.2 Source-specific handlers (PressHandlers / HoverHandlers / FocusHandlers)
- *   · §4.3 FeedbackController
+ *   · §3.3 FeedbackCreateParams (v0.2 · minimal `{ event }` form · OQ-FB-11)
+ *   · §4.1 InteractionEvent     (discriminated union · v0.5 · focus variant
+ *                                lifted from `Record<string, never>` to a
+ *                                real `FocusSourceEvent` shape)
+ *   · §4.2 Source-specific handlers (v0.5 P0-1 · ingress 类型闭环修正:
+ *                                    PressHandlers stays `PressEvent`,
+ *                                    FocusHandlers takes `React.FocusEvent`)
+ *   · §4.3 FeedbackController   (v0.5 · `focusHandlers: Required<FocusHandlers>`
+ *                                ingress · `subscribeFocus` egress real)
  *
  * Invariant anchors:
  *   · FB-2   Managed Ephemeral Instances
@@ -16,10 +22,14 @@
  *   ·  └ 2.3 start() called at most once per instance
  *   · FB-3   No DOM Input Read + No Foreign Tree Query
  *   · FB-ARCH-3 Source-Agnostic API
- *   ·  ├ 3.1 Ingress/Egress separation  (general principle + Phase 2 concretization)
+ *   ·  ├ 3.1 Ingress/Egress separation  (general principle + Phase 2/4
+ *   ·  │     concretization · press + focus both real)
  *   ·  ├ 3.2 Dispatch order: internal activeInstances → subscribers
- *   ·  └ 3.3 Non-equivalence between pressHandlers (ingress) and subscribePress (egress)
+ *   ·  └ 3.3 Non-equivalence between {press,focus}Handlers (ingress) and
+ *   ·        subscribe{Press,Focus} (egress)
  */
+
+import type * as React from 'react';
 
 import type { PressEvent } from '../interaction-events';
 
@@ -34,14 +44,46 @@ export type InteractionEventSource = 'press' | 'hover' | 'focus' | 'programmatic
 // ─────────────────────────────────────────────────────────────────────
 
 /**
- * Phase 6+ placeholder shapes. Kept as structural types so the discriminated
- * union compiles today without forcing hover/focus wire-up work.
+ * Hover variant placeholder · Phase 6+ wire-up. Kept as a structural empty
+ * type so the discriminated union compiles today.
  *
- * Names are `*SourceEvent` (not bare `HoverEvent` / `FocusEvent`) to avoid
- * shadowing DOM globals at consumer import sites.
+ * Name is `HoverSourceEvent` (not bare `HoverEvent`) to avoid shadowing DOM
+ * globals at consumer import sites.
  */
 export type HoverSourceEvent = Record<string, never>;
-export type FocusSourceEvent = Record<string, never>;
+
+/**
+ * Focus variant · v0.5 Phase 4.1 lifted from placeholder to real shape.
+ *
+ * The Controller normalizes the inbound `React.FocusEvent<HTMLElement>` into
+ * a `FocusSourceEvent` before handing it to factories (§4.2 mapping table).
+ * Factories MUST treat all three fields as authoritative · they MUST NOT
+ * walk back into `nativeEvent.target.matches(':focus-visible')` themselves
+ * (FB-3 · No DOM Input Read · the `focusVisible` boolean is the contract).
+ */
+export interface FocusSourceEvent {
+  /**
+   * The element receiving focus (`event.currentTarget` from the React
+   * synthetic event). Factories own DOM ops on this node only —
+   * `target.classList.add('prismui-{factoryName}-active')` etc. (§8.1
+   * receivers whitelist + OQ-FB-P4-2 prefix constraint).
+   */
+  target: HTMLElement;
+  /**
+   * Whether the focus should produce a visible ring under current focus
+   * conditions. Derived once by the Controller using `:focus-visible`
+   * matching at handoff time (Z-5: factory-layer judgment moved to
+   * Controller-layer derivation to avoid every factory re-walking the DOM).
+   *
+   * Factories that want focus-visible-only feedback (e.g. glowFeedback)
+   * MUST early-return a no-op instance when this is `false`. Factories
+   * targeting always-on focus visuals (rare) MAY ignore the flag.
+   */
+  focusVisible: boolean;
+  /** Underlying browser FocusEvent · used for advanced consumers / DevTools. */
+  nativeEvent: globalThis.FocusEvent;
+}
+
 export type ProgrammaticSourceEvent = { timestamp: number; [key: string]: unknown };
 
 /**
@@ -94,17 +136,34 @@ export interface PressHandlers {
 }
 
 export interface HoverHandlers {
+  /** 【Phase 6+ placeholder · adapter shape will be the React.PointerEvent or useHover analogue】 */
+  onHoverStart?: (event: React.PointerEvent<HTMLElement>) => void;
   /** 【Phase 6+ placeholder】 */
-  onHoverStart?: (event: Extract<InteractionEvent, { source: 'hover' }>) => void;
-  /** 【Phase 6+ placeholder】 */
-  onHoverEnd?: (event: Extract<InteractionEvent, { source: 'hover' }>) => void;
+  onHoverEnd?: (event: React.PointerEvent<HTMLElement>) => void;
 }
 
+/**
+ * Focus ingress / egress handlers · v0.5 Phase 4.1 P0-1 类型闭环修正.
+ *
+ *   Contract v0.2 drafting initially typed these as
+ *   `(e: InteractionEvent & { source: 'focus' }) => void`. That signature
+ *   was incompatible with the only legitimate adapter · React DOM
+ *   `onFocus={...}` / `onBlur={...}` · whose synthetic event is
+ *   `React.FocusEvent<HTMLElement>`. To be spreadable directly onto the
+ *   host element (zero-cost interop · no manual `wrap()` step in the
+ *   component layer) handlers MUST receive the native React event.
+ *
+ *   Controller-internal normalization to the discriminated `FocusSourceEvent`
+ *   happens at the **start edge**: `factory.create({ event: ... })` and
+ *   `instance.start(event)`. `finish()` / `cancel()` / `dispose()` are
+ *   parameterless (§3.1) — life-cycle terminators carry no event context.
+ *
+ *   Egress observers (`subscribeFocus`) see the same React event the
+ *   ingress did · no re-shape happens at the egress border (FB-ARCH-3.2).
+ */
 export interface FocusHandlers {
-  /** 【Phase 6+ placeholder】 */
-  onFocus?: (event: Extract<InteractionEvent, { source: 'focus' }>) => void;
-  /** 【Phase 6+ placeholder】 */
-  onBlur?: (event: Extract<InteractionEvent, { source: 'focus' }>) => void;
+  onFocus?: (event: React.FocusEvent<HTMLElement>) => void;
+  onBlur?: (event: React.FocusEvent<HTMLElement>) => void;
 }
 
 // ─────────────────────────────────────────────────────────────────────
@@ -117,26 +176,64 @@ export interface FeedbackInstance {
 
   /**
    * Bound pointerId (FB-2 concurrency prerequisite · aligns with L2 C-1
-   * independent FSM-per-pointerId). Used as the outer key of
-   * `activeInstances: Map<pointerId, FeedbackInstance[]>`.
+   * independent FSM-per-pointerId).
+   *
+   *   · Press source : `number` — outer key of `activeInstances:
+   *     Map<pointerId, FeedbackInstance[]>` (§6.1).
+   *   · Focus source (v0.5 Phase 4.1 · Z-2): `null` — focus is a
+   *     singleton (one focused element per document); the Controller
+   *     stores focus instances in a separate `focusInstances` field
+   *     keyed by nothing (§6.4).
+   *   · Programmatic source: `null` — pointerId is intrinsically absent.
+   *   · Hover source: Phase 6+ adapter spec will decide (likely `number`).
+   *
+   * Consumers reading this value MUST handle `null` (§6.5: external
+   * pointerId references are forbidden anyway · this readonly view exists
+   * for DevTools / log / test snapshot only).
    */
-  readonly pointerId: number;
+  readonly pointerId: number | null;
 
-  /** Bound source (FB-ARCH-3 · Phase 2 always `'press'`). */
+  /** Bound source (FB-ARCH-3 · v0.5 supports `'press'` + `'focus'` · `'hover'` / `'programmatic'` Phase 6+). */
   readonly source: InteractionEventSource;
 
   /**
-   * pressstart equivalent · instance enters active / begins animation / playback / analytics.
+   * Source-start callback · instance enters active state · begins animation
+   * / playback / analytics.
+   *
+   *   - press source: invoked from `onPressStart` (Controller · L2 usePress)
+   *   - focus source: invoked from `onFocus` (Controller · React FocusEvent
+   *     adapter · §6.1)
    *
    * Contract (FB-2.3): Controller MUST call at most once per instance.
    * Instance MAY defensively ignore duplicate `start()` calls.
+   *
+   * The argument is the Controller-normalized `InteractionEvent` (the only
+   * place the discriminated union appears on the factory boundary · §4.2
+   * P0-1 mapping table).
    */
   start(event: InteractionEvent): void;
 
-  /** Success path · wait for animation to complete, then dispose. */
+  /**
+   * Success-path terminator · wait for animation to complete, then dispose.
+   *
+   *   - press source: invoked from `onPressEnd`
+   *   - focus source: invoked from `onBlur`
+   *
+   * Parameterless · life-cycle terminators carry no event context (v0.5
+   * Round 2 P1-1 · interface stays consistent with v0.2 Phase 2 Delivered).
+   */
   finish(): void;
 
-  /** Failure path · destroy immediately · animation interrupted. */
+  /**
+   * Failure-path terminator · destroy immediately · animation interrupted.
+   *
+   *   - press source: invoked from `onPressCancel` (e.g. interactive
+   *     disabled flip mid-press)
+   *   - focus source: invoked when the host explicitly aborts the focus
+   *     visual (e.g. disabled-flip while focused, programmatic dispose)
+   *
+   * Parameterless (v0.5 Round 2 P1-1).
+   */
   cancel(): void;
 
   /**
@@ -181,20 +278,25 @@ export interface FeedbackController {
   subscribePress(handlers: PressHandlers): Unsubscribe;
   /** 【Phase 6+ placeholder】 */
   subscribeHover(handlers: HoverHandlers): Unsubscribe;
-  /** 【Phase 6+ placeholder】 */
+  /**
+   * Focus egress observers (v0.5 Phase 4.1 real · upgraded from placeholder).
+   * Observers receive the same `React.FocusEvent<HTMLElement>` the ingress
+   * did (FB-ARCH-3.2 dispatch order: internal focusInstances → subscribers).
+   */
   subscribeFocus(handlers: FocusHandlers): Unsubscribe;
 
   /**
    * Programmatic trigger (analytics / form error / tests · no DOM source adapter).
    *
-   * For `source: 'press'` events prefer wiring `pressHandlers` through
-   * `usePress`; `trigger` is meant for emission paths without an ingress
-   * adapter (FB-ARCH-3.1 Phase 2 concretization).
+   * For `source: 'press' | 'focus'` events prefer wiring through their
+   * respective ingress adapters (`pressHandlers` / `focusHandlers`);
+   * `trigger` is meant for emission paths without an ingress adapter
+   * (FB-ARCH-3.1 Phase 2 concretization).
    */
   trigger(event: InteractionEvent): void;
 
   /**
-   * Ingress adapter (FB-ARCH-3.1 · press source input channel).
+   * Press ingress adapter (FB-ARCH-3.1 · press source input channel).
    *
    * Stable reference across renders (OQ-FB-4 useRef + updateFactories).
    * Caller MUST spread onto `usePress({...})` options — otherwise the
@@ -204,8 +306,23 @@ export interface FeedbackController {
   readonly pressHandlers: Required<PressHandlers>;
 
   /**
+   * Focus ingress adapter (v0.5 Phase 4.1 real · FB-ARCH-3.1 · focus source
+   * input channel).
+   *
+   * Stable reference across renders. Caller MUST spread onto the host
+   * element's `onFocus` / `onBlur` React props (or chain via `chainHandlers`
+   * with any user-supplied focus handlers — otherwise the focus glow
+   * factories never fire).
+   *
+   * The Controller normalizes each inbound `React.FocusEvent<HTMLElement>`
+   * into a `FocusSourceEvent` before handing it to factories (§4.2 mapping
+   * table · `:focus-visible` derivation also happens here).
+   */
+  readonly focusHandlers: Required<FocusHandlers>;
+
+  /**
    * Swap the active factory list (OQ-FB-12 policy):
-   *   · only affects future `onPressStart` calls
+   *   · only affects future source activations (`onPressStart` / `onFocus`)
    *   · already-active instances keep running under their original factory
    *   · removed factories' instances finish naturally (no retroactive cancel)
    *   · new factories come into effect on the next source activation

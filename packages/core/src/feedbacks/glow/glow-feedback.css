@@ -1,0 +1,26 @@
+/*
+ * Stage-10 · L4 Feedback · glowFeedback CSS (v0.5 Phase 4.1)
+ *
+ * §11.3 — glow factory ships ONLY the reduced-motion safety net here.
+ * Actual glow visuals (`box-shadow` / `outline` / etc.) live in HOST CSS
+ * keyed off `.<host-root-class>.prismui-glow-active` (§11.4 Host CSS
+ * prerequisites) so consumers can theme freely without a parameterized
+ * factory API (D-4: CSS custom properties are the styling entry point).
+ *
+ * The reduced-motion rule below collapses any host-defined transition on
+ * the active class to zero so the glow appears / disappears instantly.
+ * The Controller already gates `create` under reduced-motion (§9.1 main
+ * guarantee), so this rule is the second layer of defense — important for
+ * non-Controller-routed focus visuals or theme overrides that bypass the
+ * gate.
+ *
+ * P0-3 safety: the factory's setTimeout fallback (350 ms) is the primary
+ * guarantee that `dispose()` runs even when transitions are zeroed; this
+ * CSS rule is an aesthetic / a11y supplement, not a correctness contract.
+ */
+
+@media (prefers-reduced-motion: reduce) {
+  .prismui-glow-active {
+    transition: none !important;
+  }
+}

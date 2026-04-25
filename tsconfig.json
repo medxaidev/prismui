@@ -30,7 +30,8 @@
   "include": [
     "vitest.config.ts",
     "vitest.setup.ts",
-    "packages/**/*"
+    "packages/**/*",
+    ".storybook/**/*"
   ],
   "exclude": [
     "**/node_modules/**",

@@ -1,5 +1,4 @@
 import type { Preview } from '@storybook/react';
-import React from 'react';
 import { PrismUIProvider } from '../packages/core/src/core/theme/provider/PrismUIProvider';
 import { ColorSchemeProvider } from '../packages/core/src/core/theme/color-scheme.context';
 

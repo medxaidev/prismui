@@ -27,6 +27,7 @@ import type { DefaultColorFamily, PrismUIColorFamilies } from "./color.types";
 import type { PrismUIPalette, TextRoleName, TextRoleRef } from "./palette.types";
 import type { PrismuiSizeTokens } from "../../size/types";
 import type { PrismuiStateTokens } from "../../state/types";
+import type { FeedbackFactory } from "../../feedback";
 
 /**
  * Valid CSS Custom Property name — must start with "--" per CSS specification.
@@ -52,12 +53,20 @@ export type CSSVarKey = `--${string}`;
  * - `styles`: per-slot inline style injection (theme < props, spread-merged, undefined values stripped).
  * - `vars`: CSS Variable overrides keyed by `CSSVarKey` (`--${string}`).
  *   Compile-time enforcement: non-`--` keys are type errors.
+ * - `defaultFeedbacks`: L4 Feedback factory list applied when the component
+ *   does not receive a `feedbacks` prop (v0.5 Phase 4.1 · D-3 decision ·
+ *   `@/devdocs/system/feedback-contract.md` §12.2). Replacement semantics —
+ *   undefined → component module default · `[]` → explicit opt-out · array →
+ *   complete substitution. Currently consumed by `<Button>`; other Action
+ *   Surface components (IconButton / ToggleButton / Switch / Checkbox) gain
+ *   the same hook in Phase 4.2+ via the same key.
  */
 export interface PrismUIComponentConfig {
   defaultProps?: Record<string, unknown>;
   classNames?: Record<string, string>;
   styles?: Record<string, React.CSSProperties>;
   vars?: Record<CSSVarKey, string | number>;
+  defaultFeedbacks?: FeedbackFactory[];
 }
 
 /**

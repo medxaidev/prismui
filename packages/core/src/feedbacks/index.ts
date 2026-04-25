@@ -11,3 +11,4 @@
  */
 
 export * from './ripple';
+export * from './glow';
