@@ -35,7 +35,15 @@ const meta = {
     },
     color: {
       control: 'select',
-      options: ['primary', 'success', 'danger', 'warning', 'neutral'],
+      options: [
+        'primary',
+        'secondary',
+        'info',
+        'success',
+        'warning',
+        'error',
+        'neutral',
+      ],
     },
     orientation: {
       control: 'radio',
@@ -123,24 +131,53 @@ export const AllSizes: Story = {
   ),
 };
 
-// ── 4 · All Colors — color system sampling ──────────────────────────────
+// ── 4 · All Colors — full ThemeColor enum (7-tier) per Checkbox parity ──────
+// Each row is a RadioGroup with a different `color`, demonstrating that the
+// child Radios inherit the color token from the group (R-9 child-explicit-
+// wins · group inheritance).
 export const AllColors: Story = {
   render: () => (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-      {(['primary', 'success', 'danger', 'warning', 'neutral'] as const).map(
-        (color) => (
-          <RadioGroup
-            key={color}
-            color={color}
-            defaultValue="b"
-            orientation="horizontal"
+    <div
+      style={{
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 12,
+        padding: 20,
+        fontFamily: 'sans-serif',
+      }}
+    >
+      {(
+        [
+          'primary',
+          'secondary',
+          'info',
+          'success',
+          'warning',
+          'error',
+          'neutral',
+        ] as const
+      ).map((color) => (
+        <div
+          key={color}
+          style={{ display: 'flex', alignItems: 'center', gap: 12 }}
+        >
+          <span
+            style={{
+              fontSize: 11,
+              color: '#637381',
+              width: 80,
+              flexShrink: 0,
+            }}
           >
-            <InlineLabel value="a">{color} · A</InlineLabel>
-            <InlineLabel value="b">{color} · B</InlineLabel>
-            <InlineLabel value="c">{color} · C</InlineLabel>
+            {color}
+          </span>
+          <RadioGroup color={color} defaultValue="b" orientation="horizontal">
+            <InlineLabel value="a">A</InlineLabel>
+            <InlineLabel value="b">B</InlineLabel>
+            <InlineLabel value="c">C</InlineLabel>
           </RadioGroup>
-        ),
-      )}
+        </div>
+      ))}
     </div>
   ),
 };

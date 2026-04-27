@@ -36,6 +36,8 @@
   justify-content: center;
   vertical-align: middle;
   flex: 0 0 auto;
+  box-sizing: border-box;
+  line-height: 0;
 
   /* No background / border / padding — the visual circle lives on .circle. */
   background: transparent;
@@ -104,68 +106,63 @@
   outline-color: var(--prismui-text-danger, #ef4444);
 }
 
-/* ── Circle: visual ring slot ─────────────────────────────────────────── */
+/* ── Circle: outer ring · SVG <circle> ────────────────────────────────
+ * fill / stroke drive the visual; r=10 in a 24-unit viewBox yields a
+ * disk that nearly fills the host (leaving 2 viewBox units = ~8% margin
+ * for the focus halo / outline channel). Stroke is painted on the
+ * inside via vector-effect so the apparent radius matches the box. */
 .circle {
-  position: absolute;
-  inset: 0;
-  border-radius: var(--radio-radius, 50%);
-
-  background: var(--radio-circle-bg-off, transparent);
-  border: var(--radio-circle-border-width, 1.5px) solid
-          var(--radio-circle-border-off,
+  fill: var(--radio-circle-bg-off, transparent);
+  stroke: var(--radio-circle-border-off,
                 var(--prismui-color-neutral-bordered-border, #d4d4d8));
-
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  pointer-events: none;
-
+  stroke-width: 1.6; /* viewBox units · ~1.2px at md(18) · ~1.6px at xl(24) */
   transition:
-    background-color
-      var(--radio-transition-duration, 120ms)
-      var(--radio-transition-easing, ease),
-    border-color
-      var(--radio-transition-duration, 120ms)
-      var(--radio-transition-easing, ease);
+    fill   var(--radio-transition-duration, 120ms)
+           var(--radio-transition-easing, ease),
+    stroke var(--radio-transition-duration, 120ms)
+           var(--radio-transition-easing, ease);
 }
 
-/* Hover bump — capability-aware so touch devices don't latch the hover state
- * after a tap. Suppressed on disabled / readonly. */
+/* Hover bump — capability-aware so touch devices don't latch hover after
+ * a tap. Suppressed on disabled / readonly. */
 @media (hover: hover) {
   .root:hover:not([data-disabled]):not([data-readonly]) .circle {
-    background: var(--radio-circle-bg-off-hover,
-                var(--prismui-color-neutral-bordered-hover-bg, #f4f4f5));
+    fill: var(--radio-circle-bg-off-hover,
+              var(--prismui-color-neutral-bordered-hover-bg, #f4f4f5));
   }
   .root[data-checked='true']:hover:not([data-disabled]):not([data-readonly]) .circle {
-    background: var(--radio-circle-bg-on-hover, transparent);
+    fill: var(--radio-circle-bg-on-hover, transparent);
   }
 }
 
-/* Checked: border swaps to color-channel, background flips to "on" off. */
+/* Checked: stroke + fill flip to the color-channel (inverted/solid-fill). */
 .root[data-checked='true'] .circle {
-  background: var(--radio-circle-bg-on, transparent);
-  border-color: var(--radio-circle-border-on,
-                var(--prismui-color-primary, #3b82f6));
+  fill:   var(--radio-circle-bg-on,
+              var(--prismui-color-primary, #3b82f6));
+  stroke: var(--radio-circle-border-on,
+              var(--prismui-color-primary, #3b82f6));
 }
 
-/* ── Indicator: inner dot (transform-animated) ────────────────────────── */
+/* ── Indicator: inner dot · SVG <circle> ──────────────────────────────
+ * cx/cy=12 (viewBox center) + r=5 → perfectly centered by SVG geometry,
+ * subpixel-immune. transform-origin: center; transform-box: fill-box;
+ * lets `scale()` pivot on the dot's own center for the pop-in animation. */
 .indicator {
-  width:  var(--radio-indicator-size, 8px);
-  height: var(--radio-indicator-size, 8px);
-  border-radius: 50%;
-  background: var(--radio-indicator-color,
-              var(--prismui-color-primary, #3b82f6));
-  transform: scale(0);
+  fill: var(--radio-indicator-color,
+            var(--prismui-color-primary-high-fg, #ffffff));
+  transform-origin: center;
+  transform-box: fill-box;
+  /* OFF · invisible + zero-scale (animated in on checked). */
   opacity: 0;
+  transform: scale(0);
   transition:
     transform 140ms cubic-bezier(0.2, 0, 0.2, 1),
-    opacity 100ms ease;
-  pointer-events: none;
+    opacity   100ms ease;
 }
 
 .root[data-checked='true'] .indicator {
-  transform: scale(1);
   opacity: 1;
+  transform: scale(1);
 }
 
 /* ── Disabled visual (root opacity + suppress focus visuals above) ────── */
@@ -175,7 +172,7 @@
 
 /* ── Per-radio invalid (own data-invalid='true') ──────────────────────── */
 .root[data-invalid='true'] .circle {
-  border-color: var(--prismui-text-danger, #ef4444);
+  stroke: var(--prismui-text-danger, #ef4444);
 }
 
 /* ── S-5 · group-level invalid descends ────────────────────────────────
@@ -183,32 +180,14 @@
  * Radios inherit visually through this descendant selector — no per-child
  * plumbing. Local override (`data-invalid='false'`) wins by source order. */
 :global([role='radiogroup'][data-invalid='true']) .root:not([data-invalid='false']) .circle {
-  border-color: var(--prismui-text-danger, #ef4444);
+  stroke: var(--prismui-text-danger, #ef4444);
 }
 
-/* ── Size tiers (data-size ← Size System v3) ──────────────────────────── */
-.root[data-size='xs'] {
-  --radio-circle-size:    14px;
-  --radio-indicator-size:  6px;
-  --radio-circle-border-width: 1.5px;
-}
-.root[data-size='sm'] {
-  --radio-circle-size:    16px;
-  --radio-indicator-size:  7px;
-  --radio-circle-border-width: 1.5px;
-}
-.root[data-size='md'] {
-  --radio-circle-size:    18px;
-  --radio-indicator-size:  8px;
-  --radio-circle-border-width: 1.5px;
-}
-.root[data-size='lg'] {
-  --radio-circle-size:    20px;
-  --radio-indicator-size:  9px;
-  --radio-circle-border-width: 2px;
-}
-.root[data-size='xl'] {
-  --radio-circle-size:    24px;
-  --radio-indicator-size: 11px;
-  --radio-circle-border-width: 2px;
-}
+/* ── Size tiers (data-size ← Size System v3) ──────────────────────────
+ * SVG-based rendering needs only the HOST size; stroke-width and inner-
+ * dot radius are vector-defined inside the viewBox so they auto-scale. */
+.root[data-size='xs'] { --radio-circle-size: 14px; }
+.root[data-size='sm'] { --radio-circle-size: 16px; }
+.root[data-size='md'] { --radio-circle-size: 18px; }
+.root[data-size='lg'] { --radio-circle-size: 20px; }
+.root[data-size='xl'] { --radio-circle-size: 24px; }

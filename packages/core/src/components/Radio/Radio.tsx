@@ -135,19 +135,24 @@ const varsResolver: VarsResolver<RadioOwnProps> = (props) => {
   return {
     '--radio-radius': resolveRadiusToken(props.radius ?? 'full'),
 
-    // Off / on circle backgrounds + borders
+    // Off / on circle backgrounds + borders · INVERTED ("solid fill") scheme.
+    // Off = neutral rim on transparent; On = color-high-bg fill + color-high-
+    // bg border (unified so no seam between the fill and the ring), with the
+    // indicator painted in the contrast foreground (`high-fg`, typically
+    // white in both light + dark schemes per the palette role spec).
     '--radio-circle-bg-off': 'transparent',
-    '--radio-circle-bg-on': 'transparent',
+    '--radio-circle-bg-on': `var(--prismui-color-${color}-high-bg)`,
     '--radio-circle-border-off': 'var(--prismui-color-neutral-bordered-border)',
     '--radio-circle-border-on': `var(--prismui-color-${color}-high-bg)`,
 
-    // Hover bumps
+    // Hover bumps — off uses the neutral hover chip; on bumps to the
+    // color-high-hover-bg (same channel Switch's track-on consumes).
     '--radio-circle-bg-off-hover':
       'var(--prismui-color-neutral-bordered-hover-bg)',
-    '--radio-circle-bg-on-hover': 'transparent',
+    '--radio-circle-bg-on-hover': `var(--prismui-color-${color}-high-hover-bg)`,
 
-    // Indicator (the inner dot · color-driven)
-    '--radio-indicator-color': `var(--prismui-color-${color}-high-bg)`,
+    // Indicator (the inner dot) — contrast foreground on the color fill.
+    '--radio-indicator-color': `var(--prismui-color-${color}-high-fg)`,
 
     // Motion
     '--radio-transition-duration': 'var(--prismui-duration-fast)',
@@ -178,9 +183,11 @@ export const Radio = factory<RadioOwnProps>(
     defaultElement: 'button',
     slots: radioSlots,
     componentPropKeys: radioComponentPropKeys,
+    // size / color are intentionally NOT defaulted here so the render body
+    // can detect "user did not pass" and fall back to groupCtx (R-9 child-
+    // explicit-wins · §5.2). `radius` default stays — standalone Radios
+    // need a stable shape without a parent group.
     defaultProps: {
-      color: 'primary',
-      size: 'md',
       radius: 'full',
     } satisfies Partial<RadioOwnProps>,
     systems: [
@@ -216,6 +223,8 @@ export const Radio = factory<RadioOwnProps>(
       disabled: propsDisabled,
       loading: propsLoading,
       feedbacks: propsFeedbacks,
+      size: ownSize,
+      color: ownColor,
     } = componentProps;
 
     // Generate a stable id for registry keying. Falls back to user-supplied
@@ -552,10 +561,35 @@ export const Radio = factory<RadioOwnProps>(
       ),
     };
 
+    // ── R-9 · size / color inheritance (child-explicit-wins) ─────────────
+    // Resolution chain: own prop → group context → module default. Geometry
+    // (size) and identity (color) both follow the same posture so a single
+    // `<RadioGroup size="lg" color="success">` propagates uniformly.
+    const effectiveSize = ownSize ?? groupCtx?.size ?? 'md';
+    const effectiveColor = ownColor ?? groupCtx?.color ?? 'primary';
+
+    // varsResolver was driven by the original (possibly-undefined) prop
+    // shape, so when the child relies on group inheritance the resolved
+    // CSS vars still point at `--prismui-color-primary-*`. Patch the two
+    // color-bearing channels here so the visual reflects the inherited
+    // color. Geometry vars are 100% data-attr-driven inside the CSS
+    // module, so size inheritance only needs the data-attr override below.
+    const rootProps = styles.getRootProps();
+    const inheritedStyle: React.CSSProperties = {
+      ...(rootProps.style ?? {}),
+      // Inverted (solid-fill) scheme: bg + border share the color-high-bg
+      // token so there's no seam; indicator paints in the contrast fg.
+      ['--radio-circle-bg-on' as string]: `var(--prismui-color-${effectiveColor}-high-bg)`,
+      ['--radio-circle-bg-on-hover' as string]: `var(--prismui-color-${effectiveColor}-high-hover-bg)`,
+      ['--radio-circle-border-on' as string]: `var(--prismui-color-${effectiveColor}-high-bg)`,
+      ['--radio-indicator-color' as string]: `var(--prismui-color-${effectiveColor}-high-fg)`,
+    };
+
     return (
       <Element
         ref={composedRef}
-        {...styles.getRootProps()}
+        {...rootProps}
+        style={inheritedStyle}
         {...passthroughRest}
         {...chainedPointerHandlers}
         {...mergedActionBehavior}
@@ -568,20 +602,42 @@ export const Radio = factory<RadioOwnProps>(
         id={ownId}
         {...rootDataAttrs}
         {...systemDataAttrs}
+        data-size={effectiveSize}
+        data-color={effectiveColor}
         {...disabilityAttrs}
         {...(ownLoading ? { 'aria-busy': true } : {})}
       >
-        <span
-          className={circleSlotStyles.className}
-          style={circleSlotStyles.style}
+        {/* SVG-based visual · MUI-parity vector rendering. The 24-unit
+            viewBox + fractional cx/cy guarantees pixel-perfect centering
+            at every size tier — no flex / box-model rounding artefacts.
+            Slot classes still flow to the inner <circle>s so consumer
+            overrides via classes.circle / classes.indicator keep working. */}
+        <svg
+          aria-hidden="true"
+          focusable="false"
+          viewBox="0 0 24 24"
+          width="100%"
+          height="100%"
+          style={{ display: 'block', pointerEvents: 'none' }}
           data-prismui-slot-usage
         >
-          <span
+          <circle
+            cx={12}
+            cy={12}
+            r={9}
+            className={circleSlotStyles.className}
+            style={circleSlotStyles.style}
+            data-prismui-slot-usage
+          />
+          <circle
+            cx={12}
+            cy={12}
+            r={4}
             className={indicatorSlotStyles.className}
             style={indicatorSlotStyles.style}
             data-prismui-slot-usage
           />
-        </span>
+        </svg>
         {userChildren}
       </Element>
     );

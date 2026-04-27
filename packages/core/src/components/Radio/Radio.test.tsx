@@ -85,12 +85,13 @@ describe('Radio + RadioGroup', () => {
       expect(getByTestId('a').getAttribute('aria-checked')).toBe('false');
     });
 
-    it('renders .circle + .indicator span tree inside each Radio', () => {
+    it('renders <svg> with two <circle> primitives (ring + indicator)', () => {
       const { getByTestId } = render(<Group3 />);
       const a = getByTestId('a');
-      const circle = a.querySelector('span');
-      expect(circle).toBeInTheDocument();
-      expect(circle!.querySelector('span')).toBeInTheDocument();
+      const svg = a.querySelector('svg');
+      expect(svg).toBeInTheDocument();
+      expect(svg!.getAttribute('viewBox')).toBe('0 0 24 24');
+      expect(svg!.querySelectorAll('circle')).toHaveLength(2);
     });
 
     it('type="button" forced on all group children (R-11)', () => {

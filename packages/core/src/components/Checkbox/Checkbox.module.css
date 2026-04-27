@@ -292,40 +292,43 @@
 
 /* ── Size tiers (data-size ← size system) ────────────────────────────────
  * OQ-CB-4 landed strategy A: locked px values per tier so small-size check
- * glyphs stay legible. Indicator-size ≈ 62% of box-size; stroke scales
- * slightly with size so corners stay crisp. */
+ * glyphs stay legible. Indicator-size ≈ 70% of box-size (Ant/MUI parity ·
+ * was 62% pre-harmonisation); stroke scales slightly with size so corners
+ * stay crisp. Host box matches Radio's 14/16/18/20/24 tier scale (Size
+ * System v3) so Checkbox + Radio in a Field row share visual weight. */
 .root[data-size='xs'] {
   --checkbox-box-size:        14px;
   --checkbox-box-border-width: 1.25px;
-  --checkbox-indicator-size:   9px;
+  --checkbox-indicator-size:  10px; /* 71% · was 64% */
   --checkbox-indicator-stroke: 2px;
 }
 
 .root[data-size='sm'] {
   --checkbox-box-size:        16px;
   --checkbox-box-border-width: 1.5px;
-  --checkbox-indicator-size:  10px;
+  --checkbox-indicator-size:  11px; /* 69% · was 62% */
   --checkbox-indicator-stroke: 2px;
 }
 
 .root[data-size='md'] {
   --checkbox-box-size:        18px;
   --checkbox-box-border-width: 1.5px;
-  --checkbox-indicator-size:  11px;
+  --checkbox-indicator-size:  13px; /* 72% · was 61% */
   --checkbox-indicator-stroke: 2.25px;
 }
 
+/* lg / xl host sizes harmonised with Radio (Size System v3 · 14/16/18/20/24). */
 .root[data-size='lg'] {
-  --checkbox-box-size:        22px;
+  --checkbox-box-size:        20px; /* was 22 */
   --checkbox-box-border-width: 1.75px;
-  --checkbox-indicator-size:  14px;
+  --checkbox-indicator-size:  14px; /* 70% */
   --checkbox-indicator-stroke: 2.5px;
 }
 
 .root[data-size='xl'] {
-  --checkbox-box-size:        26px;
+  --checkbox-box-size:        24px; /* was 26 */
   --checkbox-box-border-width: 2px;
-  --checkbox-indicator-size:  16px;
+  --checkbox-indicator-size:  17px; /* 71% · was 62% */
   --checkbox-indicator-stroke: 2.75px;
 }
 
