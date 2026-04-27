@@ -1,0 +1,182 @@
+/*
+ * Textarea — Control component (consumes Field via useFieldControlProps).
+ *
+ * Structure (design.md §4):
+ *   .root (div wrapper — visual · variant token layer · state chain)
+ *     .input (native <textarea> — semantic + aria + ref target)
+ *
+ * Token contract (design.md §6):
+ *   - Component-local vars (written by varsResolver):
+ *       --input-padding-x / --input-padding-y / --input-font-size /
+ *       --input-line-height / --input-min-height / --input-radius
+ *   - Instance var (written by render Step 7 · T-4-B · Round 2 P1-1):
+ *       --input-min-rows  →  drives SSR baseline height via --input-min-height
+ *   - Variant token layer (written by varsResolver via variantColorResolver):
+ *       --prismui-variant-bg / -fg / -hover-bg / -active-bg / -border /
+ *       -hover-border / -hover-shadow
+ *
+ * Visual parity with Input (design.md §8):
+ *   State chain · IV-3 focus mode B · IV-4 unstyled token-free · readOnly ·
+ *   disabled hard-shield — all 1:1 mirror of Input.module.css selectors.
+ *   Diffs:
+ *     · root uses min-height (content-driven) instead of height (T-4-B)
+ *     · .input adds padding-block (single-line Input only has padding-inline)
+ *     · no .section / [data-pointer] rules (Textarea v1 T-7 · §4.3)
+ *     · `resize` written by render inline style (design.md §10 · T-5)
+ *
+ * State priority (design.md §8.3 · inherited from Input §2.7):
+ *   disabled > invalid > focus-within > hover > rest.
+ *   Enforced via (a) declaration order rest→hover→focus→invalid, and
+ *                (b) every interactive rule explicitly negating [data-disabled].
+ */
+
+/* ── Root (wrapper) — rest baseline, driven by variant token layer ────────── */
+.root {
+  display: flex;
+  align-items: stretch;
+
+  /* sizing from component-local size contract (design.md §6.2 · T-4-B).
+   * height is NOT declared — content drives the box; --input-min-height
+   * provides the SSR-safe baseline consuming --input-min-rows (default 1). */
+  min-height: var(--input-min-height);
+  border-radius: var(--input-radius);
+
+  /* typography — inherited by .input via `font: inherit` */
+  font-size: var(--input-font-size);
+  font-family: inherit;
+  line-height: var(--input-line-height);
+
+  /* appearance — all from Variant Token Layer (injected by varsResolver) */
+  background: var(--prismui-variant-bg);
+  color: var(--prismui-text-primary);
+  border: 1px solid var(--prismui-variant-border);
+
+  transition:
+    border-color var(--prismui-transition-fast),
+    background var(--prismui-transition-fast),
+    box-shadow var(--prismui-transition-fast),
+    color var(--prismui-transition-fast),
+    outline-color var(--prismui-transition-fast);
+}
+
+/* ── State Priority chain: rest → hover → focus → invalid ─────────────────── */
+
+/* 2. hover (lower priority than focus · mirrors Input.module.css:65) */
+.root:hover:not([data-disabled]):not([data-readonly]):not([data-variant='unstyled']) {
+  border-color: var(--prismui-variant-hover-border);
+  background: var(--prismui-variant-hover-bg);
+}
+
+/* 3a. Pointer focus only — border → primary (弱信号 · FE-1 可选通道).
+ *     UA Reality (focus-behavior.md §2.3): 主流 UA 对 text-input 元素强制
+ *     :focus-visible = true · :not(:focus-visible) 永为 false · 本 rule 实际不激活。
+ *     保留作为 forward-compatible · 与 Input.module.css:76 同构。 */
+.root:focus-within:has(> .input:not(:focus-visible)):not([data-disabled]):not([data-variant='unstyled']) {
+  border-color: var(--prismui-color-primary-bordered-border, var(--prismui-color-primary));
+}
+
+/* 3b. Keyboard focus — outline ring + halo (主信号 · FE-1 强制通道).
+ *     Visual stack (mirrors Input.module.css:94 · Phase 6 follow-up v0.8.2):
+ *       · layer 1 — native `outline` (crisp ring, offset)
+ *       · layer 2 — `box-shadow` 6px halo via color-mix 32% (translucent)
+ *     Two layers occupy DIFFERENT CSS channels → zero specificity conflict. */
+.root:has(> .input:focus-visible):not([data-disabled]):not([data-variant='unstyled']) {
+  outline: var(--prismui-focus-ring-width) solid var(--prismui-focus-ring-color);
+  outline-offset: var(--prismui-focus-ring-offset);
+  box-shadow: 0 0 0 6px
+    color-mix(in srgb, var(--prismui-focus-ring-color) 32%, transparent);
+}
+
+/* 4. invalid — border color swap (mirrors Input.module.css:102) */
+.root:has(> .input[aria-invalid='true']):not([data-disabled]):not([data-variant='unstyled']) {
+  border-color: var(--prismui-text-danger);
+}
+
+/* invalid × keyboard focus — BOTH layers swap to danger token simultaneously
+ * (FE-3 "invalid 覆盖 focus 颜色但不改变通道"). mirrors Input.module.css:109. */
+.root:has(> .input[aria-invalid='true']):has(> .input:focus-visible):not([data-disabled]):not([data-variant='unstyled']) {
+  outline-color: var(--prismui-text-danger);
+  box-shadow: 0 0 0 6px
+    color-mix(in srgb, var(--prismui-text-danger) 32%, transparent);
+}
+
+/* ── unstyled (IV-4: token-free, no state override) ───────────────────────── */
+.root[data-variant='unstyled'] {
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  transition: none;
+}
+
+.root[data-variant='unstyled'] .input {
+  padding: 0;
+}
+
+/* ── readOnly (not a state override — subtle bg shift via hover-bg token) ── */
+.root[data-readonly]:not([data-variant='unstyled']) {
+  background: var(--prismui-variant-hover-bg);
+}
+
+.root[data-readonly] .input {
+  cursor: default;
+}
+
+/* ── disabled (hard shield — all interactive rules exclude via :not) ────── */
+.root[data-disabled] {
+  opacity: var(--prismui-state-opacity-disabled);
+  cursor: var(--prismui-state-cursor-disabled);
+}
+
+.root[data-disabled] .input {
+  cursor: inherit;
+  pointer-events: none;
+  resize: none;
+}
+
+/* ── Inner <textarea> (semantic target) ──────────────────────────────────── */
+.input {
+  /* layout */
+  flex: 1 1 auto;
+  width: 100%;
+  min-width: 0;
+  padding-inline: var(--input-padding-x);
+  /* Textarea-specific: vertical padding lives on the textarea (not on root)
+   * so selection highlight, scrollbar track and content all share the same
+   * inner box. Matches min-height formula (design.md §6.2 · T-4-B). */
+  padding-block: var(--input-padding-y);
+
+  /* typography */
+  font: inherit;
+  line-height: inherit;
+  color: var(--prismui-text-primary);
+  caret-color: currentColor;
+
+  /* strip native styling — root carries visuals */
+  background: transparent;
+  border: none;
+  outline: none;
+  appearance: none;
+  margin: 0;
+
+  /* Textarea-specific: content-driven height baseline.
+   * `resize` is written by render as inline style (design.md §10 · T-5):
+   *   autosize=true  → inline-style `resize: none` (hard-forced)
+   *   autosize=false → inline-style `resize: <prop value>` (default 'vertical')
+   * No CSS `resize:` rule here — inline style is the single source of truth. */
+  display: block;
+  overflow: auto;
+
+  /* Block-direction writing — textareas render content vertically; CSS `height`
+   * is managed by the autosize effect when enabled (design.md §9.2), otherwise
+   * UA default (rows attribute) governs initial height. */
+}
+
+.input::placeholder {
+  color: var(--prismui-text-secondary);
+  opacity: 1;
+}
+
+.input:disabled {
+  /* color is inherited; native disabled bg is suppressed by transparent above */
+  color: inherit;
+}

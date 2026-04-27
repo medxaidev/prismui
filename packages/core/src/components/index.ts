@@ -34,6 +34,7 @@ export * from './Button';
 export * from './IconButton';
 export * from './ToggleButton';
 export * from './Input';
+export * from './Textarea';
 export * from './Field';
 export * from './Switch';
 export * from './Checkbox';

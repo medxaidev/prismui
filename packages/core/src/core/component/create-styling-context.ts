@@ -278,6 +278,8 @@ export function createStylingContext<Props, Names extends string = string>(
       'disabled', 'type', 'name', 'value',
       'placeholder', 'autoFocus', 'autoComplete', 'required', 'readOnly', 'maxLength',
       'minLength', 'pattern', 'accept', 'multiple', 'checked', 'defaultValue',
+      // <textarea>-specific natives (same rationale as maxLength / minLength on <input>).
+      'rows', 'cols', 'wrap',
       'defaultChecked', 'href', 'target', 'rel', 'download', 'src', 'alt', 'width',
       'height', 'loading', 'decoding', 'crossOrigin', 'referrerPolicy', 'sizes',
       'srcSet', 'useMap', 'isMap', 'form', 'formAction', 'formEncType', 'formMethod',

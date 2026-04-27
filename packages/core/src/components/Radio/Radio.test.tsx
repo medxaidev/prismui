@@ -747,6 +747,72 @@ describe('Radio + RadioGroup', () => {
   });
 
   // ─────────────────────────────────────────────────────────────────────
+  // 14.5 · Group→Child inheritance (R-12 · child-explicit-wins · 6)
+  // ─────────────────────────────────────────────────────────────────────
+  // Locks the inheritance posture introduced after Round 1: RadioGroup-
+  // level `size` / `color` cascade down to every child Radio that did NOT
+  // pass its own value. Mirrors the disabled / loading inheritance flow
+  // already proven in §8 — but extended to visual axes (R-12).
+  describe('Group→Child inheritance (R-12)', () => {
+    it('group size cascades to every child via data-size', () => {
+      const { getAllByRole } = render(<Group3 size="lg" />);
+      getAllByRole('radio').forEach((r) =>
+        expect(r.getAttribute('data-size')).toBe('lg'),
+      );
+    });
+
+    it('group color cascades to every child via data-color', () => {
+      const { getAllByRole } = render(<Group3 color="success" />);
+      getAllByRole('radio').forEach((r) =>
+        expect(r.getAttribute('data-color')).toBe('success'),
+      );
+    });
+
+    it('child explicit size wins over group size (child-explicit-wins)', () => {
+      const { getByTestId } = render(
+        <RadioGroup size="lg">
+          <Radio value="a" data-testid="a" />
+          <Radio value="b" data-testid="b" size="xs" />
+        </RadioGroup>,
+      );
+      expect(getByTestId('a').getAttribute('data-size')).toBe('lg');
+      expect(getByTestId('b').getAttribute('data-size')).toBe('xs');
+    });
+
+    it('child explicit color wins over group color (child-explicit-wins)', () => {
+      const { getByTestId } = render(
+        <RadioGroup color="success">
+          <Radio value="a" data-testid="a" />
+          <Radio value="b" data-testid="b" color="error" />
+        </RadioGroup>,
+      );
+      expect(getByTestId('a').getAttribute('data-color')).toBe('success');
+      expect(getByTestId('b').getAttribute('data-color')).toBe('error');
+    });
+
+    it('group color drives the inverted bg-on CSS var on every child', () => {
+      // Inverted (solid-fill) scheme · §6.3 v1.0 · the bg-on channel must
+      // resolve to the cascaded color so checked state visually flips.
+      const { getByTestId } = render(<Group3 color="warning" />);
+      const a = getByTestId('a');
+      const bgOn = a.style.getPropertyValue('--radio-circle-bg-on');
+      expect(bgOn).toBe('var(--prismui-color-warning-high-bg)');
+      const dot = a.style.getPropertyValue('--radio-indicator-color');
+      expect(dot).toBe('var(--prismui-color-warning-high-fg)');
+    });
+
+    it('with no size/color anywhere, falls back to module defaults (md/primary)', () => {
+      // RadioGroup has defaultProps.size='md' / color='primary', so this
+      // test pins down "no explicit anywhere" → md/primary surfaces on
+      // child data-attrs.
+      const { getByTestId } = render(<Group3 />);
+      const a = getByTestId('a');
+      expect(a.getAttribute('data-size')).toBe('md');
+      expect(a.getAttribute('data-color')).toBe('primary');
+    });
+  });
+
+  // ─────────────────────────────────────────────────────────────────────
   // 14 · Ref + forwarding (2)
   // ─────────────────────────────────────────────────────────────────────
   describe('Ref forwarding', () => {
