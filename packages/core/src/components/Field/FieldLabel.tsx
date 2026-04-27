@@ -118,7 +118,30 @@ export const FieldLabel = factory(
               // engine and preserves the S-7 freeze contract.
               event.preventDefault();
               if (!ctx.disabled) {
-                target.click();
+                // ── P0-2 A · radiogroup branch (Radio design.md §8.2c) ──
+                // RadioGroup is a non-interactive container; calling
+                // .click() on a <div role="radiogroup"> is a no-op. The
+                // semantically meaningful action is "enter the group" —
+                // focus + activate the first non-disabled Radio child,
+                // matching WAI-ARIA APG / Radix / MUI label-forward
+                // expectations.
+                if (role === 'radiogroup') {
+                  const radios = target.querySelectorAll('[role="radio"]');
+                  const focusable = Array.from(radios).find((node) => {
+                    const el = node as HTMLElement;
+                    if (el.hasAttribute('disabled')) return false;
+                    if (el.getAttribute('aria-disabled') === 'true') {
+                      return false;
+                    }
+                    return true;
+                  }) as HTMLElement | undefined;
+                  if (focusable) {
+                    focusable.focus();
+                    focusable.click();
+                  }
+                } else {
+                  target.click();
+                }
               }
             }
           }

@@ -1,0 +1,214 @@
+/**
+ * Radio.module.css · Phase 5/6 visual contract
+ *
+ * Sources of truth
+ *   · @/devdocs/components/Radio/design.md §6 / §10
+ *   · @/devdocs/system/focus-behavior.md §3 mode-B 真分轨 (FE-2)
+ *   · @/devdocs/system/feedback-contract.md §11.4 host CSS prerequisites (glow)
+ *   · @/devdocs/system/control-surface.md C-2 abstract family (parity with
+ *     Switch / Checkbox)
+ *
+ * Slot tree
+ *   .root        ← <button role="radio"> — focusable host. Owns focus channels
+ *                  (mode-B halo / outline / glow halo). Geometry pass-through.
+ *     .circle    ← <span> — visual ring (border / background / radius / size).
+ *       .indicator ← <span> — inner dot (transform-driven check animation).
+ *
+ * S-* contract pins
+ *   S-1 · `--radio-*` namespace; no cross-consumption of `--toggle-button-*`
+ *         / `--input-*` / `--switch-*` / `--checkbox-*`.
+ *   S-2 · `data-size` / `data-color` / `data-checked` / `data-disabled` /
+ *         `data-invalid` only — no class-state branching.
+ *   S-3 · :focus:not(:focus-visible) (halo · pointer) + :focus-visible
+ *         (outline · keyboard) coexist on root — mode-B FE-2 anti-duplicate.
+ *   S-4 · `prismui-glow-active` host hook (global · feedback-contract §11.4).
+ *   S-5 · group-level invalid: `[role='radiogroup'][data-invalid='true']`
+ *         descends visually to child `.circle` border.
+ *   S-6 · ripple clip via `overflow: hidden` on .root — outside-border-box
+ *         halos / outlines / glow box-shadow are unaffected.
+ */
+
+/* ── Root: focusable host (no visual ring of its own) ─────────────────── */
+.root {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  vertical-align: middle;
+  flex: 0 0 auto;
+
+  /* No background / border / padding — the visual circle lives on .circle. */
+  background: transparent;
+  border: none;
+  padding: 0;
+  margin: 0;
+  font: inherit;
+  color: inherit;
+
+  /* Reset native button defaults */
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+
+  cursor: pointer;
+  user-select: none;
+  touch-action: manipulation;
+
+  /* Sized so the focus ring traces the visual circle. Size tokens defined
+   * in the data-size tier rules below — fallback aligns to MD. */
+  width:  var(--radio-circle-size, 18px);
+  height: var(--radio-circle-size, 18px);
+  border-radius: var(--radio-radius, 50%);
+
+  /* Ripple clip — see S-6. Outside-border-box paint (halo / outline / glow
+   * box-shadow) is applied AFTER the overflow clip, unaffected. */
+  overflow: hidden;
+}
+
+.root[data-disabled] {
+  cursor: not-allowed;
+}
+.root[data-readonly] {
+  cursor: default;
+}
+
+/* ── S-3 · Focus mode-B 真分轨 (TWO-CHANNEL · FE-2 anti-duplicate-signal) ── */
+.root:focus:not(:focus-visible):not([data-disabled]) {
+  box-shadow:
+    0 0 0 var(--prismui-focus-pointer-halo-width, 2px)
+    var(--prismui-focus-pointer-halo-color, rgba(0, 0, 0, 0.16));
+}
+
+.root:focus-visible:not([data-disabled]) {
+  outline: var(--prismui-focus-ring-width, 2px) solid
+           var(--prismui-focus-ring-color, currentColor);
+  outline-offset: var(--prismui-focus-ring-offset, 2px);
+}
+
+/* ── S-4 · L4 Feedback · glow halo (Phase 6 · feedback-contract §11.4) ──
+ * `glowFeedback` toggles literal global `prismui-glow-active` on the host
+ * (Z-5 internally — never fires on mouse-only focus). Disabled guard
+ * defends manual class injection. Mode-B coexistence verified:
+ *   · pointer halo branch (focus:not(:focus-visible)) — glow never fires there
+ *   · keyboard outline branch — outline is UA-painted, box-shadow free → glow
+ *     halo sits in the free channel. */
+.root:global(.prismui-glow-active):not([data-disabled]) {
+  box-shadow: 0 0 0 6px
+    color-mix(in srgb,
+              var(--prismui-focus-ring-color, currentColor) 32%,
+              transparent);
+}
+
+/* ── FE-3 · Invalid × focus (outline-color swap only — no extra channel) ─ */
+.root[data-invalid='true']:focus-visible:not([data-disabled]) {
+  outline-color: var(--prismui-text-danger, #ef4444);
+}
+
+/* ── Circle: visual ring slot ─────────────────────────────────────────── */
+.circle {
+  position: absolute;
+  inset: 0;
+  border-radius: var(--radio-radius, 50%);
+
+  background: var(--radio-circle-bg-off, transparent);
+  border: var(--radio-circle-border-width, 1.5px) solid
+          var(--radio-circle-border-off,
+                var(--prismui-color-neutral-bordered-border, #d4d4d8));
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+
+  transition:
+    background-color
+      var(--radio-transition-duration, 120ms)
+      var(--radio-transition-easing, ease),
+    border-color
+      var(--radio-transition-duration, 120ms)
+      var(--radio-transition-easing, ease);
+}
+
+/* Hover bump — capability-aware so touch devices don't latch the hover state
+ * after a tap. Suppressed on disabled / readonly. */
+@media (hover: hover) {
+  .root:hover:not([data-disabled]):not([data-readonly]) .circle {
+    background: var(--radio-circle-bg-off-hover,
+                var(--prismui-color-neutral-bordered-hover-bg, #f4f4f5));
+  }
+  .root[data-checked='true']:hover:not([data-disabled]):not([data-readonly]) .circle {
+    background: var(--radio-circle-bg-on-hover, transparent);
+  }
+}
+
+/* Checked: border swaps to color-channel, background flips to "on" off. */
+.root[data-checked='true'] .circle {
+  background: var(--radio-circle-bg-on, transparent);
+  border-color: var(--radio-circle-border-on,
+                var(--prismui-color-primary, #3b82f6));
+}
+
+/* ── Indicator: inner dot (transform-animated) ────────────────────────── */
+.indicator {
+  width:  var(--radio-indicator-size, 8px);
+  height: var(--radio-indicator-size, 8px);
+  border-radius: 50%;
+  background: var(--radio-indicator-color,
+              var(--prismui-color-primary, #3b82f6));
+  transform: scale(0);
+  opacity: 0;
+  transition:
+    transform 140ms cubic-bezier(0.2, 0, 0.2, 1),
+    opacity 100ms ease;
+  pointer-events: none;
+}
+
+.root[data-checked='true'] .indicator {
+  transform: scale(1);
+  opacity: 1;
+}
+
+/* ── Disabled visual (root opacity + suppress focus visuals above) ────── */
+.root[data-disabled] {
+  opacity: 0.5;
+}
+
+/* ── Per-radio invalid (own data-invalid='true') ──────────────────────── */
+.root[data-invalid='true'] .circle {
+  border-color: var(--prismui-text-danger, #ef4444);
+}
+
+/* ── S-5 · group-level invalid descends ────────────────────────────────
+ * Radiogroup sets `[data-invalid='true']` on its root via Field. Descendant
+ * Radios inherit visually through this descendant selector — no per-child
+ * plumbing. Local override (`data-invalid='false'`) wins by source order. */
+:global([role='radiogroup'][data-invalid='true']) .root:not([data-invalid='false']) .circle {
+  border-color: var(--prismui-text-danger, #ef4444);
+}
+
+/* ── Size tiers (data-size ← Size System v3) ──────────────────────────── */
+.root[data-size='xs'] {
+  --radio-circle-size:    14px;
+  --radio-indicator-size:  6px;
+  --radio-circle-border-width: 1.5px;
+}
+.root[data-size='sm'] {
+  --radio-circle-size:    16px;
+  --radio-indicator-size:  7px;
+  --radio-circle-border-width: 1.5px;
+}
+.root[data-size='md'] {
+  --radio-circle-size:    18px;
+  --radio-indicator-size:  8px;
+  --radio-circle-border-width: 1.5px;
+}
+.root[data-size='lg'] {
+  --radio-circle-size:    20px;
+  --radio-indicator-size:  9px;
+  --radio-circle-border-width: 2px;
+}
+.root[data-size='xl'] {
+  --radio-circle-size:    24px;
+  --radio-indicator-size: 11px;
+  --radio-circle-border-width: 2px;
+}

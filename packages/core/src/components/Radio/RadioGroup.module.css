@@ -1,0 +1,36 @@
+/**
+ * RadioGroup · container layout (Commit 1 baseline)
+ *
+ * Design reference: `@/devdocs/components/Radio/design.md` v0.2 §6.6
+ * Namespace: `--radio-group-*` (SR-5 · separate from `--radio-*`).
+ *
+ * v1 keeps the container intentionally minimal — flex layout with a single
+ * gap token. Orientation drives flex-direction so the same `gap` value
+ * spaces children consistently along whichever axis arrow keys navigate.
+ *
+ * Children render their own slots (circle / indicator / etc.); RadioGroup
+ * doesn't paint anything itself.
+ */
+
+.root {
+  display: flex;
+  gap: var(--radio-group-gap, 8px);
+  /* Default vertical (matches `orientation='vertical'` default) */
+  flex-direction: column;
+}
+
+.root[data-orientation='horizontal'] {
+  flex-direction: row;
+}
+
+/**
+ * Loading / disabled freeze: container surfaces `data-interactive-disabled`
+ * via the state system (factory). We keep the visual identical to the
+ * unfrozen state on the container itself — children pick up the signal
+ * through context and render their own disabled visual. This avoids
+ * double-styling (container greyed AND children greyed).
+ *
+ * If a future design needs a container-level affordance (e.g. a wash on
+ * the whole group), add it here keyed off
+ *   `.root[data-interactive-disabled='true']`.
+ */
