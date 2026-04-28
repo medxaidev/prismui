@@ -195,6 +195,24 @@ export interface PrismUITheme<
    * See stage-3-step-(stage-9)-8.md §3.
    */
   textRoles: Record<TextRoleName, TextRoleRef>;
+
+  /**
+   * Z-Index tokens (Stage-11 · L0 Overlay Foundation · OV-FLOAT-3 single source).
+   *
+   * Drives `useFloatingPosition({ zIndexLevel })` and any future overlay layer
+   * stacking. Components MUST NOT hard-code numeric z-index values — always
+   * read from this map via Floating primitive or `theme.zIndex.{key}`.
+   *
+   * Defaults: tooltip 1500 · popover 1300 · modal 1400 · toast 1600.
+   * Source: `@/devdocs/system/floating-primitive.md` §5.2.
+   */
+  zIndex: {
+    tooltip: number;
+    popover: number;
+    modal: number;
+    toast: number;
+  };
+
   scale: number;
   /**
    * Custom CSS Variables injection (escape hatch).

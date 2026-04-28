@@ -180,6 +180,18 @@ export const defaultTheme: PrismUITheme = {
   // ========== Text Role System (Step 3.8) ==========
   textRoles: defaultTextRoles,
 
+  // ========== Z-Index System (Stage-11 · OV-FLOAT-3) ==========
+  // Numerical hierarchy mirrors the conventional Material/Bootstrap stacking
+  // order: popover < modal < tooltip < toast. Components MUST consume these
+  // via `theme.zIndex.{key}` (or the Floating primitive's `zIndexLevel`
+  // option) rather than hard-coding.
+  zIndex: {
+    tooltip: 1500,
+    popover: 1300,
+    modal: 1400,
+    toast: 1600,
+  },
+
   // ========== Global Config ==========
   scale: 1,
 

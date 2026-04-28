@@ -251,6 +251,12 @@ describe('Theme System', () => {
           success:   { semantic: 'success', role: 'high', field: 'bg' },
           info:      { semantic: 'info',    role: 'high', field: 'bg' },
         },
+        zIndex: {
+          tooltip: 1500,
+          popover: 1300,
+          modal: 1400,
+          toast: 1600,
+        },
       };
 
       expect(theme).toBeDefined();
