@@ -40,5 +40,6 @@ export * from './component';
 export * from './styles';
 export * from './polymorphic';
 export * from './interaction-events';
+export * from './overlay';
 export * from './utils';
 export * from './feedback';
