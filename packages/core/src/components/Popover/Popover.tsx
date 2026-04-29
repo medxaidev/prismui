@@ -75,13 +75,15 @@ export interface PopoverContentProps
   /**
    * Dismissal 通道开关 · 与 `useDismissal` flat opt-in 对齐（无 channels 包裹·
    * 无 routeChange）。
-   * 默认值: pointerOutside=true · escapeKey=true · scrollOutside=true ·
-   * focusOutside=false（OQ-POP-8 临时默认 A · Round 1 锁后回写）。
+   * 默认值（v0.1.4 Round 1 锁定）: pointerOutside=true · escapeKey=true ·
+   * scrollOutside=true · focusOutside=false（OQ-POP-8 = A · 非模态 · 与 Radix
+   * 默认有意分叉）。
    */
   dismiss?: PopoverContentDismissOptions;
   /**
-   * Force Round 0 默认 `false` · 当为 true 时 children 必须是单一 ReactElement。
-   * v0.1.2 Round 0 暂未实现 asChild 路径 · 占位符 · v1.x 视诉求展开。
+   * Content asChild · 默认 `false`（v0.1.4 Round 1 锁定：v1 不交付 asChild 路径
+   * · OQ-POP-2 仅约束 Trigger 默认 true）· 当为 true 时开发环境 console.error ·
+   * v1.x 视诉求展开。
    */
   asChild?: boolean;
   children?: React.ReactNode;
@@ -216,7 +218,8 @@ const PopoverContent = React.forwardRef<HTMLDivElement, PopoverContentProps>(
       // eslint-disable-next-line no-console
       console.error(
         '[PrismUI Popover] Popover.Content `asChild` is reserved for v1.x. ' +
-          'v0.1.2 ships without an asChild path; this prop is currently a no-op.',
+          'v1 ships without an asChild path (OQ-POP-2 locked v0.1.4 restricts the ' +
+          'asChild contract to Popover.Trigger only); this prop is currently a no-op.',
       );
     }
 

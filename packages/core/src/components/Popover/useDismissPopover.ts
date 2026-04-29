@@ -62,7 +62,7 @@ export function useDismissPopover(options: UseDismissPopoverOptions): void {
     overlayRef,
     pointerOutside = true,
     escapeKey = true,
-    focusOutside = false, // ⏸️ OQ-POP-8 待锁 · 临时默认 A
+    focusOutside = false, // ✅ OQ-POP-8 locked v0.1.4 = A · 非模态 · 与 Radix 默认有意分叉
     scrollOutside = true,
     onBeforeDismiss,
   } = options;
