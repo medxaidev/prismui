@@ -12,11 +12,12 @@
  * closed. The closed state is unmounted by default (forceMount=false), so we
  * only style the first three.
  *
- * Visual tokens (Stage-8 / OQ-POP-7 v0.1.5):
- *   · `--prismui-shadow-md`   → box-shadow                       (theme.shadows.md)
- *   · `--prismui-radius-md`   → border-radius                    (theme.radius.md = 8px)
- *   · `--prismui-spacing-sm`  → vertical padding                 (theme.spacing.sm = 8px)
- *   · `--prismui-spacing-md`  → horizontal padding               (theme.spacing.md = 16px)
+ * Visual tokens (Stage-8 / OQ-POP-7 v0.1.5 + STAGE-12 v1.0.1 §2.4 TR-LAYER-3):
+ *   · `--prismui-shadow-md`         → box-shadow                   (theme.shadows.md)
+ *   · `--prismui-radius-md`         → border-radius                (theme.radius.md = 8px)
+ *   · `--prismui-spacing-sm`        → vertical padding             (theme.spacing.sm = 8px)
+ *   · `--prismui-spacing-md`        → horizontal padding           (theme.spacing.md = 16px)
+ *   · `--prismui-transition-base`   → opacity / transform shorthand (theme.transition.duration.base = 150ms + ease-standard)
  *
  * Each `var()` ships with an inline fallback so the component renders sensibly
  * in environments without `<PrismUIProvider>` (storybook isolation, raw test
@@ -36,6 +37,7 @@
   --popover-shadow: var(--prismui-shadow-md, 0 4px 16px rgba(0, 0, 0, 0.12));
   --popover-radius: var(--prismui-radius-md, 0.5rem);
   --popover-padding: var(--prismui-spacing-sm, 0.5rem) var(--prismui-spacing-md, 1rem);
+  --popover-transition: var(--prismui-transition-base, 150ms cubic-bezier(0.4, 0, 0.2, 1));
   --popover-bg: #ffffff;
   --popover-color: inherit;
   --popover-border: 1px solid rgba(0, 0, 0, 0.06);
@@ -50,8 +52,8 @@
 
   transform-origin: center center;
   transition:
-    opacity 150ms ease,
-    transform 150ms ease;
+    opacity var(--popover-transition),
+    transform var(--popover-transition);
 }
 
 .content[data-state='entering'],

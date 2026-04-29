@@ -1,0 +1,81 @@
+/**
+ * Tooltip · default visual + motion module.
+ *
+ * Contract: `@/devdocs/components/Tooltip/design.md` v0.4 §四 + §六.
+ *
+ * The component itself does NOT inject this CSS — consumers opt-in by passing
+ * `className={tooltipClasses.content}` (or composing their own styles). The
+ * default class is exposed for parity with `popoverClasses`.
+ *
+ * `data-state` values driven by Stage-12 Presence: entering / open / exiting /
+ * closed. The closed state is unmounted by default (forceMount=false), so we
+ * only style the first three.
+ *
+ * Visual tokens (Stage-8 / OQ-TT-7 alignment):
+ *   · `--prismui-shadow-md`         → box-shadow                   (theme.shadows.md · 与 Popover 保持一致)
+ *   · `--prismui-radius-sm`         → border-radius                (theme.radius.sm = 0.375rem / 6px · 比 Popover md 更紧)
+ *   · `--prismui-spacing-xs`        → vertical padding             (theme.spacing.xs = 0.25rem)
+ *   · `--prismui-spacing-sm`        → horizontal padding           (theme.spacing.sm = 0.5rem)
+ *   · `--prismui-transition-fast`   → opacity / transform shorthand (theme.transition.duration.fast = 120ms + ease-standard)
+ *
+ * Each `var()` ships with an inline fallback so the component renders sensibly
+ * in environments without `<PrismUIProvider>` (storybook isolation, raw test
+ * harness, SSR pre-hydration). The fallback values intentionally mirror the
+ * default-theme scale so the visual delta is zero when tokens are absent.
+ *
+ * Local CSS variables (`--tooltip-*`) are kept as a customization layer —
+ * consumers can override on a per-instance basis via inline style or wrapping
+ * selectors without touching the global token namespace.
+ */
+
+.content {
+  /* Fallback uses a single-layer shadow (CSS `var()` permits exactly one
+     fallback expression — comma-separated multi-layer shadows would be parsed
+     as additional `var()` arguments and rejected). The token expands to the
+     full multi-layer composite when `<PrismUIProvider>` is in scope. */
+  --tooltip-shadow: var(--prismui-shadow-md, 0 2px 8px rgba(0, 0, 0, 0.18));
+  --tooltip-radius: var(--prismui-radius-sm, 0.375rem);
+  --tooltip-padding: var(--prismui-spacing-xs, 0.25rem) var(--prismui-spacing-sm, 0.5rem);
+  --tooltip-transition: var(--prismui-transition-fast, 120ms cubic-bezier(0.4, 0, 0.2, 1));
+  --tooltip-bg: rgba(33, 33, 33, 0.96);
+  --tooltip-color: #ffffff;
+  --tooltip-font-size: 0.8125rem;
+  --tooltip-line-height: 1.4;
+  --tooltip-max-width: 18rem;
+
+  background: var(--tooltip-bg);
+  color: var(--tooltip-color);
+  border-radius: var(--tooltip-radius);
+  box-shadow: var(--tooltip-shadow);
+  padding: var(--tooltip-padding);
+  font-size: var(--tooltip-font-size);
+  line-height: var(--tooltip-line-height);
+  max-width: var(--tooltip-max-width);
+  outline: none;
+
+  /* Tooltip is non-interactive (§5.1 · APG `tooltip` pattern). pointer-events
+     none guards against accidental hover-keep-alive on the floating layer. */
+  pointer-events: none;
+
+  transform-origin: center center;
+  transition:
+    opacity var(--tooltip-transition),
+    transform var(--tooltip-transition);
+}
+
+.content[data-state='entering'],
+.content[data-state='exiting'] {
+  opacity: 0;
+  transform: scale(0.96);
+}
+
+.content[data-state='open'] {
+  opacity: 1;
+  transform: scale(1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .content {
+    transition: none;
+  }
+}
