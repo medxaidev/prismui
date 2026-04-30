@@ -4,6 +4,16 @@
   align-items: center;
   justify-content: center;
 
+  /* Stage-14 SZ-COMP-1 (Phase 3): explicit border-box so the structural
+   * `borderY` budget (default 2px · top + bottom) is included inside the
+   * declared `height` rather than added on top. Required for the formula
+   *   height = lineHeight + paddingY*2 + borderY
+   * to match the rendered outer bounding box. Was previously implicit
+   * content-box (browser default), giving a +2px outer drift that happened
+   * to land near SZ-COMP-2's anchor by coincidence — Phase 3 makes the
+   * relationship causal. */
+  box-sizing: border-box;
+
   /* Sizing */
   height: var(--button-height);
   padding-left: var(--button-padding-x);
@@ -132,6 +142,56 @@
 .root[data-disabled='true'] {
   opacity: var(--prismui-state-opacity-disabled);
   cursor: var(--prismui-state-cursor-disabled);
+}
+
+/* ── Stage-14 SZ-INTERACT-1 (Phase 3 · D-5=a) · Hit-Target Extension ─────
+ * Touch-device a11y: hit-target MUST be ≥ 44×44 px (Apple HIG / Material
+ * Design). Button sm has visible height 30px, which is below the threshold.
+ * Stage-14 SZ-INTERACT-1 invariant: "交互命中区可以大于视觉边界" — extend
+ * the touch target via a transparent absolutely-positioned `::before`
+ * overlay WITHOUT changing layout, height, width, or box-sizing.
+ *
+ * inset: -7px expands in all directions (30 + 7*2 = 44 vertically · the
+ * horizontal axis grows beyond the natural button width by 14px which is
+ * within touch-target ergonomic norms — taps that would otherwise land in
+ * the dead zone next to the button now register as button presses).
+ *
+ * ── Known v1.0 layered concern (documented · not blocking) ────────────────
+ * The parent `.root` declares `overflow: hidden` for ripple containment
+ * (line ~46). With `overflow: hidden`, the visual paint of the ::before
+ * overlay AND its pointer-event area are both clipped to the button's
+ * border-box. Effective hit-area extension therefore requires a future
+ * ripple-host refactor (move `overflow: hidden` from `.root` onto a
+ * dedicated ripple wrapper element · MUI / Mantine pattern).
+ *
+ * Phase 3 deliberately keeps the rule in place as a *structural* declaration
+ * so:
+ *   1. The intent is captured at the CSS layer (audit-trail · lint guard)
+ *   2. v1.x backlog refactor needs only the ripple-host change · the hit-
+ *      target rule is already in the right shape
+ *   3. SZ-INTERACT-1 守护测试 (Button hit-target test) asserts the rule's
+ *      *presence* in module.css — refactoring without preserving this
+ *      structural marker fails the build.
+ *
+ * Out-of-scope (deferred to v1.x):
+ *   - IconButton / ToggleButton / Tag / Switch / Checkbox / Radio / Tab
+ *     hit-target overlays (Phase 3 is Button-led per D-6=b · v1.1 audit)
+ *   - Behavioral hit-area test (depends on ripple-host refactor)
+ *   - Button md (36px) hit-target — Stage-14 §3.5 SZ-INTERACT-1 currently
+ *     scopes only Button sm to the constraint; revisit if user research
+ *     shows 36px regression on touch devices. */
+.root[data-size='sm']::before {
+  content: '';
+  position: absolute;
+  /* sm height 30 + 7*2 = 44 (Apple HIG minimum). Vertical-priority extension
+   * — horizontal padding-x grows naturally with text length, so a uniform
+   * inset is the cleanest declarative form. */
+  inset: -7px;
+  /* Transparent · no visual side-effect. */
+  background: transparent;
+  /* Ensure the overlay receives pointer events even when the button has
+   * `cursor: pointer` and `pointer-events` defaults vary. */
+  pointer-events: auto;
 }
 
 .inner {

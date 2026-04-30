@@ -2,6 +2,7 @@ export type {
   CSSLength,
   CSSVarKey,
   TokenRef,
+  TypographyToken,
   PrismUITheme,
   PrismUIComponentConfig,
 } from "./theme.types";
@@ -35,6 +36,8 @@ export type {
   FontSizeScale,
   FontWeightScale,
   LineHeightScale,
+  TypographyFamily,
+  TypographySize,
   RadiusScale,
   ShadowScale,
   BreakpointScale,

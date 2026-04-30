@@ -164,9 +164,16 @@ export const ColorFamilies: Story = {
 
 // ── Story 3: Spacing Scale ────────────────────────────────────────────────────
 
-const spacingScales = ['xs', 'sm', 'md', 'lg', 'xl'] as const;
+const spacingScales = ['none', 'xs', 'sm', 'md', 'lg', 'xl', '2xl', '3xl'] as const;
 const spacingValues: Record<string, string> = {
-  xs: '0.25rem (4px)', sm: '0.5rem (8px)', md: '1rem (16px)', lg: '1.5rem (24px)', xl: '2rem (32px)',
+  none: '0px (0px)',
+  xs: '0.25rem (4px)',
+  sm: '0.5rem (8px)',
+  md: '1rem (16px)',
+  lg: '1.5rem (24px)',
+  xl: '2rem (32px)',
+  '2xl': '2.5rem (40px)',
+  '3xl': '3rem (48px)',
 };
 
 export const SpacingScale: Story = {
@@ -301,6 +308,117 @@ export const TypographyScale: Story = {
         <p style={{ fontSize: 11, color: '#919EAB' }}>
           extrabold (800) is new in Step 3.5. fontFamily = "Public Sans Variable" + system fallback.
           lineHeight.xs changed to 1.25 (was 1.4) to align with MUI heading line height.
+        </p>
+      </div>
+    </PrismUIProvider>
+  ),
+};
+
+// ── Story 6: Stage-14 Typography Family Layer (SZ-TYPE-2 v1.0) ────────────────
+
+const familySchema = [
+  {
+    family: 'body',
+    label: 'Body — running text · regular weight',
+    weight: 400,
+    samples: [
+      { size: 'sm', spec: '13/20', sample: 'Body small — caption, footnote, dense table cell text.' },
+      { size: 'md', spec: '14/20', sample: 'Body medium — primary paragraph copy. Stage-14 §3.6 anchor.' },
+      { size: 'lg', spec: '16/24', sample: 'Body large — long-form reading, marketing pages.' },
+    ],
+  },
+  {
+    family: 'title',
+    label: 'Title — headings · semibold weight',
+    weight: 600,
+    samples: [
+      { size: 'sm', spec: '16/24', sample: 'Title small (h4 / subtitle)' },
+      { size: 'md', spec: '20/28', sample: 'Title medium (Modal Header · §3.7.1)' },
+      { size: 'lg', spec: '24/32', sample: 'Title large (h1 / display)' },
+    ],
+  },
+  {
+    family: 'label',
+    label: 'Label — UI text · medium weight',
+    weight: 500,
+    samples: [
+      { size: 'sm', spec: '12/16', sample: 'Label small — chip, badge, dense UI label' },
+      { size: 'md', spec: '14/20', sample: 'Label medium — Button, Field, Tab. OQ-SZ-1=B anchor.' },
+      { size: 'lg', spec: '16/24', sample: 'Label large — large button text' },
+    ],
+  },
+] as const;
+
+export const TypographyFamilies: Story = {
+  render: () => (
+    <PrismUIProvider>
+      <div style={sectionStyle}>
+        <p style={headingStyle}>
+          Stage-14 SZ-TYPE-2 Family Layer — var(--prismui-typography-{'{family}'}-{'{size}'}-*)
+        </p>
+        <p style={{ fontSize: 11, color: '#637381', marginBottom: 24, lineHeight: 1.5 }}>
+          Three semantic families × three sizes = 9 tokens. Each token carries
+          <code style={{ margin: '0 4px', padding: '1px 4px', background: '#F4F6F8', borderRadius: 3 }}>
+            (fontSize, lineHeight, fontWeight)
+          </code>
+          per <strong>SZ-TYPE-3</strong> single-declaration rule. Every lineHeight is a px integer
+          divisible by 4 per <strong>SZ-TYPE-1</strong> (% 4 === 0). Horizontal guide lines below
+          visualize lineHeight grid alignment (R-6 守护：preview without lineHeight visualization
+          would let SZ-TYPE-1 silently drift).
+        </p>
+
+        {familySchema.map(({ family, label, weight, samples }) => (
+          <div key={family} style={{ marginBottom: 36 }}>
+            <p style={{ ...headingStyle, color: '#0C68E9', marginBottom: 12 }}>
+              {label} (default fontWeight: {weight})
+            </p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+              {samples.map(({ size, spec, sample }) => (
+                <div
+                  key={size}
+                  style={{
+                    display: 'grid',
+                    gridTemplateColumns: '120px 1fr',
+                    alignItems: 'flex-start',
+                    gap: 16,
+                  }}
+                >
+                  <div style={{ fontSize: 11, color: '#919EAB', fontFamily: 'monospace', paddingTop: 6 }}>
+                    <div style={{ fontWeight: 600, color: '#454F5B' }}>{family}.{size}</div>
+                    <div>{spec}</div>
+                  </div>
+                  {/* lineHeight grid visualization: dashed top/bottom borders show
+                      that text vertical extent matches the px lineHeight exactly. */}
+                  <div
+                    style={{
+                      borderTop: '1px dashed #DFE3E8',
+                      borderBottom: '1px dashed #DFE3E8',
+                      padding: 0,
+                      // Box height = lineHeight token to make the grid visually verifiable
+                      lineHeight: `var(--prismui-typography-${family}-${size}-line-height)`,
+                    }}
+                  >
+                    <span
+                      style={{
+                        fontFamily: 'var(--prismui-font-family)',
+                        fontSize: `var(--prismui-typography-${family}-${size}-font-size)` as any,
+                        lineHeight: `var(--prismui-typography-${family}-${size}-line-height)`,
+                        fontWeight: `var(--prismui-typography-${family}-${size}-font-weight)` as any,
+                        color: '#1C252E',
+                      }}
+                    >
+                      {sample}
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        ))}
+
+        <p style={{ fontSize: 11, color: '#919EAB', marginTop: 24 }}>
+          Anchors: <code>body.md</code> = 14/20 (§3.6) · <code>title.md</code> = 20/28 (§3.7.1
+          Section <code>titleSize</code>) · <code>label.md</code> = 14/20 (OQ-SZ-1=B Button label).
         </p>
       </div>
     </PrismUIProvider>

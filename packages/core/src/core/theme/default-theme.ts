@@ -78,15 +78,60 @@ export const defaultTheme: PrismUITheme = {
       lg: 1.55,
       xl: 1.6,
     },
+
+    // ========== Stage-14 SZ-TYPE-2 Family Layer (v1.0 lock) ==========
+    // Three semantic families × three size steps = 9 tokens.
+    // - body  (running text · regular weight 400)
+    // - title (headings · semibold 600)
+    // - label (UI text · medium 500)
+    //
+    // SZ-TYPE-1: every lineHeight ∈ {16, 20, 24, 28, 32, 36, 40, 48}
+    //            (px integer · `% 4 === 0`). Asserted in `theme.test.ts`.
+    // SZ-TYPE-3: every token declares (fontSize, lineHeight, fontWeight).
+    //
+    // Anchors documented in STAGE-14-OVERVIEW.md:
+    //   body.md  = 14/20  (§3.6 example · canonical body baseline)
+    //   title.md = 20/28  (§3.7.1 Section schema · titleSize)
+    //   label.md = 14/20  (§OQ-SZ-1 = B · Button label baseline)
+    //
+    // Non-anchor sizes (sm / lg) follow a regular 3-step ramp:
+    //   body.sm  = 13/20  (dense form caption · footnote · table cell text)
+    //   body.lg  = 16/24  (long-form reading)
+    //   title.sm = 16/24  (subtitle / h4)
+    //   title.lg = 24/32  (display / h1)
+    //   label.sm = 12/16  (dense UI label · chip · badge)
+    //   label.lg = 16/24  (large button text)
+    body: {
+      sm: { fontSize: '13px', lineHeight: 20, fontWeight: 400 },
+      md: { fontSize: '14px', lineHeight: 20, fontWeight: 400 },
+      lg: { fontSize: '16px', lineHeight: 24, fontWeight: 400 },
+    },
+    title: {
+      sm: { fontSize: '16px', lineHeight: 24, fontWeight: 600 },
+      md: { fontSize: '20px', lineHeight: 28, fontWeight: 600 },
+      lg: { fontSize: '24px', lineHeight: 32, fontWeight: 600 },
+    },
+    label: {
+      sm: { fontSize: '12px', lineHeight: 16, fontWeight: 500 },
+      md: { fontSize: '14px', lineHeight: 20, fontWeight: 500 },
+      lg: { fontSize: '16px', lineHeight: 24, fontWeight: 500 },
+    },
   },
 
   // ========== Spacing System ==========
+  // Stage-14 SZ-SCALE-4 (v0.2 lock): 8-step semantic spacing.
+  // Values are rem-based for user-zoom safety; equivalent px shown for
+  // reference at default root font-size 16px. All values satisfy SZ-SCALE-2
+  // `value % 4 === 0` (4-px base, Stage-14 SZ-SCALE-1).
   spacing: {
-    xs: '0.25rem', // 4px
-    sm: '0.5rem', // 8px
-    md: '1rem', // 16px
-    lg: '1.5rem', // 24px
-    xl: '2rem', // 32px
+    none: '0px',     // 0px
+    xs:   '0.25rem', // 4px
+    sm:   '0.5rem',  // 8px
+    md:   '1rem',    // 16px
+    lg:   '1.5rem',  // 24px
+    xl:   '2rem',    // 32px
+    '2xl': '2.5rem', // 40px
+    '3xl': '3rem',   // 48px
   },
 
   // ========== Radius System ==========

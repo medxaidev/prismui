@@ -145,11 +145,16 @@ describe("generateCSSVariables", () => {
     }
   });
 
-  it("generates spacing variables", () => {
+  it("generates spacing variables (8-step Stage-14 SZ-SCALE-4)", () => {
     const vars = generateCSSVariables(defaultTheme, "light");
+    expect(vars["--prismui-spacing-none"]).toBe("0px");
     expect(vars["--prismui-spacing-xs"]).toBe("0.25rem");
+    expect(vars["--prismui-spacing-sm"]).toBe("0.5rem");
     expect(vars["--prismui-spacing-md"]).toBe("1rem");
+    expect(vars["--prismui-spacing-lg"]).toBe("1.5rem");
     expect(vars["--prismui-spacing-xl"]).toBe("2rem");
+    expect(vars["--prismui-spacing-2xl"]).toBe("2.5rem");
+    expect(vars["--prismui-spacing-3xl"]).toBe("3rem");
   });
 
   it("generates radius variables", () => {
@@ -202,6 +207,62 @@ describe("generateCSSVariables", () => {
   it("generates line-height variables", () => {
     const vars = generateCSSVariables(defaultTheme, "light");
     expect(vars["--prismui-line-height-md"]).toBe("1.5");
+  });
+
+  // ── Stage-14 SZ-TYPE-2 Family Layer (v1.0 lock) ─────────────────────────
+  it("emits Stage-14 typography family vars (3 families × 3 sizes × 3 fields = 27)", () => {
+    const vars = generateCSSVariables(defaultTheme, "light");
+    const families = ["body", "title", "label"] as const;
+    const sizes = ["sm", "md", "lg"] as const;
+    const fields = ["font-size", "line-height", "font-weight"] as const;
+
+    for (const family of families) {
+      for (const size of sizes) {
+        for (const field of fields) {
+          const key = `--prismui-typography-${family}-${size}-${field}`;
+          expect(vars, key).toHaveProperty(key);
+          expect(vars[key], `${key} should be a non-empty string`).toBeDefined();
+          expect(typeof vars[key]).toBe("string");
+          expect(vars[key].length).toBeGreaterThan(0);
+        }
+      }
+    }
+  });
+
+  it("Stage-14 anchor: typography body.md = 14/20 / 400 in CSS vars", () => {
+    const vars = generateCSSVariables(defaultTheme, "light");
+    expect(vars["--prismui-typography-body-md-font-size"]).toBe("14px");
+    expect(vars["--prismui-typography-body-md-line-height"]).toBe("20px");
+    expect(vars["--prismui-typography-body-md-font-weight"]).toBe("400");
+  });
+
+  it("Stage-14 anchor: typography title.md = 20/28 / 600 in CSS vars (Section titleSize)", () => {
+    const vars = generateCSSVariables(defaultTheme, "light");
+    expect(vars["--prismui-typography-title-md-font-size"]).toBe("20px");
+    expect(vars["--prismui-typography-title-md-line-height"]).toBe("28px");
+    expect(vars["--prismui-typography-title-md-font-weight"]).toBe("600");
+  });
+
+  it("Stage-14 anchor: typography label.md = 14/20 / 500 in CSS vars (OQ-SZ-1=B Button)", () => {
+    const vars = generateCSSVariables(defaultTheme, "light");
+    expect(vars["--prismui-typography-label-md-font-size"]).toBe("14px");
+    expect(vars["--prismui-typography-label-md-line-height"]).toBe("20px");
+    expect(vars["--prismui-typography-label-md-font-weight"]).toBe("500");
+  });
+
+  it("SZ-TYPE-1: every family lineHeight CSS var ends with 'px' (px integer · % 4 === 0)", () => {
+    const vars = generateCSSVariables(defaultTheme, "light");
+    const families = ["body", "title", "label"] as const;
+    const sizes = ["sm", "md", "lg"] as const;
+    for (const family of families) {
+      for (const size of sizes) {
+        const key = `--prismui-typography-${family}-${size}-line-height`;
+        const value = vars[key];
+        expect(value, key).toMatch(/^\d+px$/);
+        const px = parseInt(value, 10);
+        expect(px % 4, `${key}=${value} must be % 4 === 0`).toBe(0);
+      }
+    }
   });
 
   it("generates shadow variables", () => {

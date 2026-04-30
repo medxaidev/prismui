@@ -17,6 +17,7 @@ import type {
   FontSizeScale,
   FontWeightScale,
   LineHeightScale,
+  TypographySize,
   RadiusScale,
   ShadowScale,
   BreakpointScale,
@@ -84,6 +85,28 @@ export interface PrismUIComponentConfig {
 export type CSSLength = number | `${number}px` | `${number}rem` | `${number}%`;
 
 /**
+ * Typography Token (Stage-14 SZ-TYPE-3 · single-declaration rule).
+ *
+ * Each entry in `theme.typography.{body,title,label}` carries this triple.
+ * Per SZ-TYPE-3, `fontSize` and `lineHeight` MUST be declared together;
+ * `fontWeight` is also required (was "optional" in early Stage-14 drafts but
+ * v1.0 lock makes it explicit per family default — body=400, title=600,
+ * label=500 — to keep cross-family typographic identity stable).
+ *
+ * Per SZ-TYPE-1, `lineHeight` is a px integer divisible by 4
+ * (i.e. ∈ {16, 20, 24, 28, 32, 36, 40, 48}). `fontSize` is unconstrained
+ * (12 / 13 / 14 / 16 / 20 / 24 are all valid).
+ */
+export interface TypographyToken {
+  /** Font size in CSSLength (px integer or rem). Stage-14 SZ-TYPE: free choice. */
+  fontSize: CSSLength;
+  /** Line height as px integer. SZ-TYPE-1: must satisfy `% 4 === 0`. */
+  lineHeight: number;
+  /** Font weight numeric (100-900). Family default per SZ-TYPE-2. */
+  fontWeight: number;
+}
+
+/**
  * Token Reference
  *
  * Used to reference other tokens (Graph structure).
@@ -120,9 +143,35 @@ export interface PrismUITheme<
   typography: {
     fontFamily: string;
     fontFamilyMonospace: string;
+    /**
+     * Primitive font-size scale (Stage-3 / Stage-8 — pre-Stage-14 layer).
+     * Retained for backward compatibility; new components SHOULD prefer the
+     * Stage-14 SZ-TYPE-2 three-family layer below (`body` / `title` / `label`).
+     */
     fontSize: Record<FontSizeScale, CSSLength>;
     fontWeight: Record<FontWeightScale, number>;
+    /**
+     * Primitive line-height scale (unitless ratio · pre-Stage-14 layer).
+     * SZ-TYPE-1 (`% 4 === 0` px integer) applies only to the family layer
+     * below — primitive ratios remain ratio-typed for back-compat.
+     */
     lineHeight: Record<LineHeightScale, number>;
+    /**
+     * Stage-14 SZ-TYPE-2 family layer (v1.0 lock).
+     *
+     * Three semantic families × three size steps = 9 typography tokens.
+     * Each token carries `(fontSize, lineHeight, fontWeight)` per SZ-TYPE-3
+     * (single-declaration rule). `lineHeight` is a px integer divisible by 4
+     * per SZ-TYPE-1 (`% 4 === 0`).
+     *
+     * Anchors (Stage-14):
+     *   - `body.md`  = 14/20 (§3.6 example)
+     *   - `title.md` = 20/28 (§3.7.1 Section schema · titleSize)
+     *   - `label.md` = 14/20 (OQ-SZ-1 = B · Button label baseline)
+     */
+    body: Record<TypographySize, TypographyToken>;
+    title: Record<TypographySize, TypographyToken>;
+    label: Record<TypographySize, TypographyToken>;
   };
   spacing: Record<SpacingScale, CSSLength>;
   radius: Record<RadiusScale, CSSLength>;

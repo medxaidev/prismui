@@ -65,6 +65,44 @@ export interface SizeScale {
   slotSize: string;
   /** v3 新增：主轴内部元素间距（如 section ↔ label）。 */
   innerGap: string;
+
+  // ── Stage-14 SZ-COMP-1 三项公式输入 (Phase 3 Additive · v1.0 lock) ────────
+  // height = lineHeight + paddingY * 2 + borderY
+  //
+  // 说明：v1 baseline 的 `height` 字段由历史 hardcoded 值组成（24/30/36/42/48），
+  // 与下面三项公式输入存在已知 drift（xs/md/xl 的 actual = ideal − 2，sm/lg 0）。
+  // v1.x backlog 迁移到 ideal · 测试层 `compute-height.test.ts` 守护 drift 仅减不增
+  // (ratchet)。详见 STAGE-14-OVERVIEW.md Audit Log Phase 3 entry。
+  //
+  // 命名一致性：与 typography family token 同名（`lineHeight: number` 复用 px
+  // 整数协议 · 不再用 ratio）·与 paddingX 字段对称（paddingY: CSSLength string
+  // · 用户可填 `'8px'` 或 `8`）·borderY 默认 2 体现 SZ-COMP-6 透明结构占位规则。
+
+  /**
+   * Stage-14 SZ-TYPE-1 lineHeight (px integer · % 4 === 0).
+   *
+   * Sourced from typography family alignment (`theme.typography.label.{sm|md|lg}
+   * .lineHeight` for Button-led components per OQ-SZ-1=B). Stored as `number`
+   * to guarantee arithmetic safety in `computeHeight`.
+   */
+  lineHeight: number;
+  /**
+   * Stage-14 SZ-COMP-1 paddingY (CSSLength · % 4 === 0 when expressed in px).
+   *
+   * Independent from `paddingX` — vertical/horizontal axes may differ to keep
+   * `height` in the public ergonomics range while honoring `lineHeight` from
+   * typography. SZ-SCALE-2 invariant applies to the px integer interpretation.
+   */
+  paddingY: string;
+  /**
+   * Stage-14 SZ-COMP-6 borderY (px integer · default 2).
+   *
+   * Total structural border budget for top + bottom combined (NOT per-side).
+   * `2` matches `border: 1px solid` on each side, which is the Field-enterable
+   * default. solid/ghost variants paint the border `transparent` so the
+   * structural placeholder remains; outline variants paint `currentColor`.
+   */
+  borderY: number;
 }
 
 /**

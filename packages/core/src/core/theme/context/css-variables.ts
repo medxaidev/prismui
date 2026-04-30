@@ -240,6 +240,11 @@ export function selectPalette(
  * - --prismui-font-weight-{scale}
  * - --prismui-line-height-{scale}
  *
+ * Stage-14 SZ-TYPE-2 Family Layer (3 × 3 × 3 = 27 vars):
+ * - --prismui-typography-{body|title|label}-{sm|md|lg}-font-size
+ * - --prismui-typography-{body|title|label}-{sm|md|lg}-line-height
+ * - --prismui-typography-{body|title|label}-{sm|md|lg}-font-weight
+ *
  * Focus ring (Stage 9 / a11y):
  * - --prismui-focus-ring-width   → outline width for :focus-visible
  * - --prismui-focus-ring-offset  → outline offset for :focus-visible
@@ -360,6 +365,25 @@ export function generateCSSVariables(
   }
   for (const [scale, value] of Object.entries(theme.typography.lineHeight)) {
     vars[`--prismui-line-height-${scale}`] = String(value);
+  }
+
+  // ── Stage-14 SZ-TYPE-2 Family Layer ───────────────────────────────────────
+  // Emits 27 vars (3 families × 3 sizes × 3 fields) for the body/title/label
+  // semantic typography layer. Naming convention:
+  //   --prismui-typography-{family}-{size}-font-size
+  //   --prismui-typography-{family}-{size}-line-height   (px integer · SZ-TYPE-1)
+  //   --prismui-typography-{family}-{size}-font-weight
+  //
+  // Consumers MAY use the primitive `--prismui-font-size-*` / `--prismui-line-
+  // height-*` vars (Stage-3 layer · still emitted above for back-compat) OR
+  // these family vars. New components SHOULD prefer the family layer.
+  for (const family of ['body', 'title', 'label'] as const) {
+    const familyTokens = theme.typography[family];
+    for (const [size, token] of Object.entries(familyTokens)) {
+      vars[`--prismui-typography-${family}-${size}-font-size`] = String(token.fontSize);
+      vars[`--prismui-typography-${family}-${size}-line-height`] = `${token.lineHeight}px`;
+      vars[`--prismui-typography-${family}-${size}-font-weight`] = String(token.fontWeight);
+    }
   }
 
   // ── Color Family Shades ───────────────────────────────────────────────────

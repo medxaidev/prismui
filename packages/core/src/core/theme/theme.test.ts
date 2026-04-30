@@ -34,12 +34,15 @@ describe('Theme System', () => {
       expect(defaultTheme.typography.lineHeight.md).toBe(1.5);
     });
 
-    it('should use rem for spacing', () => {
+    it('should use rem for spacing (8-step Stage-14 SZ-SCALE-4)', () => {
+      expect(defaultTheme.spacing.none).toBe('0px');
       expect(defaultTheme.spacing.xs).toBe('0.25rem');
       expect(defaultTheme.spacing.sm).toBe('0.5rem');
       expect(defaultTheme.spacing.md).toBe('1rem');
       expect(defaultTheme.spacing.lg).toBe('1.5rem');
       expect(defaultTheme.spacing.xl).toBe('2rem');
+      expect(defaultTheme.spacing['2xl']).toBe('2.5rem');
+      expect(defaultTheme.spacing['3xl']).toBe('3rem');
     });
 
     it('should use rem for radius (and px for full)', () => {
@@ -90,6 +93,85 @@ describe('Theme System', () => {
       expect(defaultTheme.typography.fontWeight.semibold).toBe(600);
       expect(defaultTheme.typography.fontWeight.bold).toBe(700);
       expect(defaultTheme.typography.fontWeight.extrabold).toBe(800);
+    });
+  });
+
+  // ── Stage-14 SZ-TYPE-2 Family Layer (v1.0 lock) ───────────────────────────
+  describe('Stage-14 Typography Family Layer (SZ-TYPE-2 v1.0)', () => {
+    const families = ['body', 'title', 'label'] as const;
+    const sizes = ['sm', 'md', 'lg'] as const;
+
+    it('should have all 9 family tokens (3 families × 3 sizes)', () => {
+      for (const family of families) {
+        for (const size of sizes) {
+          const token = defaultTheme.typography[family][size];
+          expect(token, `${family}.${size}`).toBeDefined();
+          expect(token.fontSize, `${family}.${size}.fontSize`).toBeDefined();
+          expect(token.lineHeight, `${family}.${size}.lineHeight`).toBeDefined();
+          expect(token.fontWeight, `${family}.${size}.fontWeight`).toBeDefined();
+        }
+      }
+    });
+
+    it('SZ-TYPE-1: every lineHeight is a px integer divisible by 4', () => {
+      for (const family of families) {
+        for (const size of sizes) {
+          const lh = defaultTheme.typography[family][size].lineHeight;
+          expect(Number.isInteger(lh), `${family}.${size}.lineHeight should be integer`).toBe(true);
+          expect(lh % 4, `${family}.${size}.lineHeight=${lh} must satisfy % 4 === 0`).toBe(0);
+        }
+      }
+    });
+
+    it('SZ-TYPE-3: every token declares fontSize + lineHeight + fontWeight together', () => {
+      for (const family of families) {
+        for (const size of sizes) {
+          const token = defaultTheme.typography[family][size];
+          // Single-declaration rule: all three fields must be present
+          expect(typeof token.fontSize === 'string' || typeof token.fontSize === 'number').toBe(true);
+          expect(typeof token.lineHeight).toBe('number');
+          expect(typeof token.fontWeight).toBe('number');
+        }
+      }
+    });
+
+    it('Stage-14 anchor: body.md = 14/20', () => {
+      expect(defaultTheme.typography.body.md.fontSize).toBe('14px');
+      expect(defaultTheme.typography.body.md.lineHeight).toBe(20);
+      expect(defaultTheme.typography.body.md.fontWeight).toBe(400);
+    });
+
+    it('Stage-14 anchor: title.md = 20/28 (Section §3.7.1 titleSize)', () => {
+      expect(defaultTheme.typography.title.md.fontSize).toBe('20px');
+      expect(defaultTheme.typography.title.md.lineHeight).toBe(28);
+      expect(defaultTheme.typography.title.md.fontWeight).toBe(600);
+    });
+
+    it('Stage-14 anchor: label.md = 14/20 (OQ-SZ-1 = B Button label)', () => {
+      expect(defaultTheme.typography.label.md.fontSize).toBe('14px');
+      expect(defaultTheme.typography.label.md.lineHeight).toBe(20);
+      expect(defaultTheme.typography.label.md.fontWeight).toBe(500);
+    });
+
+    it('family fontWeight defaults: body=400 / title=600 / label=500', () => {
+      // All sizes within a family share the family's default weight
+      for (const size of sizes) {
+        expect(defaultTheme.typography.body[size].fontWeight).toBe(400);
+        expect(defaultTheme.typography.title[size].fontWeight).toBe(600);
+        expect(defaultTheme.typography.label[size].fontWeight).toBe(500);
+      }
+    });
+
+    it('size ramps are monotonically non-decreasing within each family', () => {
+      // fontSize and lineHeight should not regress as size grows sm → md → lg
+      for (const family of families) {
+        const sm = defaultTheme.typography[family].sm;
+        const md = defaultTheme.typography[family].md;
+        const lg = defaultTheme.typography[family].lg;
+        // lineHeight monotonic
+        expect(sm.lineHeight, `${family}.sm.lh ≤ md.lh`).toBeLessThanOrEqual(md.lineHeight);
+        expect(md.lineHeight, `${family}.md.lh ≤ lg.lh`).toBeLessThanOrEqual(lg.lineHeight);
+      }
     });
   });
 
@@ -184,13 +266,31 @@ describe('Theme System', () => {
             lg: 1.55,
             xl: 1.6,
           },
+          body: {
+            sm: { fontSize: '13px', lineHeight: 20, fontWeight: 400 },
+            md: { fontSize: '14px', lineHeight: 20, fontWeight: 400 },
+            lg: { fontSize: '16px', lineHeight: 24, fontWeight: 400 },
+          },
+          title: {
+            sm: { fontSize: '16px', lineHeight: 24, fontWeight: 600 },
+            md: { fontSize: '20px', lineHeight: 28, fontWeight: 600 },
+            lg: { fontSize: '24px', lineHeight: 32, fontWeight: 600 },
+          },
+          label: {
+            sm: { fontSize: '12px', lineHeight: 16, fontWeight: 500 },
+            md: { fontSize: '14px', lineHeight: 20, fontWeight: 500 },
+            lg: { fontSize: '16px', lineHeight: 24, fontWeight: 500 },
+          },
         },
         spacing: {
+          none: '0px',
           xs: '0.25rem',
           sm: '0.5rem',
           md: '1rem',
           lg: '1.5rem',
           xl: '2rem',
+          '2xl': '2.5rem',
+          '3xl': '3rem',
         },
         radius: {
           xs: '0.25rem',
@@ -223,11 +323,18 @@ describe('Theme System', () => {
           },
         },
         size: {
-          xs: { height: '24px', paddingX:  '8px', fontSize: '12px', slotSize: '14px', innerGap:  '4px' },
-          sm: { height: '30px', paddingX: '10px', fontSize: '13px', slotSize: '16px', innerGap:  '6px' },
-          md: { height: '36px', paddingX: '12px', fontSize: '14px', slotSize: '18px', innerGap:  '8px' },
-          lg: { height: '42px', paddingX: '14px', fontSize: '15px', slotSize: '20px', innerGap: '10px' },
-          xl: { height: '48px', paddingX: '16px', fontSize: '16px', slotSize: '22px', innerGap: '12px' },
+          // Stage-14 Phase 3: SZ-COMP-1 三项公式输入字段（lineHeight / paddingY / borderY）
+          // 与 default-size-tokens.ts 对齐 · 详见公式 height = lineHeight + paddingY*2 + borderY。
+          xs: { height: '24px', paddingX:  '8px', fontSize: '12px', slotSize: '14px', innerGap:  '4px',
+                lineHeight: 16, paddingY:  '4px', borderY: 2 },
+          sm: { height: '30px', paddingX: '10px', fontSize: '13px', slotSize: '16px', innerGap:  '6px',
+                lineHeight: 20, paddingY:  '4px', borderY: 2 },
+          md: { height: '36px', paddingX: '12px', fontSize: '14px', slotSize: '18px', innerGap:  '8px',
+                lineHeight: 20, paddingY:  '8px', borderY: 2 },
+          lg: { height: '42px', paddingX: '14px', fontSize: '15px', slotSize: '20px', innerGap: '10px',
+                lineHeight: 24, paddingY:  '8px', borderY: 2 },
+          xl: { height: '48px', paddingX: '16px', fontSize: '16px', slotSize: '22px', innerGap: '12px',
+                lineHeight: 24, paddingY: '12px', borderY: 2 },
         },
         state: {
           disabled: { opacity: 0.5, cursor: 'not-allowed' },

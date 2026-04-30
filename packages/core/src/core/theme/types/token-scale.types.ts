@@ -12,9 +12,25 @@
 /**
  * Spacing Scale
  *
- * 5-step spacing scale
+ * 8-step semantic spacing scale (Stage-14 SZ-SCALE-4 v0.2 lock).
+ *
+ * Aligned with the 4-px primitive scale (Stage-14 SZ-SCALE-1/2):
+ *   none = 0    xs = 4     sm = 8     md = 16
+ *   lg   = 24   xl = 32    2xl = 40   3xl = 48
+ *
+ * Scope: covers values that recur across layout / component padding.
+ * Components MAY use the primitive `theme.scale` for one-off non-recurring
+ * values, but recurring values MUST be semantic-tokenized here.
  */
-export type SpacingScale = "xs" | "sm" | "md" | "lg" | "xl";
+export type SpacingScale =
+  | "none"
+  | "xs"
+  | "sm"
+  | "md"
+  | "lg"
+  | "xl"
+  | "2xl"
+  | "3xl";
 
 /**
  * Font Size Scale
@@ -36,6 +52,28 @@ export type FontWeightScale = "regular" | "medium" | "semibold" | "bold" | "extr
  * 5-step line height scale
  */
 export type LineHeightScale = "xs" | "sm" | "md" | "lg" | "xl";
+
+/**
+ * Typography Family (Stage-14 SZ-TYPE-2 · v1.0 lock)
+ *
+ * Three semantic families layered on top of the primitive scales above:
+ *   - `body`  — running text, paragraph copy
+ *   - `title` — headings (h1-h3), modal/section titles
+ *   - `label` — UI text on buttons, form fields, tabs, tags
+ *
+ * Each family carries its own (fontSize, lineHeight, fontWeight) triple per
+ * size step (see `TypographySize`). Used by `theme.typography.{body,title,label}`.
+ */
+export type TypographyFamily = "body" | "title" | "label";
+
+/**
+ * Typography Size (Stage-14 SZ-TYPE-2 · v1.0 lock)
+ *
+ * Three-step size scale per family. Aligned with component size scale (sm/md/lg)
+ * but independent — typography size does NOT have to match component size 1:1.
+ * (e.g. Button sm uses `label.md` per OQ-SZ-1=B, not `label.sm`.)
+ */
+export type TypographySize = "sm" | "md" | "lg";
 
 /**
  * Radius Scale

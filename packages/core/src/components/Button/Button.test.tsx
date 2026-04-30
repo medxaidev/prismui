@@ -1,5 +1,7 @@
 import { describe, it, expect, vi } from 'vitest';
 import * as React from 'react';
+import * as fs from 'fs';
+import * as path from 'path';
 import { render, fireEvent, act } from '@testing-library/react';
 import { Button } from './Button';
 import { PrismUIProvider } from '../../core/theme/provider/PrismUIProvider';
@@ -1570,6 +1572,86 @@ describe('Button', () => {
           restore();
         }
       });
+    });
+  });
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // Stage-14 Phase 3 · SZ-COMP-1 + SZ-INTERACT-1 structural CSS guards
+  //
+  // These tests assert the *presence* of structural CSS rules that encode
+  // Stage-14 invariants. They are intentionally lint-style (RegExp on raw CSS
+  // source) rather than behavioral, because:
+  //
+  //   1. SZ-COMP-1's `box-sizing: border-box` produces no observable jsdom
+  //      side-effect on its own — we want a build-time tripwire so anyone
+  //      removing the declaration during a future refactor fails the test.
+  //   2. SZ-INTERACT-1's `::before` hit-target overlay is currently visually
+  //      clipped by `.root { overflow: hidden }` (ripple containment · v1.0
+  //      layered concern documented in module.css). Behavioral coverage is
+  //      deferred to v1.x when ripple-host refactor lands. The structural
+  //      guard preserves the *intent* declaration so the v1.x refactor only
+  //      needs to remove the overflow clip — the rule is already in shape.
+  //
+  // See: STAGE-14-OVERVIEW.md §3.3 SZ-COMP-1 / §3.5 SZ-INTERACT-1
+  //      ADR-005 §决策 5 / Audit Log Phase 3 entry
+  // ─────────────────────────────────────────────────────────────────────────
+  describe('Stage-14 Phase 3 · SZ-COMP-1 + SZ-INTERACT-1 CSS guards', () => {
+    const cssPath = path.resolve(__dirname, './Button.module.css');
+    const css = fs.readFileSync(cssPath, 'utf8');
+
+    it('SZ-COMP-1 · `.root` declares `box-sizing: border-box`', () => {
+      // The formula `height = lineHeight + paddingY*2 + borderY` only matches
+      // the rendered outer bounding box when border-box is in effect. v1
+      // baseline previously relied on the implicit content-box default — the
+      // +2px outer drift happened to land near SZ-COMP-2's anchor by
+      // coincidence. Phase 3 makes the relationship causal.
+      //
+      // RegExp tolerates whitespace + comment-block placement variations
+      // inside the `.root` rule body.
+      expect(css).toMatch(/\.root\s*\{[^}]*box-sizing\s*:\s*border-box/);
+    });
+
+    it('SZ-INTERACT-1 · `[data-size="sm"]::before` hit-target overlay rule exists', () => {
+      // Apple HIG / Material Design touch-target ≥ 44×44 px. Button sm has
+      // visible height 30px (< 44), so it is one of the SZ-INTERACT-1 「受
+      // 约束组件」listed in Stage-14 §3.5. The structural overlay declaration
+      // MUST exist at the CSS layer so v1.x ripple-host refactor (which
+      // removes the parent's `overflow: hidden`) immediately makes the rule
+      // behaviorally effective without code changes here.
+      expect(css).toMatch(/\.root\[data-size=['"]sm['"]\]::before/);
+    });
+
+    it('SZ-INTERACT-1 · hit-target rule uses negative `inset` (extension geometry)', () => {
+      // The whole point of the overlay is that it geometrically extends OUT-
+      // SIDE the button's border-box. A non-negative inset would silently
+      // turn the rule into a no-op. The exact magnitude (-7px) is documented
+      // in module.css as the minimum to reach 44px on sm (30 + 7*2 = 44);
+      // this guard accepts any negative px integer so v1.x can tune.
+      const hitTargetBlockMatch = css.match(
+        /\.root\[data-size=['"]sm['"]\]::before\s*\{([^}]*)\}/,
+      );
+      expect(hitTargetBlockMatch, 'hit-target ::before rule block not found').not.toBeNull();
+      const block = hitTargetBlockMatch![1];
+      // Match `inset: -<digits>px` (allow surrounding whitespace).
+      expect(block, 'inset: negative px not found in hit-target block').toMatch(
+        /inset\s*:\s*-\d+px/,
+      );
+    });
+
+    it('SZ-INTERACT-1 · hit-target rule uses transparent background (zero visual side-effect)', () => {
+      // The overlay must remain visually invisible — any visible background
+      // would alter the perceived button silhouette and conflict with
+      // Stage-14 「不改变 layout / height / width / box-sizing」phrasing.
+      const hitTargetBlockMatch = css.match(
+        /\.root\[data-size=['"]sm['"]\]::before\s*\{([^}]*)\}/,
+      );
+      expect(hitTargetBlockMatch).not.toBeNull();
+      const block = hitTargetBlockMatch![1];
+      // Either explicit `background: transparent` or absent (default = transparent).
+      // We require explicit declaration for audit-trail clarity.
+      expect(block, 'hit-target overlay must declare transparent background').toMatch(
+        /background\s*:\s*transparent/,
+      );
     });
   });
 });
