@@ -157,4 +157,65 @@ describe('rippleFeedback', () => {
 
     i2.dispose();
   });
+
+  // ──────────────────────────────────────────────────────────────────────
+  // Stage-14 v1.x · ripple-host opt-in (Wave 3)
+  //
+  // When the press target contains a descendant marked with
+  // `[data-ripple-host]`, the ripple span MUST mount inside that descendant
+  // rather than directly on the target. This is the opt-in mechanism that
+  // lets components scope `overflow: hidden` to the ripple-host element so
+  // the press target's `.root` is free to host SZ-INTERACT-1 hit-area
+  // overlays without being clipped. Backward-compatible: when no such
+  // descendant exists, behavior is identical to v1.0.
+  // ──────────────────────────────────────────────────────────────────────
+  describe('ripple-host opt-in · [data-ripple-host] descendant', () => {
+    it('mounts the ripple inside the [data-ripple-host] descendant when present', () => {
+      const event = makePressInteractionEvent();
+      const host = document.createElement('span');
+      host.setAttribute('data-ripple-host', '');
+      event.target.appendChild(host);
+
+      const instance = rippleFeedback.create({ event });
+      instance.start(event);
+
+      // Ripple lives inside the host, not as a direct child of the target.
+      expect(host.querySelector('.prismui-ripple')).not.toBeNull();
+      expect(
+        Array.from(event.target.children).some(
+          (c) => c.classList && c.classList.contains('prismui-ripple'),
+        ),
+      ).toBe(false);
+      // querySelector descends, so existing test patterns
+      // `target.querySelector('.prismui-ripple')` still resolve correctly.
+      expect(event.target.querySelector('.prismui-ripple')).not.toBeNull();
+    });
+
+    it('falls back to mounting on the press target when no [data-ripple-host] exists', () => {
+      // Identical to the v1.0 baseline behavior — additive contract.
+      const event = makePressInteractionEvent();
+      const instance = rippleFeedback.create({ event });
+      instance.start(event);
+
+      const ripple = event.target.querySelector('.prismui-ripple')!;
+      expect(ripple.parentElement).toBe(event.target);
+    });
+
+    it('uses the FIRST [data-ripple-host] when multiple are present (querySelector single-match semantics)', () => {
+      const event = makePressInteractionEvent();
+      const first = document.createElement('span');
+      first.setAttribute('data-ripple-host', '');
+      first.id = 'first';
+      const second = document.createElement('span');
+      second.setAttribute('data-ripple-host', '');
+      second.id = 'second';
+      event.target.append(first, second);
+
+      const instance = rippleFeedback.create({ event });
+      instance.start(event);
+
+      expect(first.querySelector('.prismui-ripple')).not.toBeNull();
+      expect(second.querySelector('.prismui-ripple')).toBeNull();
+    });
+  });
 });

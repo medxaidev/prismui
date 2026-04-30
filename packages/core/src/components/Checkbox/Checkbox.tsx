@@ -725,6 +725,11 @@ export const Checkbox = factory<CheckboxOwnProps>(
           className={boxSlotStyles.className}
           style={boxSlotStyles.style}
           data-prismui-slot-usage
+          // Stage-14 v1.x · Wave 3 · ripple-host opt-in (mirrors Switch).
+          // `.box` already has `position: absolute; inset: 0; overflow: hidden`
+          // (CSS) so it serves as the ripple-feedback mount point. Frees
+          // `.root::before` (Wave 4 hit-target overlay) from the overflow clip.
+          data-ripple-host
         >
           <span
             className={indicatorSlotStyles.className}

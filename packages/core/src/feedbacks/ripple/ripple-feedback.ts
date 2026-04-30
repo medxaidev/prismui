@@ -75,7 +75,21 @@ export const rippleFeedback: FeedbackFactory = {
         el.style.setProperty('--ripple-size', `${size}px`);
 
         // Self-owned mount · attached inside the press target (§8.1 whitelist).
-        target.appendChild(el);
+        //
+        // Stage-14 v1.x · ripple-host opt-in (additive · backward-compatible):
+        // If the press target contains a descendant with `[data-ripple-host]`,
+        // mount inside it instead of directly on the target. This lets
+        // components scope `overflow: hidden` to a dedicated wrapper, freeing
+        // the press target's `.root` to host SZ-INTERACT-1 `::before` hit-area
+        // overlays without being clipped (Wave 3 unblocks Wave 4). When no
+        // such descendant exists, behavior is identical to v1.0 (target itself
+        // hosts the ripple). The host MUST cover the press target's border-box
+        // exactly (`position: absolute; inset: 0` or geometric equivalent) so
+        // `--ripple-x/y` (computed in the press target's border-box coordinate
+        // system) remain valid as offsets within the host's containing block.
+        const host =
+          target.querySelector<HTMLElement>('[data-ripple-host]') ?? target;
+        host.appendChild(el);
       },
 
       finish() {

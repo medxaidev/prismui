@@ -81,23 +81,17 @@
    * rounded square — the checkbox metaphor). */
   border-radius: var(--checkbox-box-radius);
 
-  /* Stage 10 · Phase 6 · Feedback ripple host (mirrors Button §10.4 host CSS).
-   * `.root` already has `position: relative` (line ~54) so `.prismui-ripple`
-   * (position: absolute, --ripple-x/y in border-box coordinates) lands inside
-   * the Checkbox's root rather than escaping to an ancestor.
+  /* Stage 10 · Phase 6 · Feedback ripple host (Stage-14 v1.x · Wave 3 refactor).
+   * `.root` is `position: relative` (line ~54) so absolute children land
+   * inside the Checkbox's root.
    *
-   * `overflow: hidden` clips the expanding ripple circle to the rounded
-   * square boundary — a content clip that does NOT affect the outside
-   * `box-shadow` painted by mode-B halo (CB-5 pointer halo) / `:focus-
-   * visible` outline / glow class. Outlines and box-shadows live in
-   * border-box-adjacent space and are unaffected by `overflow: hidden`.
-   *
-   * NOTE on CB-5 mode-B halo coexistence: Checkbox's `.root:focus:not(:focus-
-   * visible)` rule (line ~187) paints a pointer halo via box-shadow OUTSIDE
-   * the border box — unaffected by `overflow: hidden`. Same for the
-   * `:focus-visible` outline. Ripple clipping only affects the INSIDE-the-
-   * border-box animation, which is exactly what we want. */
-  overflow: hidden;
+   * Stage-14 v1.x · Wave 3 refactor: `overflow: hidden` is now declared on
+   * `.box` (which is `position: absolute; inset: 0` and shares `.root`'s
+   * border-box geometry exactly). The box carries `data-ripple-host`
+   * (Checkbox.tsx) so ripple-feedback.ts mounts the ripple span inside it.
+   * This frees `.root::before` (Wave 4 SZ-INTERACT-1 hit-target overlay) to
+   * paint outside the border-box. The CB-5 mode-B halo / `:focus-visible`
+   * outline / glow box-shadows continue to paint outside the clip as before. */
 
   /* Transition — box-shadow (halo) + opacity only on root; box's own
    * background / border / border-color transitions live on .box itself. */
@@ -106,12 +100,32 @@
     opacity    var(--checkbox-transition-duration) var(--checkbox-transition-easing);
 }
 
-/* ── Box (outer frame — background + border layer) ───────────────────────
- * Sits at 100%/100% inside root; data-checked drives bg + border. */
+/* ── Stage-14 v1.x · Wave 4 · SZ-INTERACT-1 hit-target overlay ──────────────
+ * Checkbox sm tier is 16×16 — well below the 44px Apple HIG touch minimum.
+ * Uniform `inset: -14px` extends to 44×44 logically while keeping the visible
+ * box untouched (transparent fill). Wave 3 moved `overflow: hidden` to `.box`,
+ * freeing this overlay to paint and receive pointer events outside the root's
+ * border-box. Only `sm` in scope at v1 (mirrors Button) — other tiers deferred. */
+.root[data-size='sm']::before {
+  content: '';
+  position: absolute;
+  inset: -14px;
+  background: transparent;
+  pointer-events: auto;
+}
+
+/* ── Box (outer frame — background + border layer + Wave 3 ripple-host) ─────
+ * Sits at 100%/100% inside root; data-checked drives bg + border.
+ * Stage-14 v1.x · Wave 3: also serves as the `[data-ripple-host]` element —
+ * already shares `.root`'s border-box geometry, so ripple coords
+ * (`--ripple-x/y` computed in `.root` coordinates) remain valid as offsets
+ * within the box's containing block. `overflow: hidden` (was on `.root`)
+ * clips the ripple to the rounded square. */
 .box {
   display: block;
   position: absolute;
   inset: 0;
+  overflow: hidden;
   width: 100%;
   height: 100%;
   border-radius: inherit;

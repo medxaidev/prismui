@@ -33,17 +33,19 @@
    * (defaults to var(--prismui-radius-md); user-override via `radius` prop). */
   border-radius: var(--button-radius);
 
-  /* Stage 10 · Phase 3 · Feedback ripple host.
+  /* Stage 10 · Phase 3 · Feedback ripple host (Stage-14 v1.x · Wave 3 refactor).
    * `position: relative` makes the press target a positioned containing block
    * so `.prismui-ripple` (position: absolute, --ripple-x/y in border-box
    * coordinates) lands inside the button instead of the viewport.
-   * `overflow: hidden` clips the expanding ripple circle to the button's
-   * rounded border — this is a content clip, it does NOT affect the outside
-   * `box-shadow` painted by `:hover` / `:focus-visible` (those layers live
-   * outside the border box and are unaffected by overflow). Same rule MUI /
-   * Mantine ship for their ripple-enabled buttons. */
+   *
+   * Stage-14 v1.x · ripple-host refactor: `overflow: hidden` is now declared
+   * on the dedicated `.rippleHost` wrapper (see rule below) rather than on
+   * `.root`. This frees `.root::before` (SZ-INTERACT-1 hit-target overlay) to
+   * paint and receive pointer events OUTSIDE the button's border-box —
+   * v1.0's documented layered concern is now resolved. The ripple primitive
+   * mounts inside `[data-ripple-host]` via opt-in (additive · backward
+   * compatible — see ripple-feedback.ts line ~78). Same MUI / Mantine pattern. */
   position: relative;
-  overflow: hidden;
 
   /* Interaction */
   cursor: pointer;
@@ -156,27 +158,19 @@
  * within touch-target ergonomic norms — taps that would otherwise land in
  * the dead zone next to the button now register as button presses).
  *
- * ── Known v1.0 layered concern (documented · not blocking) ────────────────
- * The parent `.root` declares `overflow: hidden` for ripple containment
- * (line ~46). With `overflow: hidden`, the visual paint of the ::before
- * overlay AND its pointer-event area are both clipped to the button's
- * border-box. Effective hit-area extension therefore requires a future
- * ripple-host refactor (move `overflow: hidden` from `.root` onto a
- * dedicated ripple wrapper element · MUI / Mantine pattern).
+ * ── Stage-14 v1.x · Wave 3 ripple-host refactor — concern resolved ───────
+ * Previously `.root { overflow: hidden }` clipped this overlay's paint and
+ * pointer-event area to the border-box, neutralizing the extension. The
+ * Wave 3 refactor moved `overflow: hidden` to the dedicated `.rippleHost`
+ * wrapper (see rule above). The hit-target ::before now paints and receives
+ * touches outside the border-box as designed — SZ-INTERACT-1 fully
+ * functional on touch devices.
  *
- * Phase 3 deliberately keeps the rule in place as a *structural* declaration
- * so:
- *   1. The intent is captured at the CSS layer (audit-trail · lint guard)
- *   2. v1.x backlog refactor needs only the ripple-host change · the hit-
- *      target rule is already in the right shape
- *   3. SZ-INTERACT-1 守护测试 (Button hit-target test) asserts the rule's
- *      *presence* in module.css — refactoring without preserving this
- *      structural marker fails the build.
+ * The structural CSS guard (Button.test.tsx) continues to assert the rule's
+ * presence so any refactor that removes it fails the build.
  *
- * Out-of-scope (deferred to v1.x):
- *   - IconButton / ToggleButton / Tag / Switch / Checkbox / Radio / Tab
- *     hit-target overlays (Phase 3 is Button-led per D-6=b · v1.1 audit)
- *   - Behavioral hit-area test (depends on ripple-host refactor)
+ * Out-of-scope (still deferred):
+ *   - Tag / Tab hit-target overlays (no v1 components yet)
  *   - Button md (36px) hit-target — Stage-14 §3.5 SZ-INTERACT-1 currently
  *     scopes only Button sm to the constraint; revisit if user research
  *     shows 36px regression on touch devices. */
@@ -194,11 +188,39 @@
   pointer-events: auto;
 }
 
+/* ── Stage-14 v1.x · Wave 3 · ripple-host wrapper ────────────────────────
+ * Geometric overlay covering `.root`'s border-box exactly (`inset: 0`).
+ * Hosts the ripple span via the opt-in `[data-ripple-host]` attribute (see
+ * ripple-feedback.ts line ~78). `border-radius: inherit` matches the parent
+ * button's rounded corners so the ripple animation is clipped to the visual
+ * shape, not a square. `pointer-events: none` keeps the wrapper transparent
+ * to all input — the button itself receives clicks / pointer events, the
+ * ripple span is purely decorative. `z-index: 0` + `.inner { z-index: 1 }`
+ * stacks content above the ripple paint without relying on DOM-order paint
+ * defaults (positioned absolute children paint on top of static siblings,
+ * so explicit z-index is required).
+ *
+ * The wrapper is `aria-hidden="true"` in the render layer (Button.tsx) so
+ * AT skips it during traversal — semantically it is part of the button. */
+.rippleHost {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  border-radius: inherit;
+  pointer-events: none;
+  z-index: 0;
+}
+
 .inner {
   display: flex;
   align-items: center;
   /* Size System v3 — replaces the v1 hardcoded `gap: 8px` */
   gap: var(--button-inner-gap);
+  /* Wave 3 stacking: positioned context with z-index 1 paints content
+   * above the absolute-positioned `.rippleHost` (z-index 0) without
+   * depending on DOM-order paint defaults. */
+  position: relative;
+  z-index: 1;
 }
 
 /* `.label` slot — typography is handled by `.root`; the rule below is a

@@ -57,6 +57,12 @@ export const ICON_BUTTON_DEFAULT_FEEDBACKS: FeedbackFactory[] = [rippleFeedback,
  * ──────────────────────────────────────────────────────────────────── */
 const iconButtonSlots = defineSlots({
   root: 'button',
+  // Stage-14 v1.x · Wave 3 · ripple-host opt-in wrapper. See
+  // IconButton.module.css `.rippleHost` and ripple-feedback.ts for the
+  // contract. Empty geometric overlay covering `.root`'s border-box; lets
+  // Wave 4 SZ-INTERACT-1 hit-target overlays paint outside the border box
+  // without being clipped by the ripple-containment overflow.
+  rippleHost: 'span',
 });
 
 export type IconButtonStylesNames = SlotNames<typeof iconButtonSlots>;
@@ -377,6 +383,9 @@ export const IconButton = factory<IconButtonOwnProps>(
     // has no component-local data-attrs (no fullWidth / no round sentinel —
     // OQ-IB6 decided not to add one since radius is already expressed via
     // the CSS var; and per the consolidation above, no `data-loader` either).
+    // Stage-14 v1.x · Wave 3 · ripple-host wrapper styles (see slot definition).
+    const rippleHostStyles = styles.getStyles('rippleHost');
+
     return (
       <Element
         ref={ref}
@@ -388,6 +397,12 @@ export const IconButton = factory<IconButtonOwnProps>(
         {...systemDataAttrs}
         {...disabilityAttrs}
       >
+        <span
+          aria-hidden="true"
+          data-ripple-host
+          className={rippleHostStyles.className}
+          style={rippleHostStyles.style}
+        />
         {content}
       </Element>
     );

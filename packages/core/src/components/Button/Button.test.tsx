@@ -445,7 +445,18 @@ describe('Button', () => {
       const { container } = render(
         <Button leftSection="L" rightSection="R">Label</Button>,
       );
-      const inner = container.querySelector('button')!.firstElementChild!;
+      // Stage-14 v1.x · Wave 3 ripple-host refactor: `.root`'s first child is
+      // now the empty `<span data-ripple-host>` paint surface, so queries that
+      // previously assumed `.inner` was the firstElementChild must skip it.
+      // Query inner explicitly via the slot's `data-prismui-slot-usage`
+      // marker (Inner is the first such descendant; Label is nested inside).
+      const button = container.querySelector('button')!;
+      // Children order: [0] = ripple-host wrapper (Wave 3, empty span with
+      // data-ripple-host), [1] = inner slot. Skip past the ripple-host.
+      const children = Array.from(button.children);
+      const rippleHost = children.find((c) => c.hasAttribute('data-ripple-host'));
+      expect(rippleHost).toBeDefined(); // Wave 3 invariant: present on Button
+      const inner = children.find((c) => !c.hasAttribute('data-ripple-host'))!;
       const [first, middle, last] = Array.from(inner.children);
       expect(first.getAttribute('data-position')).toBe('left');
       expect(middle.getAttribute('data-position')).toBeNull(); // label

@@ -694,6 +694,13 @@ export const Switch = factory<SwitchOwnProps>(
           className={trackSlotStyles.className}
           style={trackSlotStyles.style}
           data-prismui-slot-usage
+          // Stage-14 v1.x · Wave 3 · ripple-host opt-in. `.track` already has
+          // `position: absolute; inset: 0; overflow: hidden` (CSS) so it serves
+          // as the ripple-feedback mount point. Ripple-feedback.ts mounts the
+          // ripple span inside `[data-ripple-host]` when present. The Switch's
+          // `<button>.root` no longer carries `overflow: hidden`, leaving room
+          // for Wave 4 hit-target overlays to paint outside the border-box.
+          data-ripple-host
         >
           <span
             className={thumbSlotStyles.className}

@@ -18,6 +18,8 @@
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import * as React from 'react';
+import * as fs from 'node:fs';
+import * as path from 'node:path';
 import { render, fireEvent, act } from '@testing-library/react';
 import {
   ToggleButton,
@@ -1455,6 +1457,59 @@ describe('ToggleButton', () => {
           restore();
         }
       });
+    });
+  });
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // Stage-14 v1.x · SZ-COMP-1 structural CSS guard (Wave 1 backlog)
+  //
+  // ToggleButton shares Button's 5-slot silhouette and the same
+  // `height = lineHeight + paddingY*2 + borderY` derivation. Because mixed
+  // toolbars (`<Button>` + `<ToggleButton>`) must read as one family, both
+  // components MUST use the same box model — content-box drift would make
+  // bordered ToggleButtons +2px taller than adjacent Buttons. The guard is
+  // lint-style on raw CSS source, mirroring Button Phase 3.
+  //
+  // See: STAGE-14-OVERVIEW.md §3.3 SZ-COMP-1 / Audit Log v1.x backlog Wave 1
+  // ─────────────────────────────────────────────────────────────────────────
+  describe('Stage-14 v1.x · SZ-COMP-1 CSS guard', () => {
+    const cssPath = path.resolve(__dirname, './ToggleButton.module.css');
+    const css = fs.readFileSync(cssPath, 'utf8');
+
+    it('SZ-COMP-1 · `.root` declares `box-sizing: border-box`', () => {
+      // The formula `height = lineHeight + paddingY*2 + borderY` only matches
+      // the rendered outer box when border-box is in effect. Without it,
+      // toolbar mixes of Button + ToggleButton would visibly mis-align by
+      // 2px wherever the ToggleButton's outline variant renders a 1px border.
+      expect(css).toMatch(/\.root\s*\{[^}]*box-sizing\s*:\s*border-box/);
+    });
+  });
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // Stage-14 v1.x · Wave 4 · SZ-INTERACT-1 hit-target overlay structural guard
+  //
+  // ToggleButton inherits Button's height scale (24/30/36/42/48). sm tier
+  // (30×?) is below the 44px touch-target minimum so it carries the same
+  // `.root[data-size='sm']::before { inset: -7px }` overlay as Button.
+  // See: STAGE-14-OVERVIEW.md §3.5 SZ-INTERACT-1 / Wave 4 audit log
+  // ─────────────────────────────────────────────────────────────────────────
+  describe('Stage-14 v1.x · Wave 4 · SZ-INTERACT-1 hit-target overlay', () => {
+    const cssPath = path.resolve(__dirname, './ToggleButton.module.css');
+    const css = fs.readFileSync(cssPath, 'utf8');
+    const ruleRe = /\.root\[data-size=['"]sm['"]\]::before\s*\{([^}]*)\}/;
+
+    it('rule for `[data-size="sm"]::before` exists', () => {
+      expect(css).toMatch(/\.root\[data-size=['"]sm['"]\]::before/);
+    });
+    it('uses negative `inset` (extension geometry)', () => {
+      const m = css.match(ruleRe);
+      expect(m, 'hit-target ::before rule block not found').not.toBeNull();
+      expect(m![1]).toMatch(/inset\s*:\s*-\d+px/);
+    });
+    it('uses transparent background (zero visual side-effect)', () => {
+      const m = css.match(ruleRe);
+      expect(m).not.toBeNull();
+      expect(m![1]).toMatch(/background\s*:\s*transparent/);
     });
   });
 });

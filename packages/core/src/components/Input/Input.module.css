@@ -37,6 +37,13 @@
   display: flex;
   align-items: stretch;
 
+  /* Stage-14 SZ-COMP-1 + SZ-COMP-6 · `height` is the OUTER box.
+   * border-box honors the height token across the Field-enterable
+   * coordinate system (Button / Input / Textarea share borderY=2 per
+   * SZ-COMP-6). Without it the 1px border drifts +2px outside the
+   * declared height — same audit finding as Button Phase 3. */
+  box-sizing: border-box;
+
   /* sizing from size system */
   height: var(--input-height);
   border-radius: var(--input-radius);

@@ -12,6 +12,8 @@
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import * as React from 'react';
+import * as fs from 'node:fs';
+import * as path from 'node:path';
 import { render, fireEvent, act } from '@testing-library/react';
 import { IconButton, __resetIconButtonInvariantWarnings } from './index';
 import { PrismUIProvider } from '../../core/theme/provider/PrismUIProvider';
@@ -1360,6 +1362,64 @@ describe('IconButton', () => {
           restore();
         }
       });
+    });
+  });
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // Stage-14 v1.x · SZ-COMP-1 structural CSS guard (Wave 1 backlog)
+  //
+  // Mirrors Button.test.tsx Phase 3 lint-style RegExp guard. IconButton is a
+  // sizing-bearing component (`width: var(--icon-button-size)` and
+  // `height: var(--icon-button-size)` declare an OUTER box) and must use
+  // border-box so the 1px border lives INSIDE the size token (24/30/36/42/48)
+  // — without it the icon button drifts +2px on each axis. The behavioral
+  // effect is invisible in jsdom (no layout); the structural guard is the
+  // only practical tripwire.
+  //
+  // See: STAGE-14-OVERVIEW.md §3.3 SZ-COMP-1 / Audit Log v1.x backlog Wave 1
+  // ─────────────────────────────────────────────────────────────────────────
+  describe('Stage-14 v1.x · SZ-COMP-1 CSS guard', () => {
+    const cssPath = path.resolve(__dirname, './IconButton.module.css');
+    const css = fs.readFileSync(cssPath, 'utf8');
+
+    it('SZ-COMP-1 · `.root` declares `box-sizing: border-box`', () => {
+      // The size token defines the OUTER dimensions of the square — the
+      // border must be subtracted from the inside, not added to the outside.
+      // RegExp tolerates whitespace + comment-block placement variations
+      // inside the `.root` rule body.
+      expect(css).toMatch(/\.root\s*\{[^}]*box-sizing\s*:\s*border-box/);
+    });
+  });
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // Stage-14 v1.x · Wave 4 · SZ-INTERACT-1 hit-target overlay structural guard
+  //
+  // IconButton sm tier is 30×30 — below the 44px Apple HIG / Material Design
+  // touch-target minimum. `.root[data-size='sm']::before { inset: -7px }`
+  // extends the press target to 44×44 logically with zero visual side-effect.
+  // Lint-style RegExp guards mirror Button's Phase 3 pattern (no behavioral
+  // probe — jsdom has no layout) so any future refactor that strips the rule
+  // fails the build.
+  //
+  // See: STAGE-14-OVERVIEW.md §3.5 SZ-INTERACT-1 / Wave 4 audit log
+  // ─────────────────────────────────────────────────────────────────────────
+  describe('Stage-14 v1.x · Wave 4 · SZ-INTERACT-1 hit-target overlay', () => {
+    const cssPath = path.resolve(__dirname, './IconButton.module.css');
+    const css = fs.readFileSync(cssPath, 'utf8');
+    const ruleRe = /\.root\[data-size=['"]sm['"]\]::before\s*\{([^}]*)\}/;
+
+    it('rule for `[data-size="sm"]::before` exists', () => {
+      expect(css).toMatch(/\.root\[data-size=['"]sm['"]\]::before/);
+    });
+    it('uses negative `inset` (extension geometry)', () => {
+      const m = css.match(ruleRe);
+      expect(m, 'hit-target ::before rule block not found').not.toBeNull();
+      expect(m![1]).toMatch(/inset\s*:\s*-\d+px/);
+    });
+    it('uses transparent background (zero visual side-effect)', () => {
+      const m = css.match(ruleRe);
+      expect(m).not.toBeNull();
+      expect(m![1]).toMatch(/background\s*:\s*transparent/);
     });
   });
 });

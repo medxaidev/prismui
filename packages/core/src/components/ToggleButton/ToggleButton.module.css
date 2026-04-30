@@ -32,6 +32,12 @@
   align-items: center;
   justify-content: center;
 
+  /* Stage-14 SZ-COMP-1 · border-box keeps the 1px border inside the
+   * height token (mirrors Button Phase 3 box-sizing fix). ToggleButton
+   * shares Button's silhouette and must inherit the same box model so
+   * mixed `<Button>` + `<ToggleButton>` toolbars stay pixel-aligned. */
+  box-sizing: border-box;
+
   /* Sizing — same `height / padding-x` mapping as Button. */
   height: var(--toggle-button-height);
   padding-left: var(--toggle-button-padding-x);
@@ -51,16 +57,13 @@
   border: 1px solid var(--prismui-variant-border);
   border-radius: var(--toggle-button-radius);
 
-  /* Stage 10 · Phase 5 · Feedback ripple host (mirrors Button §10.4 host CSS).
-   * `position: relative` makes the press target a positioned containing block
-   * so `.prismui-ripple` (position: absolute, --ripple-x/y in border-box
-   * coordinates) lands inside the ToggleButton instead of the viewport.
-   * `overflow: hidden` clips the expanding ripple circle to the rounded
-   * border — a content clip that does NOT affect the outside `box-shadow`
-   * painted by `:hover` / `:focus-visible` / glow (those layers live outside
-   * the border box and are unaffected by overflow). */
+  /* Stage 10 · Phase 5 · Feedback ripple host (Stage-14 v1.x · Wave 3 refactor).
+   * `position: relative` makes the press target a positioned containing block.
+   * Wave 3 moved `overflow: hidden` to the dedicated `.rippleHost` wrapper
+   * (rule below) so `.root::before` (Wave 4 SZ-INTERACT-1 hit-target overlay)
+   * paints outside the border-box. Mirrors Button's Wave 3 refactor exactly
+   * — toolbar mixes of `<Button>` + `<ToggleButton>` keep identical layering. */
   position: relative;
-  overflow: hidden;
 
   /* Interaction */
   cursor: pointer;
@@ -184,10 +187,40 @@
 /* ── Inner flex row (matches Button) ───────────────────────────────────
  * Hosts left / label / right sections. Gap is Size System v3-driven so
  * every size tier stays visually proportional. */
+/* ── Stage-14 v1.x · Wave 3 · ripple-host wrapper (mirrors Button) ──────────
+ * Empty geometric overlay covering `.root`'s border-box exactly. Hosts the
+ * ripple span via `[data-ripple-host]` opt-in (ripple-feedback.ts). Frees
+ * `.root::before` (Wave 4 hit-target overlay) from the overflow clip. */
+.rippleHost {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  border-radius: inherit;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* ── Stage-14 v1.x · Wave 4 · SZ-INTERACT-1 hit-target overlay ──────────────
+ * Mirrors Button's overlay verbatim — ToggleButton inherits the same 5-tier
+ * height scale (24/30/36/42/48). `sm` (30px) extends to 44px via -7px inset.
+ * Wave 3 refactor moved `overflow: hidden` to `.rippleHost`, freeing this
+ * overlay to paint outside the border-box. Other tiers (xs/md) deferred —
+ * scope-matched to Button's current rule. */
+.root[data-size='sm']::before {
+  content: '';
+  position: absolute;
+  inset: -7px;
+  background: transparent;
+  pointer-events: auto;
+}
+
 .inner {
   display: flex;
   align-items: center;
   gap: var(--toggle-button-inner-gap);
+  /* Wave 3 stacking: paint content above absolute-positioned `.rippleHost`. */
+  position: relative;
+  z-index: 1;
 }
 
 .label {

@@ -35,6 +35,13 @@
   display: flex;
   align-items: stretch;
 
+  /* Stage-14 SZ-COMP-1 + SZ-COMP-6 · border-box keeps the 1px border
+   * inside `min-height` (Field-enterable coordinate system · matches
+   * Input/Button). Without it the SSR-safe baseline drifts +2px and
+   * any consumer-supplied `height` prop drifts +2px too — same audit
+   * finding as Button Phase 3. */
+  box-sizing: border-box;
+
   /* sizing from component-local size contract (design.md §6.2 · T-4-B).
    * height is NOT declared — content drives the box; --input-min-height
    * provides the SSR-safe baseline consuming --input-min-rows (default 1). */

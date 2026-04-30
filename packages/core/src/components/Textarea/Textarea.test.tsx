@@ -527,4 +527,28 @@ describe('Textarea', () => {
       expect(inputBlockMatch![0]).not.toMatch(/^[^}]*\bresize\s*:/);
     });
   });
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // Stage-14 v1.x · SZ-COMP-1 + SZ-COMP-6 structural CSS guard (Wave 1)
+  //
+  // Textarea is Field-enterable (SZ-COMP-6 borderY=2). Unlike Input it
+  // declares `min-height` rather than fixed `height`, but the same border-box
+  // invariant applies — the SSR-safe baseline `--input-min-height` and any
+  // consumer-supplied `height` prop must include the 1px border on both
+  // sides, not push it outside. Without border-box, autosize-driven height
+  // mutations would also drift +2px on every keystroke that triggers a
+  // line wrap.
+  //
+  // See: STAGE-14-OVERVIEW.md §3.3 SZ-COMP-1 / §3.4 SZ-COMP-6 / Wave 1
+  // ─────────────────────────────────────────────────────────────────────────
+  describe('Stage-14 v1.x · SZ-COMP-1 CSS guard', () => {
+    const cssPath = path.resolve(__dirname, './Textarea.module.css');
+    const css = fs.readFileSync(cssPath, 'utf8');
+
+    it('SZ-COMP-1 · `.root` declares `box-sizing: border-box`', () => {
+      // RegExp tolerates whitespace + comment-block placement variations
+      // inside the `.root` rule body.
+      expect(css).toMatch(/\.root\s*\{[^}]*box-sizing\s*:\s*border-box/);
+    });
+  });
 });

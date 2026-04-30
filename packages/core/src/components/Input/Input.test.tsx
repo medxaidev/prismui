@@ -374,4 +374,28 @@ describe('Input', () => {
       expect(ringSelector).toMatch(/:not\(\[data-variant='unstyled'\]\)/);
     });
   });
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // Stage-14 v1.x · SZ-COMP-1 + SZ-COMP-6 structural CSS guard (Wave 1)
+  //
+  // Input is a Field-enterable component (SZ-COMP-6) and shares the
+  // borderY=2 invariant with Button / Textarea. Its `.root` declares an
+  // OUTER `height: var(--input-height)` that only resolves correctly under
+  // border-box — content-box would push the 1px border outside the height
+  // token, mis-aligning Input vs Button vs Textarea in mixed forms.
+  //
+  // Lint-style RegExp on raw CSS source, mirroring Button Phase 3.
+  // See: STAGE-14-OVERVIEW.md §3.3 SZ-COMP-1 / §3.4 SZ-COMP-6 / Wave 1
+  // ─────────────────────────────────────────────────────────────────────────
+  describe('Stage-14 v1.x · SZ-COMP-1 CSS guard', () => {
+    const cssPath = path.resolve(__dirname, './Input.module.css');
+    const css = fs.readFileSync(cssPath, 'utf8');
+
+    it('SZ-COMP-1 · `.root` declares `box-sizing: border-box`', () => {
+      // The Field coordinate system relies on every Field-enterable having
+      // the same outer-box semantics. RegExp tolerates whitespace + comment
+      // placement variations inside the `.root` rule body.
+      expect(css).toMatch(/\.root\s*\{[^}]*box-sizing\s*:\s*border-box/);
+    });
+  });
 });

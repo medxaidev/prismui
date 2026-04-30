@@ -72,6 +72,9 @@ const radioSlots = defineSlots({
   root: 'button',
   circle: 'span',
   indicator: 'span',
+  // Stage-14 v1.x · Wave 3 · ripple-host opt-in wrapper. See
+  // Radio.module.css `.rippleHost` and ripple-feedback.ts for the contract.
+  rippleHost: 'span',
 });
 
 export type RadioStylesNames = SlotNames<typeof radioSlots>;
@@ -491,6 +494,8 @@ export const Radio = factory<RadioOwnProps>(
     // ── Slot rendering ────────────────────────────────────────────────────
     const circleSlotStyles = styles.getStyles('circle');
     const indicatorSlotStyles = styles.getStyles('indicator');
+    // Stage-14 v1.x · Wave 3 · ripple-host wrapper styles (see slot definition).
+    const rippleHostStyles = styles.getStyles('rippleHost');
 
     const rootDataAttrs: Record<string, string> = {
       'data-checked': checkedAttr,
@@ -607,6 +612,12 @@ export const Radio = factory<RadioOwnProps>(
         {...disabilityAttrs}
         {...(ownLoading ? { 'aria-busy': true } : {})}
       >
+        <span
+          aria-hidden="true"
+          data-ripple-host
+          className={rippleHostStyles.className}
+          style={rippleHostStyles.style}
+        />
         {/* SVG-based visual · MUI-parity vector rendering. The 24-unit
             viewBox + fractional cx/cy guarantees pixel-perfect centering
             at every size tier — no flex / box-model rounding artefacts.

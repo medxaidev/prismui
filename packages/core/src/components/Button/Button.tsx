@@ -48,6 +48,11 @@ const buttonSlots = defineSlots({
   inner: 'span',
   section: 'span',
   label: 'span',
+  // Stage-14 v1.x · Wave 3 · ripple-host opt-in wrapper (§Button.module.css
+  // `.rippleHost`). Empty geometric overlay covering `.root`'s border-box;
+  // ripple-feedback.ts mounts the ripple span here so `overflow: hidden` no
+  // longer clips `.root::before` (SZ-INTERACT-1 hit-target overlay).
+  rippleHost: 'span',
 });
 
 export type ButtonStylesNames = SlotNames<typeof buttonSlots>;
@@ -221,6 +226,13 @@ export const Button = factory<ButtonOwnProps>(
     // Multi-instance slot: raw span + data-position (mirrors Input pattern).
     // Button.Section compound is intentionally NOT used (single-instance only).
     const sectionSlot = styles.getStyles('section');
+    // Stage-14 v1.x · Wave 3 · ripple-host wrapper styles.
+    // Empty <span> child rendered first inside `.root` so its absolute paint
+    // sits below `.inner` (which has `z-index: 1` for explicit stacking). The
+    // `data-ripple-host` attribute is the opt-in hook ripple-feedback.ts looks
+    // for via `target.querySelector('[data-ripple-host]')`. `aria-hidden` keeps
+    // it invisible to AT (it carries no semantics — purely a paint surface). */
+    const rippleHostStyles = styles.getStyles('rippleHost');
 
     // Root-level data-attrs managed by the component (NOT system-managed).
     // The 7 system keys (data-variant / data-size / data-color / data-disabled
@@ -507,6 +519,12 @@ export const Button = factory<ButtonOwnProps>(
         {...systemDataAttrs}
         {...disabilityAttrs}
       >
+        <span
+          aria-hidden="true"
+          data-ripple-host
+          className={rippleHostStyles.className}
+          style={rippleHostStyles.style}
+        />
         <Button.Inner data-prismui-slot-usage {...styles.getStyles('inner')}>
           {leftContent != null && (
             <span

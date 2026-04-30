@@ -77,6 +77,9 @@ const toggleButtonSlots = defineSlots({
   inner: 'span',
   section: 'span',
   label: 'span',
+  // Stage-14 v1.x · Wave 3 · ripple-host opt-in wrapper (mirrors Button).
+  // See ToggleButton.module.css `.rippleHost` and ripple-feedback.ts.
+  rippleHost: 'span',
 });
 
 export type ToggleButtonStylesNames = SlotNames<typeof toggleButtonSlots>;
@@ -304,6 +307,8 @@ export const ToggleButton = factory<ToggleButtonOwnProps>(
     // for us; the second invocation would produce an identical React
     // element which is what we want here.
     const sectionSlot = styles.getStyles('section');
+    // Stage-14 v1.x · Wave 3 · ripple-host wrapper styles (see slot definition).
+    const rippleHostStyles = styles.getStyles('rippleHost');
 
     // ── DEV invariants ─────────────────────────────────────────────────
     // Both short-circuit in production builds inside the helper module.
@@ -548,6 +553,12 @@ export const ToggleButton = factory<ToggleButtonOwnProps>(
         {...systemDataAttrs}
         {...disabilityAttrs}
       >
+        <span
+          aria-hidden="true"
+          data-ripple-host
+          className={rippleHostStyles.className}
+          style={rippleHostStyles.style}
+        />
         <ToggleButton.Inner data-prismui-slot-usage {...styles.getStyles('inner')}>
           {leftContent != null && (
             <span

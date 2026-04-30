@@ -62,9 +62,49 @@
   height: var(--radio-circle-size, 18px);
   border-radius: var(--radio-radius, 50%);
 
-  /* Ripple clip — see S-6. Outside-border-box paint (halo / outline / glow
-   * box-shadow) is applied AFTER the overflow clip, unaffected. */
+  /* Stage-14 v1.x · Wave 3 refactor: `overflow: hidden` moved to `.rippleHost`
+   * wrapper rule (below). The ripple still clips to the rounded outline
+   * because `.rippleHost` has `border-radius: inherit` and covers `.root`'s
+   * border-box. Frees `.root::before` (Wave 4 SZ-INTERACT-1 hit-target overlay)
+   * to paint outside the border-box. Outside-border-box paint (halo / outline
+   * / glow box-shadow) is unaffected — those layers ignore container overflow. */
+}
+
+/* ── Stage-14 v1.x · Wave 3 · ripple-host wrapper ────────────────────────────
+ * Empty geometric overlay covering `.root`'s border-box exactly. Hosts the
+ * ripple span via `[data-ripple-host]` opt-in (ripple-feedback.ts). Radio's
+ * single `<svg>` content child needs explicit stacking (rule below) since
+ * absolute-positioned `.rippleHost` would otherwise paint atop static-flow
+ * siblings. */
+.rippleHost {
+  position: absolute;
+  inset: 0;
   overflow: hidden;
+  border-radius: inherit;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Stack any non-ripple-host direct child of `.root` (the `<svg>` in Radio's
+ * tree) above `.rippleHost`. Mirrors IconButton's pattern. */
+.root > :not([data-ripple-host]) {
+  position: relative;
+  z-index: 1;
+}
+
+/* ── Stage-14 v1.x · Wave 4 · SZ-INTERACT-1 hit-target overlay ──────────────
+ * Radio sm tier is 16×16 — well below the 44px Apple HIG touch minimum.
+ * Uniform `inset: -14px` extends to 44×44 logically while keeping the visible
+ * circle untouched (transparent fill). Wave 3 moved `overflow: hidden` to
+ * `.rippleHost`, freeing this overlay to paint and receive pointer events
+ * outside the root's border-box. Only `sm` in scope at v1 (mirrors Button) —
+ * other tiers deferred. */
+.root[data-size='sm']::before {
+  content: '';
+  position: absolute;
+  inset: -14px;
+  background: transparent;
+  pointer-events: auto;
 }
 
 .root[data-disabled] {

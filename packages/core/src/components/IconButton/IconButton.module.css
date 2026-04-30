@@ -24,6 +24,13 @@
   justify-content: center;
   flex-shrink: 0;
 
+  /* Stage-14 SZ-COMP-1 · `height` is the OUTER box (border included).
+   * border-box is the only box model that honors this — without it the
+   * 1px border drifts outside the height token (24/30/36/42/48 → +2px),
+   * mirroring the Button v1.0 audit finding. Phase 3 v1.x backlog
+   * propagation: IconButton joins Button (Phase 3) under SZ-COMP-1. */
+  box-sizing: border-box;
+
   /* Sizing · D-1 — square. Both dimensions pull from the same size alias,
      which itself aliases Size System v3 height. Padding deliberately omitted:
      the icon is centered by flex, not nudged by padding. */
@@ -38,16 +45,15 @@
   border: 1px solid var(--prismui-variant-border);
   border-radius: var(--icon-button-radius);
 
-  /* Stage 10 · Phase 5 · Feedback ripple host (mirrors Button §10.4 host CSS).
-   * `position: relative` makes the press target a positioned containing block
-   * so `.prismui-ripple` (position: absolute, --ripple-x/y in border-box
-   * coordinates) lands inside the IconButton instead of the viewport.
-   * `overflow: hidden` clips the expanding ripple circle to the button's
-   * rounded border — a content clip that does NOT affect the outside
-   * `box-shadow` painted by `:hover` / `:focus-visible` / glow (those layers
-   * live outside the border box and are unaffected by overflow). */
+  /* Stage 10 · Phase 5 · Feedback ripple host (Stage-14 v1.x · Wave 3 refactor).
+   * `position: relative` makes the press target a positioned containing block.
+   * Wave 3 moved `overflow: hidden` to the dedicated `.rippleHost` wrapper
+   * (rule below) so `.root::before` (Wave 4 SZ-INTERACT-1 hit-target overlay
+   * for xs/sm/md, all < 44px) can paint and receive pointer events outside
+   * the border-box. Ripple primitive opt-in: ripple-feedback.ts mounts the
+   * ripple span inside `[data-ripple-host]` when present (additive contract,
+   * see ripple-feedback.ts §line ~78). Same MUI / Mantine pattern. */
   position: relative;
-  overflow: hidden;
 
   /* Interaction */
   cursor: pointer;
@@ -187,6 +193,50 @@
  * 3+ levels) fall through to the browser's default svg sizing. Authors
  * who need deep wrappers should either (a) flatten to 1 wrap level, or
  * (b) style their own svg explicitly. Documented in design.md §五.5. */
+
+/* ── Stage-14 v1.x · Wave 3 · ripple-host wrapper ────────────────────────
+ * Empty geometric overlay covering `.root`'s border-box exactly. Hosts the
+ * ripple span via `[data-ripple-host]` opt-in (ripple-feedback.ts). Frees
+ * `.root::before` (Wave 4 hit-target overlay) from `overflow: hidden` clip.
+ * `border-radius: inherit` matches the IconButton's rounded shape so the
+ * ripple animation is clipped to the visual outline. `pointer-events: none`
+ * keeps it transparent to input — the button itself receives all events. */
+.rippleHost {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  border-radius: inherit;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* ── Stage-14 v1.x · Wave 4 · SZ-INTERACT-1 hit-target overlay ──────────────
+ * Apple HIG / Material Design require a minimum 44px hit-target for touch.
+ * IconButton sm tier is 30×30px (Size System v3 default) — below threshold.
+ * `inset: -7px` extends the press target to 44×44 logically while keeping the
+ * visual box untouched (transparent fill, no border, no shadow). The Wave 3
+ * refactor moved `overflow: hidden` to `.rippleHost`, so this overlay paints
+ * and receives pointer events outside the border-box as designed. Only `sm`
+ * is in scope at v1 (mirrors Button) — md (36px) is borderline and currently
+ * accepted; revisit on user research signal. */
+.root[data-size='sm']::before {
+  content: '';
+  position: absolute;
+  inset: -7px;
+  background: transparent;
+  pointer-events: auto;
+}
+
+/* IconButton has no `.inner` slot — the icon child sits directly in `.root`
+ * (design.md §三 single-layer slot tree). Explicit stacking is required:
+ * positioned absolute children (`.rippleHost { z-index: 0 }`) paint AFTER
+ * static-flow siblings unless those siblings also create a stacking context.
+ * `position: relative; z-index: 1` on every non-ripple-host direct child
+ * forces the icon to paint above the ripple, matching the Button pattern. */
+.root > :not([data-ripple-host]) {
+  position: relative;
+  z-index: 1;
+}
 
 /* ── Reduced Motion (IV-A5) ──────────────────────────────────────────── */
 @media (prefers-reduced-motion: reduce) {
