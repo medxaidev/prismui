@@ -265,6 +265,139 @@ describe("generateCSSVariables", () => {
     }
   });
 
+  // ── Stage-14 Phase 4 · Section Layout vars (SZ-SEC-1 / SZ-SEC-2 v1.0) ────
+  // 8 type fields → 10 CSS vars (typography size key resolves to a triplet).
+  // STAGE-14-OVERVIEW.md §3.7.1 / css-variables.ts emission block.
+  it("emits all 10 Stage-14 Section Layout vars (3 spacing + 3 resolved typography + 4 alignment)", () => {
+    const vars = generateCSSVariables(defaultTheme, "light");
+    const expectedKeys = [
+      // spacing (3)
+      "--prismui-section-padding-x",
+      "--prismui-section-padding-y",
+      "--prismui-section-gap",
+      // resolved typography triplet (3 — derived from titleSize size key)
+      "--prismui-section-title-font-size",
+      "--prismui-section-title-line-height",
+      "--prismui-section-title-font-weight",
+      // alignment (4)
+      "--prismui-section-header-align",
+      "--prismui-section-header-justify",
+      "--prismui-section-footer-justify",
+      "--prismui-section-content-scroll",
+    ];
+    for (const key of expectedKeys) {
+      expect(vars, key).toHaveProperty(key);
+      expect(vars[key], `${key} should be a non-empty string`).toBeTruthy();
+      expect(typeof vars[key]).toBe("string");
+    }
+  });
+
+  it("Section spacing vars match theme.spacing.* anchors (SZ-SEC-1 derivation)", () => {
+    // SZ-SEC-1 promises Section paddings derive from spacing tokens. The
+    // emitted CSS values must literally equal the spacing scale entries.
+    const vars = generateCSSVariables(defaultTheme, "light");
+    expect(vars["--prismui-section-padding-x"]).toBe("1.5rem"); // spacing.lg
+    expect(vars["--prismui-section-padding-y"]).toBe("1rem");   // spacing.md
+    expect(vars["--prismui-section-gap"]).toBe("1rem");          // spacing.md
+  });
+
+  it("Section title triplet resolves via theme.typography.title[titleSize] (default md → 20/28/600)", () => {
+    // The "1 typography field expands to 3 vars" promise: titleSize='md'
+    // indexes into theme.typography.title.md and the emitter writes the
+    // resolved fontSize / lineHeight / fontWeight as Section-scoped vars.
+    const vars = generateCSSVariables(defaultTheme, "light");
+    expect(vars["--prismui-section-title-font-size"]).toBe("20px");
+    expect(vars["--prismui-section-title-line-height"]).toBe("28px");
+    expect(vars["--prismui-section-title-font-weight"]).toBe("600");
+  });
+
+  it("Section title-line-height ends with 'px' and is % 4 === 0 (inherits SZ-TYPE-1 from typography family)", () => {
+    // The Section title triplet inherits SZ-TYPE-1 because it is *resolved
+    // from* the typography family which already enforces the invariant.
+    // This guard catches any future direct hardcoding or unit drift in
+    // the Section emission path.
+    const vars = generateCSSVariables(defaultTheme, "light");
+    const lh = vars["--prismui-section-title-line-height"];
+    expect(lh, "section-title-line-height shape").toMatch(/^\d+px$/);
+    const px = parseInt(lh, 10);
+    expect(px % 4, `section title lineHeight=${lh} must satisfy % 4 === 0`).toBe(0);
+  });
+
+  it("Section alignment vars are CSS Flexbox literals (D-4 mapping table)", () => {
+    // Default theme: header.align=center / header.justify=between /
+    // footer.justify=end / content.scroll=auto. Verify the type-level
+    // unions are correctly mapped to canonical CSS Flexbox values.
+    const vars = generateCSSVariables(defaultTheme, "light");
+    expect(vars["--prismui-section-header-align"]).toBe("center");
+    expect(vars["--prismui-section-header-justify"]).toBe("space-between");
+    expect(vars["--prismui-section-footer-justify"]).toBe("flex-end");
+    expect(vars["--prismui-section-content-scroll"]).toBe("auto");
+  });
+
+  it("Section title triplet auto-propagates when theme overrides titleSize ('md' → 'lg')", () => {
+    // SZ-SEC-1 single-source-of-truth promise: changing titleSize at the
+    // theme layer must flow through to the resolved CSS vars without any
+    // emitter or container CSS edit. This test substitutes a custom theme
+    // with titleSize='lg' and asserts the emission picks up the new size's
+    // typography family token (title.lg = 24/32/600 per Stage-14 anchors).
+    const customTheme = {
+      ...defaultTheme,
+      layout: {
+        ...defaultTheme.layout,
+        section: { ...defaultTheme.layout.section, titleSize: "lg" as const },
+      },
+    };
+    const vars = generateCSSVariables(customTheme, "light");
+    expect(vars["--prismui-section-title-font-size"]).toBe("24px");
+    expect(vars["--prismui-section-title-line-height"]).toBe("32px");
+    expect(vars["--prismui-section-title-font-weight"]).toBe("600");
+  });
+
+  it("Section alignment vars adapt to non-default footer.justify ('between' / 'start')", () => {
+    // Verify the D-4 mapping table covers all footer.justify branches.
+    const themeBetween = {
+      ...defaultTheme,
+      layout: {
+        section: { ...defaultTheme.layout.section, footer: { justify: "between" as const } },
+      },
+    };
+    const themeStart = {
+      ...defaultTheme,
+      layout: {
+        section: { ...defaultTheme.layout.section, footer: { justify: "start" as const } },
+      },
+    };
+    expect(generateCSSVariables(themeBetween, "light")["--prismui-section-footer-justify"])
+      .toBe("space-between");
+    expect(generateCSSVariables(themeStart, "light")["--prismui-section-footer-justify"])
+      .toBe("flex-start");
+  });
+
+  it("Section content.scroll='never' maps to 'visible' (D-4 mapping)", () => {
+    const themeNever = {
+      ...defaultTheme,
+      layout: {
+        section: { ...defaultTheme.layout.section, content: { scroll: "never" as const } },
+      },
+    };
+    expect(generateCSSVariables(themeNever, "light")["--prismui-section-content-scroll"])
+      .toBe("visible");
+  });
+
+  it("Section header.align='start' maps to 'flex-start' (D-4 mapping)", () => {
+    const themeStart = {
+      ...defaultTheme,
+      layout: {
+        section: {
+          ...defaultTheme.layout.section,
+          header: { ...defaultTheme.layout.section.header, align: "start" as const },
+        },
+      },
+    };
+    expect(generateCSSVariables(themeStart, "light")["--prismui-section-header-align"])
+      .toBe("flex-start");
+  });
+
   it("generates shadow variables", () => {
     const vars = generateCSSVariables(defaultTheme, "light");
     expect(vars["--prismui-shadow-xs"]).toContain("rgba");

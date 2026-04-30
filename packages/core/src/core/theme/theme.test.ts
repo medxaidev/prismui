@@ -175,6 +175,88 @@ describe('Theme System', () => {
     });
   });
 
+  // ── Stage-14 Phase 4 · Section Layout Tokens (SZ-SEC-1 / SZ-SEC-2 v1.0) ──
+  // STAGE-14-OVERVIEW.md §3.7.1 schema = 8 fields:
+  //   spacing(3)  · paddingX, paddingY, gap
+  //   typography  · titleSize (size key)
+  //   alignment(4)· header.align, header.justify, footer.justify, content.scroll
+  //
+  // The tests below guard schema completeness, anchor values, and resolution
+  // through the typography family layer (titleSize → theme.typography.title[size]
+  // — the single-source-of-truth chain that SZ-SEC-1 promises).
+  describe('Stage-14 Section Layout (SZ-SEC-1 / SZ-SEC-2 v1.0)', () => {
+    it('schema completeness · all 8 fields present (3 spacing + 1 typography + 4 alignment)', () => {
+      const section = defaultTheme.layout.section;
+      // Spacing (3)
+      expect(section.paddingX, 'section.paddingX').toBeDefined();
+      expect(section.paddingY, 'section.paddingY').toBeDefined();
+      expect(section.gap, 'section.gap').toBeDefined();
+      // Typography (1) — size key, not the resolved triplet
+      expect(section.titleSize, 'section.titleSize').toBeDefined();
+      // Alignment (4) — D-2 nested per "section" semantic
+      expect(section.header.align, 'section.header.align').toBeDefined();
+      expect(section.header.justify, 'section.header.justify').toBeDefined();
+      expect(section.footer.justify, 'section.footer.justify').toBeDefined();
+      expect(section.content.scroll, 'section.content.scroll').toBeDefined();
+    });
+
+    it('§3.7.1 anchor values · spacing default = lg/md/md (24/16/16 px)', () => {
+      // Defaults follow the §3.7.1 spec verbatim. Values come from
+      // theme.spacing.lg (1.5rem = 24px) and theme.spacing.md (1rem = 16px).
+      expect(defaultTheme.layout.section.paddingX).toBe('1.5rem');
+      expect(defaultTheme.layout.section.paddingY).toBe('1rem');
+      expect(defaultTheme.layout.section.gap).toBe('1rem');
+      // Cross-reference: paddingX should equal theme.spacing.lg (SZ-SEC-1
+      // "tokens not hardcoded" guard — values must be discoverable in the
+      // spacing scale).
+      expect(defaultTheme.layout.section.paddingX).toBe(defaultTheme.spacing.lg);
+      expect(defaultTheme.layout.section.paddingY).toBe(defaultTheme.spacing.md);
+      expect(defaultTheme.layout.section.gap).toBe(defaultTheme.spacing.md);
+    });
+
+    it('§3.7.1 anchor: titleSize = "md" (resolves to typography.title.md = 20/28)', () => {
+      // titleSize is a size key (TypographySize), not the resolved triplet.
+      // The §3.6 "title.md = 20/28" anchor used across Stage-14 docs is
+      // realized by titleSize='md' indexing into theme.typography.title.md.
+      expect(defaultTheme.layout.section.titleSize).toBe('md');
+      const titleToken =
+        defaultTheme.typography.title[defaultTheme.layout.section.titleSize];
+      expect(titleToken.fontSize, 'resolved titleFontSize').toBe('20px');
+      expect(titleToken.lineHeight, 'resolved titleLineHeight').toBe(28);
+      expect(titleToken.fontWeight, 'resolved titleFontWeight').toBe(600);
+    });
+
+    it('§3.7.1 anchor alignment defaults · Modal/Dialog convention', () => {
+      const section = defaultTheme.layout.section;
+      // header.align: 'center' — Title vs CloseButton vertically centered
+      expect(section.header.align).toBe('center');
+      // header.justify: 'between' — Title flush-left, Close flush-right
+      expect(section.header.justify).toBe('between');
+      // footer.justify: 'end' — primary action button rightmost
+      expect(section.footer.justify).toBe('end');
+      // content.scroll: 'auto' — long content scrolls within Content band
+      expect(section.content.scroll).toBe('auto');
+    });
+
+    it('SZ-SEC-1 resolution chain · titleSize indexes into a real typography family token', () => {
+      // The "typography 1 field = titleSize" design only works if the size
+      // key actually resolves to a token. This test makes the chain explicit
+      // so a future refactor that drops the title family from typography
+      // (or renames sizes) fails with a clear diagnostic.
+      const sizeKey = defaultTheme.layout.section.titleSize;
+      const titleFamily = defaultTheme.typography.title;
+      expect(titleFamily, 'theme.typography.title family must exist').toBeDefined();
+      expect(
+        titleFamily[sizeKey],
+        `theme.typography.title.${sizeKey} must resolve to a token`,
+      ).toBeDefined();
+      // The resolved token shape (SZ-TYPE-3 single-declaration rule)
+      expect(titleFamily[sizeKey].fontSize).toBeDefined();
+      expect(titleFamily[sizeKey].lineHeight).toBeDefined();
+      expect(titleFamily[sizeKey].fontWeight).toBeDefined();
+    });
+  });
+
   describe('Type System', () => {
     it('should allow CSSLength values', () => {
       const values: CSSLength[] = [
@@ -347,6 +429,18 @@ describe('Theme System', () => {
           width: '2px',
           offset: '2px',
           color: 'var(--prismui-color-primary)',
+        },
+        // Stage-14 Phase 4 · Section Layout Tokens (SZ-SEC-1 / SZ-SEC-2)
+        layout: {
+          section: {
+            paddingX: '1.5rem',
+            paddingY: '1rem',
+            gap:      '1rem',
+            titleSize: 'md',
+            header:  { align: 'center', justify: 'between' },
+            footer:  { justify: 'end' },
+            content: { scroll: 'auto' },
+          },
         },
         scale: 1,
         textRoles: {

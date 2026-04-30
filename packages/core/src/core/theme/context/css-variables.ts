@@ -245,6 +245,13 @@ export function selectPalette(
  * - --prismui-typography-{body|title|label}-{sm|md|lg}-line-height
  * - --prismui-typography-{body|title|label}-{sm|md|lg}-font-weight
  *
+ * Stage-14 Phase 4 Section Layout (10 vars · SZ-SEC-1/2):
+ * - --prismui-section-padding-x / -padding-y / -gap          (spacing CSSLength)
+ * - --prismui-section-title-font-size / -line-height / -font-weight (resolved triplet)
+ * - --prismui-section-header-align / -header-justify         (Flexbox literal)
+ * - --prismui-section-footer-justify                         (Flexbox literal)
+ * - --prismui-section-content-scroll                         (overflow-y literal)
+ *
  * Focus ring (Stage 9 / a11y):
  * - --prismui-focus-ring-width   → outline width for :focus-visible
  * - --prismui-focus-ring-offset  → outline offset for :focus-visible
@@ -396,6 +403,73 @@ export function generateCSSVariables(
       vars[`--prismui-color-${family}-${shade}`] = value;
     }
   }
+
+  // ── Stage-14 Phase 4 · Section Layout (SZ-SEC-1 / SZ-SEC-2) ───────────────
+  // Authority: STAGE-14-OVERVIEW.md §3.7.1 (8 fields = 3 spacing + 1
+  // typography + 4 alignment). The 1 typography field (`titleSize`) is a
+  // size-KEY config knob — the CSS layer needs the *resolved* fontSize /
+  // lineHeight / fontWeight triplet for declarative consumption, so that
+  // 1 type field expands to 3 CSS variables. Total emitted: **10 vars**
+  // (3 spacing + 3 resolved typography + 4 alignment) from 8 type fields.
+  //
+  // Naming convention:
+  //   --prismui-section-padding-x         (spacing CSSLength · default 1.5rem)
+  //   --prismui-section-padding-y         (spacing CSSLength · default 1rem)
+  //   --prismui-section-gap               (spacing CSSLength · default 1rem)
+  //   --prismui-section-title-font-size   (resolved from typography.title[size])
+  //   --prismui-section-title-line-height (resolved · "{n}px" format · SZ-TYPE-1)
+  //   --prismui-section-title-font-weight (resolved · numeric)
+  //   --prismui-section-header-align      (CSS align-items literal)
+  //   --prismui-section-header-justify    (CSS justify-content literal)
+  //   --prismui-section-footer-justify    (CSS justify-content literal)
+  //   --prismui-section-content-scroll    (CSS overflow-y literal)
+  //
+  // Why resolve the title triplet here rather than letting containers
+  // reference `--prismui-typography-title-md-*` directly:
+  //   1. Single source of truth — changing `theme.layout.section.titleSize`
+  //      from 'md' to 'lg' auto-propagates to every container without any
+  //      CSS edit. Otherwise the size key would only be type-level metadata
+  //      and SZ-SEC-1 ("must consume tokens, not hardcode") becomes a half-
+  //      promise (containers would still hardcode the family/size pair).
+  //   2. Container CSS stays declarative: `font-size: var(--prismui-section-
+  //      title-font-size)` is the canonical form across all consumers.
+  //
+  // Alignment mapping table (D-4 · stable contract):
+  //   header.align    'center'  → 'center'         · 'start'   → 'flex-start'
+  //   header.justify  'between' → 'space-between'
+  //   footer.justify  'end'     → 'flex-end'       · 'between' → 'space-between'
+  //                   'start'   → 'flex-start'
+  //   content.scroll  'auto'    → 'auto'           · 'never'   → 'visible'
+  const section = theme.layout.section;
+
+  vars['--prismui-section-padding-x'] = String(section.paddingX);
+  vars['--prismui-section-padding-y'] = String(section.paddingY);
+  vars['--prismui-section-gap']        = String(section.gap);
+
+  // Resolve title typography triplet from theme.typography.title[titleSize].
+  // The lookup is type-safe because `titleSize: TypographySize` constrains
+  // the index, and `theme.typography.title` is `Record<TypographySize, ...>`.
+  const titleToken = theme.typography.title[section.titleSize];
+  vars['--prismui-section-title-font-size']   = String(titleToken.fontSize);
+  vars['--prismui-section-title-line-height'] = `${titleToken.lineHeight}px`;
+  vars['--prismui-section-title-font-weight'] = String(titleToken.fontWeight);
+
+  vars['--prismui-section-header-align'] =
+    section.header.align === 'center' ? 'center' : 'flex-start';
+  // header.justify is currently a single-value union ('between'). When v1.x
+  // widens the union, an exhaustiveness check (assertNever) here would force
+  // a branch update — the literal emission below is intentional v1 simplicity.
+  vars['--prismui-section-header-justify'] = 'space-between';
+
+  vars['--prismui-section-footer-justify'] =
+    section.footer.justify === 'end'
+      ? 'flex-end'
+      : section.footer.justify === 'between'
+        ? 'space-between'
+        : 'flex-start';
+
+  vars['--prismui-section-content-scroll'] =
+    section.content.scroll === 'auto' ? 'auto' : 'visible';
 
   // ── Focus Ring ────────────────────────────────────────────────────────────
   vars['--prismui-focus-ring-width'] = String(theme.focusRing.width);

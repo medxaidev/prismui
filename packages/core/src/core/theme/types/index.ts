@@ -50,6 +50,14 @@ export type {
 } from "./effect.types";
 
 export type {
+  SectionLayoutToken,
+  SectionHeaderAlign,
+  SectionHeaderJustify,
+  SectionFooterJustify,
+  SectionContentScroll,
+} from "./section.types";
+
+export type {
   SpacingValue,
   FontSizeValue,
   FontWeightValue,

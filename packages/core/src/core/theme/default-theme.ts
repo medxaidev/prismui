@@ -179,6 +179,59 @@ export const defaultTheme: PrismUITheme = {
   // ========== Size System ==========
   size: defaultSizeTokens,
 
+  // ========== Section Layout System (Stage-14 Phase 4 · SZ-SEC-1 / SZ-SEC-2) ==========
+  // Single source of truth for any container component rendering Header /
+  // Content / Footer bands (Modal · Drawer · Toast · Dialog · Card).
+  //
+  // Schema authority: STAGE-14-OVERVIEW.md §3.7.1 (locked v0.5).
+  //
+  // Default values follow the §3.7.1 spec verbatim — Modal Round 0 (Stage-11
+  // Phase 7) is the first real consumer; if its visual review reveals the
+  // need to retune, the change goes through ADR-005 v1.0.6+ audit log
+  // rather than being patched in-place here. Phase 4 deliberately does NOT
+  // pre-tune to "what Modal probably wants" because that would make the
+  // token a Modal-specific helper instead of a cross-container contract.
+  //
+  // Token derivation (Stage-14 single-direction chain · §2.2):
+  //   spacing  → paddingX (lg=24) · paddingY (md=16) · gap (md=16)
+  //   typography → titleSize references theme.typography.title.{size}
+  //                ('md' = 20/28 · §3.6 anchor)
+  //   alignment → CSS Flexbox literal unions (compile-time guard, D-3)
+  layout: {
+    section: {
+      // —— Spacing (3 fields) · all values resolve to theme.spacing.* tokens
+      paddingX: '1.5rem', // spacing.lg = 24px
+      paddingY: '1rem',   // spacing.md = 16px
+      gap:      '1rem',   // spacing.md = 16px
+
+      // —— Typography (1 field) · references theme.typography.title.md = 20/28
+      // (the §3.6 anchor used across Stage-14 docs as the "modal title" benchmark)
+      titleSize: 'md',
+
+      // —— Alignment (4 fields) · D-2 nested per "section" semantic
+      header: {
+        // Title and CloseButton vertically centered (Modal/Dialog convention).
+        // 'start' is reserved for multi-line wrapped titles where Close must
+        // anchor near the first text baseline.
+        align: 'center',
+        // Title flush left, CloseButton flush right — the canonical Modal
+        // header pattern across iOS / Material / Mantine / Mantine / shadcn.
+        justify: 'between',
+      },
+      footer: {
+        // Action buttons right-aligned — primary action rightmost is the
+        // most-tested layout (Apple HIG / Material Design / NN/g research).
+        justify: 'end',
+      },
+      content: {
+        // overflow-y: auto — long content scrolls within the Content band
+        // rather than the modal as a whole. Toast/error containers may
+        // override to 'never' on a per-instance basis.
+        scroll: 'auto',
+      },
+    },
+  },
+
   // ========== State System ==========
   state: defaultStateTokens,
 

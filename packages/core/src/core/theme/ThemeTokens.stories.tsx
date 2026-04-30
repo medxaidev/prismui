@@ -424,3 +424,180 @@ export const TypographyFamilies: Story = {
     </PrismUIProvider>
   ),
 };
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Stage-14 Phase 4 · Section Layout (SZ-SEC-1 / SZ-SEC-2)
+//
+// Renders the canonical Header / Content / Footer three-band layout using
+// ONLY the `--prismui-section-*` CSS variables — no hardcoded padding, gap,
+// align-items, or justify-content values. This is exactly the consumption
+// pattern Modal Round 0 (Stage-11 Phase 7) will use, so the story doubles
+// as a visual contract specification.
+//
+// Each band is annotated with the var name(s) that drive its layout so the
+// audit trail from `theme.layout.section.*` → CSS var → rendered geometry
+// is self-evident in Storybook.
+// ─────────────────────────────────────────────────────────────────────────────
+export const SectionLayout: Story = {
+  render: () => (
+    <PrismUIProvider>
+      <div style={sectionStyle}>
+        <h2 style={headingStyle}>Stage-14 Section Layout (SZ-SEC-1 / SZ-SEC-2)</h2>
+        <p style={{ fontSize: 13, color: '#637381', marginBottom: 24, lineHeight: 1.5 }}>
+          Single source of truth: <code>theme.layout.section.*</code> · 8 type fields → 10
+          CSS variables (3 spacing + 3 resolved typography + 4 alignment). Container
+          components (Modal · Drawer · Toast · Dialog · Card) consume these vars
+          directly — never hardcode padding / gap / justify-content.
+        </p>
+
+        {/* Outer card — emulates a Modal/Dialog container */}
+        <div
+          style={{
+            border: '1px solid #DFE3E8',
+            borderRadius: 8,
+            background: '#FFFFFF',
+            boxShadow: '0 12px 24px -4px rgba(145, 158, 171, 0.12)',
+            // Section flex column · gap drives Header↔Content↔Footer separation
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 'var(--prismui-section-gap)',
+            // padding-y on outer for top/bottom; padding-x set per-band below
+            // (matches the §3.7.1 "three-band uniform padding" promise)
+            paddingTop: 'var(--prismui-section-padding-y)',
+            paddingBottom: 'var(--prismui-section-padding-y)',
+          }}
+        >
+          {/* Header band */}
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'var(--prismui-section-header-align)' as React.CSSProperties['alignItems'],
+              justifyContent: 'var(--prismui-section-header-justify)' as React.CSSProperties['justifyContent'],
+              paddingLeft: 'var(--prismui-section-padding-x)',
+              paddingRight: 'var(--prismui-section-padding-x)',
+            }}
+          >
+            <div
+              style={{
+                fontSize: 'var(--prismui-section-title-font-size)' as React.CSSProperties['fontSize'],
+                lineHeight: 'var(--prismui-section-title-line-height)' as React.CSSProperties['lineHeight'],
+                fontWeight: 'var(--prismui-section-title-font-weight)' as React.CSSProperties['fontWeight'],
+                color: '#1C252E',
+              }}
+            >
+              Section Title
+            </div>
+            <button
+              type="button"
+              aria-label="Close"
+              style={{
+                background: 'transparent',
+                border: 'none',
+                cursor: 'pointer',
+                fontSize: 18,
+                lineHeight: 1,
+                color: '#919EAB',
+                padding: 4,
+              }}
+            >
+              ×
+            </button>
+          </div>
+
+          {/* Content band */}
+          <div
+            style={{
+              paddingLeft: 'var(--prismui-section-padding-x)',
+              paddingRight: 'var(--prismui-section-padding-x)',
+              overflowY: 'var(--prismui-section-content-scroll)' as React.CSSProperties['overflowY'],
+              fontSize: 14,
+              lineHeight: '20px',
+              color: '#454F5B',
+            }}
+          >
+            <p style={{ margin: 0 }}>
+              Content band uses <code>--prismui-section-padding-x</code> for horizontal
+              padding and <code>--prismui-section-content-scroll</code> for overflow handling.
+              Long content scrolls within this band rather than the whole modal.
+            </p>
+          </div>
+
+          {/* Footer band */}
+          <div
+            style={{
+              display: 'flex',
+              gap: 8,
+              justifyContent: 'var(--prismui-section-footer-justify)' as React.CSSProperties['justifyContent'],
+              paddingLeft: 'var(--prismui-section-padding-x)',
+              paddingRight: 'var(--prismui-section-padding-x)',
+            }}
+          >
+            <button
+              type="button"
+              style={{
+                padding: '6px 14px',
+                border: '1px solid #DFE3E8',
+                borderRadius: 6,
+                background: '#FFFFFF',
+                cursor: 'pointer',
+                fontSize: 14,
+              }}
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              style={{
+                padding: '6px 14px',
+                border: '1px solid #0C68E9',
+                borderRadius: 6,
+                background: '#0C68E9',
+                color: '#FFFFFF',
+                cursor: 'pointer',
+                fontSize: 14,
+              }}
+            >
+              Confirm
+            </button>
+          </div>
+        </div>
+
+        {/* Variable audit table */}
+        <div style={{ marginTop: 24, fontSize: 11, fontFamily: 'monospace', color: '#637381' }}>
+          <p style={{ ...headingStyle, fontSize: 13, fontFamily: 'system-ui', color: '#212B36' }}>
+            CSS variables driving this layout
+          </p>
+          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+            <thead>
+              <tr style={{ textAlign: 'left', borderBottom: '1px solid #DFE3E8' }}>
+                <th style={{ padding: 6, color: '#454F5B' }}>Variable</th>
+                <th style={{ padding: 6, color: '#454F5B' }}>Default</th>
+                <th style={{ padding: 6, color: '#454F5B' }}>Source</th>
+              </tr>
+            </thead>
+            <tbody>
+              {[
+                ['--prismui-section-padding-x',         '1.5rem (24px)',  'spacing.lg'],
+                ['--prismui-section-padding-y',         '1rem (16px)',    'spacing.md'],
+                ['--prismui-section-gap',               '1rem (16px)',    'spacing.md'],
+                ['--prismui-section-title-font-size',   '20px',           'typography.title.md'],
+                ['--prismui-section-title-line-height', '28px',           'typography.title.md'],
+                ['--prismui-section-title-font-weight', '600',            'typography.title.md'],
+                ['--prismui-section-header-align',      'center',         'D-3 literal union'],
+                ['--prismui-section-header-justify',    'space-between',  'D-3 literal union'],
+                ['--prismui-section-footer-justify',    'flex-end',       'D-3 literal union'],
+                ['--prismui-section-content-scroll',    'auto',           'D-3 literal union'],
+              ].map(([name, def, src]) => (
+                <tr key={name} style={{ borderBottom: '1px solid #F4F6F8' }}>
+                  <td style={{ padding: 6, color: '#1C252E' }}>{name}</td>
+                  <td style={{ padding: 6, color: '#454F5B' }}>{def}</td>
+                  <td style={{ padding: 6, color: '#919EAB' }}>{src}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </PrismUIProvider>
+  ),
+};

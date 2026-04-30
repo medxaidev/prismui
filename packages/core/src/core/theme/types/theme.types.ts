@@ -28,6 +28,7 @@ import type { DefaultColorFamily, PrismUIColorFamilies } from "./color.types";
 import type { PrismUIPalette, TextRoleName, TextRoleRef } from "./palette.types";
 import type { PrismuiSizeTokens } from "../../size/types";
 import type { PrismuiStateTokens } from "../../state/types";
+import type { SectionLayoutToken } from "./section.types";
 import type { FeedbackFactory } from "../../feedback";
 
 /**
@@ -183,6 +184,26 @@ export interface PrismUITheme<
   };
   size: PrismuiSizeTokens;
   state: PrismuiStateTokens;
+
+  /**
+   * Section Layout Tokens (Stage-14 Phase 4 · SZ-SEC-1 / SZ-SEC-2).
+   *
+   * Container components (Modal / Drawer / Toast / Dialog / Card) that render
+   * Header / Content / Footer bands MUST consume `theme.layout.section.*`
+   * via `--prismui-section-*` CSS variables. Hardcoding `padding` / `gap` /
+   * `justify-content` / `align-items` inside container .module.css violates
+   * SZ-SEC-2.
+   *
+   * Schema reference: STAGE-14-OVERVIEW.md §3.7.1 · 8 fields = spacing(3) +
+   * typography(1) + alignment(4).
+   *
+   * v1 has a single `section` namespace shared by all container types. Per-
+   * container overrides (`layout.section.modal.*` vs `.toast.*`) are deferred
+   * to v1.x (triggered when a third container family deviates from defaults).
+   */
+  layout: {
+    section: SectionLayoutToken;
+  };
   /**
    * Focus Ring tokens.
    *
