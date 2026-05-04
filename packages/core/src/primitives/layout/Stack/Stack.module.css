@@ -1,0 +1,60 @@
+/*
+ * Stage-15 Phase 1 · Stack primitive
+ *
+ * Contracts:
+ *   - LY-STACK-1 vertical flex semantic lock · cannot flip to row via prop
+ *                (use <Inline> for row layouts)
+ *   - LY-STACK-2 `gap` prop · SpacingScale 8 keys · default 'md'
+ *   - LY-STACK-3 `align` / `justify` literal unions · TS-guarded surface
+ *   - LY-BOX-3   Stack does NOT accept padding/margin (TS-level absence
+ *                in Stack's own prop type — composition: <Box padding="md">
+ *                <Stack>…</Stack></Box>)
+ *   - LY-CORE-1  zero runtime style · everything via CSS-var lookup
+ *   - LY-CORE-5  data-attr DOM-bearing · attribute selectors consume scale
+ *
+ * Default lock — written into `.root` directly:
+ *   display: flex
+ *   flex-direction: column
+ *   align-items: stretch              (LY-STACK-1)
+ *   justify-content: flex-start       (LY-STACK-1)
+ *   gap: var(--prismui-spacing-md)    (LY-STACK-2 default)
+ *
+ * Override surface — opt-in via data-attrs:
+ *   data-gap="<scale>"      → overrides default md (always emitted by Stack.tsx
+ *                              for honesty; the rule below covers all 8 keys)
+ *   data-align="<align>"    → overrides stretch (only emitted when user supplies)
+ *   data-justify="<just>"   → overrides flex-start (only emitted when user supplies)
+ */
+
+.root {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: flex-start;
+  gap: var(--prismui-spacing-md);
+}
+
+/* ── gap (SpacingScale · always emitted by component) ─────────────────────── */
+.root[data-gap='none'] { gap: var(--prismui-spacing-none); }
+.root[data-gap='xs']   { gap: var(--prismui-spacing-xs); }
+.root[data-gap='sm']   { gap: var(--prismui-spacing-sm); }
+.root[data-gap='md']   { gap: var(--prismui-spacing-md); }
+.root[data-gap='lg']   { gap: var(--prismui-spacing-lg); }
+.root[data-gap='xl']   { gap: var(--prismui-spacing-xl); }
+.root[data-gap='2xl']  { gap: var(--prismui-spacing-2xl); }
+.root[data-gap='3xl']  { gap: var(--prismui-spacing-3xl); }
+
+/* ── align-items (5 literal options · only emitted on override) ───────────── */
+.root[data-align='start']    { align-items: flex-start; }
+.root[data-align='center']   { align-items: center; }
+.root[data-align='end']      { align-items: flex-end; }
+.root[data-align='stretch']  { align-items: stretch; }
+.root[data-align='baseline'] { align-items: baseline; }
+
+/* ── justify-content (6 literal options · only emitted on override) ───────── */
+.root[data-justify='start']   { justify-content: flex-start; }
+.root[data-justify='center']  { justify-content: center; }
+.root[data-justify='end']     { justify-content: flex-end; }
+.root[data-justify='between'] { justify-content: space-between; }
+.root[data-justify='around']  { justify-content: space-around; }
+.root[data-justify='evenly']  { justify-content: space-evenly; }
