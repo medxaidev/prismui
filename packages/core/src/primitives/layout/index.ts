@@ -4,7 +4,7 @@
  * Exports (Phase 1 · landing in sequence):
  *   - Box       · ✅ landed
  *   - Stack     · ✅ landed
- *   - Inline    · ⏳ pending
+ *   - Inline    · ✅ landed
  *   - Center    · ⏳ pending
  *   - Grid      · ⏳ pending
  *   - Divider   · ⏳ pending
@@ -19,3 +19,6 @@ export type { BoxOwnProps, BoxProps, BoxComponent } from './Box';
 
 export { Stack, STACK_DEFAULT_GAP } from './Stack';
 export type { StackOwnProps, StackProps, StackComponent } from './Stack';
+
+export { Inline, INLINE_DEFAULT_GAP } from './Inline';
+export type { InlineOwnProps, InlineProps, InlineComponent } from './Inline';

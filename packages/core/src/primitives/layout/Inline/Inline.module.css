@@ -1,0 +1,63 @@
+/*
+ * Stage-15 Phase 1 · Inline primitive
+ *
+ * Contracts:
+ *   - LY-INLINE-1 horizontal flex semantic lock · cannot flip to column
+ *                 (use <Stack> for vertical layouts)
+ *   - LY-INLINE-2 gap (SpacingScale, default 'md') · align (5 literals) ·
+ *                 justify (6 literals) · `wrap` boolean (default false)
+ *   - LY-BOX-3    Inline does NOT accept padding/margin
+ *   - LY-CORE-1   zero runtime style
+ *   - LY-CORE-5   data-attr DOM-bearing
+ *
+ * Default lock — written into `.root` directly:
+ *   display: flex
+ *   flex-direction: row
+ *   align-items: center                 (LY-INLINE-1 — note: differs from Stack's stretch)
+ *   justify-content: flex-start         (LY-INLINE-1)
+ *   flex-wrap: nowrap                   (LY-INLINE-1)
+ *   gap: var(--prismui-spacing-md)      (LY-INLINE-2 default)
+ *
+ * Override surface — opt-in via data-attrs:
+ *   data-gap="<scale>"     → always emitted (honest default · same as Stack)
+ *   data-align="<align>"   → only emitted on override
+ *   data-justify="<just>"  → only emitted on override
+ *   data-wrap=""           → only emitted when wrap=true (boolean attribute)
+ */
+
+.root {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: flex-start;
+  flex-wrap: nowrap;
+  gap: var(--prismui-spacing-md);
+}
+
+/* ── gap (SpacingScale · always emitted) ──────────────────────────────────── */
+.root[data-gap='none'] { gap: var(--prismui-spacing-none); }
+.root[data-gap='xs']   { gap: var(--prismui-spacing-xs); }
+.root[data-gap='sm']   { gap: var(--prismui-spacing-sm); }
+.root[data-gap='md']   { gap: var(--prismui-spacing-md); }
+.root[data-gap='lg']   { gap: var(--prismui-spacing-lg); }
+.root[data-gap='xl']   { gap: var(--prismui-spacing-xl); }
+.root[data-gap='2xl']  { gap: var(--prismui-spacing-2xl); }
+.root[data-gap='3xl']  { gap: var(--prismui-spacing-3xl); }
+
+/* ── align-items (5 literals · only emitted on override) ──────────────────── */
+.root[data-align='start']    { align-items: flex-start; }
+.root[data-align='center']   { align-items: center; }
+.root[data-align='end']      { align-items: flex-end; }
+.root[data-align='stretch']  { align-items: stretch; }
+.root[data-align='baseline'] { align-items: baseline; }
+
+/* ── justify-content (6 literals · only emitted on override) ──────────────── */
+.root[data-justify='start']   { justify-content: flex-start; }
+.root[data-justify='center']  { justify-content: center; }
+.root[data-justify='end']     { justify-content: flex-end; }
+.root[data-justify='between'] { justify-content: space-between; }
+.root[data-justify='around']  { justify-content: space-around; }
+.root[data-justify='evenly']  { justify-content: space-evenly; }
+
+/* ── wrap (boolean attribute · only emitted when true) ────────────────────── */
+.root[data-wrap] { flex-wrap: wrap; }
