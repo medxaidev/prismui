@@ -1,0 +1,112 @@
+/*
+ * Stage-15 Phase 1 · Box primitive
+ *
+ * Contracts:
+ *   - LY-BOX-1  default <div> + polymorphic `component` prop · no default display
+ *   - LY-BOX-2  spacing token passthrough (8 SpacingScale keys only)
+ *   - LY-BOX-3  Box exclusively owns padding/margin props (other layout primitives
+ *               MUST NOT accept them)
+ *   - LY-CORE-1 zero-runtime style · all sizing via data-attr + CSS var lookup
+ *   - LY-CORE-5 DOM-bearing data-attr · attribute selectors consume SpacingScale
+ *
+ * Design notes:
+ *   - `.root` is intentionally empty (no default display / color / typography).
+ *     Box MUST NOT inject `display: block` because the element's natural
+ *     display contract (div, span, section, li, ...) already provides it.
+ *     Polymorphic `component="span"` must still produce an inline box.
+ *   - Every spacing prop maps to an attribute selector. `undefined` props are
+ *     conditionally spread on the React side, so the attribute is absent and
+ *     the rule does not match — no `padding: undefined` leaks.
+ *   - `none` scale key resolves to `--prismui-spacing-none` (= 0) via the
+ *     Stage-14 token contract; there is no special-case shortcut in CSS.
+ */
+
+.root {
+  /*
+   * Debug marker only — enumerates the primitive identity in devtools without
+   * introducing any visual contract (no display / color / typography).
+   * LY-BOX-1 says Box has "no default display"; this custom property is
+   * inert (never referenced by `var()` inside Box CSS) and therefore safe.
+   */
+  --prismui-primitive: 'box';
+}
+
+/* ── padding (shorthand · all sides) ──────────────────────────────────────── */
+.root[data-padding='none'] { padding: var(--prismui-spacing-none); }
+.root[data-padding='xs']   { padding: var(--prismui-spacing-xs); }
+.root[data-padding='sm']   { padding: var(--prismui-spacing-sm); }
+.root[data-padding='md']   { padding: var(--prismui-spacing-md); }
+.root[data-padding='lg']   { padding: var(--prismui-spacing-lg); }
+.root[data-padding='xl']   { padding: var(--prismui-spacing-xl); }
+.root[data-padding='2xl']  { padding: var(--prismui-spacing-2xl); }
+.root[data-padding='3xl']  { padding: var(--prismui-spacing-3xl); }
+
+/* ── padding-x (inline axis) ──────────────────────────────────────────────── */
+.root[data-padding-x='none'] { padding-inline: var(--prismui-spacing-none); }
+.root[data-padding-x='xs']   { padding-inline: var(--prismui-spacing-xs); }
+.root[data-padding-x='sm']   { padding-inline: var(--prismui-spacing-sm); }
+.root[data-padding-x='md']   { padding-inline: var(--prismui-spacing-md); }
+.root[data-padding-x='lg']   { padding-inline: var(--prismui-spacing-lg); }
+.root[data-padding-x='xl']   { padding-inline: var(--prismui-spacing-xl); }
+.root[data-padding-x='2xl']  { padding-inline: var(--prismui-spacing-2xl); }
+.root[data-padding-x='3xl']  { padding-inline: var(--prismui-spacing-3xl); }
+
+/* ── padding-y (block axis) ───────────────────────────────────────────────── */
+.root[data-padding-y='none'] { padding-block: var(--prismui-spacing-none); }
+.root[data-padding-y='xs']   { padding-block: var(--prismui-spacing-xs); }
+.root[data-padding-y='sm']   { padding-block: var(--prismui-spacing-sm); }
+.root[data-padding-y='md']   { padding-block: var(--prismui-spacing-md); }
+.root[data-padding-y='lg']   { padding-block: var(--prismui-spacing-lg); }
+.root[data-padding-y='xl']   { padding-block: var(--prismui-spacing-xl); }
+.root[data-padding-y='2xl']  { padding-block: var(--prismui-spacing-2xl); }
+.root[data-padding-y='3xl']  { padding-block: var(--prismui-spacing-3xl); }
+
+/* ── padding-top ──────────────────────────────────────────────────────────── */
+.root[data-padding-top='none'] { padding-top: var(--prismui-spacing-none); }
+.root[data-padding-top='xs']   { padding-top: var(--prismui-spacing-xs); }
+.root[data-padding-top='sm']   { padding-top: var(--prismui-spacing-sm); }
+.root[data-padding-top='md']   { padding-top: var(--prismui-spacing-md); }
+.root[data-padding-top='lg']   { padding-top: var(--prismui-spacing-lg); }
+.root[data-padding-top='xl']   { padding-top: var(--prismui-spacing-xl); }
+.root[data-padding-top='2xl']  { padding-top: var(--prismui-spacing-2xl); }
+.root[data-padding-top='3xl']  { padding-top: var(--prismui-spacing-3xl); }
+
+/* ── padding-right ────────────────────────────────────────────────────────── */
+.root[data-padding-right='none'] { padding-right: var(--prismui-spacing-none); }
+.root[data-padding-right='xs']   { padding-right: var(--prismui-spacing-xs); }
+.root[data-padding-right='sm']   { padding-right: var(--prismui-spacing-sm); }
+.root[data-padding-right='md']   { padding-right: var(--prismui-spacing-md); }
+.root[data-padding-right='lg']   { padding-right: var(--prismui-spacing-lg); }
+.root[data-padding-right='xl']   { padding-right: var(--prismui-spacing-xl); }
+.root[data-padding-right='2xl']  { padding-right: var(--prismui-spacing-2xl); }
+.root[data-padding-right='3xl']  { padding-right: var(--prismui-spacing-3xl); }
+
+/* ── padding-bottom ───────────────────────────────────────────────────────── */
+.root[data-padding-bottom='none'] { padding-bottom: var(--prismui-spacing-none); }
+.root[data-padding-bottom='xs']   { padding-bottom: var(--prismui-spacing-xs); }
+.root[data-padding-bottom='sm']   { padding-bottom: var(--prismui-spacing-sm); }
+.root[data-padding-bottom='md']   { padding-bottom: var(--prismui-spacing-md); }
+.root[data-padding-bottom='lg']   { padding-bottom: var(--prismui-spacing-lg); }
+.root[data-padding-bottom='xl']   { padding-bottom: var(--prismui-spacing-xl); }
+.root[data-padding-bottom='2xl']  { padding-bottom: var(--prismui-spacing-2xl); }
+.root[data-padding-bottom='3xl']  { padding-bottom: var(--prismui-spacing-3xl); }
+
+/* ── padding-left ─────────────────────────────────────────────────────────── */
+.root[data-padding-left='none'] { padding-left: var(--prismui-spacing-none); }
+.root[data-padding-left='xs']   { padding-left: var(--prismui-spacing-xs); }
+.root[data-padding-left='sm']   { padding-left: var(--prismui-spacing-sm); }
+.root[data-padding-left='md']   { padding-left: var(--prismui-spacing-md); }
+.root[data-padding-left='lg']   { padding-left: var(--prismui-spacing-lg); }
+.root[data-padding-left='xl']   { padding-left: var(--prismui-spacing-xl); }
+.root[data-padding-left='2xl']  { padding-left: var(--prismui-spacing-2xl); }
+.root[data-padding-left='3xl']  { padding-left: var(--prismui-spacing-3xl); }
+
+/* ── margin (shorthand · all sides) ───────────────────────────────────────── */
+.root[data-margin='none'] { margin: var(--prismui-spacing-none); }
+.root[data-margin='xs']   { margin: var(--prismui-spacing-xs); }
+.root[data-margin='sm']   { margin: var(--prismui-spacing-sm); }
+.root[data-margin='md']   { margin: var(--prismui-spacing-md); }
+.root[data-margin='lg']   { margin: var(--prismui-spacing-lg); }
+.root[data-margin='xl']   { margin: var(--prismui-spacing-xl); }
+.root[data-margin='2xl']  { margin: var(--prismui-spacing-2xl); }
+.root[data-margin='3xl']  { margin: var(--prismui-spacing-3xl); }

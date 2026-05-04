@@ -45,5 +45,6 @@ export const hello = () => {
 // ── Aggregators (one level down · never reach past) ────────────────────────
 export * from './core';
 export * from './components';
+export * from './primitives';
 export * from './hooks';
 export * from './feedbacks';
