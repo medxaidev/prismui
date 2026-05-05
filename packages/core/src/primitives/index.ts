@@ -10,3 +10,4 @@
  * just re-exports the public surfaces.
  */
 export * from './layout';
+export * from './scope';
