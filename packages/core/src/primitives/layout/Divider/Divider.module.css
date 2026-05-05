@@ -1,0 +1,57 @@
+/*
+ * Stage-15 Phase 1 · Divider primitive
+ *
+ * Contracts:
+ *   - LY-DIV-1   default element `<hr>` · native `role="separator"`
+ *                semantics. CSS-side responsibility: reset the browser's
+ *                default `<hr>` styling so our own `border-top` /
+ *                `border-left` rules are the only visible declaration.
+ *   - LY-DIV-2   `orientation` prop · `'horizontal'` (default) consumes
+ *                `border-top`; `'vertical'` consumes `border-left`.
+ *                Divider does NOT introduce `margin` — adjacent spacing
+ *                is the responsibility of the parent Stack/Inline/Grid
+ *                `gap` (LY-BOX-3 reverse also binds Divider).
+ *   - LY-BOX-3   Divider does NOT accept `padding*` / `margin` props.
+ *   - LY-CORE-1  zero-runtime style.
+ *
+ * Color policy (v1): Divider uses `currentColor` with low opacity so it
+ * inherits the surrounding text colour by default — keeping Divider a
+ * pure geometric primitive and avoiding a Stage-14 colour-token
+ * dependency that hasn't been defined yet (LY-CORE-4 single-direction
+ * token consumption · we only consume tokens that exist). Callers who
+ * want a branded divider colour override via `className` / `style`.
+ */
+
+.root {
+  /* Reset <hr> browser defaults (margin, border, colour, height) so our
+   * own rules below are the single source of visual truth. Safe for
+   * non-<hr> elements too — these are sensible neutral defaults. */
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  /* Divider colour: inherit surrounding text colour, fade to a subtle
+   * separator weight. `currentColor` keeps Divider primitive-level
+   * (no Stage-14 colour token dependency). */
+  color: currentColor;
+  opacity: 0.2;
+  /* Block default: self-stretches along the cross-axis of a flex
+   * parent. Vertical variant overrides this below. */
+  flex-shrink: 0;
+}
+
+.root[data-orientation='horizontal'] {
+  width: 100%;
+  height: 0;
+  border-top: 1px solid currentColor;
+}
+
+.root[data-orientation='vertical'] {
+  width: 0;
+  /* `align-self: stretch` inside an <Inline> makes the vertical divider
+   * fill the row height automatically. For non-flex parents the consumer
+   * sets a `height` via inline style or className (documented in the
+   * Divider stories). */
+  align-self: stretch;
+  border-left: 1px solid currentColor;
+}

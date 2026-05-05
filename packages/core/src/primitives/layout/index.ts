@@ -1,13 +1,13 @@
 /**
  * Stage-15 Layout primitives barrel.
  *
- * Exports (Phase 1 · landing in sequence):
+ * Exports (Phase 1 · COMPLETE):
  *   - Box       · ✅ landed
  *   - Stack     · ✅ landed
  *   - Inline    · ✅ landed
  *   - Center    · ✅ landed
  *   - Grid      · ✅ landed
- *   - Divider   · ⏳ pending
+ *   - Divider   · ✅ landed
  *
  * Contract (ADR-006 §6.1): this barrel MUST NOT re-export anything outside
  * the six Layout primitives. Scope / Section live in sibling barrels.
@@ -28,3 +28,6 @@ export type { CenterOwnProps, CenterProps, CenterComponent } from './Center';
 
 export { Grid, GRID_DEFAULT_GAP } from './Grid';
 export type { GridOwnProps, GridProps, GridComponent } from './Grid';
+
+export { Divider, DIVIDER_DEFAULT_ORIENTATION } from './Divider';
+export type { DividerOwnProps, DividerProps, DividerComponent } from './Divider';
