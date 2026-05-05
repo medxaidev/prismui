@@ -1,0 +1,85 @@
+/*
+ * Stage-15 Phase 3 · Section primitives · shared CSS Module.
+ *
+ * Authority: STAGE-15-OVERVIEW §3.8 · LY-SEC-1 token consumption lock.
+ * Consumes Stage-14 Phase 4 `theme.layout.section.*` tokens via the
+ * 10 CSS variables emitted by `core/theme/context/css-variables.ts`.
+ *
+ * Variables consumed (DO NOT hardcode any of these · LY-SEC-1 · v1.1 schema):
+ *   --prismui-section-padding-x          (shared horizontal padding · spacing.lg)
+ *   --prismui-section-gap                (root flex gap between bands · spacing.none default)
+ *   --prismui-section-header-padding-y   (header band vertical padding · v1.1)
+ *   --prismui-section-content-padding-y  (content band vertical padding · v1.1)
+ *   --prismui-section-footer-padding-y   (footer band vertical padding · v1.1)
+ *   --prismui-section-title-font-size    (typography on header band)
+ *   --prismui-section-title-line-height
+ *   --prismui-section-title-font-weight
+ *   --prismui-section-header-align       (Flexbox align-items literal)
+ *   --prismui-section-header-justify     (Flexbox justify-content literal)
+ *   --prismui-section-footer-justify     (Flexbox justify-content literal)
+ *   --prismui-section-content-scroll     (overflow-y literal)
+ *
+ * Padding ownership: ROOT does NOT apply padding · each BAND applies
+ * its own padding. This avoids double-padding when bands sit inside the
+ * root, and lets a band stand alone (e.g. SectionHeader inside a Card)
+ * with the same visual rhythm.
+ */
+
+/* ── Root ────────────────────────────────────────────────────────────────── */
+
+.root {
+  display: flex;
+  flex-direction: column;
+  gap: var(--prismui-section-gap);
+}
+
+/* ── Header band ─────────────────────────────────────────────────────────── */
+
+.header {
+  display: flex;
+  padding-block: var(--prismui-section-header-padding-y);
+  padding-inline: var(--prismui-section-padding-x);
+  align-items: var(--prismui-section-header-align);
+  justify-content: var(--prismui-section-header-justify);
+
+  /* Title typography applies to the band — descendant text inherits unless
+   * overridden. Consumers writing `<h2>{title}</h2>` get the resolved
+   * theme.layout.section.titleSize without any extra CSS. */
+  font-size: var(--prismui-section-title-font-size);
+  line-height: var(--prismui-section-title-line-height);
+  font-weight: var(--prismui-section-title-font-weight);
+}
+
+/* ── Content band ────────────────────────────────────────────────────────── */
+
+.content {
+  padding-block: var(--prismui-section-content-padding-y);
+  padding-inline: var(--prismui-section-padding-x);
+  overflow-y: var(--prismui-section-content-scroll);
+  /* `min-height: 0` lets a flex-grow content band shrink below its
+   * intrinsic size, enabling internal scrollbars when overflow-y:auto.
+   * Without this, the band overflows the root and pushes the footer
+   * out of view — a classic Modal scrolling bug. */
+  min-height: 0;
+  /* `flex: 1 1 auto` lets the content band claim remaining height in a
+   * flex-column root, so header / footer stay pinned. Adjacent bands
+   * keep their intrinsic sizes. */
+  flex: 1 1 auto;
+}
+
+/* ── Footer band ─────────────────────────────────────────────────────────── */
+
+.footer {
+  display: flex;
+  padding-block: var(--prismui-section-footer-padding-y);
+  padding-inline: var(--prismui-section-padding-x);
+  justify-content: var(--prismui-section-footer-justify);
+  /* No inter-child `gap` rule (v1.1): the v1.0 implementation reused
+   * `--prismui-section-gap` as button-to-button spacing, but in v1.1
+   * `section.gap` semantically means "between bands" (default = 0) and
+   * cannot serve a second purpose without a dedicated token. Consumers
+   * who render multiple action buttons should compose inter-button
+   * spacing explicitly — wrap the buttons in `<Inline gap="sm">` (the
+   * canonical Stage-15 pattern) or apply individual button margins. The
+   * footer is intentionally a layout slot, not a button toolbar. */
+}

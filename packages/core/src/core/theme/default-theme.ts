@@ -192,42 +192,62 @@ export const defaultTheme: PrismUITheme = {
   // pre-tune to "what Modal probably wants" because that would make the
   // token a Modal-specific helper instead of a cross-container contract.
   //
-  // Token derivation (Stage-14 single-direction chain · §2.2):
-  //   spacing  → paddingX (lg=24) · paddingY (md=16) · gap (md=16)
+  // Token derivation (Stage-14 single-direction chain · §2.2 · v1.1 schema):
+  //   spacing   → paddingX (lg=24) · gap (none=0)
   //   typography → titleSize references theme.typography.title.{size}
   //                ('md' = 20/28 · §3.6 anchor)
+  //   per-band  → header.paddingY (lg=24) · content.paddingY (none=0) · footer.paddingY (lg=24)
   //   alignment → CSS Flexbox literal unions (compile-time guard, D-3)
+  //
+  // v1.1 default rhythm (was uniform paddingY: md across all bands in v1.0):
+  //   Header  : pY = lg = 24  (square padding · matches paddingX)
+  //   Content : pY = 0        (Content abuts Header / Footer · no redundant whitespace)
+  //   Footer  : pY = lg = 24  (square padding · matches paddingX)
+  //   Gap     : 0             (bands abut directly · padding inside bands does the work)
+  //
+  // This is the Card / Dialog canonical rhythm: title and action bands have
+  // comfortable square padding · content fills the remaining vertical space
+  // without adding more whitespace. Modal Round 0 may override these via
+  // its own theme overrides if a different rhythm is desired (the schema
+  // supports any per-band paddingY combination).
   layout: {
     section: {
-      // —— Spacing (3 fields) · all values resolve to theme.spacing.* tokens
+      // —— Spacing (2 fields · top-level · v1.1) ——————————————————————————————
       paddingX: '1.5rem', // spacing.lg = 24px
-      paddingY: '1rem',   // spacing.md = 16px
-      gap:      '1rem',   // spacing.md = 16px
+      gap:      '0px',    // spacing.none = 0 (v1.1 · was 'md'/16 in v1.0)
 
       // —— Typography (1 field) · references theme.typography.title.md = 20/28
       // (the §3.6 anchor used across Stage-14 docs as the "modal title" benchmark)
       titleSize: 'md',
 
-      // —— Alignment (4 fields) · D-2 nested per "section" semantic
+      // —— Per-band config (alignment + paddingY · v1.1) ——————————————————————
       header: {
         // Title and CloseButton vertically centered (Modal/Dialog convention).
         // 'start' is reserved for multi-line wrapped titles where Close must
         // anchor near the first text baseline.
         align: 'center',
         // Title flush left, CloseButton flush right — the canonical Modal
-        // header pattern across iOS / Material / Mantine / Mantine / shadcn.
+        // header pattern across iOS / Material / Mantine / shadcn.
         justify: 'between',
+        // v1.1: square padding (lg=24 · matches paddingX) for Header band.
+        paddingY: '1.5rem', // spacing.lg = 24px
       },
       footer: {
         // Action buttons right-aligned — primary action rightmost is the
         // most-tested layout (Apple HIG / Material Design / NN/g research).
         justify: 'end',
+        // v1.1: square padding (lg=24 · matches paddingX) for Footer band.
+        paddingY: '1.5rem', // spacing.lg = 24px
       },
       content: {
         // overflow-y: auto — long content scrolls within the Content band
         // rather than the modal as a whole. Toast/error containers may
         // override to 'never' on a per-instance basis.
         scroll: 'auto',
+        // v1.1: 0 padding so Content abuts Header / Footer directly. The
+        // bands above and below already supply their own square paddingY,
+        // so any non-zero Content paddingY would produce redundant whitespace.
+        paddingY: '0px', // spacing.none = 0
       },
     },
   },

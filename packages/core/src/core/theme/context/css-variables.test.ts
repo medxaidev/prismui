@@ -265,16 +265,22 @@ describe("generateCSSVariables", () => {
     }
   });
 
-  // ── Stage-14 Phase 4 · Section Layout vars (SZ-SEC-1 / SZ-SEC-2 v1.0) ────
-  // 8 type fields → 10 CSS vars (typography size key resolves to a triplet).
-  // STAGE-14-OVERVIEW.md §3.7.1 / css-variables.ts emission block.
-  it("emits all 10 Stage-14 Section Layout vars (3 spacing + 3 resolved typography + 4 alignment)", () => {
+  // ── Stage-14 Phase 4 · Section Layout vars (SZ-SEC-1 / SZ-SEC-2 v1.1) ────
+  // 10 type fields → 12 CSS vars (typography size key resolves to a triplet).
+  // STAGE-14-OVERVIEW.md §3.7.1 (v1.1) / css-variables.ts emission block.
+  // ADR-005 v1.0.7 audit entry: paddingY moved from a single global field to
+  // per-band fields (header / content / footer), so the emitted var list
+  // changed from `--prismui-section-padding-y` to three band-specific vars.
+  it("emits all 12 Stage-14 Section Layout vars (v1.1 · 2 spacing + 3 per-band paddingY + 3 resolved typography + 4 alignment)", () => {
     const vars = generateCSSVariables(defaultTheme, "light");
     const expectedKeys = [
-      // spacing (3)
+      // spacing (2 · top-level shared across bands)
       "--prismui-section-padding-x",
-      "--prismui-section-padding-y",
       "--prismui-section-gap",
+      // per-band paddingY (3 · v1.1 · was a single global var in v1.0)
+      "--prismui-section-header-padding-y",
+      "--prismui-section-content-padding-y",
+      "--prismui-section-footer-padding-y",
       // resolved typography triplet (3 — derived from titleSize size key)
       "--prismui-section-title-font-size",
       "--prismui-section-title-line-height",
@@ -290,15 +296,23 @@ describe("generateCSSVariables", () => {
       expect(vars[key], `${key} should be a non-empty string`).toBeTruthy();
       expect(typeof vars[key]).toBe("string");
     }
+    // The retired v1.0 global paddingY var MUST NOT leak through — emitting
+    // it would break Stage-15 CSS consumers that have switched to the per-band
+    // vars. (If a future v1.x reintroduces a global paddingY field this test
+    // is the canary that forces an explicit decision.)
+    expect(vars).not.toHaveProperty("--prismui-section-padding-y");
   });
 
-  it("Section spacing vars match theme.spacing.* anchors (SZ-SEC-1 derivation)", () => {
-    // SZ-SEC-1 promises Section paddings derive from spacing tokens. The
-    // emitted CSS values must literally equal the spacing scale entries.
+  it("Section spacing vars match theme.spacing.* anchors (SZ-SEC-1 derivation · v1.1)", () => {
+    // SZ-SEC-1 promises Section paddings derive from spacing tokens. v1.1
+    // moves paddingY into per-band fields; the emitted CSS values must
+    // still literally equal the spacing scale entries.
     const vars = generateCSSVariables(defaultTheme, "light");
-    expect(vars["--prismui-section-padding-x"]).toBe("1.5rem"); // spacing.lg
-    expect(vars["--prismui-section-padding-y"]).toBe("1rem");   // spacing.md
-    expect(vars["--prismui-section-gap"]).toBe("1rem");          // spacing.md
+    expect(vars["--prismui-section-padding-x"]).toBe("1.5rem");          // spacing.lg
+    expect(vars["--prismui-section-gap"]).toBe("0px");                    // spacing.none (v1.1 default)
+    expect(vars["--prismui-section-header-padding-y"]).toBe("1.5rem");   // spacing.lg (v1.1)
+    expect(vars["--prismui-section-content-padding-y"]).toBe("0px");      // spacing.none (v1.1)
+    expect(vars["--prismui-section-footer-padding-y"]).toBe("1.5rem");   // spacing.lg (v1.1)
   });
 
   it("Section title triplet resolves via theme.typography.title[titleSize] (default md → 20/28/600)", () => {
@@ -358,13 +372,19 @@ describe("generateCSSVariables", () => {
     const themeBetween = {
       ...defaultTheme,
       layout: {
-        section: { ...defaultTheme.layout.section, footer: { justify: "between" as const } },
+        section: {
+          ...defaultTheme.layout.section,
+          footer: { ...defaultTheme.layout.section.footer, justify: "between" as const },
+        },
       },
     };
     const themeStart = {
       ...defaultTheme,
       layout: {
-        section: { ...defaultTheme.layout.section, footer: { justify: "start" as const } },
+        section: {
+          ...defaultTheme.layout.section,
+          footer: { ...defaultTheme.layout.section.footer, justify: "start" as const },
+        },
       },
     };
     expect(generateCSSVariables(themeBetween, "light")["--prismui-section-footer-justify"])
@@ -377,7 +397,10 @@ describe("generateCSSVariables", () => {
     const themeNever = {
       ...defaultTheme,
       layout: {
-        section: { ...defaultTheme.layout.section, content: { scroll: "never" as const } },
+        section: {
+          ...defaultTheme.layout.section,
+          content: { ...defaultTheme.layout.section.content, scroll: "never" as const },
+        },
       },
     };
     expect(generateCSSVariables(themeNever, "light")["--prismui-section-content-scroll"])

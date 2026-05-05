@@ -177,41 +177,55 @@ describe('Theme System', () => {
 
   // ── Stage-14 Phase 4 · Section Layout Tokens (SZ-SEC-1 / SZ-SEC-2 v1.0) ──
   // STAGE-14-OVERVIEW.md §3.7.1 schema = 8 fields:
-  //   spacing(3)  · paddingX, paddingY, gap
+  //   spacing(2)  · paddingX, gap                            (top-level · v1.1)
   //   typography  · titleSize (size key)
-  //   alignment(4)· header.align, header.justify, footer.justify, content.scroll
+  //   per-band(7) · header.{align,justify,paddingY}
+  //               · footer.{justify,paddingY}
+  //               · content.{scroll,paddingY}
   //
-  // The tests below guard schema completeness, anchor values, and resolution
-  // through the typography family layer (titleSize → theme.typography.title[size]
-  // — the single-source-of-truth chain that SZ-SEC-1 promises).
-  describe('Stage-14 Section Layout (SZ-SEC-1 / SZ-SEC-2 v1.0)', () => {
-    it('schema completeness · all 8 fields present (3 spacing + 1 typography + 4 alignment)', () => {
+  // v1.1 schema revision (ADR-005 v1.0.7 audit entry): paddingY moved from a
+  // single global field into a per-band field, and gap default became
+  // spacing.none (was spacing.md) so bands abut directly with their own
+  // paddingY. The tests below guard schema completeness post-revision.
+  describe('Stage-14 Section Layout (SZ-SEC-1 / SZ-SEC-2 v1.1)', () => {
+    it('schema completeness · all 10 fields present (v1.1 · 2 spacing + 1 typography + 7 per-band)', () => {
       const section = defaultTheme.layout.section;
-      // Spacing (3)
+      // Spacing (2 · top-level shared across bands)
       expect(section.paddingX, 'section.paddingX').toBeDefined();
-      expect(section.paddingY, 'section.paddingY').toBeDefined();
       expect(section.gap, 'section.gap').toBeDefined();
       // Typography (1) — size key, not the resolved triplet
       expect(section.titleSize, 'section.titleSize').toBeDefined();
-      // Alignment (4) — D-2 nested per "section" semantic
+      // Per-band (7) — alignment + paddingY
       expect(section.header.align, 'section.header.align').toBeDefined();
       expect(section.header.justify, 'section.header.justify').toBeDefined();
+      expect(section.header.paddingY, 'section.header.paddingY (v1.1)').toBeDefined();
       expect(section.footer.justify, 'section.footer.justify').toBeDefined();
+      expect(section.footer.paddingY, 'section.footer.paddingY (v1.1)').toBeDefined();
       expect(section.content.scroll, 'section.content.scroll').toBeDefined();
+      expect(section.content.paddingY, 'section.content.paddingY (v1.1)').toBeDefined();
     });
 
-    it('§3.7.1 anchor values · spacing default = lg/md/md (24/16/16 px)', () => {
-      // Defaults follow the §3.7.1 spec verbatim. Values come from
-      // theme.spacing.lg (1.5rem = 24px) and theme.spacing.md (1rem = 16px).
-      expect(defaultTheme.layout.section.paddingX).toBe('1.5rem');
-      expect(defaultTheme.layout.section.paddingY).toBe('1rem');
-      expect(defaultTheme.layout.section.gap).toBe('1rem');
-      // Cross-reference: paddingX should equal theme.spacing.lg (SZ-SEC-1
-      // "tokens not hardcoded" guard — values must be discoverable in the
-      // spacing scale).
-      expect(defaultTheme.layout.section.paddingX).toBe(defaultTheme.spacing.lg);
-      expect(defaultTheme.layout.section.paddingY).toBe(defaultTheme.spacing.md);
-      expect(defaultTheme.layout.section.gap).toBe(defaultTheme.spacing.md);
+    it('§3.7.1 v1.1 anchor values · paddingX=lg · gap=none · per-band paddingY = lg/none/lg', () => {
+      // v1.1 defaults (band-abuts-band rhythm · see ADR-005 v1.0.7):
+      //   paddingX            = spacing.lg   (1.5rem = 24px) · unchanged
+      //   gap                 = spacing.none (0px)            · was 'md'/16 in v1.0
+      //   header.paddingY     = spacing.lg   (1.5rem = 24px) · was global 'md' in v1.0
+      //   content.paddingY    = spacing.none (0px)            · was global 'md' in v1.0
+      //   footer.paddingY     = spacing.lg   (1.5rem = 24px) · was global 'md' in v1.0
+      const section = defaultTheme.layout.section;
+      expect(section.paddingX).toBe('1.5rem');
+      expect(section.gap).toBe('0px');
+      expect(section.header.paddingY).toBe('1.5rem');
+      expect(section.content.paddingY).toBe('0px');
+      expect(section.footer.paddingY).toBe('1.5rem');
+      // Cross-reference: every paddingY MUST equal a value in `theme.spacing.*`
+      // (SZ-SEC-1 "tokens not hardcoded" guard — values must be discoverable
+      // in the spacing scale).
+      expect(section.paddingX).toBe(defaultTheme.spacing.lg);
+      expect(section.gap).toBe(defaultTheme.spacing.none);
+      expect(section.header.paddingY).toBe(defaultTheme.spacing.lg);
+      expect(section.content.paddingY).toBe(defaultTheme.spacing.none);
+      expect(section.footer.paddingY).toBe(defaultTheme.spacing.lg);
     });
 
     it('§3.7.1 anchor: titleSize = "md" (resolves to typography.title.md = 20/28)', () => {
@@ -430,16 +444,15 @@ describe('Theme System', () => {
           offset: '2px',
           color: 'var(--prismui-color-primary)',
         },
-        // Stage-14 Phase 4 · Section Layout Tokens (SZ-SEC-1 / SZ-SEC-2)
+        // Stage-14 Phase 4 · Section Layout Tokens (SZ-SEC-1 / SZ-SEC-2 · v1.1)
         layout: {
           section: {
             paddingX: '1.5rem',
-            paddingY: '1rem',
-            gap:      '1rem',
+            gap:      '0px',
             titleSize: 'md',
-            header:  { align: 'center', justify: 'between' },
-            footer:  { justify: 'end' },
-            content: { scroll: 'auto' },
+            header:  { align: 'center', justify: 'between', paddingY: '1.5rem' },
+            footer:  { justify: 'end',                       paddingY: '1.5rem' },
+            content: { scroll: 'auto',                       paddingY: '0px'    },
           },
         },
         scale: 1,

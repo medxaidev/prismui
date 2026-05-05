@@ -11,3 +11,4 @@
  */
 export * from './layout';
 export * from './scope';
+export * from './section';

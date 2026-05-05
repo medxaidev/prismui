@@ -245,8 +245,11 @@ export function selectPalette(
  * - --prismui-typography-{body|title|label}-{sm|md|lg}-line-height
  * - --prismui-typography-{body|title|label}-{sm|md|lg}-font-weight
  *
- * Stage-14 Phase 4 Section Layout (10 vars · SZ-SEC-1/2):
- * - --prismui-section-padding-x / -padding-y / -gap          (spacing CSSLength)
+ * Stage-14 Phase 4 Section Layout (12 vars · SZ-SEC-1/2 · v1.1 schema):
+ * - --prismui-section-padding-x / -gap                       (spacing CSSLength)
+ * - --prismui-section-header-padding-y                       (spacing CSSLength · v1.1)
+ * - --prismui-section-content-padding-y                      (spacing CSSLength · v1.1)
+ * - --prismui-section-footer-padding-y                       (spacing CSSLength · v1.1)
  * - --prismui-section-title-font-size / -line-height / -font-weight (resolved triplet)
  * - --prismui-section-header-align / -header-justify         (Flexbox literal)
  * - --prismui-section-footer-justify                         (Flexbox literal)
@@ -404,25 +407,28 @@ export function generateCSSVariables(
     }
   }
 
-  // ── Stage-14 Phase 4 · Section Layout (SZ-SEC-1 / SZ-SEC-2) ───────────────
-  // Authority: STAGE-14-OVERVIEW.md §3.7.1 (8 fields = 3 spacing + 1
-  // typography + 4 alignment). The 1 typography field (`titleSize`) is a
-  // size-KEY config knob — the CSS layer needs the *resolved* fontSize /
-  // lineHeight / fontWeight triplet for declarative consumption, so that
-  // 1 type field expands to 3 CSS variables. Total emitted: **10 vars**
-  // (3 spacing + 3 resolved typography + 4 alignment) from 8 type fields.
+  // ── Stage-14 Phase 4 · Section Layout (SZ-SEC-1 / SZ-SEC-2 · v1.1 schema) ──
+  // Authority: STAGE-14-OVERVIEW.md §3.7.1 (10 fields v1.1 = 2 spacing + 1
+  // typography + 7 alignment-and-paddingY · was 8 in v1.0). The 1 typography
+  // field (`titleSize`) is a size-KEY config knob — the CSS layer needs the
+  // *resolved* fontSize / lineHeight / fontWeight triplet, so the emitter
+  // expands titleSize into those three vars. Net CSS-var count = 2 (spacing)
+  // + 3 (per-band paddingY · v1.1) + 3 (resolved typography) + 4 (alignment) =
+  // **12 emitted variables** from 10 type fields (was 10 emitted from 8 in v1.0).
   //
   // Naming convention:
-  //   --prismui-section-padding-x         (spacing CSSLength · default 1.5rem)
-  //   --prismui-section-padding-y         (spacing CSSLength · default 1rem)
-  //   --prismui-section-gap               (spacing CSSLength · default 1rem)
-  //   --prismui-section-title-font-size   (resolved from typography.title[size])
-  //   --prismui-section-title-line-height (resolved · "{n}px" format · SZ-TYPE-1)
-  //   --prismui-section-title-font-weight (resolved · numeric)
-  //   --prismui-section-header-align      (CSS align-items literal)
-  //   --prismui-section-header-justify    (CSS justify-content literal)
-  //   --prismui-section-footer-justify    (CSS justify-content literal)
-  //   --prismui-section-content-scroll    (CSS overflow-y literal)
+  //   --prismui-section-padding-x          (spacing CSSLength · default 1.5rem)
+  //   --prismui-section-gap                (spacing CSSLength · default 0px · v1.1)
+  //   --prismui-section-header-padding-y   (spacing CSSLength · default 1.5rem · v1.1)
+  //   --prismui-section-content-padding-y  (spacing CSSLength · default 0px · v1.1)
+  //   --prismui-section-footer-padding-y   (spacing CSSLength · default 1.5rem · v1.1)
+  //   --prismui-section-title-font-size    (resolved from typography.title[size])
+  //   --prismui-section-title-line-height  (resolved · "{n}px" format · SZ-TYPE-1)
+  //   --prismui-section-title-font-weight  (resolved · numeric)
+  //   --prismui-section-header-align       (CSS align-items literal)
+  //   --prismui-section-header-justify     (CSS justify-content literal)
+  //   --prismui-section-footer-justify     (CSS justify-content literal)
+  //   --prismui-section-content-scroll     (CSS overflow-y literal)
   //
   // Why resolve the title triplet here rather than letting containers
   // reference `--prismui-typography-title-md-*` directly:
@@ -443,8 +449,14 @@ export function generateCSSVariables(
   const section = theme.layout.section;
 
   vars['--prismui-section-padding-x'] = String(section.paddingX);
-  vars['--prismui-section-padding-y'] = String(section.paddingY);
   vars['--prismui-section-gap']        = String(section.gap);
+
+  // v1.1 schema · per-band paddingY (was a single global field in v1.0).
+  // The CSS layer references these via `var(--prismui-section-{band}-padding-y)`
+  // so each band picks up its own value without inheriting from a shared parent.
+  vars['--prismui-section-header-padding-y']  = String(section.header.paddingY);
+  vars['--prismui-section-content-padding-y'] = String(section.content.paddingY);
+  vars['--prismui-section-footer-padding-y']  = String(section.footer.paddingY);
 
   // Resolve title typography triplet from theme.typography.title[titleSize].
   // The lookup is type-safe because `titleSize: TypographySize` constrains

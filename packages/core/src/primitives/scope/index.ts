@@ -1,10 +1,10 @@
 /**
  * Stage-15 Phase 2 · Behavior Scope primitives namespace barrel.
  *
- * Exports (Phase 2 · landing in sequence):
+ * Exports (Phase 2 · COMPLETE):
  *   - ScopePortal   · ✅ landed (re-export of Stage-11 Portal · LY-SCOPE-3/4)
  *   - RemoveScroll  · ✅ landed (LY-SCOPE-2 · LY-SCOPE-5)
- *   - FocusScope    · ⏳ pending
+ *   - FocusScope    · ✅ landed (LY-SCOPE-1 · LY-SCOPE-5)
  *
  * Contract (ADR-006 §6.1): this barrel MUST NOT re-export anything outside
  * the three Behavior Scope primitives. Layout / Section live in sibling
@@ -23,3 +23,6 @@ export type { ScopePortalProps } from './portal';
 
 export { RemoveScroll } from './RemoveScroll';
 export type { RemoveScrollProps } from './RemoveScroll';
+
+export { FocusScope } from './FocusScope';
+export type { FocusScopeProps } from './FocusScope';

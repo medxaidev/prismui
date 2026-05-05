@@ -458,13 +458,11 @@ export const SectionLayout: Story = {
             background: '#FFFFFF',
             boxShadow: '0 12px 24px -4px rgba(145, 158, 171, 0.12)',
             // Section flex column · gap drives Header↔Content↔Footer separation
+            // (v1.1 default = 0 · each band owns its own paddingY now)
             display: 'flex',
             flexDirection: 'column',
             gap: 'var(--prismui-section-gap)',
-            // padding-y on outer for top/bottom; padding-x set per-band below
-            // (matches the §3.7.1 "three-band uniform padding" promise)
-            paddingTop: 'var(--prismui-section-padding-y)',
-            paddingBottom: 'var(--prismui-section-padding-y)',
+            // v1.1 · padding-y is per-band (see each section below)
           }}
         >
           {/* Header band */}
@@ -475,6 +473,8 @@ export const SectionLayout: Story = {
               justifyContent: 'var(--prismui-section-header-justify)' as React.CSSProperties['justifyContent'],
               paddingLeft: 'var(--prismui-section-padding-x)',
               paddingRight: 'var(--prismui-section-padding-x)',
+              paddingTop: 'var(--prismui-section-header-padding-y)',
+              paddingBottom: 'var(--prismui-section-header-padding-y)',
             }}
           >
             <div
@@ -509,6 +509,8 @@ export const SectionLayout: Story = {
             style={{
               paddingLeft: 'var(--prismui-section-padding-x)',
               paddingRight: 'var(--prismui-section-padding-x)',
+              paddingTop: 'var(--prismui-section-content-padding-y)',
+              paddingBottom: 'var(--prismui-section-content-padding-y)',
               overflowY: 'var(--prismui-section-content-scroll)' as React.CSSProperties['overflowY'],
               fontSize: 14,
               lineHeight: '20px',
@@ -530,6 +532,8 @@ export const SectionLayout: Story = {
               justifyContent: 'var(--prismui-section-footer-justify)' as React.CSSProperties['justifyContent'],
               paddingLeft: 'var(--prismui-section-padding-x)',
               paddingRight: 'var(--prismui-section-padding-x)',
+              paddingTop: 'var(--prismui-section-footer-padding-y)',
+              paddingBottom: 'var(--prismui-section-footer-padding-y)',
             }}
           >
             <button
@@ -577,16 +581,18 @@ export const SectionLayout: Story = {
             </thead>
             <tbody>
               {[
-                ['--prismui-section-padding-x',         '1.5rem (24px)',  'spacing.lg'],
-                ['--prismui-section-padding-y',         '1rem (16px)',    'spacing.md'],
-                ['--prismui-section-gap',               '1rem (16px)',    'spacing.md'],
-                ['--prismui-section-title-font-size',   '20px',           'typography.title.md'],
-                ['--prismui-section-title-line-height', '28px',           'typography.title.md'],
-                ['--prismui-section-title-font-weight', '600',            'typography.title.md'],
-                ['--prismui-section-header-align',      'center',         'D-3 literal union'],
-                ['--prismui-section-header-justify',    'space-between',  'D-3 literal union'],
-                ['--prismui-section-footer-justify',    'flex-end',       'D-3 literal union'],
-                ['--prismui-section-content-scroll',    'auto',           'D-3 literal union'],
+                ['--prismui-section-padding-x',          '1.5rem (24px)',  'spacing.lg'],
+                ['--prismui-section-gap',                '0px',            'spacing.none (v1.1 default)'],
+                ['--prismui-section-header-padding-y',   '1.5rem (24px)',  'spacing.lg (v1.1 · per-band)'],
+                ['--prismui-section-content-padding-y',  '0px',            'spacing.none (v1.1 · per-band)'],
+                ['--prismui-section-footer-padding-y',   '1.5rem (24px)',  'spacing.lg (v1.1 · per-band)'],
+                ['--prismui-section-title-font-size',    '20px',           'typography.title.md'],
+                ['--prismui-section-title-line-height',  '28px',           'typography.title.md'],
+                ['--prismui-section-title-font-weight',  '600',            'typography.title.md'],
+                ['--prismui-section-header-align',       'center',         'D-3 literal union'],
+                ['--prismui-section-header-justify',     'space-between',  'D-3 literal union'],
+                ['--prismui-section-footer-justify',     'flex-end',       'D-3 literal union'],
+                ['--prismui-section-content-scroll',     'auto',           'D-3 literal union'],
               ].map(([name, def, src]) => (
                 <tr key={name} style={{ borderBottom: '1px solid #F4F6F8' }}>
                   <td style={{ padding: 6, color: '#1C252E' }}>{name}</td>

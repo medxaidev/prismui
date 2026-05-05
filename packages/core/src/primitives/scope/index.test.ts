@@ -18,8 +18,8 @@ import * as ScopeBarrel from './index';
 import { Portal } from '../../core/overlay/portal/Portal';
 
 describe('primitives/scope · barrel contract (ADR-006 §6.1 whitelist)', () => {
-  it('exports exactly the landed Phase 2 value-level symbols', () => {
-    const expected = ['RemoveScroll', 'ScopePortal'].sort();
+  it('exports exactly the Phase 2 value-level symbols (COMPLETE)', () => {
+    const expected = ['FocusScope', 'RemoveScroll', 'ScopePortal'].sort();
     const actual = Object.keys(ScopeBarrel).sort();
     expect(actual).toEqual(expected);
   });
@@ -36,13 +36,17 @@ describe('primitives/scope · barrel contract (ADR-006 §6.1 whitelist)', () => 
     expect(typeof ScopeBarrel.RemoveScroll).toBe('function');
   });
 
+  it('FocusScope is a plain function component', () => {
+    expect(typeof ScopeBarrel.FocusScope).toBe('function');
+  });
+
   it('compile-time: all documented type names are importable', () => {
     // Touches the `import type` graph so `tsc --noEmit` fails if
-    // ScopePortalProps / RemoveScrollProps is ever removed from the
-    // barrel.
+    // any of the three Phase 2 prop types is removed from the barrel.
     type _SideEffect =
       | import('./index').ScopePortalProps
-      | import('./index').RemoveScrollProps;
+      | import('./index').RemoveScrollProps
+      | import('./index').FocusScopeProps;
     const _: _SideEffect | undefined = undefined;
     expect(_).toBeUndefined();
   });
