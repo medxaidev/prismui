@@ -6,7 +6,7 @@
  *   - Stack     · ✅ landed
  *   - Inline    · ✅ landed
  *   - Center    · ✅ landed
- *   - Grid      · ⏳ pending
+ *   - Grid      · ✅ landed
  *   - Divider   · ⏳ pending
  *
  * Contract (ADR-006 §6.1): this barrel MUST NOT re-export anything outside
@@ -25,3 +25,6 @@ export type { InlineOwnProps, InlineProps, InlineComponent } from './Inline';
 
 export { Center } from './Center';
 export type { CenterOwnProps, CenterProps, CenterComponent } from './Center';
+
+export { Grid, GRID_DEFAULT_GAP } from './Grid';
+export type { GridOwnProps, GridProps, GridComponent } from './Grid';

@@ -1,0 +1,67 @@
+/*
+ * Stage-15 Phase 1 · Grid primitive
+ *
+ * Contracts:
+ *   - LY-GRID-1 semantic lock: `display: grid` · native CSS Grid
+ *   - LY-GRID-2 `columns`: number (1-12) or string template
+ *               - number  → `repeat(<n>, minmax(0, 1fr))`
+ *               - string  → passthrough template value
+ *               Delivered via the `--prismui-grid-template-columns` CSS
+ *               custom property on the element's `style` attribute (the
+ *               only Stage-15 primitive that sets a CSS var via style —
+ *               necessary because the value space is open-ended and
+ *               cannot be enumerated by attribute selectors).
+ *               Guarded by the `[data-columns]` presence marker so the
+ *               custom-property rule only activates when Grid sets it.
+ *   - LY-GRID-3 `gap` / `rowGap` / `columnGap` · SpacingScale enum
+ *               - `gap` default 'md' (always emitted)
+ *               - `rowGap` / `columnGap` fine-grained override, only
+ *                 emitted when set (then wins over `gap` per CSS
+ *                 specificity / cascade order below)
+ *   - LY-GRID-4 responsive rejected (v1) · object-form column values
+ *               throw TS compile error + DEV runtime warn (Grid.tsx)
+ *   - LY-BOX-3  Grid does NOT accept padding/margin
+ *   - LY-CORE-1 zero-runtime style EXCEPT the open-value CSS custom
+ *               property for columns (see LY-GRID-2 above — the value
+ *               *is* parameterization, not visual override)
+ */
+
+.root {
+  display: grid;
+  gap: var(--prismui-spacing-md);
+}
+
+/* ── columns · custom-property channel ────────────────────────────────────── */
+.root[data-columns] {
+  grid-template-columns: var(--prismui-grid-template-columns);
+}
+
+/* ── gap (SpacingScale · always emitted) ──────────────────────────────────── */
+.root[data-gap='none'] { gap: var(--prismui-spacing-none); }
+.root[data-gap='xs']   { gap: var(--prismui-spacing-xs); }
+.root[data-gap='sm']   { gap: var(--prismui-spacing-sm); }
+.root[data-gap='md']   { gap: var(--prismui-spacing-md); }
+.root[data-gap='lg']   { gap: var(--prismui-spacing-lg); }
+.root[data-gap='xl']   { gap: var(--prismui-spacing-xl); }
+.root[data-gap='2xl']  { gap: var(--prismui-spacing-2xl); }
+.root[data-gap='3xl']  { gap: var(--prismui-spacing-3xl); }
+
+/* ── rowGap · fine-grained override (only emitted when set · beats gap) ───── */
+.root[data-row-gap='none'] { row-gap: var(--prismui-spacing-none); }
+.root[data-row-gap='xs']   { row-gap: var(--prismui-spacing-xs); }
+.root[data-row-gap='sm']   { row-gap: var(--prismui-spacing-sm); }
+.root[data-row-gap='md']   { row-gap: var(--prismui-spacing-md); }
+.root[data-row-gap='lg']   { row-gap: var(--prismui-spacing-lg); }
+.root[data-row-gap='xl']   { row-gap: var(--prismui-spacing-xl); }
+.root[data-row-gap='2xl']  { row-gap: var(--prismui-spacing-2xl); }
+.root[data-row-gap='3xl']  { row-gap: var(--prismui-spacing-3xl); }
+
+/* ── columnGap · fine-grained override (only emitted when set · beats gap) ── */
+.root[data-column-gap='none'] { column-gap: var(--prismui-spacing-none); }
+.root[data-column-gap='xs']   { column-gap: var(--prismui-spacing-xs); }
+.root[data-column-gap='sm']   { column-gap: var(--prismui-spacing-sm); }
+.root[data-column-gap='md']   { column-gap: var(--prismui-spacing-md); }
+.root[data-column-gap='lg']   { column-gap: var(--prismui-spacing-lg); }
+.root[data-column-gap='xl']   { column-gap: var(--prismui-spacing-xl); }
+.root[data-column-gap='2xl']  { column-gap: var(--prismui-spacing-2xl); }
+.root[data-column-gap='3xl']  { column-gap: var(--prismui-spacing-3xl); }
