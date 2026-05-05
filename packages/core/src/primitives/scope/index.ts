@@ -3,8 +3,8 @@
  *
  * Exports (Phase 2 · landing in sequence):
  *   - ScopePortal   · ✅ landed (re-export of Stage-11 Portal · LY-SCOPE-3/4)
+ *   - RemoveScroll  · ✅ landed (LY-SCOPE-2 · LY-SCOPE-5)
  *   - FocusScope    · ⏳ pending
- *   - RemoveScroll  · ⏳ pending
  *
  * Contract (ADR-006 §6.1): this barrel MUST NOT re-export anything outside
  * the three Behavior Scope primitives. Layout / Section live in sibling
@@ -20,3 +20,6 @@
 
 export { ScopePortal } from './portal';
 export type { ScopePortalProps } from './portal';
+
+export { RemoveScroll } from './RemoveScroll';
+export type { RemoveScrollProps } from './RemoveScroll';
