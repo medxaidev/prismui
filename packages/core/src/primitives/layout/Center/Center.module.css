@@ -1,0 +1,21 @@
+/*
+ * Stage-15 Phase 1 · Center primitive
+ *
+ * Contracts:
+ *   - LY-CENTER-1 single-child centering semantic lock · `display: flex` +
+ *                 both axes centered · does NOT accept `gap` (single child
+ *                 has no inter-child gap)
+ *   - LY-CENTER-2 multi-child DEV warn (does not block render) · Prod no-op
+ *   - LY-BOX-3    Center does NOT accept padding/margin · compose with <Box>
+ *   - LY-CORE-1   zero-runtime style
+ *
+ * No data-attrs are emitted by this primitive: Center is the simplest
+ * Layout primitive — its entire visual is the four `.root` declarations
+ * below. No SpacingScale consumption · no override surface.
+ */
+
+.root {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}

@@ -5,7 +5,7 @@
  *   - Box       · ✅ landed
  *   - Stack     · ✅ landed
  *   - Inline    · ✅ landed
- *   - Center    · ⏳ pending
+ *   - Center    · ✅ landed
  *   - Grid      · ⏳ pending
  *   - Divider   · ⏳ pending
  *
@@ -22,3 +22,6 @@ export type { StackOwnProps, StackProps, StackComponent } from './Stack';
 
 export { Inline, INLINE_DEFAULT_GAP } from './Inline';
 export type { InlineOwnProps, InlineProps, InlineComponent } from './Inline';
+
+export { Center } from './Center';
+export type { CenterOwnProps, CenterProps, CenterComponent } from './Center';
