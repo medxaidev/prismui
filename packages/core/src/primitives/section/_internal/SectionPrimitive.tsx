@@ -28,12 +28,20 @@ import classes from './Section.module.css';
  *
  * ## Slot model
  *
- * One of `'root' | 'header' | 'content' | 'footer'`. Each slot picks
- * the corresponding CSS Module class — that is the SOLE structural
- * difference between the four resulting public primitives. Default
+ * One of `'root' | 'header' | 'title' | 'content' | 'footer'`. Each slot
+ * picks the corresponding CSS Module class — that is the SOLE structural
+ * difference between the five resulting public primitives. Default
  * elements differ (chosen by each public wrapper · `<section>` /
- * `<header>` / `<div>` / `<footer>`), but the styling and ref / API
- * pipeline are unified here.
+ * `<header>` / `<h2>` / `<div>` / `<footer>`), but the styling and ref /
+ * API pipeline are unified here.
+ *
+ * The `'title'` slot was added in v1.0.8 (Stage-15 Phase 3 visual review
+ * audit · see ADR-005 v1.0.8 / review-log 2026-05-05 (b)) to close the
+ * SZ-SEC-1 typography end-to-end loop: Stage-14 emits the resolved
+ * title triplet as CSS vars, but heading-element browser defaults
+ * (`<h2>` font-size 1.5em / font-weight 700) override band-level
+ * inheritance unless the title element is explicitly typography-locked.
+ * `<SectionTitle>` is the explicit lock · the canonical title slot.
  *
  * ## Surface model (LY-SEC-2)
  *
@@ -47,7 +55,7 @@ import classes from './Section.module.css';
  * header band).
  */
 
-export type SectionSlot = 'root' | 'header' | 'content' | 'footer';
+export type SectionSlot = 'root' | 'header' | 'title' | 'content' | 'footer';
 
 /**
  * Surface variant for the root slot. `'page'` is the default emitted
@@ -77,6 +85,7 @@ type SectionPrimitiveImplProps = SectionPrimitiveOwnProps &
 const SLOT_CLASS: Record<SectionSlot, string> = {
   root: classes.root,
   header: classes.header,
+  title: classes.title,
   content: classes.content,
   footer: classes.footer,
 };
@@ -84,6 +93,11 @@ const SLOT_CLASS: Record<SectionSlot, string> = {
 const SLOT_DEFAULT_ELEMENT: Record<SectionSlot, ElementType> = {
   root: 'section',
   header: 'header',
+  // `<h2>` is the canonical Modal/Dialog/Section title element. Consumers
+  // who need a different heading level (e.g. nested sections preferring
+  // `<h3>` for outline correctness, or non-heading semantics like a
+  // toolbar label) override via the polymorphic `component` prop.
+  title: 'h2',
   content: 'div',
   footer: 'footer',
 };

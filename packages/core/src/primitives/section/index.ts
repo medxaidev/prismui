@@ -1,9 +1,10 @@
 /**
  * Stage-15 Phase 3 · Section primitives namespace barrel.
  *
- * Exports (Phase 3 · COMPLETE):
+ * Exports (Phase 3 · COMPLETE · v1.0.8 added SectionTitle as 5th primitive):
  *   - Section        · ✅ landed (LY-SEC-1/2/3/4 · root slot · default <section>)
  *   - SectionHeader  · ✅ landed (LY-SEC-1/3 · header slot · default <header>)
+ *   - SectionTitle   · ✅ landed (LY-SEC-1/3 · title slot · default <h2> · v1.0.8)
  *   - SectionContent · ✅ landed (LY-SEC-1/3 · content slot · default <div>)
  *   - SectionFooter  · ✅ landed (LY-SEC-1/3 · footer slot · default <footer>)
  *
@@ -30,6 +31,13 @@ export type {
   SectionHeaderProps,
   SectionHeaderComponent,
 } from './SectionHeader';
+
+export { SectionTitle } from './SectionTitle';
+export type {
+  SectionTitleOwnProps,
+  SectionTitleProps,
+  SectionTitleComponent,
+} from './SectionTitle';
 
 export { SectionContent } from './SectionContent';
 export type {

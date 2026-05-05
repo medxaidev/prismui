@@ -26,6 +26,7 @@ import { Section } from './Section';
 import { SectionHeader } from '../SectionHeader/SectionHeader';
 import { SectionContent } from '../SectionContent/SectionContent';
 import { SectionFooter } from '../SectionFooter/SectionFooter';
+import { SectionTitle } from '../SectionTitle/SectionTitle';
 import { Inline } from '../../layout/Inline/Inline';
 
 // ── Visual helpers (local · not exported) ─────────────────────────────────────
@@ -120,7 +121,7 @@ export const Default: Story = {
   render: () => (
     <Section style={PANEL_STYLE}>
       <SectionHeader>
-        <h2 style={{ margin: 0 }}>Settings</h2>
+        <SectionTitle>Settings</SectionTitle>
         <CloseButton />
       </SectionHeader>
       <SectionContent>
@@ -150,7 +151,7 @@ export const SurfacePage: Story = {
   render: (args) => (
     <Section {...args} style={PANEL_STYLE}>
       <SectionHeader>
-        <h2 style={{ margin: 0 }}>Page surface</h2>
+        <SectionTitle>Page surface</SectionTitle>
       </SectionHeader>
       <SectionContent>
         <p style={{ margin: 0 }}>
@@ -178,7 +179,7 @@ export const SurfaceOverlay: Story = {
   render: (args) => (
     <Section {...args} style={OVERLAY_STYLE}>
       <SectionHeader>
-        <h2 style={{ margin: 0 }}>Confirm action</h2>
+        <SectionTitle>Confirm action</SectionTitle>
         <CloseButton />
       </SectionHeader>
       <SectionContent>
@@ -209,7 +210,7 @@ export const PolymorphicArticle: Story = {
   render: () => (
     <Section component="article" style={PANEL_STYLE}>
       <SectionHeader component="div">
-        <h2 style={{ margin: 0 }}>Polymorphic Section</h2>
+        <SectionTitle>Polymorphic Section</SectionTitle>
       </SectionHeader>
       <SectionContent>
         <p style={{ margin: 0 }}>
@@ -233,7 +234,7 @@ export const PartialBands: Story = {
   render: () => (
     <Section style={PANEL_STYLE}>
       <SectionHeader>
-        <h2 style={{ margin: 0 }}>Header only</h2>
+        <SectionTitle>Header only</SectionTitle>
         <CloseButton />
       </SectionHeader>
     </Section>
@@ -251,7 +252,7 @@ export const ScrollableContent: Story = {
   render: () => (
     <Section style={{ ...PANEL_STYLE, height: 360 }}>
       <SectionHeader>
-        <h2 style={{ margin: 0 }}>Long content</h2>
+        <SectionTitle>Long content</SectionTitle>
         <CloseButton />
       </SectionHeader>
       <SectionContent>

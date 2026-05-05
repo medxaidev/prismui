@@ -50,6 +50,35 @@
   font-weight: var(--prismui-section-title-font-weight);
 }
 
+/* ── Title slot (v1.0.8 · 5th public primitive) ──────────────────────────── */
+
+/*
+ * `.title` is the explicit typography lock for SectionTitle (default <h2>).
+ *
+ * Why a dedicated class on top of the .header inheritance chain: heading
+ * elements ship with browser default font-size (h2 ≈ 1.5em / font-weight
+ * 700 / generous margin-block) that OVERRIDE styles inherited from a
+ * flex parent. Setting font-* on .header alone leaves `<h2>` at its
+ * default — visually breaking the §3.6 title.md anchor (20/28/600).
+ *
+ * The reset:
+ *   - margin: 0                 — neutralize default heading margin-block
+ *   - font-family: inherit      — pick up the body font (no Times New Roman)
+ *   - color: inherit            — band-level color stays in charge
+ *   - font-size / line-height / font-weight — explicit token application
+ *
+ * Standalone-friendly: like the other bands, .title consumes section vars
+ * directly so it works inside or outside a SectionHeader / Section parent.
+ */
+.title {
+  margin: 0;
+  font-family: inherit;
+  color: inherit;
+  font-size: var(--prismui-section-title-font-size);
+  line-height: var(--prismui-section-title-line-height);
+  font-weight: var(--prismui-section-title-font-weight);
+}
+
 /* ── Content band ────────────────────────────────────────────────────────── */
 
 .content {
@@ -65,6 +94,32 @@
    * flex-column root, so header / footer stay pinned. Adjacent bands
    * keep their intrinsic sizes. */
   flex: 1 1 auto;
+}
+
+/*
+ * v1.0.9 · partial-band rhythm correction.
+ *
+ * The v1.1 default rhythm (header.pY=lg / content.pY=none / footer.pY=lg)
+ * relies on the Header AND Footer bands to supply the top / bottom
+ * vertical breathing room. When either band is omitted (e.g. a Section
+ * with only Header + Content, or only Content) the Content band would
+ * otherwise abut the panel edge with zero padding — a visual regression.
+ *
+ * `.content:first-child` borrows the absent Header's paddingY for the
+ * top edge; `.content:last-child` borrows the absent Footer's paddingY
+ * for the bottom edge. When Content is the SOLE child both selectors
+ * apply and Content gets symmetrical 24/24 padding by default — the
+ * sensible standalone behaviour.
+ *
+ * This pattern only applies to Content because Header and Footer always
+ * own their full top+bottom paddingY by construction.
+ */
+.content:first-child {
+  padding-block-start: var(--prismui-section-header-padding-y);
+}
+
+.content:last-child {
+  padding-block-end: var(--prismui-section-footer-padding-y);
 }
 
 /* ── Footer band ─────────────────────────────────────────────────────────── */
