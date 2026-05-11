@@ -15,8 +15,8 @@
  *                         + useDismissModal + Section(surface="overlay") +
  *                         ARIA wiring + size + onKeyDownCapture (决策 11)
  *   Modal.Title         — SectionTitle(component="h2", id=titleId) alias (决策 4)
- *   Modal.Description   — <p id={descriptionId}> (决策 16 不对称处理 · 待
- *                         Stage-15 v1.0.10 SectionDescription 反推后切换)
+ *   Modal.Description   — SectionDescription(component="p", id=descriptionId)
+ *                         alias (决策 16 · v1.0.10 反推已落 · ADR-007 留口闭环)
  *   Modal.Close         — asChild · 注入 onClick / type=button
  *
  * Observable invariants locked: OV-MODAL-1 (trap focus 三子合约 · Phase 7a) +
@@ -29,7 +29,7 @@ import * as React from 'react';
 import { Portal } from '../../core/overlay/portal';
 import { Presence } from '../../core/transition/presence';
 import { useControllableState } from '../../hooks/use-controllable-state';
-import { Section, SectionTitle } from '../../primitives/section';
+import { Section, SectionDescription, SectionTitle } from '../../primitives/section';
 
 import { ModalContext, useModalContext, type ModalRole } from './modal-context';
 import { useFocusTrap } from './_internal/useFocusTrap';
@@ -126,6 +126,13 @@ export interface ModalTitleProps {
 
 export interface ModalDescriptionProps
   extends Omit<React.HTMLAttributes<HTMLParagraphElement>, 'children'> {
+  /**
+   * Element override · 默认 `<p>` (Stage-15 SectionDescription 默认)。
+   * Parity with `ModalTitleProps.component`. Use a different element when
+   * the description must sit inline (`component="span"`) or host block
+   * children (`component="div"`).
+   */
+  component?: React.ElementType;
   /** asChild · v1 reserved · no-op + dev warning。 */
   asChild?: boolean;
   children?: React.ReactNode;
@@ -250,10 +257,18 @@ const ModalTrigger = React.forwardRef<HTMLElement, ModalTriggerProps>(
       ctx.setOpen(!ctx.open);
     };
 
+    // WAI-ARIA 1.2 §6.6.7 · valid aria-haspopup tokens are
+    //   false | true | menu | listbox | tree | grid | dialog
+    // `alertdialog` is **not** a valid haspopup value (axe a11y rule
+    // `aria-valid-attr-value` flags it as critical · ADR-007 决策 16 ARIA
+    // wiring · 议题 E B 路径 role 转发只走 `role` attribute). We always emit
+    // `'dialog'` here regardless of `ctx.role`; the `role="alertdialog"`
+    // semantic is conveyed through `Modal.Content[role]` and the Trigger's
+    // `aria-controls` pointing at that content.
     const merged: Record<string, unknown> = {
       ...childProps,
       id: childProps.id ?? ctx.triggerId,
-      'aria-haspopup': childProps['aria-haspopup'] ?? ctx.role,
+      'aria-haspopup': childProps['aria-haspopup'] ?? 'dialog',
       'aria-expanded': ctx.open,
       'aria-controls': ctx.contentId,
       'data-state': ctx.open ? 'open' : 'closed',
@@ -544,12 +559,19 @@ const ModalTitle = React.forwardRef<HTMLElement, ModalTitleProps>(
 ModalTitle.displayName = 'Modal.Title';
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Modal.Description — <p id={descriptionId}> (议题 E 决策 16 · 不对称处理)
+// Modal.Description — SectionDescription alias (议题 E 决策 16 · v1.0.10 反推已落)
 // ─────────────────────────────────────────────────────────────────────────────
+//
+// Until Stage-15 v1.0.10 landed the SectionDescription primitive, this slot
+// rendered a raw `<p>` (议题 E 决策 16 "不对称处理 · 待反推后切换"). v1.0.10
+// closed that 留口 (`@/packages/core/src/primitives/section/SectionDescription`)
+// so we now alias it identically to how Modal.Title aliases SectionTitle —
+// single source of truth for the `.description` margin reset, re-usable
+// outside Modal in any Section / Card surface.
 
-const ModalDescription = React.forwardRef<HTMLParagraphElement, ModalDescriptionProps>(
+const ModalDescription = React.forwardRef<HTMLElement, ModalDescriptionProps>(
   function ModalDescription(props, forwardedRef) {
-    const { asChild, children, id, ...rest } = props;
+    const { asChild, children, component, id, className, ...rest } = props;
     const ctx = useModalContext('Modal.Description');
 
     if (process.env.NODE_ENV !== 'production' && asChild === true) {
@@ -557,16 +579,20 @@ const ModalDescription = React.forwardRef<HTMLParagraphElement, ModalDescription
       console.error(
         '[PrismUI Modal] Modal.Description `asChild` is reserved for v1.x. ' +
           'v1 ships without an asChild path; this prop is currently a no-op. ' +
-          'Stage-15 SectionDescription primitive is pending v1.0.10 反推 ' +
-          '(ADR-007 议题 E 决策 16) — once landed, this component will alias ' +
-          'SectionDescription identically to Modal.Title aliasing SectionTitle.',
+          'Use `component={Element}` to override the rendered tag (default <p>).',
       );
     }
 
     return (
-      <p {...rest} ref={forwardedRef} id={id ?? ctx.descriptionId}>
+      <SectionDescription
+        {...rest}
+        ref={forwardedRef as React.Ref<HTMLElement>}
+        component={component ?? 'p'}
+        id={id ?? ctx.descriptionId}
+        className={className}
+      >
         {children}
-      </p>
+      </SectionDescription>
     );
   },
 );

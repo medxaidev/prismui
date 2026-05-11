@@ -1,12 +1,14 @@
 /**
  * Stage-15 Phase 3 · Section primitives namespace barrel.
  *
- * Exports (Phase 3 · COMPLETE · v1.0.8 added SectionTitle as 5th primitive):
- *   - Section        · ✅ landed (LY-SEC-1/2/3/4 · root slot · default <section>)
- *   - SectionHeader  · ✅ landed (LY-SEC-1/3 · header slot · default <header>)
- *   - SectionTitle   · ✅ landed (LY-SEC-1/3 · title slot · default <h2> · v1.0.8)
- *   - SectionContent · ✅ landed (LY-SEC-1/3 · content slot · default <div>)
- *   - SectionFooter  · ✅ landed (LY-SEC-1/3 · footer slot · default <footer>)
+ * Exports (Phase 3 · COMPLETE · v1.0.10 added SectionDescription as 6th primitive):
+ *   - Section            · ✅ landed (LY-SEC-1/2/3/4 · root slot · default <section>)
+ *   - SectionHeader      · ✅ landed (LY-SEC-1/3 · header slot · default <header>)
+ *   - SectionTitle       · ✅ landed (LY-SEC-1/3 · title slot · default <h2> · v1.0.8)
+ *   - SectionDescription · ✅ landed (LY-SEC-1/3 · description slot · default <p> ·
+ *                                      v1.0.10 · reverse-derived from Modal Phase 7c)
+ *   - SectionContent     · ✅ landed (LY-SEC-1/3 · content slot · default <div>)
+ *   - SectionFooter      · ✅ landed (LY-SEC-1/3 · footer slot · default <footer>)
  *
  * Contract (ADR-006 §6.1 + LY-SEC-5): this barrel MUST NOT re-export
  * `SectionPrimitive` — that helper is private to keep the v1 contract
@@ -20,6 +22,14 @@
  * Surface component, with `surface="overlay"` instead of the default
  * `"page"`. Section landing closes the v1 token-consumer story for
  * `theme.layout.section.*` (Stage-14 SZ-SEC-1).
+ *
+ * The v1.0.10 addition (SectionDescription) is the **reverse-derivation
+ * landing**: Modal Phase 7c (ADR-007 议题 E 决策 16) demanded a primitive
+ * for `aria-describedby` flow-text so `Modal.Description` could alias it
+ * identically to how `Modal.Title` aliases SectionTitle. Promoting the
+ * <p> margin reset to the primitive layer keeps the rule honest (single
+ * source of truth · re-usable outside Modal · no Modal-internal CSS
+ * special-case).
  */
 
 export { Section, SECTION_DEFAULT_SURFACE } from './Section';
@@ -38,6 +48,13 @@ export type {
   SectionTitleProps,
   SectionTitleComponent,
 } from './SectionTitle';
+
+export { SectionDescription } from './SectionDescription';
+export type {
+  SectionDescriptionOwnProps,
+  SectionDescriptionProps,
+  SectionDescriptionComponent,
+} from './SectionDescription';
 
 export { SectionContent } from './SectionContent';
 export type {

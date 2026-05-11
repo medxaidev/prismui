@@ -28,12 +28,12 @@ import classes from './Section.module.css';
  *
  * ## Slot model
  *
- * One of `'root' | 'header' | 'title' | 'content' | 'footer'`. Each slot
- * picks the corresponding CSS Module class — that is the SOLE structural
- * difference between the five resulting public primitives. Default
- * elements differ (chosen by each public wrapper · `<section>` /
- * `<header>` / `<h2>` / `<div>` / `<footer>`), but the styling and ref /
- * API pipeline are unified here.
+ * One of `'root' | 'header' | 'title' | 'description' | 'content' | 'footer'`.
+ * Each slot picks the corresponding CSS Module class — that is the SOLE
+ * structural difference between the six resulting public primitives.
+ * Default elements differ (chosen by each public wrapper · `<section>` /
+ * `<header>` / `<h2>` / `<p>` / `<div>` / `<footer>`), but the styling and
+ * ref / API pipeline are unified here.
  *
  * The `'title'` slot was added in v1.0.8 (Stage-15 Phase 3 visual review
  * audit · see ADR-005 v1.0.8 / review-log 2026-05-05 (b)) to close the
@@ -42,6 +42,14 @@ import classes from './Section.module.css';
  * (`<h2>` font-size 1.5em / font-weight 700) override band-level
  * inheritance unless the title element is explicitly typography-locked.
  * `<SectionTitle>` is the explicit lock · the canonical title slot.
+ *
+ * The `'description'` slot was added in v1.0.10 (Stage-15 reverse-
+ * derived from Modal Phase 7c · 议题 E 决策 16 · ADR-007 留口). Same
+ * motivation as `'title'`: the default `<p>` ships with `margin-block:
+ * 1em` which breaks Modal / Section band layouts. SectionDescription
+ * applies a minimal `.description` reset (`margin: 0` + `color: inherit`
+ * + `font-family: inherit`) — no new theme token is introduced; the
+ * description text inherits typography from its parent band.
  *
  * ## Surface model (LY-SEC-2)
  *
@@ -55,7 +63,7 @@ import classes from './Section.module.css';
  * header band).
  */
 
-export type SectionSlot = 'root' | 'header' | 'title' | 'content' | 'footer';
+export type SectionSlot = 'root' | 'header' | 'title' | 'description' | 'content' | 'footer';
 
 /**
  * Surface variant for the root slot. `'page'` is the default emitted
@@ -86,6 +94,7 @@ const SLOT_CLASS: Record<SectionSlot, string> = {
   root: classes.root,
   header: classes.header,
   title: classes.title,
+  description: classes.description,
   content: classes.content,
   footer: classes.footer,
 };
@@ -98,6 +107,12 @@ const SLOT_DEFAULT_ELEMENT: Record<SectionSlot, ElementType> = {
   // `<h3>` for outline correctness, or non-heading semantics like a
   // toolbar label) override via the polymorphic `component` prop.
   title: 'h2',
+  // `<p>` is the canonical Modal/Dialog/Section description element
+  // (matches WAI-ARIA dialog pattern `aria-describedby` consumer
+  // expectation: a flow-text paragraph). Reverse-derived from Modal
+  // Phase 7c (议题 E 决策 16 · v1.0.10) so `Modal.Description` can alias
+  // SectionDescription identically to Modal.Title aliasing SectionTitle.
+  description: 'p',
   content: 'div',
   footer: 'footer',
 };

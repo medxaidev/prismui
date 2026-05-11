@@ -24,11 +24,12 @@ import * as SectionBarrel from './index';
 const h = React.createElement;
 
 describe('primitives/section · barrel contract (ADR-006 §6.1 whitelist)', () => {
-  it('exports exactly the Phase 3 value-level symbols (COMPLETE · v1.0.8 · 5 primitives)', () => {
+  it('exports exactly the Phase 3 value-level symbols (COMPLETE · v1.0.10 · 6 primitives)', () => {
     const expected = [
       'Section',
       'SECTION_DEFAULT_SURFACE',
       'SectionContent',
+      'SectionDescription',
       'SectionFooter',
       'SectionHeader',
       'SectionTitle',
@@ -37,11 +38,12 @@ describe('primitives/section · barrel contract (ADR-006 §6.1 whitelist)', () =
     expect(actual).toEqual(expected);
   });
 
-  it('all 5 public Section primitives are callable (forwardRef shape)', () => {
+  it('all 6 public Section primitives are callable (forwardRef shape)', () => {
     for (const name of [
       'Section',
       'SectionHeader',
       'SectionTitle',
+      'SectionDescription',
       'SectionContent',
       'SectionFooter',
     ] as const) {
@@ -69,6 +71,9 @@ describe('primitives/section · barrel contract (ADR-006 §6.1 whitelist)', () =
       | import('./index').SectionTitleOwnProps
       | import('./index').SectionTitleProps
       | import('./index').SectionTitleComponent
+      | import('./index').SectionDescriptionOwnProps
+      | import('./index').SectionDescriptionProps
+      | import('./index').SectionDescriptionComponent
       | import('./index').SectionContentOwnProps
       | import('./index').SectionContentProps
       | import('./index').SectionContentComponent
@@ -127,13 +132,24 @@ describe('primitives/section · forbidden leak audit', () => {
 });
 
 describe('primitives/section · composition integration', () => {
-  it('renders the canonical 5-slot shape with correct semantic elements (v1.0.8)', () => {
-    const { Section, SectionHeader, SectionTitle, SectionContent, SectionFooter } =
-      SectionBarrel;
+  it('renders the canonical 6-slot shape with correct semantic elements (v1.0.10)', () => {
+    const {
+      Section,
+      SectionHeader,
+      SectionTitle,
+      SectionDescription,
+      SectionContent,
+      SectionFooter,
+    } = SectionBarrel;
     const tree = h(
       Section,
       null,
-      h(SectionHeader, null, h(SectionTitle, null, 'Title')),
+      h(
+        SectionHeader,
+        null,
+        h(SectionTitle, null, 'Title'),
+        h(SectionDescription, null, 'Subtitle text'),
+      ),
       h(SectionContent, null, h('p', null, 'Body')),
       h(SectionFooter, null, h('button', null, 'OK')),
     );
@@ -141,11 +157,18 @@ describe('primitives/section · composition integration', () => {
     const root = container.firstElementChild!;
     expect(root.tagName).toBe('SECTION');
     expect(root.getAttribute('data-surface')).toBe('page');
-    expect(root.querySelector('header')!.textContent).toBe('Title');
+    expect(root.querySelector('header')!.textContent).toBe('TitleSubtitle text');
     // SectionTitle renders <h2> as the canonical default — verifies the
     // 5th primitive composes inside SectionHeader and forwards the slot
-    // class without breaking the Header's 4-element composition.
+    // class without breaking the Header's composition.
     expect(root.querySelector('h2')!.textContent).toBe('Title');
+    // SectionDescription (6th primitive · v1.0.10) renders <p> by default
+    // and composes alongside SectionTitle inside SectionHeader.
+    const headerPs = Array.from(
+      root.querySelector('header')!.querySelectorAll('p'),
+    );
+    expect(headerPs.length).toBe(1);
+    expect(headerPs[0].textContent).toBe('Subtitle text');
     // First non-header / non-footer descendant <div> is the SectionContent.
     const contentDiv = Array.from(root.querySelectorAll('div')).find(
       (el) => el.textContent === 'Body',

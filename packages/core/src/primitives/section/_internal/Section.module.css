@@ -79,6 +79,39 @@
   font-weight: var(--prismui-section-title-font-weight);
 }
 
+/* ── Description slot (v1.0.10 · 6th public primitive · reverse-derived
+ *     from Modal Phase 7c · 议题 E 决策 16 · ADR-007 留口) ─────────────────── */
+
+/*
+ * `.description` is the explicit reset for SectionDescription (default <p>).
+ *
+ * Why a dedicated class on top of plain <p>: paragraph elements ship with
+ * browser default `margin-block: 1em` (≈ 16px top + 16px bottom) which
+ * breaks Modal / Section band layouts (extra vertical space between
+ * SectionTitle and SectionDescription · or between SectionDescription and
+ * SectionContent body). The reset:
+ *   - margin: 0           — neutralize default <p> margin-block
+ *   - font-family: inherit — match band typography (no Times New Roman
+ *                            fallback on engines without a custom UA stylesheet)
+ *   - color: inherit       — band-level color stays in charge
+ *
+ * Unlike `.title`, `.description` does **NOT** introduce new typography
+ * CSS vars in v1.0.10. Description text inherits the parent band's
+ * font-size / line-height / weight (typically the body / content
+ * typography, intentionally smaller and lighter than the title). If
+ * future visual review identifies a need for a dedicated description
+ * typography token chain, it will be added as a SECOND landing step
+ * (mirroring how `.title` got its triplet in v1.0.8).
+ *
+ * Standalone-friendly: like the other bands, .description works inside
+ * or outside a SectionHeader / Section parent.
+ */
+.description {
+  margin: 0;
+  font-family: inherit;
+  color: inherit;
+}
+
 /* ── Content band ────────────────────────────────────────────────────────── */
 
 .content {
