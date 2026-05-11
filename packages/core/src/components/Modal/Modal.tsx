@@ -34,6 +34,7 @@ import { Section, SectionTitle } from '../../primitives/section';
 import { ModalContext, useModalContext, type ModalRole } from './modal-context';
 import { useFocusTrap } from './_internal/useFocusTrap';
 import { ModalScrollLock } from './_internal/scrollLock';
+import { useStackingContextWarning } from './_internal/useStackingContextWarning';
 import { useDismissModal } from './useDismissModal';
 import classes from './Modal.module.css';
 
@@ -462,6 +463,15 @@ const ModalContentPanel = React.forwardRef<HTMLElement, ModalContentPanelProps>(
     useFocusTrap({
       active: ctx.open,
       containerRef: ctx.contentRef,
+    });
+
+    // PR-INTEROP-4 dev-mode anti-pattern warning (ADR-007 决策 20 · V2 path).
+    // Mounted here for the same reason as useFocusTrap: contentRef must be
+    // populated before the effect runs. The hook is a strict no-op in
+    // production (NODE_ENV gate inside · tree-shaken at build).
+    useStackingContextWarning({
+      active: ctx.open,
+      contentRef: ctx.contentRef,
     });
 
     const composedRef = composeRefs<HTMLElement>(ctx.contentRef, presenceRef);
