@@ -1,0 +1,131 @@
+/**
+ * Modal · default visual + motion module.
+ *
+ * Authority: ADR-007 决策 6 (LY-MODAL-2 size 5 档) + 决策 14 (PR-INTEROP-1
+ * motion token) + 决策 18 (LY-MODAL-3 backdrop 2 字段) + 决策 19 (LY-MODAL-4
+ * panel chrome 4 字段).
+ *
+ * **Phase 7c 数值已锁** (ADR-007 封版后第 2 实施 session):
+ *   · `theme.layout.modal.size.*`         = 320 / 480 / 640 / 880 / 1200 px
+ *   · `theme.layout.modal.backdrop.color` = rgba(0, 0, 0, 0.5)
+ *   · `theme.layout.modal.backdrop.blur`  = 'none'
+ *   · `theme.layout.modal.border`         = 'none'
+ *   · `theme.transition.modal.backdrop.duration` = 200ms (>= content · PR-INTEROP-1)
+ *   · `theme.transition.modal.content.duration`  = 200ms
+ *   · `theme.zIndex.modal`                = 1400 (emitted as --prismui-z-modal)
+ *
+ * CSS fallbacks mirror the locked defaults so Modal still renders if
+ * `<PrismUIProvider>` is absent (parity with Popover.module.css pattern).
+ *
+ * **不变量锁定**:
+ *   · `--prismui-z-modal`                      → backdrop + content 同档 (LY-MODAL-4)
+ *   · `--prismui-shadow-xl` / `--prismui-radius-lg` → panel chrome (LY-MODAL-4)
+ *   · `--prismui-modal-backdrop-color` / `-blur` → backdrop visual (LY-MODAL-3)
+ *   · `--prismui-modal-border`                 → panel border override (LY-MODAL-4)
+ *   · `--prismui-modal-backdrop-duration` / `-content-duration` (TR-MODAL-1 + PR-INTEROP-1)
+ *
+ * **Size variants** (决策 6 LY-MODAL-2):
+ *   · xs / sm / md (default) / lg / xl via `data-size` attribute
+ *   · numeric / string fallback via `style={{ width }}` at component layer
+ */
+
+/* ─────────────────────────────────────────────────────────────────────────
+ * Backdrop · OV-MODAL-3 独立 DOM child + LY-MODAL-3 visual
+ * ───────────────────────────────────────────────────────────────────────── */
+
+.backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: var(--prismui-z-modal, 1400);
+
+  background: var(--prismui-modal-backdrop-color, rgba(0, 0, 0, 0.5));
+  backdrop-filter: var(--prismui-modal-backdrop-blur, none);
+  -webkit-backdrop-filter: var(--prismui-modal-backdrop-blur, none);
+
+  transition:
+    opacity var(--prismui-modal-backdrop-duration, 200ms)
+            var(--prismui-ease-standard, cubic-bezier(0.4, 0, 0.2, 1));
+}
+
+.backdrop[data-state='entering'],
+.backdrop[data-state='exiting'] {
+  opacity: 0;
+}
+
+.backdrop[data-state='open'] {
+  opacity: 1;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+ * Content · panel chrome · LY-MODAL-4 (shadow / radius / border / z) +
+ * LY-MODAL-2 (size schema) + 议题 B 决策 4 (Section surface=overlay)
+ * ───────────────────────────────────────────────────────────────────────── */
+
+.content {
+  /* Positioning · centred fixed · viewport cap via max-* (LY-MODAL-2 SZ-MODAL-1) */
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: var(--prismui-z-modal, 1400); /* same band as backdrop · DOM order wins (决策 19) */
+
+  /* Viewport caps · prevent panel from exceeding viewport */
+  max-width: calc(100vw - 32px);
+  max-height: calc(100vh - 32px);
+
+  /* LY-MODAL-4 panel chrome · 4 字段 */
+  background: var(--prismui-surface-overlay, #ffffff);
+  color: var(--prismui-color-text, inherit);
+  box-shadow: var(--prismui-shadow-xl, -40px 40px 80px -8px rgba(0, 0, 0, 0.24));
+  border-radius: var(--prismui-radius-lg, 0.75rem);
+  border: var(--prismui-modal-border, none); /* LY-MODAL-4 默 'none' · token override */
+
+  outline: none; /* trap focus may put focus on content itself · don't show ring */
+  overflow: auto; /* internal content scroll · ModalScrollLock locks PAGE not content */
+
+  transition:
+    opacity var(--prismui-modal-content-duration, 200ms)
+            var(--prismui-ease-standard, cubic-bezier(0.4, 0, 0.2, 1)),
+    transform var(--prismui-modal-content-duration, 200ms)
+              var(--prismui-ease-standard, cubic-bezier(0.4, 0, 0.2, 1));
+}
+
+.content[data-state='entering'],
+.content[data-state='exiting'] {
+  opacity: 0;
+  transform: translate(-50%, -50%) scale(0.97);
+}
+
+.content[data-state='open'] {
+  opacity: 1;
+  transform: translate(-50%, -50%) scale(1);
+}
+
+/* Size variants · 决策 6 · 5 档 preset · Phase 7c locked (320/480/640/880/1200) */
+.content[data-size='xs'] {
+  width: var(--prismui-modal-size-xs, 320px);
+}
+.content[data-size='sm'] {
+  width: var(--prismui-modal-size-sm, 480px);
+}
+.content[data-size='md'] {
+  width: var(--prismui-modal-size-md, 640px);
+}
+.content[data-size='lg'] {
+  width: var(--prismui-modal-size-lg, 880px);
+}
+.content[data-size='xl'] {
+  width: var(--prismui-modal-size-xl, 1200px);
+}
+
+/* `full` not locked per 决策 6 — placeholder for v1.x. */
+
+/* Reduced-motion respect · cuts transitions to instant for users with
+   prefers-reduced-motion (PR-INTEROP-1 motion namespace + Phase 7c
+   responsibility · baseline behaviour set here). */
+@media (prefers-reduced-motion: reduce) {
+  .backdrop,
+  .content {
+    transition: none;
+  }
+}

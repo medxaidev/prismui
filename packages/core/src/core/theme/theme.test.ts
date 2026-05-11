@@ -417,6 +417,11 @@ describe('Theme System', () => {
             in: 'cubic-bezier(0.4, 0, 1, 1)',
             out: 'cubic-bezier(0, 0, 0.2, 1)',
           },
+          // Stage-11 Phase 7c · Modal motion (ADR-007 决策 14 · PR-INTEROP-1)
+          modal: {
+            backdrop: { duration: '200ms' },
+            content:  { duration: '200ms' },
+          },
         },
         size: {
           // Stage-14 Phase 3: SZ-COMP-1 三项公式输入字段（lineHeight / paddingY / borderY）
@@ -445,6 +450,7 @@ describe('Theme System', () => {
           color: 'var(--prismui-color-primary)',
         },
         // Stage-14 Phase 4 · Section Layout Tokens (SZ-SEC-1 / SZ-SEC-2 · v1.1)
+        // + Stage-11 Phase 7c · Modal Layout (ADR-007 决策 6 + 18-19)
         layout: {
           section: {
             paddingX: '1.5rem',
@@ -453,6 +459,11 @@ describe('Theme System', () => {
             header:  { align: 'center', justify: 'between', paddingY: '1.5rem' },
             footer:  { justify: 'end',                       paddingY: '1.5rem' },
             content: { scroll: 'auto',                       paddingY: '0px'    },
+          },
+          modal: {
+            size: { xs: '320px', sm: '480px', md: '640px', lg: '880px', xl: '1200px' },
+            backdrop: { color: 'rgba(0, 0, 0, 0.5)', blur: 'none' },
+            border: 'none',
           },
         },
         scale: 1,

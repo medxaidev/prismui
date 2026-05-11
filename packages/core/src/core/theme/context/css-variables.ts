@@ -255,6 +255,17 @@ export function selectPalette(
  * - --prismui-section-footer-justify                         (Flexbox literal)
  * - --prismui-section-content-scroll                         (overflow-y literal)
  *
+ * Stage-11 Phase 7c Modal Layout (10 vars · ADR-007 决策 6 + 18-19 + 14):
+ * - --prismui-modal-size-{xs|sm|md|lg|xl}   panel width preset (LY-MODAL-2)
+ * - --prismui-modal-backdrop-color          backdrop color (alpha-inclusive · LY-MODAL-3)
+ * - --prismui-modal-backdrop-blur           backdrop-filter value (LY-MODAL-3)
+ * - --prismui-modal-border                  panel border (LY-MODAL-4 · default 'none')
+ * - --prismui-modal-backdrop-duration       backdrop transition duration (TR-MODAL-1)
+ * - --prismui-modal-content-duration        content transition duration (TR-MODAL-1)
+ *
+ * Stage-11 Z-Index (OV-FLOAT-3 · 4 vars):
+ * - --prismui-z-{tooltip|popover|modal|toast}  numeric value mirrored from theme.zIndex
+ *
  * Focus ring (Stage 9 / a11y):
  * - --prismui-focus-ring-width   → outline width for :focus-visible
  * - --prismui-focus-ring-offset  → outline offset for :focus-visible
@@ -365,6 +376,17 @@ export function generateCSSVariables(
     vars[`--prismui-transition-${scale}`] =
       `var(--prismui-duration-${scale}) var(--prismui-ease-standard)`;
   }
+
+  // ── Modal motion (Stage-11 Phase 7c · ADR-007 决策 14) ──────────────────
+  // PR-INTEROP-1 second-layer token protection: both emitted so Modal.module.css
+  // can reference backdrop vs content durations independently. The invariant
+  // `backdrop >= content` is enforced as a DEV soft-check in `createTheme()`.
+  vars['--prismui-modal-backdrop-duration'] = String(
+    theme.transition.modal.backdrop.duration,
+  );
+  vars['--prismui-modal-content-duration'] = String(
+    theme.transition.modal.content.duration,
+  );
 
   // ── Typography ────────────────────────────────────────────────────────────
   for (const [scale, value] of Object.entries(theme.typography.fontSize)) {
@@ -482,6 +504,37 @@ export function generateCSSVariables(
 
   vars['--prismui-section-content-scroll'] =
     section.content.scroll === 'auto' ? 'auto' : 'visible';
+
+  // ── Stage-11 Phase 7c · Modal Layout (ADR-007 决策 6 + 18-19) ────────────
+  // Emits 8 variables from the `theme.layout.modal.*` namespace:
+  //   --prismui-modal-size-{xs|sm|md|lg|xl}   (5 · 决策 6 LY-MODAL-2)
+  //   --prismui-modal-backdrop-color           (决策 18 LY-MODAL-3 alpha-inclusive)
+  //   --prismui-modal-backdrop-blur            (决策 18 LY-MODAL-3 · default 'none')
+  //   --prismui-modal-border                   (决策 19 LY-MODAL-4 · default 'none')
+  //
+  // Not emitted here (consumed via existing global vars):
+  //   panel box-shadow → --prismui-shadow-xl   (决策 19 `theme.shadows.xl`)
+  //   panel radius     → --prismui-radius-lg   (决策 19 `theme.radius.lg`)
+  //   panel bg/color   → palette surface vars  (议题 B 决策 4 Section 消费)
+  //   z-index          → --prismui-z-modal     (emitted below · OV-FLOAT-3)
+  const modalLayout = theme.layout.modal;
+  for (const [key, value] of Object.entries(modalLayout.size)) {
+    vars[`--prismui-modal-size-${key}`] = String(value);
+  }
+  vars['--prismui-modal-backdrop-color'] = modalLayout.backdrop.color;
+  vars['--prismui-modal-backdrop-blur']  = modalLayout.backdrop.blur;
+  vars['--prismui-modal-border']         = modalLayout.border;
+
+  // ── Z-Index (Stage-11 OV-FLOAT-3 · Phase 7c extension) ──────────────────
+  // Emitted so CSS modules (Modal.module.css etc.) can consume via
+  // `var(--prismui-z-modal)`. Floating primitive still sources zIndex via
+  // JS (`useFloatingPosition({ zIndexLevel })` · inline style) because the
+  // vendor `useFloating` positioning API wants numeric value on `.floatingStyles`.
+  // The CSS-variable path and the JS path stay in sync (both read
+  // `theme.zIndex[key]`). See `floating-primitive.md` §5.2 + ADR-007 决策 19.
+  for (const [level, value] of Object.entries(theme.zIndex)) {
+    vars[`--prismui-z-${level}`] = String(value);
+  }
 
   // ── Focus Ring ────────────────────────────────────────────────────────────
   vars['--prismui-focus-ring-width'] = String(theme.focusRing.width);

@@ -58,6 +58,13 @@ export type {
 } from "./section.types";
 
 export type {
+  ModalLayoutToken,
+  ModalSizePreset,
+  ModalBackdropVisual,
+  ModalTransitionToken,
+} from "./modal.types";
+
+export type {
   SpacingValue,
   FontSizeValue,
   FontWeightValue,

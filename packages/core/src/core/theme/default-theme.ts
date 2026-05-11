@@ -174,6 +174,14 @@ export const defaultTheme: PrismUITheme = {
       in:       'cubic-bezier(0.4, 0, 1, 1)',
       out:      'cubic-bezier(0, 0, 0.2, 1)',
     },
+    // ── Modal motion (Stage-11 Phase 7c · ADR-007 决策 14 · PR-INTEROP-1) ──
+    // Invariant: backdrop.duration >= content.duration (enforced via DEV-mode
+    // soft-check warning in `createTheme()`). Equal values minimally satisfy
+    // the bound; users who customise MUST keep backdrop >= content.
+    modal: {
+      backdrop: { duration: '200ms' },
+      content:  { duration: '200ms' },
+    },
   },
 
   // ========== Size System ==========
@@ -249,6 +257,40 @@ export const defaultTheme: PrismUITheme = {
         // so any non-zero Content paddingY would produce redundant whitespace.
         paddingY: '0px', // spacing.none = 0
       },
+    },
+
+    // ========== Modal Layout (Stage-11 Phase 7c · ADR-007 决策 6 + 18-19) ==========
+    // Schema authority: `core/theme/types/modal.types.ts` + ADR-007.
+    //
+    // - `size.*` — 5-tier panel width preset (决策 6 LY-MODAL-2). Values are
+    //   the ROUND-0 §LY-MODAL-2 candidate set (320 / 480 / 640 / 880 / 1200)
+    //   phase-locked in Phase 7c. Intended distribution:
+    //     xs=320  — compact prompts / alert dialogs (single-line message + 2 actions)
+    //     sm=480  — standard form modal (login · 2-3 field signup)
+    //     md=640  — default · wider form modal (multi-column · tabbed content)
+    //     lg=880  — content-heavy modal (article preview · rich media picker)
+    //     xl=1200 — near-fullscreen composer (split-view editor · data grid)
+    //   `full` is NOT included per 决策 6 (v1 not-locked · defer to v1.x).
+    //
+    // - `backdrop.color` — black @ 50% alpha (决策 18 方案 α · alpha 折进 color).
+    //   Themes may override to adjust tint / alpha without touching component.
+    // - `backdrop.blur` — `'none'` default (决策 18 minimum-viable · blur
+    //   consumers opt-in via theme override).
+    // - `border` — `'none'` default (决策 19 LY-MODAL-4 · theme-override path
+    //   for styles that need visible border without className/asChild).
+    modal: {
+      size: {
+        xs: '320px',
+        sm: '480px',
+        md: '640px',
+        lg: '880px',
+        xl: '1200px',
+      },
+      backdrop: {
+        color: 'rgba(0, 0, 0, 0.5)',
+        blur:  'none',
+      },
+      border: 'none',
     },
   },
 

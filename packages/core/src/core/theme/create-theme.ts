@@ -113,6 +113,58 @@ function validateThemeComponents(theme: PrismUITheme): void {
   }
 }
 
+// ── validateModalTransition ────────────────────────────────────────────────
+// DEV-only: enforces ADR-007 PR-INTEROP-1 second-layer token protection
+// (议题 D 决策 14). The invariant `backdrop.duration >= content.duration`
+// prevents the exit-phase visual fracture where the backdrop fades out
+// faster than the panel, briefly exposing "naked" Modal content atop a
+// fully opaque page.
+//
+// The check is a runtime soft-check (not TypeScript compile-time) because
+// duration values are free-form CSS strings (`'200ms'` / `'0.2s'` / `'var(--x)'`)
+// not parseable at the type level. We parse ms / s / decimals and leave
+// variable references (`var(...)`) unchecked (user-theme var-aware paths
+// are intentionally trusted · upstream Stage-3 theme system can always
+// fully resolve them at render time).
+//
+// Latched once per theme object (WeakSet) so Storybook / HMR re-renders
+// don't spam the console.
+const _validatedModalTransition =
+  process.env.NODE_ENV !== 'production' ? new WeakSet<object>() : null;
+
+function parseDurationMs(value: string): number | null {
+  const trimmed = value.trim();
+  // Skip unknowable values (CSS var references, calc expressions etc.)
+  if (/^(var|calc|env)\(/i.test(trimmed)) return null;
+  const msMatch = trimmed.match(/^(\d+(?:\.\d+)?)ms$/);
+  if (msMatch) return Number.parseFloat(msMatch[1]!);
+  const sMatch = trimmed.match(/^(\d+(?:\.\d+)?)s$/);
+  if (sMatch) return Number.parseFloat(sMatch[1]!) * 1000;
+  return null;
+}
+
+function validateModalTransition(theme: PrismUITheme): void {
+  if (process.env.NODE_ENV === 'production') return;
+  if (_validatedModalTransition!.has(theme)) return;
+  _validatedModalTransition!.add(theme);
+
+  const modal = theme.transition?.modal;
+  if (!modal) return; // back-compat guard: older partial themes may omit
+  const backdropMs = parseDurationMs(modal.backdrop.duration);
+  const contentMs  = parseDurationMs(modal.content.duration);
+  if (backdropMs == null || contentMs == null) return;
+
+  if (backdropMs < contentMs) {
+    console.warn(
+      `[PrismUI] theme.transition.modal.backdrop.duration (${modal.backdrop.duration}) ` +
+      `is shorter than theme.transition.modal.content.duration (${modal.content.duration}). ` +
+      `This violates ADR-007 决策 14 PR-INTEROP-1 (backdrop.duration >= content.duration). ` +
+      `During the exit transition, the backdrop will fade out faster than the Modal panel, ` +
+      `causing a brief visual fracture where content sits on a fully opaque page.`,
+    );
+  }
+}
+
 // ── createTheme ────────────────────────────────────────────────────────────
 // Always uses deepMerge — no shallow copy branch.
 // Guarantees: returned theme shares NO internal object references with defaultTheme.
@@ -130,5 +182,6 @@ export function createTheme<
     (overrides ?? {}) as DeepPartial<PrismUITheme<C, S>>,
   );
   validateThemeComponents(theme as unknown as PrismUITheme);
+  validateModalTransition(theme as unknown as PrismUITheme);
   return theme;
 }

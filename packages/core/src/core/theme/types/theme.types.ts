@@ -29,6 +29,7 @@ import type { PrismUIPalette, TextRoleName, TextRoleRef } from "./palette.types"
 import type { PrismuiSizeTokens } from "../../size/types";
 import type { PrismuiStateTokens } from "../../state/types";
 import type { SectionLayoutToken } from "./section.types";
+import type { ModalLayoutToken, ModalTransitionToken } from "./modal.types";
 import type { FeedbackFactory } from "../../feedback";
 
 /**
@@ -181,6 +182,12 @@ export interface PrismUITheme<
   transition: {
     duration: Record<TransitionDurationScale, string>;
     easing: Record<TransitionEasingScale, string>;
+    /**
+     * Modal motion tokens (Stage-11 Phase 7c · ADR-007 决策 14 · PR-INTEROP-1
+     * 第 2 层 token 保护). `backdrop.duration >= content.duration` invariant
+     * enforced at `createTheme()` via DEV-mode soft-check warning.
+     */
+    modal: ModalTransitionToken;
   };
   size: PrismuiSizeTokens;
   state: PrismuiStateTokens;
@@ -203,6 +210,13 @@ export interface PrismUITheme<
    */
   layout: {
     section: SectionLayoutToken;
+    /**
+     * Modal layout + chrome tokens (Stage-11 Phase 7c · ADR-007 决策 6 + 18-19).
+     *
+     * Schema: 5 size preset + 2 backdrop visual (color / blur) + 1 border.
+     * Consumed by Modal.module.css via `--prismui-modal-*` CSS variables.
+     */
+    modal: ModalLayoutToken;
   };
   /**
    * Focus Ring tokens.

@@ -372,6 +372,7 @@ describe("generateCSSVariables", () => {
     const themeBetween = {
       ...defaultTheme,
       layout: {
+        ...defaultTheme.layout,
         section: {
           ...defaultTheme.layout.section,
           footer: { ...defaultTheme.layout.section.footer, justify: "between" as const },
@@ -381,6 +382,7 @@ describe("generateCSSVariables", () => {
     const themeStart = {
       ...defaultTheme,
       layout: {
+        ...defaultTheme.layout,
         section: {
           ...defaultTheme.layout.section,
           footer: { ...defaultTheme.layout.section.footer, justify: "start" as const },
@@ -397,6 +399,7 @@ describe("generateCSSVariables", () => {
     const themeNever = {
       ...defaultTheme,
       layout: {
+        ...defaultTheme.layout,
         section: {
           ...defaultTheme.layout.section,
           content: { ...defaultTheme.layout.section.content, scroll: "never" as const },
@@ -411,6 +414,7 @@ describe("generateCSSVariables", () => {
     const themeStart = {
       ...defaultTheme,
       layout: {
+        ...defaultTheme.layout,
         section: {
           ...defaultTheme.layout.section,
           header: { ...defaultTheme.layout.section.header, align: "start" as const },
