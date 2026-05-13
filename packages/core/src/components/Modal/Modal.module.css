@@ -31,7 +31,27 @@
 
 /* ─────────────────────────────────────────────────────────────────────────
  * Backdrop · OV-MODAL-3 独立 DOM child + LY-MODAL-3 visual
+ *
+ * Motion via `@keyframes` (not bare `transition`) is REQUIRED because Modal
+ * has no post-mount inline-style mutator (unlike Popover, where Floating UI
+ * writes `transform` after first paint and the property change auto-triggers
+ * the CSS transition + `transitionend` event). With pure `transition`, the
+ * element mounts at `data-state="entering"` opacity 0 with no preceding
+ * state to interpolate from — `transitionend` never fires and Stage-12
+ * Presence stays in `entering` forever. `@keyframes` animations fire
+ * `animationend` reliably on first paint, advancing Presence to `open`.
+ * (Same pattern used by Radix UI Dialog.)
  * ───────────────────────────────────────────────────────────────────────── */
+
+@keyframes prismui-modal-backdrop-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes prismui-modal-backdrop-out {
+  from { opacity: 1; }
+  to   { opacity: 0; }
+}
 
 .backdrop {
   position: fixed;
@@ -41,15 +61,20 @@
   background: var(--prismui-modal-backdrop-color, rgba(0, 0, 0, 0.5));
   backdrop-filter: var(--prismui-modal-backdrop-blur, none);
   -webkit-backdrop-filter: var(--prismui-modal-backdrop-blur, none);
-
-  transition:
-    opacity var(--prismui-modal-backdrop-duration, 200ms)
-            var(--prismui-ease-standard, cubic-bezier(0.4, 0, 0.2, 1));
 }
 
-.backdrop[data-state='entering'],
+.backdrop[data-state='entering'] {
+  animation: prismui-modal-backdrop-in
+             var(--prismui-modal-backdrop-duration, 200ms)
+             var(--prismui-ease-standard, cubic-bezier(0.4, 0, 0.2, 1))
+             both;
+}
+
 .backdrop[data-state='exiting'] {
-  opacity: 0;
+  animation: prismui-modal-backdrop-out
+             var(--prismui-modal-backdrop-duration, 200ms)
+             var(--prismui-ease-standard, cubic-bezier(0.4, 0, 0.2, 1))
+             both;
 }
 
 .backdrop[data-state='open'] {
@@ -61,13 +86,32 @@
  * LY-MODAL-2 (size schema) + 议题 B 决策 4 (Section surface=overlay)
  * ───────────────────────────────────────────────────────────────────────── */
 
+@keyframes prismui-modal-content-in {
+  from { opacity: 0; transform: translate(-50%, -50%) scale(0.97); }
+  to   { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+}
+
+@keyframes prismui-modal-content-out {
+  from { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+  to   { opacity: 0; transform: translate(-50%, -50%) scale(0.97); }
+}
+
 .content {
   /* Positioning · centred fixed · viewport cap via max-* (LY-MODAL-2 SZ-MODAL-1) */
   position: fixed;
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  z-index: var(--prismui-z-modal, 1400); /* same band as backdrop · DOM order wins (决策 19) */
+  /* z-index = backdrop + 1 · explicit lift above backdrop (Phase 7c · v1.0.11
+     hot-fix). ADR-007 决策 19 originally specified "same band · DOM order
+     wins", but React 19 portal commit ordering does NOT guarantee JSX-order
+     → body-append-order mapping when Content has additional wrapping
+     (`<ModalScrollLock>` from `react-remove-scroll` adds wrapper layers
+     that shift Content's portal flush relative to Backdrop's). Empirically
+     Content was committing FIRST in some renders, putting Backdrop after
+     it in DOM and (with same z-index) painting backdrop ON TOP of the
+     panel. Adding `+1` removes the stacking dependency on commit order. */
+  z-index: calc(var(--prismui-z-modal, 1400) + 1);
 
   /* Viewport caps · prevent panel from exceeding viewport */
   max-width: calc(100vw - 32px);
@@ -82,23 +126,24 @@
 
   outline: none; /* trap focus may put focus on content itself · don't show ring */
   overflow: auto; /* internal content scroll · ModalScrollLock locks PAGE not content */
-
-  transition:
-    opacity var(--prismui-modal-content-duration, 200ms)
-            var(--prismui-ease-standard, cubic-bezier(0.4, 0, 0.2, 1)),
-    transform var(--prismui-modal-content-duration, 200ms)
-              var(--prismui-ease-standard, cubic-bezier(0.4, 0, 0.2, 1));
 }
 
-.content[data-state='entering'],
+.content[data-state='entering'] {
+  animation: prismui-modal-content-in
+             var(--prismui-modal-content-duration, 200ms)
+             var(--prismui-ease-standard, cubic-bezier(0.4, 0, 0.2, 1))
+             both;
+}
+
 .content[data-state='exiting'] {
-  opacity: 0;
-  transform: translate(-50%, -50%) scale(0.97);
+  animation: prismui-modal-content-out
+             var(--prismui-modal-content-duration, 200ms)
+             var(--prismui-ease-standard, cubic-bezier(0.4, 0, 0.2, 1))
+             both;
 }
 
 .content[data-state='open'] {
   opacity: 1;
-  transform: translate(-50%, -50%) scale(1);
 }
 
 /* Size variants · 决策 6 · 5 档 preset · Phase 7c locked (320/480/640/880/1200) */
@@ -124,8 +169,10 @@
    prefers-reduced-motion (PR-INTEROP-1 motion namespace + Phase 7c
    responsibility · baseline behaviour set here). */
 @media (prefers-reduced-motion: reduce) {
-  .backdrop,
-  .content {
-    transition: none;
+  .backdrop[data-state='entering'],
+  .backdrop[data-state='exiting'],
+  .content[data-state='entering'],
+  .content[data-state='exiting'] {
+    animation-duration: 1ms; /* near-zero so animationend still fires */
   }
 }

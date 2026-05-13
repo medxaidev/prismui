@@ -1,0 +1,18 @@
+﻿node.exe : npm warn Expanding --ci to --cidr. This will stop working in the next major version of npm.
+所在位置 C:\Users\86185\AppData\Roaming\npm\npm.ps1:24 字符: 5
++     & "node$exe"  "$basedir/node_modules/npm/bin/npm-cli.js" $args
++     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (npm warn Expand...version of npm.:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+
+> prismui@0.0.1 storybook
+> storybook dev -p 6006
+
+
+[90m鈹?[39m  storybook v10.3.4
+[?25l[90m鈹?[39m
+[36m鈼?[39m  Port 6006 is not available.
+[0m[36m鈹?[39m[0m  [2mWould you like to run Storybook on port 6007 instead?[22m
+[36m鈹?[39m  [32m鈼?[39m Yes [2m/[22m [2m鈼?[22m [2mNo[22m
+[36m鈹?[39m
