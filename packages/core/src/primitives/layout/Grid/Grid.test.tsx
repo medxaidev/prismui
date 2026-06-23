@@ -127,7 +127,11 @@ describe('Grid · LY-GRID-3 rowGap / columnGap', () => {
 
 // ── LY-GRID-4 · DEV rejection of responsive / invalid values ────────────────
 
-describe('Grid · LY-GRID-4 responsive rejection', () => {
+describe('Grid · LY-GRID-4 (Stage-16 amended-by) responsive columns', () => {
+  // LY-GRID-4 was amended-by ADR-008 v0.2 decision 14: object-form
+  // responsive `columns` is now ACCEPTED for the v1 locked enablement
+  // set. The DEV warn surface narrows to malformed values only
+  // (non-primitive entries inside the responsive map, out-of-range numbers).
   let warnSpy: ReturnType<typeof vi.spyOn>;
 
   beforeEach(() => {
@@ -137,22 +141,50 @@ describe('Grid · LY-GRID-4 responsive rejection', () => {
     warnSpy.mockRestore();
   });
 
-  it('DEV warns when columns is an object (responsive attempt)', () => {
-    // Forced-through via `as unknown` to simulate a user bypassing the
-    // TS compile-time rejection of object columns.
-    const responsive = { base: 1, md: 2 } as unknown as number;
-    render(<Grid columns={responsive}>x</Grid>);
-    expect(warnSpy).toHaveBeenCalledTimes(1);
-    expect(warnSpy.mock.calls[0]?.[0]).toMatch(/Responsive object values/);
-    expect(warnSpy.mock.calls[0]?.[0]).toMatch(/LY-GRID-4/);
+  it('does NOT warn for a valid responsive object (Stage-16 unlock)', () => {
+    render(<Grid columns={{ xs: 1, md: 2, lg: 4 }}>x</Grid>);
+    expect(warnSpy).not.toHaveBeenCalled();
   });
 
-  it('DEV warn does NOT set data-columns / CSS var for object values', () => {
-    const responsive = { base: 1 } as unknown as number;
-    const { container } = render(<Grid columns={responsive}>x</Grid>);
+  it('emits data-columns-responsive (NOT data-columns) for object form', () => {
+    const { container } = render(<Grid columns={{ xs: 1, md: 4 }}>x</Grid>);
     const el = container.firstElementChild as HTMLElement;
+    expect(el.hasAttribute('data-columns-responsive')).toBe(true);
     expect(el.hasAttribute('data-columns')).toBe(false);
-    expect(el.style.getPropertyValue('--prismui-grid-template-columns')).toBe('');
+  });
+
+  it('emits per-breakpoint --prismui-grid-template-columns-<bp> CSS vars', () => {
+    const { container } = render(
+      <Grid columns={{ xs: 1, md: 4, xl: '200px 1fr' }}>x</Grid>,
+    );
+    const el = container.firstElementChild as HTMLElement;
+    expect(el.style.getPropertyValue('--prismui-grid-template-columns-xs'))
+      .toBe('repeat(1, minmax(0, 1fr))');
+    expect(el.style.getPropertyValue('--prismui-grid-template-columns-md'))
+      .toBe('repeat(4, minmax(0, 1fr))');
+    expect(el.style.getPropertyValue('--prismui-grid-template-columns-xl'))
+      .toBe('200px 1fr');
+    // Unprovided breakpoints MUST NOT be set (CSS var() fallback chain
+    // in the module handles inheritance, not the JS layer).
+    expect(el.style.getPropertyValue('--prismui-grid-template-columns-sm'))
+      .toBe('');
+    expect(el.style.getPropertyValue('--prismui-grid-template-columns-lg'))
+      .toBe('');
+    expect(el.style.getPropertyValue('--prismui-grid-template-columns'))
+      .toBe('');
+  });
+
+  it('DEV warns when a responsive object contains a non-primitive entry', () => {
+    const malformed = { xs: 1, md: { nested: 1 } } as unknown as Record<string, number>;
+    render(<Grid columns={malformed}>x</Grid>);
+    expect(warnSpy).toHaveBeenCalledTimes(1);
+    expect(warnSpy.mock.calls[0]?.[0]).toMatch(/non-primitive entry/);
+  });
+
+  it('DEV warns when a responsive object contains an out-of-range number', () => {
+    render(<Grid columns={{ xs: 1, md: 99 }}>x</Grid>);
+    expect(warnSpy).toHaveBeenCalledTimes(1);
+    expect(warnSpy.mock.calls[0]?.[0]).toMatch(/outside the soft 1–12 integer range/);
   });
 });
 
@@ -236,5 +268,67 @@ describe('Grid · LY-CORE-7 user APIs + style merge', () => {
     expect(el.id).toBe('g1');
     expect(el.className).toMatch(/\bapp-grid\b/);
     expect(el.getAttribute('aria-label')).toBe('cards');
+  });
+});
+
+// ─── Stage-16 Phase 2 · responsive `gap` / `rowGap` / `columnGap` ───────────
+describe('Grid · Stage-16 responsive gap family', () => {
+  it('emits per-breakpoint data-gap-<bp> for a responsive gap', () => {
+    const { container } = render(
+      <Grid gap={{ xs: 'sm', md: 'lg' }}>x</Grid>,
+    );
+    const el = container.firstElementChild as HTMLElement;
+    expect(el.getAttribute('data-gap-xs')).toBe('sm');
+    expect(el.getAttribute('data-gap-md')).toBe('lg');
+    expect(el.getAttribute('data-gap')).toBeNull();
+  });
+
+  it('emits per-breakpoint data-row-gap-<bp> + data-column-gap-<bp>', () => {
+    const { container } = render(
+      <Grid rowGap={{ xs: 'sm', lg: 'xl' }} columnGap={{ md: '2xl' }}>x</Grid>,
+    );
+    const el = container.firstElementChild as HTMLElement;
+    expect(el.getAttribute('data-row-gap-xs')).toBe('sm');
+    expect(el.getAttribute('data-row-gap-lg')).toBe('xl');
+    expect(el.getAttribute('data-column-gap-md')).toBe('2xl');
+    expect(el.getAttribute('data-row-gap')).toBeNull();
+    expect(el.getAttribute('data-column-gap')).toBeNull();
+  });
+
+  it('falls back to scalar default data-gap="md" when gap is empty object', () => {
+    const { container } = render(<Grid gap={{}}>x</Grid>);
+    const el = container.firstElementChild as HTMLElement;
+    expect(el.getAttribute('data-gap')).toBe('md');
+  });
+
+  it('mixes responsive columns + scalar gap + responsive rowGap', () => {
+    const { container } = render(
+      <Grid columns={{ xs: 1, md: 4 }} gap="lg" rowGap={{ md: 'xl' }}>x</Grid>,
+    );
+    const el = container.firstElementChild as HTMLElement;
+    expect(el.hasAttribute('data-columns-responsive')).toBe(true);
+    expect(el.getAttribute('data-gap')).toBe('lg');
+    expect(el.getAttribute('data-row-gap-md')).toBe('xl');
+    expect(el.style.getPropertyValue('--prismui-grid-template-columns-md'))
+      .toBe('repeat(4, minmax(0, 1fr))');
+  });
+});
+
+describe('Grid · Stage-16 RES-RT-1 boundary', () => {
+  it('inline style for responsive columns contains ONLY CSS custom properties', () => {
+    const { container } = render(
+      <Grid columns={{ xs: 1, md: 4 }}>x</Grid>,
+    );
+    const el = container.firstElementChild as HTMLElement;
+    for (let i = 0; i < el.style.length; i++) {
+      const name = el.style.item(i);
+      expect(name.startsWith('--')).toBe(true);
+    }
+  });
+
+  it('does not inject inline style for responsive gap (data-attr only path)', () => {
+    const { container } = render(<Grid gap={{ xs: 'sm', md: 'lg' }}>x</Grid>);
+    const el = container.firstElementChild as HTMLElement;
+    expect(el.getAttribute('style')).toBeNull();
   });
 });

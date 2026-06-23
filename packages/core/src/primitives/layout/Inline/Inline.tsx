@@ -4,8 +4,23 @@ import type {
   PolymorphicProps,
   PolymorphicRef,
 } from '../../../core/polymorphic/types';
+import {
+  type ResponsiveValue,
+  BREAKPOINT_ORDER,
+  isResponsiveObject,
+  resolveResponsiveDataAttrs,
+} from '../../../core/responsive';
 import type { SpacingScale } from '../../../core/theme/types/token-scale.types';
 import classes from './Inline.module.css';
+
+type InlineAlign = 'start' | 'center' | 'end' | 'stretch' | 'baseline';
+type InlineJustify =
+  | 'start'
+  | 'center'
+  | 'end'
+  | 'between'
+  | 'around'
+  | 'evenly';
 
 /**
  * `<Inline>` — Stage-15 Layout primitive · horizontal flex container.
@@ -18,27 +33,40 @@ import classes from './Inline.module.css';
  *     vertically center their items) · `justify-content: flex-start` ·
  *     `flex-wrap: nowrap`. Cannot be flipped to column via prop. Use
  *     `<Stack>` for vertical layouts.
- *   - **LY-INLINE-2** — `gap` accepts ONLY the 8 `SpacingScale` keys (default
- *     `'md'`); `align` / `justify` are literal-union surfaces matching Stack;
- *     `wrap` is a boolean toggle for `flex-wrap` (default `false`).
+ *   - **LY-INLINE-2** — `gap` accepts the 8 `SpacingScale` keys (default
+ *     `'md'`) OR a responsive map; `align` / `justify` are literal-union
+ *     surfaces matching Stack and accept the same scalar/responsive form;
+ *     `wrap` is a boolean toggle for `flex-wrap` (default `false`) and
+ *     also accepts a responsive `Partial<Record<BreakpointScale, boolean>>`
+ *     map (Stage-16 · ADR-008 v0.2 decision 2 c.1 · wrap unlocked because
+ *     row layout commonly toggles wrap between mobile / tablet / desktop).
  *   - **LY-BOX-3** (reverse) — Inline does NOT accept `padding*` / `margin`
  *     props at the TS level. Compose: `<Box padding="md"><Inline>…</Inline></Box>`.
  *   - **LY-CORE-1** — zero-runtime style; CSS Module + attribute selectors
- *     deliver every visual.
+ *     (under `@media (min-width: <bp>)` blocks for the responsive form)
+ *     deliver every visual. RES-RT-1 holds: no inline style, no runtime
+ *     CSS rule generation.
  *   - ~~**LY-INLINE-3**~~ — Inline ↔ Stack symmetry observation; demoted to
  *     a §10.2 design-algebra meta-statement in Round 1 (not a guarded
  *     invariant, but the prop surface here intentionally mirrors Stack
  *     except for `wrap`).
  */
 export interface InlineOwnProps {
-  /** Gap between children. `SpacingScale` key only. Default `'md'`. */
-  gap?: SpacingScale;
-  /** Cross-axis (vertical) alignment. Default `center` (LY-INLINE-1). */
-  align?: 'start' | 'center' | 'end' | 'stretch' | 'baseline';
-  /** Main-axis (horizontal) distribution. Default `flex-start`. */
-  justify?: 'start' | 'center' | 'end' | 'between' | 'around' | 'evenly';
-  /** Allow children to wrap onto multiple lines. Default `false` (nowrap). */
-  wrap?: boolean;
+  /**
+   * Gap between children. `SpacingScale` scalar OR responsive map.
+   * Default `'md'` applies only when `gap` is `undefined`.
+   */
+  gap?: ResponsiveValue<SpacingScale>;
+  /** Cross-axis (vertical) alignment. Scalar or responsive map. */
+  align?: ResponsiveValue<InlineAlign>;
+  /** Main-axis (horizontal) distribution. Scalar or responsive map. */
+  justify?: ResponsiveValue<InlineJustify>;
+  /**
+   * Allow children to wrap onto multiple lines. Default `false` (nowrap).
+   * Accepts a boolean scalar OR a `Partial<Record<BreakpointScale, boolean>>`
+   * responsive map (e.g. `{ xs: true, lg: false }`).
+   */
+  wrap?: ResponsiveValue<boolean>;
 }
 
 /** Full Inline prop type (polymorphic, defaults to `'div'`). */
@@ -66,30 +94,51 @@ function mergeClassName(userClassName: string | undefined): string {
   return userClassName ? `${classes.root} ${userClassName}` : classes.root;
 }
 
+/**
+ * Resolve `wrap` (boolean | responsive boolean) into a data-attr map.
+ *
+ *   - undefined         → `{}` (CSS default `flex-wrap: nowrap` applies)
+ *   - `true`            → `{ 'data-wrap': '' }` (valueless boolean attr,
+ *                          matches native `disabled` / `hidden` idiom)
+ *   - `false`           → `{}` (omit; default state)
+ *   - responsive object → `{ 'data-wrap-<bp>': 'true' | 'false' }` per
+ *                          provided breakpoint. Both states are emitted
+ *                          as strings (`'true'`/`'false'`) so each `@media`
+ *                          block can override the previous tier in either
+ *                          direction (e.g. `{ xs: true, lg: false }` needs
+ *                          `flex-wrap: nowrap` at lg to override xs).
+ */
+function resolveWrapAttrs(
+  wrap: ResponsiveValue<boolean> | undefined,
+): Record<string, string> {
+  if (wrap === undefined) return {};
+  if (typeof wrap === 'boolean') return wrap ? { 'data-wrap': '' } : {};
+  if (!isResponsiveObject(wrap)) return {};
+  const attrs: Record<string, string> = {};
+  for (const bp of BREAKPOINT_ORDER) {
+    const v = wrap[bp];
+    if (v !== undefined) attrs[`data-wrap-${bp}`] = v ? 'true' : 'false';
+  }
+  return attrs;
+}
+
 const InlineImpl = React.forwardRef<unknown, InlineImplProps>(function Inline(props, ref) {
-  const {
-    component,
-    className,
-    gap = INLINE_DEFAULT_GAP,
-    align,
-    justify,
-    wrap,
-    ...rest
-  } = props;
+  const { component, className, gap, align, justify, wrap, ...rest } = props;
 
   const Element = (component ?? 'div') as React.ElementType;
 
-  // Attribute strategy (mirrors Stack):
-  //   - data-gap is ALWAYS emitted (honest default value visible in DevTools).
-  //   - data-align / data-justify are emitted only when user overrides.
-  //   - data-wrap is emitted as a *valueless* boolean attribute when wrap=true,
-  //     paired with the `[data-wrap]` selector in CSS — matches the native
-  //     HTML boolean-attribute idiom (`disabled` / `hidden`) instead of
-  //     stringifying `"true"`/`"false"` into the DOM.
-  const dataAttrs: Record<string, string> = { 'data-gap': gap };
-  if (align !== undefined) dataAttrs['data-align'] = align;
-  if (justify !== undefined) dataAttrs['data-justify'] = justify;
-  if (wrap === true) dataAttrs['data-wrap'] = '';
+  // gap is ALWAYS emitted (honest default visible in DevTools); responsive
+  // empty object falls through to scalar default. align/justify silent
+  // when unset (no scalar fallback). wrap uses its own boolean-aware helper.
+  const gapAttrs = resolveResponsiveDataAttrs<SpacingScale>('gap', gap);
+  const dataAttrs: Record<string, string> = {
+    ...(Object.keys(gapAttrs).length > 0
+      ? gapAttrs
+      : { 'data-gap': INLINE_DEFAULT_GAP }),
+    ...resolveResponsiveDataAttrs<InlineAlign>('align', align),
+    ...resolveResponsiveDataAttrs<InlineJustify>('justify', justify),
+    ...resolveWrapAttrs(wrap),
+  };
 
   return (
     <Element

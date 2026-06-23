@@ -126,3 +126,95 @@ describe('Stack · LY-CORE-7 user APIs flow through', () => {
     expect(el.style.background).toBe('red');
   });
 });
+
+// ─── Stage-16 Phase 2 · responsive `gap` / `align` / `justify` ──────────────
+describe('Stack · Stage-16 responsive (gap)', () => {
+  it('emits per-breakpoint data-gap-<bp> for a responsive object', () => {
+    const { container } = render(
+      <Stack gap={{ xs: 'sm', md: 'lg' }}>x</Stack>,
+    );
+    const el = container.firstElementChild as HTMLElement;
+    expect(el.getAttribute('data-gap-xs')).toBe('sm');
+    expect(el.getAttribute('data-gap-md')).toBe('lg');
+    expect(el.getAttribute('data-gap-sm')).toBeNull();
+    expect(el.getAttribute('data-gap-lg')).toBeNull();
+    expect(el.getAttribute('data-gap-xl')).toBeNull();
+    expect(el.getAttribute('data-gap')).toBeNull();
+  });
+
+  it('supports all 5 breakpoints in a single gap object', () => {
+    const { container } = render(
+      <Stack gap={{ xs: 'xs', sm: 'sm', md: 'md', lg: 'lg', xl: 'xl' }}>x</Stack>,
+    );
+    const el = container.firstElementChild as HTMLElement;
+    for (const bp of ['xs', 'sm', 'md', 'lg', 'xl']) {
+      expect(el.getAttribute(`data-gap-${bp}`)).toBe(bp);
+    }
+    expect(el.getAttribute('data-gap')).toBeNull();
+  });
+
+  it('falls back to scalar default data-gap="md" when an empty object is provided', () => {
+    // Empty object means "no responsive overrides"; scalar default applies.
+    const { container } = render(<Stack gap={{}}>x</Stack>);
+    const el = container.firstElementChild as HTMLElement;
+    expect(el.getAttribute('data-gap')).toBe('md');
+  });
+});
+
+describe('Stack · Stage-16 responsive (align / justify)', () => {
+  it('emits per-breakpoint data-align-<bp> for a responsive object', () => {
+    const { container } = render(
+      <Stack align={{ xs: 'start', md: 'center' }}>x</Stack>,
+    );
+    const el = container.firstElementChild as HTMLElement;
+    expect(el.getAttribute('data-align-xs')).toBe('start');
+    expect(el.getAttribute('data-align-md')).toBe('center');
+    expect(el.getAttribute('data-align')).toBeNull();
+  });
+
+  it('emits per-breakpoint data-justify-<bp> for a responsive object', () => {
+    const { container } = render(
+      <Stack justify={{ sm: 'between', lg: 'evenly' }}>x</Stack>,
+    );
+    const el = container.firstElementChild as HTMLElement;
+    expect(el.getAttribute('data-justify-sm')).toBe('between');
+    expect(el.getAttribute('data-justify-lg')).toBe('evenly');
+    expect(el.getAttribute('data-justify')).toBeNull();
+  });
+
+  it('does not emit any align attr when undefined (LY-CORE-5 default-omission)', () => {
+    const { container } = render(<Stack>x</Stack>);
+    const el = container.firstElementChild as HTMLElement;
+    expect(el.getAttribute('data-align')).toBeNull();
+    for (const bp of ['xs', 'sm', 'md', 'lg', 'xl']) {
+      expect(el.getAttribute(`data-align-${bp}`)).toBeNull();
+      expect(el.getAttribute(`data-justify-${bp}`)).toBeNull();
+    }
+  });
+
+  it('mixes scalar gap + responsive align without cross-talk', () => {
+    const { container } = render(
+      <Stack gap="lg" align={{ md: 'center' }}>x</Stack>,
+    );
+    const el = container.firstElementChild as HTMLElement;
+    expect(el.getAttribute('data-gap')).toBe('lg');
+    expect(el.getAttribute('data-gap-md')).toBeNull();
+    expect(el.getAttribute('data-align-md')).toBe('center');
+    expect(el.getAttribute('data-align')).toBeNull();
+  });
+});
+
+describe('Stack · Stage-16 RES-RT-1 boundary', () => {
+  it('does not inject inline style for responsive props (data-attr only path)', () => {
+    const { container } = render(
+      <Stack gap={{ xs: 'sm', md: 'lg' }} align={{ md: 'center' }}>
+        x
+      </Stack>,
+    );
+    const el = container.firstElementChild as HTMLElement;
+    // Stack's responsive channel is pure data-attr emission. No inline
+    // style should appear. (Compare to Grid `columns` responsive which
+    // legitimately uses CSS custom properties on `style`.)
+    expect(el.getAttribute('style')).toBeNull();
+  });
+});

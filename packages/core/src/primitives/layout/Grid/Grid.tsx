@@ -4,6 +4,12 @@ import type {
   PolymorphicProps,
   PolymorphicRef,
 } from '../../../core/polymorphic/types';
+import {
+  type ResponsiveValue,
+  isResponsiveObject,
+  resolveResponsiveCssVars,
+  resolveResponsiveDataAttrs,
+} from '../../../core/responsive';
 import type { SpacingScale } from '../../../core/theme/types/token-scale.types';
 import classes from './Grid.module.css';
 
@@ -15,37 +21,46 @@ import classes from './Grid.module.css';
  *   - **LY-GRID-1** — `display: grid` semantic lock; consumes native CSS
  *     Grid (no JS row/column calculation).
  *   - **LY-GRID-2** — `columns` accepts either a `number` (1-12, soft
- *     range; expanded to `repeat(<n>, minmax(0, 1fr))`) or a `string`
- *     (any CSS `grid-template-columns` template, e.g. `"200px 1fr auto"`).
- *     Delivered via the `--prismui-grid-template-columns` CSS custom
- *     property on the `style` attribute — the only Stage-15 primitive
- *     that does this (value space is open-ended, attribute selectors
- *     cannot enumerate it). Prismui's own `style` injection is limited
- *     to this one custom property; user `style` still merges on top.
+ *     range; expanded to `repeat(<n>, minmax(0, 1fr))`), a `string`
+ *     (any CSS `grid-template-columns` template, e.g. `"200px 1fr auto"`),
+ *     or a `Partial<Record<BreakpointScale, number | string>>` responsive
+ *     map (Stage-16 · ADR-008 v0.2 decision 2 c.2 · unlocked by Phase 1
+ *     PoC 门槛-I).
+ *     - Scalar form is delivered via the `--prismui-grid-template-columns`
+ *       CSS custom property (`data-columns` presence marker activates
+ *       the rule).
+ *     - Responsive form is delivered as per-breakpoint custom properties
+ *       (`--prismui-grid-template-columns-<bp>`) with `data-columns-responsive`
+ *       marker; the CSS Module declares static `@media` blocks each reading
+ *       the corresponding var with a `var()` fallback chain to the next
+ *       lower tier (mobile-first cascade · RES-BP-3).
+ *     This is the only Stage-15/16 primitive that injects CSS values via
+ *     the `style` attribute; user `style` still merges on top.
  *   - **LY-GRID-3** — `gap` (default `'md'`) / `rowGap` / `columnGap`
- *     accept `SpacingScale`. `rowGap` / `columnGap` beat `gap` per CSS
- *     cascade order.
- *   - **LY-GRID-4** — object-form responsive values (`columns={{ base: 1,
- *     md: 2 }}`) are rejected at the TS level AND emit a one-time
- *     DEV `console.warn` if forced through via `as unknown`. v1.x
- *     backlog trigger: ≥ 3 real business scenarios + SSR hydration
- *     scheme stable.
+ *     accept `SpacingScale` scalar OR responsive map. `rowGap` /
+ *     `columnGap` beat `gap` per CSS cascade order at every breakpoint.
+ *   - **LY-GRID-4** (Stage-16 amended-by) — the original v1 rejection of
+ *     object-form `columns` is RESCINDED for the v1 locked enablement
+ *     set per ADR-008 v0.2 decision 14. The DEV warn now only fires for
+ *     non-numeric / non-string / non-plain-object values (e.g. arrays,
+ *     functions, NaN), or for numbers outside the soft 1–12 integer range.
  *   - **LY-BOX-3** (reverse) — Grid does NOT accept `padding*` /
  *     `margin` props. Compose: `<Box padding="md"><Grid>…</Grid></Box>`.
  */
 export interface GridOwnProps {
   /**
-   * Number of equal-width columns (1-12 soft range · expanded to
-   * `repeat(<n>, minmax(0, 1fr))`), OR a raw `grid-template-columns`
-   * template string (e.g. `"200px 1fr auto"`).
+   * Column track template. Accepts:
+   *   - `number` (1–12 soft range → `repeat(<n>, minmax(0, 1fr))`)
+   *   - `string` (raw `grid-template-columns` template)
+   *   - `Partial<Record<BreakpointScale, number | string>>` per-breakpoint map
    */
-  columns?: number | string;
-  /** Gap between tracks. `SpacingScale` key. Default `'md'`. */
-  gap?: SpacingScale;
-  /** Row gap. Overrides `gap` on the row axis when set. */
-  rowGap?: SpacingScale;
-  /** Column gap. Overrides `gap` on the column axis when set. */
-  columnGap?: SpacingScale;
+  columns?: ResponsiveValue<number | string>;
+  /** Gap between tracks. `SpacingScale` scalar or responsive map. Default `'md'`. */
+  gap?: ResponsiveValue<SpacingScale>;
+  /** Row gap. Overrides `gap` on the row axis. Scalar or responsive map. */
+  rowGap?: ResponsiveValue<SpacingScale>;
+  /** Column gap. Overrides `gap` on the column axis. Scalar or responsive map. */
+  columnGap?: ResponsiveValue<SpacingScale>;
 }
 
 /** Full Grid prop type (polymorphic, defaults to `'div'`). */
@@ -73,13 +88,10 @@ function mergeClassName(userClassName: string | undefined): string {
 }
 
 /**
- * Resolve `columns` into a CSS `grid-template-columns` value.
+ * Resolve a single `columns` value into a CSS `grid-template-columns`
+ * declaration string.
  *   - number → `repeat(<n>, minmax(0, 1fr))`
  *   - string → passthrough
- *
- * Invalid numbers (NaN / non-integer / < 1 / > 12) still produce a
- * CSS value (the browser will reject invalid values per the grammar),
- * but Grid.tsx emits a DEV warn before reaching this point.
  */
 function resolveColumnsTemplate(columns: number | string): string {
   if (typeof columns === 'number') {
@@ -88,13 +100,17 @@ function resolveColumnsTemplate(columns: number | string): string {
   return columns;
 }
 
+function isValidColumnsScalar(value: unknown): value is number | string {
+  return typeof value === 'string' || typeof value === 'number';
+}
+
 const GridImpl = React.forwardRef<unknown, GridImplProps>(function Grid(props, ref) {
   const {
     component,
     className,
     style: userStyle,
     columns,
-    gap = GRID_DEFAULT_GAP,
+    gap,
     rowGap,
     columnGap,
     ...rest
@@ -102,28 +118,44 @@ const GridImpl = React.forwardRef<unknown, GridImplProps>(function Grid(props, r
 
   const Element = (component ?? 'div') as React.ElementType;
 
-  // ── LY-GRID-4 DEV rejection of responsive / invalid column values ──────
+  // ── LY-GRID-4 (amended-by Stage-16) DEV warn for malformed columns ──────
   /* eslint-disable react-hooks/rules-of-hooks */
   if (process.env.NODE_ENV !== 'production') {
     const warnedRef = React.useRef<string | null>(null);
     let offense: string | null = null;
 
     if (columns !== undefined && columns !== null) {
-      // Object / array forms mean the user is attempting a responsive
-      // value ({ base: 1, md: 2 }) or a typo — both rejected in v1.
-      if (typeof columns === 'object') {
+      const responsive = isResponsiveObject(columns);
+      if (!responsive && !isValidColumnsScalar(columns)) {
         offense =
-          '<Grid> received a non-primitive `columns` value. Responsive ' +
-          'object values (`{ base: 1, md: 2 }`) are OUT OF SCOPE in v1 ' +
-          '(LY-GRID-4 / LY-CORE-6). Use a single `number` or ' +
-          '`grid-template-columns` string instead.';
-      } else if (typeof columns === 'number') {
+          '<Grid> received an invalid `columns` value. Expected a number, ' +
+          'a CSS `grid-template-columns` template string, or a ' +
+          '`Partial<Record<BreakpointScale, number | string>>` responsive map.';
+      } else if (!responsive && typeof columns === 'number') {
         if (!Number.isInteger(columns) || columns < 1 || columns > 12) {
           offense =
             `<Grid columns={${columns}}> is outside the soft 1–12 integer range ` +
             '(LY-GRID-2). The value will still flow into ' +
             '`repeat(<n>, minmax(0, 1fr))`, but consider passing a ' +
             '`grid-template-columns` string for arbitrary layouts.';
+        }
+      } else if (responsive) {
+        // Validate per-breakpoint scalar entries; reject nested objects /
+        // out-of-range numbers with the same rules as the scalar case.
+        for (const key of Object.keys(columns) as string[]) {
+          const v = (columns as Record<string, unknown>)[key];
+          if (v === undefined) continue;
+          if (!isValidColumnsScalar(v)) {
+            offense =
+              `<Grid columns={{ ${key}: … }}> contains a non-primitive entry. ` +
+              'Each breakpoint value must be a number or template string.';
+            break;
+          }
+          if (typeof v === 'number' && (!Number.isInteger(v) || v < 1 || v > 12)) {
+            offense =
+              `<Grid columns={{ ${key}: ${v} }}> is outside the soft 1–12 integer range.`;
+            break;
+          }
         }
       }
     }
@@ -136,36 +168,49 @@ const GridImpl = React.forwardRef<unknown, GridImplProps>(function Grid(props, r
   }
   /* eslint-enable react-hooks/rules-of-hooks */
 
-  // ── columns → CSS custom property ──────────────────────────────────────
-  // The ONLY place a Stage-15 primitive injects a CSS value via the
-  // `style` attribute. Justified because the value space is open-ended
-  // (any CSS `grid-template-columns` template) and cannot be enumerated
-  // by data-attr selectors. The rule in Grid.module.css reads this
-  // custom property, keeping the declaration of *what* to style in CSS
-  // (LY-CORE-1 spirit: "CSS var is the styling channel").
-  const style: React.CSSProperties =
-    columns !== undefined && typeof columns !== 'object'
-      ? ({
-          ...userStyle,
-          // Cast: React.CSSProperties narrows known properties; custom
-          // properties (starting with `--`) are perfectly valid but
-          // require a cast.
-          ['--prismui-grid-template-columns' as string]: resolveColumnsTemplate(
-            columns as number | string,
-          ),
-        } as React.CSSProperties)
-      : (userStyle ?? {});
+  // ── columns → inline CSS custom properties (open-ended value channel) ───
+  // Two emission paths:
+  //   - scalar  → `--prismui-grid-template-columns` + `data-columns` marker
+  //   - object  → `--prismui-grid-template-columns-<bp>` + `data-columns-responsive`
+  //               marker; CSS Module declares static `@media` blocks with
+  //               `var()` fallback chains.
+  // RES-RT-1 holds: the `style` attribute carries CSS VAR VALUES only;
+  // CSS rule sets stay static at build time.
+  const columnsResponsive = isResponsiveObject(columns);
+  const columnsScalar = !columnsResponsive && isValidColumnsScalar(columns);
+  const columnsVars: Record<string, string> =
+    columnsScalar || columnsResponsive
+      ? resolveResponsiveCssVars<number | string>(
+          'prismui-grid-template-columns',
+          columns as ResponsiveValue<number | string>,
+          resolveColumnsTemplate,
+        )
+      : {};
+
+  const style: React.CSSProperties = {
+    ...userStyle,
+    ...(columnsVars as React.CSSProperties),
+  };
 
   // ── data-attrs ─────────────────────────────────────────────────────────
-  // data-columns is a valueless marker (presence-only) that activates the
-  // custom-property rule in CSS — same boolean-attribute idiom as
-  // Inline's `data-wrap`.
-  const dataAttrs: Record<string, string> = { 'data-gap': gap };
-  if (columns !== undefined && typeof columns !== 'object') {
+  // gap is ALWAYS emitted (LY-GRID-3 honest default); responsive object
+  // form falls through to the scalar default if empty (matches Stack).
+  // rowGap/columnGap are silent unless set (no scalar fallback).
+  // data-columns / data-columns-responsive are presence-only markers that
+  // activate the corresponding CSS rule blocks.
+  const gapAttrs = resolveResponsiveDataAttrs<SpacingScale>('gap', gap);
+  const dataAttrs: Record<string, string> = {
+    ...(Object.keys(gapAttrs).length > 0
+      ? gapAttrs
+      : { 'data-gap': GRID_DEFAULT_GAP }),
+    ...resolveResponsiveDataAttrs<SpacingScale>('row-gap', rowGap),
+    ...resolveResponsiveDataAttrs<SpacingScale>('column-gap', columnGap),
+  };
+  if (columnsResponsive) {
+    dataAttrs['data-columns-responsive'] = '';
+  } else if (columnsScalar) {
     dataAttrs['data-columns'] = '';
   }
-  if (rowGap !== undefined) dataAttrs['data-row-gap'] = rowGap;
-  if (columnGap !== undefined) dataAttrs['data-column-gap'] = columnGap;
 
   return (
     <Element

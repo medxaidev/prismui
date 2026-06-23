@@ -1,29 +1,31 @@
 /*
  * Stage-15 Phase 1 · Stack primitive
+ * Stage-16 Phase 2 · responsive `gap` / `align` / `justify` (ADR-008 v0.2 c.1)
  *
  * Contracts:
  *   - LY-STACK-1 vertical flex semantic lock · cannot flip to row via prop
  *                (use <Inline> for row layouts)
- *   - LY-STACK-2 `gap` prop · SpacingScale 8 keys · default 'md'
- *   - LY-STACK-3 `align` / `justify` literal unions · TS-guarded surface
- *   - LY-BOX-3   Stack does NOT accept padding/margin (TS-level absence
- *                in Stack's own prop type — composition: <Box padding="md">
- *                <Stack>…</Stack></Box>)
+ *   - LY-STACK-2 `gap` prop · SpacingScale 8 keys · default 'md' · accepts
+ *                scalar OR Partial<Record<BreakpointScale, SpacingScale>>
+ *   - LY-STACK-3 `align` / `justify` literal unions · same scalar/responsive
+ *                union as `gap` (ADR-008 c.1)
+ *   - LY-BOX-3   Stack does NOT accept padding/margin
  *   - LY-CORE-1  zero runtime style · everything via CSS-var lookup
  *   - LY-CORE-5  data-attr DOM-bearing · attribute selectors consume scale
+ *   - RES-SSR-1  static @media + data-attr; no runtime CSS rule generation
+ *   - RES-BP-3   mobile-first cascade · 5 breakpoints (xs/sm/md/lg/xl)
  *
- * Default lock — written into `.root` directly:
- *   display: flex
- *   flex-direction: column
- *   align-items: stretch              (LY-STACK-1)
- *   justify-content: flex-start       (LY-STACK-1)
- *   gap: var(--prismui-spacing-md)    (LY-STACK-2 default)
+ * Default lock — written into `.root`:
+ *   display: flex · flex-direction: column · align-items: stretch
+ *   justify-content: flex-start · gap: var(--prismui-spacing-md)
  *
- * Override surface — opt-in via data-attrs:
- *   data-gap="<scale>"      → overrides default md (always emitted by Stack.tsx
- *                              for honesty; the rule below covers all 8 keys)
- *   data-align="<align>"    → overrides stretch (only emitted when user supplies)
- *   data-justify="<just>"   → overrides flex-start (only emitted when user supplies)
+ * Override surface — opt-in via data-attrs (mobile-first cascade):
+ *   Scalar (no breakpoint suffix) — applies at every viewport:
+ *     data-gap="<scale>"        | data-align="<align>" | data-justify="<just>"
+ *   Responsive (per-breakpoint suffix) — applies at viewport ≥ breakpoint:
+ *     data-gap-<bp>="<scale>"   | data-align-<bp>="<align>" | data-justify-<bp>="<just>"
+ *   Where <bp> ∈ { xs (576), sm (768), md (992), lg (1200), xl (1400) }.
+ *   Sub-xs viewports (< 576 px) fall back to the `.root` default.
  */
 
 .root {
@@ -34,7 +36,7 @@
   gap: var(--prismui-spacing-md);
 }
 
-/* ── gap (SpacingScale · always emitted by component) ─────────────────────── */
+/* ── gap (SpacingScale · scalar · always emitted by component) ────────────── */
 .root[data-gap='none'] { gap: var(--prismui-spacing-none); }
 .root[data-gap='xs']   { gap: var(--prismui-spacing-xs); }
 .root[data-gap='sm']   { gap: var(--prismui-spacing-sm); }
@@ -44,17 +46,143 @@
 .root[data-gap='2xl']  { gap: var(--prismui-spacing-2xl); }
 .root[data-gap='3xl']  { gap: var(--prismui-spacing-3xl); }
 
-/* ── align-items (5 literal options · only emitted on override) ───────────── */
+/* ── align-items (scalar · only emitted on override) ──────────────────────── */
 .root[data-align='start']    { align-items: flex-start; }
 .root[data-align='center']   { align-items: center; }
 .root[data-align='end']      { align-items: flex-end; }
 .root[data-align='stretch']  { align-items: stretch; }
 .root[data-align='baseline'] { align-items: baseline; }
 
-/* ── justify-content (6 literal options · only emitted on override) ───────── */
+/* ── justify-content (scalar · only emitted on override) ──────────────────── */
 .root[data-justify='start']   { justify-content: flex-start; }
 .root[data-justify='center']  { justify-content: center; }
 .root[data-justify='end']     { justify-content: flex-end; }
 .root[data-justify='between'] { justify-content: space-between; }
 .root[data-justify='around']  { justify-content: space-around; }
 .root[data-justify='evenly']  { justify-content: space-evenly; }
+
+/* ────────────────────────────────────────────────────────────────────────────
+ * Responsive cascade · mobile-first @media (min-width: <bp>)
+ * Each block enumerates {data-gap, data-align, data-justify}-<bp> selectors.
+ * Breakpoints (px): xs=576 · sm=768 · md=992 · lg=1200 · xl=1400
+ * ────────────────────────────────────────────────────────────────────────── */
+
+@media (min-width: 576px) {
+  .root[data-gap-xs='none'] { gap: var(--prismui-spacing-none); }
+  .root[data-gap-xs='xs']   { gap: var(--prismui-spacing-xs); }
+  .root[data-gap-xs='sm']   { gap: var(--prismui-spacing-sm); }
+  .root[data-gap-xs='md']   { gap: var(--prismui-spacing-md); }
+  .root[data-gap-xs='lg']   { gap: var(--prismui-spacing-lg); }
+  .root[data-gap-xs='xl']   { gap: var(--prismui-spacing-xl); }
+  .root[data-gap-xs='2xl']  { gap: var(--prismui-spacing-2xl); }
+  .root[data-gap-xs='3xl']  { gap: var(--prismui-spacing-3xl); }
+
+  .root[data-align-xs='start']    { align-items: flex-start; }
+  .root[data-align-xs='center']   { align-items: center; }
+  .root[data-align-xs='end']      { align-items: flex-end; }
+  .root[data-align-xs='stretch']  { align-items: stretch; }
+  .root[data-align-xs='baseline'] { align-items: baseline; }
+
+  .root[data-justify-xs='start']   { justify-content: flex-start; }
+  .root[data-justify-xs='center']  { justify-content: center; }
+  .root[data-justify-xs='end']     { justify-content: flex-end; }
+  .root[data-justify-xs='between'] { justify-content: space-between; }
+  .root[data-justify-xs='around']  { justify-content: space-around; }
+  .root[data-justify-xs='evenly']  { justify-content: space-evenly; }
+}
+
+@media (min-width: 768px) {
+  .root[data-gap-sm='none'] { gap: var(--prismui-spacing-none); }
+  .root[data-gap-sm='xs']   { gap: var(--prismui-spacing-xs); }
+  .root[data-gap-sm='sm']   { gap: var(--prismui-spacing-sm); }
+  .root[data-gap-sm='md']   { gap: var(--prismui-spacing-md); }
+  .root[data-gap-sm='lg']   { gap: var(--prismui-spacing-lg); }
+  .root[data-gap-sm='xl']   { gap: var(--prismui-spacing-xl); }
+  .root[data-gap-sm='2xl']  { gap: var(--prismui-spacing-2xl); }
+  .root[data-gap-sm='3xl']  { gap: var(--prismui-spacing-3xl); }
+
+  .root[data-align-sm='start']    { align-items: flex-start; }
+  .root[data-align-sm='center']   { align-items: center; }
+  .root[data-align-sm='end']      { align-items: flex-end; }
+  .root[data-align-sm='stretch']  { align-items: stretch; }
+  .root[data-align-sm='baseline'] { align-items: baseline; }
+
+  .root[data-justify-sm='start']   { justify-content: flex-start; }
+  .root[data-justify-sm='center']  { justify-content: center; }
+  .root[data-justify-sm='end']     { justify-content: flex-end; }
+  .root[data-justify-sm='between'] { justify-content: space-between; }
+  .root[data-justify-sm='around']  { justify-content: space-around; }
+  .root[data-justify-sm='evenly']  { justify-content: space-evenly; }
+}
+
+@media (min-width: 992px) {
+  .root[data-gap-md='none'] { gap: var(--prismui-spacing-none); }
+  .root[data-gap-md='xs']   { gap: var(--prismui-spacing-xs); }
+  .root[data-gap-md='sm']   { gap: var(--prismui-spacing-sm); }
+  .root[data-gap-md='md']   { gap: var(--prismui-spacing-md); }
+  .root[data-gap-md='lg']   { gap: var(--prismui-spacing-lg); }
+  .root[data-gap-md='xl']   { gap: var(--prismui-spacing-xl); }
+  .root[data-gap-md='2xl']  { gap: var(--prismui-spacing-2xl); }
+  .root[data-gap-md='3xl']  { gap: var(--prismui-spacing-3xl); }
+
+  .root[data-align-md='start']    { align-items: flex-start; }
+  .root[data-align-md='center']   { align-items: center; }
+  .root[data-align-md='end']      { align-items: flex-end; }
+  .root[data-align-md='stretch']  { align-items: stretch; }
+  .root[data-align-md='baseline'] { align-items: baseline; }
+
+  .root[data-justify-md='start']   { justify-content: flex-start; }
+  .root[data-justify-md='center']  { justify-content: center; }
+  .root[data-justify-md='end']     { justify-content: flex-end; }
+  .root[data-justify-md='between'] { justify-content: space-between; }
+  .root[data-justify-md='around']  { justify-content: space-around; }
+  .root[data-justify-md='evenly']  { justify-content: space-evenly; }
+}
+
+@media (min-width: 1200px) {
+  .root[data-gap-lg='none'] { gap: var(--prismui-spacing-none); }
+  .root[data-gap-lg='xs']   { gap: var(--prismui-spacing-xs); }
+  .root[data-gap-lg='sm']   { gap: var(--prismui-spacing-sm); }
+  .root[data-gap-lg='md']   { gap: var(--prismui-spacing-md); }
+  .root[data-gap-lg='lg']   { gap: var(--prismui-spacing-lg); }
+  .root[data-gap-lg='xl']   { gap: var(--prismui-spacing-xl); }
+  .root[data-gap-lg='2xl']  { gap: var(--prismui-spacing-2xl); }
+  .root[data-gap-lg='3xl']  { gap: var(--prismui-spacing-3xl); }
+
+  .root[data-align-lg='start']    { align-items: flex-start; }
+  .root[data-align-lg='center']   { align-items: center; }
+  .root[data-align-lg='end']      { align-items: flex-end; }
+  .root[data-align-lg='stretch']  { align-items: stretch; }
+  .root[data-align-lg='baseline'] { align-items: baseline; }
+
+  .root[data-justify-lg='start']   { justify-content: flex-start; }
+  .root[data-justify-lg='center']  { justify-content: center; }
+  .root[data-justify-lg='end']     { justify-content: flex-end; }
+  .root[data-justify-lg='between'] { justify-content: space-between; }
+  .root[data-justify-lg='around']  { justify-content: space-around; }
+  .root[data-justify-lg='evenly']  { justify-content: space-evenly; }
+}
+
+@media (min-width: 1400px) {
+  .root[data-gap-xl='none'] { gap: var(--prismui-spacing-none); }
+  .root[data-gap-xl='xs']   { gap: var(--prismui-spacing-xs); }
+  .root[data-gap-xl='sm']   { gap: var(--prismui-spacing-sm); }
+  .root[data-gap-xl='md']   { gap: var(--prismui-spacing-md); }
+  .root[data-gap-xl='lg']   { gap: var(--prismui-spacing-lg); }
+  .root[data-gap-xl='xl']   { gap: var(--prismui-spacing-xl); }
+  .root[data-gap-xl='2xl']  { gap: var(--prismui-spacing-2xl); }
+  .root[data-gap-xl='3xl']  { gap: var(--prismui-spacing-3xl); }
+
+  .root[data-align-xl='start']    { align-items: flex-start; }
+  .root[data-align-xl='center']   { align-items: center; }
+  .root[data-align-xl='end']      { align-items: flex-end; }
+  .root[data-align-xl='stretch']  { align-items: stretch; }
+  .root[data-align-xl='baseline'] { align-items: baseline; }
+
+  .root[data-justify-xl='start']   { justify-content: flex-start; }
+  .root[data-justify-xl='center']  { justify-content: center; }
+  .root[data-justify-xl='end']     { justify-content: flex-end; }
+  .root[data-justify-xl='between'] { justify-content: space-between; }
+  .root[data-justify-xl='around']  { justify-content: space-around; }
+  .root[data-justify-xl='evenly']  { justify-content: space-evenly; }
+}

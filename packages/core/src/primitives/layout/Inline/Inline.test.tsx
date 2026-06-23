@@ -139,3 +139,91 @@ describe('Inline · LY-CORE-7 user APIs flow through', () => {
     expect(el.style.background).toBe('pink');
   });
 });
+
+// ─── Stage-16 Phase 2 · responsive `gap` / `align` / `justify` / `wrap` ─────
+describe('Inline · Stage-16 responsive (gap / align / justify)', () => {
+  it('emits per-breakpoint data-gap-<bp> for a responsive object', () => {
+    const { container } = render(
+      <Inline gap={{ xs: 'sm', md: 'lg' }}>x</Inline>,
+    );
+    const el = container.firstElementChild as HTMLElement;
+    expect(el.getAttribute('data-gap-xs')).toBe('sm');
+    expect(el.getAttribute('data-gap-md')).toBe('lg');
+    expect(el.getAttribute('data-gap')).toBeNull();
+  });
+
+  it('emits per-breakpoint data-align-<bp> + data-justify-<bp>', () => {
+    const { container } = render(
+      <Inline align={{ md: 'start' }} justify={{ lg: 'between' }}>x</Inline>,
+    );
+    const el = container.firstElementChild as HTMLElement;
+    expect(el.getAttribute('data-align-md')).toBe('start');
+    expect(el.getAttribute('data-justify-lg')).toBe('between');
+    expect(el.getAttribute('data-align')).toBeNull();
+    expect(el.getAttribute('data-justify')).toBeNull();
+  });
+
+  it('falls back to scalar default data-gap="md" when gap is empty object', () => {
+    const { container } = render(<Inline gap={{}}>x</Inline>);
+    expect(container.firstElementChild!.getAttribute('data-gap')).toBe('md');
+  });
+});
+
+describe('Inline · Stage-16 responsive (wrap)', () => {
+  it('emits valueless data-wrap when scalar wrap=true', () => {
+    const { container } = render(<Inline wrap>x</Inline>);
+    const el = container.firstElementChild as HTMLElement;
+    expect(el.hasAttribute('data-wrap')).toBe(true);
+    expect(el.getAttribute('data-wrap')).toBe('');
+  });
+
+  it('omits data-wrap when scalar wrap=false', () => {
+    const { container } = render(<Inline wrap={false}>x</Inline>);
+    expect(container.firstElementChild!.hasAttribute('data-wrap')).toBe(false);
+  });
+
+  it('emits string-valued data-wrap-<bp> for responsive wrap (true/false)', () => {
+    const { container } = render(
+      <Inline wrap={{ xs: true, lg: false }}>x</Inline>,
+    );
+    const el = container.firstElementChild as HTMLElement;
+    expect(el.getAttribute('data-wrap-xs')).toBe('true');
+    expect(el.getAttribute('data-wrap-lg')).toBe('false');
+    // Scalar attr must NOT be emitted in responsive mode.
+    expect(el.hasAttribute('data-wrap')).toBe(false);
+  });
+
+  it('omits all data-wrap attrs when wrap is undefined', () => {
+    const { container } = render(<Inline>x</Inline>);
+    const el = container.firstElementChild as HTMLElement;
+    expect(el.hasAttribute('data-wrap')).toBe(false);
+    for (const bp of ['xs', 'sm', 'md', 'lg', 'xl']) {
+      expect(el.hasAttribute(`data-wrap-${bp}`)).toBe(false);
+    }
+  });
+
+  it('omits all data-wrap attrs when responsive object is empty', () => {
+    const { container } = render(<Inline wrap={{}}>x</Inline>);
+    const el = container.firstElementChild as HTMLElement;
+    expect(el.hasAttribute('data-wrap')).toBe(false);
+    for (const bp of ['xs', 'sm', 'md', 'lg', 'xl']) {
+      expect(el.hasAttribute(`data-wrap-${bp}`)).toBe(false);
+    }
+  });
+});
+
+describe('Inline · Stage-16 RES-RT-1 boundary', () => {
+  it('does not inject inline style for any responsive prop combination', () => {
+    const { container } = render(
+      <Inline
+        gap={{ xs: 'sm', md: 'lg' }}
+        align={{ md: 'start' }}
+        justify={{ lg: 'between' }}
+        wrap={{ xs: true, lg: false }}
+      >
+        x
+      </Inline>,
+    );
+    expect(container.firstElementChild!.getAttribute('style')).toBeNull();
+  });
+});
