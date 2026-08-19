@@ -42,8 +42,8 @@
     "clean": "rimraf dist",
     "tcm": "tcm src",
     "tcm:watch": "tcm src --watch",
-    "build": "npm run clean && npm run tcm && tsc -p tsconfig.build.json && node ./scripts/esbuild.mjs",
-    "dev": "concurrently \"npm run tcm:watch\" \"echo 'Dev mode ready'\"",
+    "build": "pnpm run clean && pnpm run tcm && tsc -p tsconfig.build.json && node ./scripts/esbuild.mjs",
+    "dev": "concurrently \"pnpm run tcm:watch\" \"echo 'Dev mode ready'\"",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "typecheck:build": "tsc -p tsconfig.build.json --noEmit"
   },

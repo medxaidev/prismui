@@ -3,14 +3,11 @@
   "version": "0.0.1",
   "private": true,
   "type": "module",
-  "workspaces": [
-    "packages/*"
-  ],
+  "packageManager": "pnpm@9.3.0",
   "scripts": {
-    "build": "npm run build --workspaces --if-present",
-    "build:core": "npm run build --workspace=packages/core",
-    "build:react": "npm run build --workspace=packages/react",
-    "clean": "npm run clean --workspaces --if-present",
+    "build": "pnpm -r run build",
+    "build:core": "pnpm --filter @prismui/core run build",
+    "clean": "pnpm -r run clean",
     "test": "vitest",
     "test:ui": "vitest --ui",
     "test:coverage": "vitest --coverage",
@@ -43,7 +40,7 @@
   },
   "engines": {
     "node": ">=18.0.0",
-    "npm": ">=9.0.0"
+    "pnpm": ">=9.0.0"
   },
   "dependencies": {
     "postcss": "8.5.14"
