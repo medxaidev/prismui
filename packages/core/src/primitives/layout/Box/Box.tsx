@@ -4,6 +4,10 @@ import type {
   PolymorphicProps,
   PolymorphicRef,
 } from '../../../core/polymorphic/types';
+import {
+  type ResponsiveValue,
+  resolveResponsiveDataAttrs,
+} from '../../../core/responsive';
 import type { SpacingScale } from '../../../core/theme/types/token-scale.types';
 import classes from './Box.module.css';
 
@@ -30,18 +34,18 @@ import classes from './Box.module.css';
  *     makes no attempt to block inline styles (documented in Round 1 Insight 2).
  */
 export interface BoxOwnProps {
-  /** Padding on all four sides (`SpacingScale` key). */
-  padding?: SpacingScale;
-  /** Inline-axis padding (`padding-inline`). */
-  paddingX?: SpacingScale;
-  /** Block-axis padding (`padding-block`). */
-  paddingY?: SpacingScale;
-  paddingTop?: SpacingScale;
-  paddingRight?: SpacingScale;
-  paddingBottom?: SpacingScale;
-  paddingLeft?: SpacingScale;
-  /** Margin on all four sides (`SpacingScale` key). */
-  margin?: SpacingScale;
+  /** Padding on all four sides. `SpacingScale` scalar OR responsive map. */
+  padding?: ResponsiveValue<SpacingScale>;
+  /** Inline-axis padding (`padding-inline`). Scalar or responsive map. */
+  paddingX?: ResponsiveValue<SpacingScale>;
+  /** Block-axis padding (`padding-block`). Scalar or responsive map. */
+  paddingY?: ResponsiveValue<SpacingScale>;
+  paddingTop?: ResponsiveValue<SpacingScale>;
+  paddingRight?: ResponsiveValue<SpacingScale>;
+  paddingBottom?: ResponsiveValue<SpacingScale>;
+  paddingLeft?: ResponsiveValue<SpacingScale>;
+  /** Margin on all four sides. Scalar or responsive map. */
+  margin?: ResponsiveValue<SpacingScale>;
 }
 
 /**
@@ -69,16 +73,21 @@ export type BoxComponent = <C extends ElementType = 'div'>(
  * inspector (ADR-006 R-3c). Return value is spread directly onto the element.
  */
 function buildDataAttrs(props: BoxOwnProps): Record<string, string> {
-  const attrs: Record<string, string> = {};
-  if (props.padding !== undefined) attrs['data-padding'] = props.padding;
-  if (props.paddingX !== undefined) attrs['data-padding-x'] = props.paddingX;
-  if (props.paddingY !== undefined) attrs['data-padding-y'] = props.paddingY;
-  if (props.paddingTop !== undefined) attrs['data-padding-top'] = props.paddingTop;
-  if (props.paddingRight !== undefined) attrs['data-padding-right'] = props.paddingRight;
-  if (props.paddingBottom !== undefined) attrs['data-padding-bottom'] = props.paddingBottom;
-  if (props.paddingLeft !== undefined) attrs['data-padding-left'] = props.paddingLeft;
-  if (props.margin !== undefined) attrs['data-margin'] = props.margin;
-  return attrs;
+  // Each spacing prop accepts a scalar `SpacingScale` OR a responsive map.
+  // `resolveResponsiveDataAttrs` emits `data-<prefix>` for scalars and
+  // `data-<prefix>-<bp>` per breakpoint for maps (Stage-16 · ADR-008 · the
+  // same enum data-attr channel Stack/Inline/Grid use). `undefined` props
+  // yield `{}`, so no attribute leaks to the DOM (LY-CORE-5).
+  return {
+    ...resolveResponsiveDataAttrs<SpacingScale>('padding', props.padding),
+    ...resolveResponsiveDataAttrs<SpacingScale>('padding-x', props.paddingX),
+    ...resolveResponsiveDataAttrs<SpacingScale>('padding-y', props.paddingY),
+    ...resolveResponsiveDataAttrs<SpacingScale>('padding-top', props.paddingTop),
+    ...resolveResponsiveDataAttrs<SpacingScale>('padding-right', props.paddingRight),
+    ...resolveResponsiveDataAttrs<SpacingScale>('padding-bottom', props.paddingBottom),
+    ...resolveResponsiveDataAttrs<SpacingScale>('padding-left', props.paddingLeft),
+    ...resolveResponsiveDataAttrs<SpacingScale>('margin', props.margin),
+  };
 }
 
 /**

@@ -28,19 +28,11 @@
  *      (the sub-barrel). The aggregators are boring "one line per child"
  *      files that almost never change.
  *
- * The small legacy helpers (`CoreConfig` / `hello`) are kept at the root
- * because they are not owned by any specific system — they predate the
- * current layering and are scheduled for removal once the demo / docs
- * site drops its dependency on them.
+ * Public surface = the five aggregators below. Nothing else is exported at
+ * the root (the legacy `CoreConfig` / `hello` placeholders were removed in
+ * the v0.1 publish-readiness pass — they predated the layering and had no
+ * consumers).
  */
-
-export interface CoreConfig {
-  name: string;
-}
-
-export const hello = () => {
-  console.log('Hello from core!');
-};
 
 // ── Aggregators (one level down · never reach past) ────────────────────────
 export * from './core';

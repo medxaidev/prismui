@@ -1,11 +1,13 @@
-// Hooks barrel — first React hook module in PrismUI Core.
+// Hooks barrel — public React hook modules in PrismUI Core.
 // See @/devdocs/hooks/ for design docs of each hook.
-// Hook contract (HR-1 ~ HR-8) is currently embodied by useControllableState;
-// if/when a third hook is added here, the contract will be promoted to
-// @/devdocs/system/hook-contract.md as a first-class document.
 
 export {
   useControllableState,
   type ControllableSetter,
   type UseControllableStateOptions,
 } from './use-controllable-state';
+
+// Stage-16 · Phase 3 · responsive client hooks (opt-in · CSS-first stays
+// the primary path; these cover imperative/JS branches).
+export { useMediaQuery } from './use-media-query';
+export { useBreakpoint } from './use-breakpoint';

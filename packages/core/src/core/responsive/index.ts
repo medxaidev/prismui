@@ -6,10 +6,16 @@
  *   - `<Stack>`  · `gap` / `align` / `justify`
  *   - `<Grid>`   · `gap` / `rowGap` / `columnGap` / `columns`
  *   - `<Inline>` · `gap` / `align` / `justify` / `wrap`
- * (Box/Center/Divider remain non-responsive in v1.)
+ *   - `<Box>`    · `padding*` / `margin` (Stage-16 Phase 2 · candidate set complete)
+ * (Center/Divider remain non-responsive in v1 · ADR-008 decision 8.)
  */
 export type { BreakpointScale, ResponsiveValue } from './types';
-export { BREAKPOINT_ORDER, isResponsiveObject } from './breakpoints';
+export {
+  BREAKPOINT_ORDER,
+  BREAKPOINT_MIN_WIDTHS,
+  isResponsiveObject,
+  up,
+} from './breakpoints';
 export {
   resolveResponsiveDataAttrs,
   resolveResponsiveCssVars,

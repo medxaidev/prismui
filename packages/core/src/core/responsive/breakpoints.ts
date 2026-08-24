@@ -21,6 +21,35 @@ export const BREAKPOINT_ORDER: readonly BreakpointScale[] = [
 ] as const;
 
 /**
+ * Breakpoint min-width values (px), locked by RES-BP-1 and mirrored in
+ * `theme.breakpoints` (`default-theme.ts:157-163`). These are the SAME
+ * values baked into the static `@media` blocks of the responsive layout
+ * primitives, so `up()` (below) and `useMediaQuery`/`useBreakpoint` stay
+ * consistent with the CSS. v1 does NOT re-read `theme.breakpoints` at
+ * runtime — the scale is a hard lock (RES-BP-1), matching the static CSS.
+ */
+export const BREAKPOINT_MIN_WIDTHS: Readonly<Record<BreakpointScale, number>> = {
+  xs: 576,
+  sm: 768,
+  md: 992,
+  lg: 1200,
+  xl: 1400,
+} as const;
+
+/**
+ * `up(scale)` — build a mobile-first `min-width` media-query string for a
+ * breakpoint tier. Pairs with `useMediaQuery`:
+ *
+ *   const isDesktop = useMediaQuery(up('lg')); // "(min-width: 1200px)"
+ *
+ * Pure + deterministic (no theme/runtime dependency) so it matches the
+ * static CSS `@media` cascade exactly (ADR-008 · decision 5 helper API).
+ */
+export function up(scale: BreakpointScale): string {
+  return `(min-width: ${BREAKPOINT_MIN_WIDTHS[scale]}px)`;
+}
+
+/**
  * Runtime type-guard distinguishing the responsive object form
  * (`{ md: 'lg' }`) from the scalar form (`'lg'`).
  *

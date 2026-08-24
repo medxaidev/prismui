@@ -132,3 +132,52 @@ describe('Box · LY-CORE-7 user APIs flow through', () => {
     expect(onClick).toHaveBeenCalledTimes(1);
   });
 });
+
+describe('Box · Stage-16 responsive spacing (ADR-008)', () => {
+  it('emits per-breakpoint data-attrs for a responsive map', () => {
+    const { container } = render(<Box padding={{ xs: 'sm', md: 'lg', xl: '2xl' }} />);
+    const el = container.firstElementChild!;
+    expect(el.getAttribute('data-padding-xs')).toBe('sm');
+    expect(el.getAttribute('data-padding-md')).toBe('lg');
+    expect(el.getAttribute('data-padding-xl')).toBe('2xl');
+    // Scalar attr must NOT be present when a map is given.
+    expect(el.hasAttribute('data-padding')).toBe(false);
+    // Unprovided breakpoints leave no attribute (LY-CORE-5 · no leak).
+    expect(el.hasAttribute('data-padding-sm')).toBe(false);
+    expect(el.hasAttribute('data-padding-lg')).toBe(false);
+  });
+
+  it('scalar and responsive props coexist across different spacing props', () => {
+    const { container } = render(<Box padding="md" paddingX={{ xs: 'xs', lg: 'xl' }} />);
+    const el = container.firstElementChild!;
+    // scalar padding → data-padding
+    expect(el.getAttribute('data-padding')).toBe('md');
+    // responsive paddingX → data-padding-x-<bp>
+    expect(el.getAttribute('data-padding-x-xs')).toBe('xs');
+    expect(el.getAttribute('data-padding-x-lg')).toBe('xl');
+    expect(el.hasAttribute('data-padding-x')).toBe(false);
+  });
+
+  it('every spacing prop supports the responsive map form', () => {
+    const propToPrefix: Array<[string, string]> = [
+      ['padding', 'data-padding-md'],
+      ['paddingX', 'data-padding-x-md'],
+      ['paddingY', 'data-padding-y-md'],
+      ['paddingTop', 'data-padding-top-md'],
+      ['paddingRight', 'data-padding-right-md'],
+      ['paddingBottom', 'data-padding-bottom-md'],
+      ['paddingLeft', 'data-padding-left-md'],
+      ['margin', 'data-margin-md'],
+    ];
+    for (const [prop, attr] of propToPrefix) {
+      const props = { [prop]: { md: 'lg' } } as React.ComponentProps<typeof Box>;
+      const { container } = render(<Box {...props} />);
+      expect(container.firstElementChild!.getAttribute(attr)).toBe('lg');
+    }
+  });
+
+  it('does not inject inline style for responsive maps (LY-CORE-1 · zero runtime)', () => {
+    const { container } = render(<Box padding={{ xs: 'sm', md: 'lg' }} />);
+    expect(container.firstElementChild!.getAttribute('style')).toBeNull();
+  });
+});
