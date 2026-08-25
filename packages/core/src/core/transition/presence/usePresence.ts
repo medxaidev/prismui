@@ -31,6 +31,14 @@ import type {
   UsePresenceResult,
 } from './types';
 
+/**
+ * Extra margin (ms) added to the computed animation duration before the
+ * safety fallback fires. Large enough that a normally-completing transition /
+ * animation always emits its native `transitionend` / `animationend` first;
+ * only the pathological "end event never fires" case reaches the fallback.
+ */
+const PRESENCE_END_FALLBACK_BUFFER_MS = 60;
+
 export function usePresence(options: UsePresenceOptions): UsePresenceResult {
   const { open, nodeRef, forceMount = false } = options;
 
@@ -97,15 +105,39 @@ export function usePresence(options: UsePresenceOptions): UsePresenceResult {
       };
     }
 
-    // Layer 2 — install listeners.
-    const sub = subscribeAnimationEnd(node, () => {
+    // Layer 2 — install listeners + a duration-based safety fallback.
+    //
+    // A declared duration does NOT guarantee `transitionend` fires: transitions
+    // only emit it when a property actually animates, and portal / commit-timing
+    // edge cases can silently skip it — stranding the element in `exiting`
+    // forever. That is exactly the bug class behind the Modal v1.0.11 keyframe
+    // hot-fix. The fallback (duration + buffer) guarantees the state machine
+    // always resolves; whichever signal arrives first wins, the other is
+    // cleaned up. This makes transition-based exits (Popover / Tooltip) as
+    // robust as keyframe-based ones (Modal) WITHOUT per-component CSS migration
+    // (D-16 · root-cause fix at the Presence layer).
+    // `cancelled` guard mirrors the duration===0 / null-node branches above:
+    // once the effect is cleaned up (unmount / state change) neither the event
+    // handler nor the fallback timer may dispatch — `stateRef` still holds the
+    // pre-unmount value, so without this guard a late signal would update an
+    // unmounted tree (React warning + cross-file env-teardown error → CI red).
+    let cancelled = false;
+    const resolve = () => {
+      if (cancelled) return;
       if (stateRef.current === 'entering' || stateRef.current === 'exiting') {
         dispatch('end');
       }
-    });
+    };
+    const sub = subscribeAnimationEnd(node, resolve);
+    const fallbackId = setTimeout(
+      resolve,
+      duration + PRESENCE_END_FALLBACK_BUFFER_MS,
+    );
 
     return () => {
+      cancelled = true;
       sub.unsubscribe();
+      clearTimeout(fallbackId);
     };
   }, [state, nodeRef]);
 

@@ -1,5 +1,5 @@
 declare const styles: {
-  readonly "content": string;
+  readonly "prismui-glow-active": string;
 };
 export = styles;
 

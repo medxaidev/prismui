@@ -169,6 +169,30 @@ describe('PR-LIFE-1 · mount effect drives entering → open', () => {
 
     document.body.removeChild(node);
   });
+
+  it('nonzero duration · fallback resolves when NO end event ever fires (D-16)', async () => {
+    const node = document.createElement('div');
+    document.body.appendChild(node);
+    setTransitionDuration(node, 30); // declared, but transitionend is NEVER fired
+
+    const ref = { current: node as Element };
+    const { result } = renderHook(() =>
+      usePresence({ open: true, nodeRef: ref as React.RefObject<Element> }),
+    );
+    await nextFrame();
+    expect(result.current.state).toBe('entering');
+
+    // Deliberately fire nothing. The duration-based safety fallback
+    // (duration + PRESENCE_END_FALLBACK_BUFFER_MS) must still resolve the
+    // state machine, so a missing transitionend can never strand the element
+    // in `entering` / `exiting` (the Modal v1.0.11 keyframe hot-fix bug class).
+    await act(async () => {
+      await new Promise<void>((r) => setTimeout(r, 30 + 60 + 50));
+    });
+    expect(result.current.state).toBe('open');
+
+    document.body.removeChild(node);
+  });
 });
 
 describe('PR-LIFE-2 · unmount cleanup', () => {

@@ -1,6 +1,8 @@
-declare const classes: {
-  readonly root: string;
-  readonly box: string;
-  readonly indicator: string;
+declare const styles: {
+  readonly "box": string;
+  readonly "indicator": string;
+  readonly "prismui-checkbox-spinner-rotate": string;
+  readonly "root": string;
 };
-export default classes;
+export = styles;
+

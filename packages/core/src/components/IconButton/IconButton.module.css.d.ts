@@ -1,6 +1,7 @@
 declare const styles: {
-  readonly root: string;
-  readonly rippleHost: string;
+  readonly "prismui-icon-button-spinner-rotate": string;
+  readonly "rippleHost": string;
+  readonly "root": string;
 };
+export = styles;
 
-export default styles;

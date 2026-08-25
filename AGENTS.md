@@ -25,18 +25,18 @@ A test-count delta of more than ~5% against this number is worth investigating.
 
 ## Gotchas
 
-**`pnpm build` mutates tracked source files.** The `tcm src` step regenerates
-`packages/core/src/**/*.css.d.ts`, and `typed-css-modules` 0.9.1 emits
-`export = styles` while the committed files use `export default styles`. Both
-typecheck, but a build leaves ~24 unrelated modifications in the working tree.
-Revert them (`git checkout -- "packages/core/src/**/*.css.d.ts"`) before
-committing anything else.
+**`.css.d.ts` are committed as tcm output (v0.1 · D-5 resolved).** The `tcm src`
+step regenerates `packages/core/src/**/*.css.d.ts`; the committed files now
+match tcm's exact output (`export = styles` + quoted keys), so `pnpm build` /
+`tcm:watch` are idempotent — no working-tree churn. Do NOT hand-edit these
+stubs to `export default` (that reintroduces the churn). They are dev-time type
+stubs only, never shipped (not in `files`).
 
-**Two known flaky tests.** `useDismissal.test.tsx` (D-3 multi-channel
-idempotence) and `Modal/_internal/useStackingContextWarning.test.tsx` fail
-intermittently — both are timing/event-ordering sensitive, and observed outcomes
-across consecutive runs range from 0 to 3 failures. A red result in either does
-not by itself indicate a regression; re-run before concluding anything.
+**Flaky tests resolved (v0.1 · D-1).** The two former flakies are fixed:
+`useDismissal` dedup switched from a `performance.now()` window to a
+`queueMicrotask` round model (load-independent); `testTimeout`/`hookTimeout`
+raised to 15s for parallel-load headroom (Modal `await import` smoke). Full
+suite is stable green across repeated runs.
 
 **Upgrading to pnpm 10+** requires opting esbuild back into lifecycle scripts,
 since pnpm 10 stopped running dependency build scripts by default:

@@ -1,7 +1,7 @@
 declare const styles: {
-  readonly root: string;
-  readonly input: string;
-  readonly section: string;
+  readonly "input": string;
+  readonly "root": string;
+  readonly "section": string;
 };
+export = styles;
 
-export default styles;

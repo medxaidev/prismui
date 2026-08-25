@@ -128,15 +128,26 @@ export function useDismissal(options: UseDismissalOptions): UseDismissalResult {
   // ── synchronous dispatch ──────────────────────────────────────────────────
   const dispatchDismiss = useCallback(
     (reason: DismissalReason, event: Event | null) => {
-      const decision = decideDispatch(dedupRef.current, reason);
+      const latch = dedupRef.current;
+      const decision = decideDispatch(latch, reason);
       if (!decision.proceed) return;
-      dedupRef.current.tick = decision.tick;
-      dedupRef.current.priority = decision.priority;
+      latch.latched = true;
+      latch.priority = decision.priority;
+
+      // Close the round at the next microtask (the true end of this
+      // synchronous event round). Load-independent — no wall-clock window.
+      // Only the RESET is deferred; `onDismiss` still runs synchronously
+      // below, so the v0.1.1 "defer the flush" React-batch hazard does not
+      // apply (we never defer the dispatch itself).
+      if (decision.opensRound) {
+        queueMicrotask(() => resetDedup(latch));
+      }
 
       const result = latestRef.current.onDismiss(reason, event);
       if (result === false) {
-        // Cancel — clear the latch so subsequent events can still fire.
-        resetDedup(dedupRef.current);
+        // Cancel — clear the latch immediately so subsequent same-round
+        // events can still fire (the scheduled microtask reset is idempotent).
+        resetDedup(latch);
       }
     },
     [],

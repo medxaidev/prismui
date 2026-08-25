@@ -13,6 +13,12 @@ export default defineConfig({
     environment: 'jsdom',
     setupFiles: ['./vitest.setup.ts'],
     css: true,
+    // Headroom for tests that do heavy work under full-suite PARALLEL load
+    // (e.g. Modal integration smoke `await import('../Modal')` pulls the whole
+    // overlay/presence dep tree; ~1.8s isolated but can exceed the 5s default
+    // under CPU/disk contention). 15s still fails a genuine hang. See D-1.
+    testTimeout: 15000,
+    hookTimeout: 15000,
     coverage: {
       provider: 'v8',
       reporter: ['text', 'json', 'html'],

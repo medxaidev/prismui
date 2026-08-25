@@ -1,8 +1,8 @@
 declare const styles: {
-  readonly root: string;
-  readonly label: string;
-  readonly description: string;
-  readonly error: string;
+  readonly "description": string;
+  readonly "error": string;
+  readonly "label": string;
+  readonly "root": string;
 };
+export = styles;
 
-export default styles;

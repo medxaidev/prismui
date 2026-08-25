@@ -26,60 +26,71 @@ export const PRIORITY: Readonly<Record<DismissalReason, number>> = {
 
 /** Per-hook latch · re-created via `useRef`. */
 export interface DismissDedupRef {
-  /** Last dispatch timestamp from `performance.now()` · `0` = unset. */
-  tick: number;
+  /**
+   * `true` once a dispatch has opened the current synchronous round. The
+   * caller resets it to `false` at the round boundary (via `queueMicrotask`),
+   * so the latch tracks "same synchronous event round" WITHOUT relying on a
+   * wall-clock window.
+   */
+  latched: boolean;
   /** Priority of the last dispatched reason · `Infinity` = unset. */
   priority: number;
 }
 
 /** Initial value used by `useRef`. */
 export function createDedupRef(): DismissDedupRef {
-  return { tick: 0, priority: Number.POSITIVE_INFINITY };
+  return { latched: false, priority: Number.POSITIVE_INFINITY };
 }
 
 /**
- * Same-tick window in ms. `performance.now()` resolution is typically 0.005-1ms
- * on modern engines · 1ms is a safe upper bound that bridges multi-channel
- * native dispatches in the same synchronous event round.
- *
- * Phase 3 verification item (ADR-003): confirm robustness on low-end devices.
- */
-const SAME_TICK_WINDOW_MS = 1;
-
-/**
  * Decide whether the incoming dispatch should proceed under the dedup latch.
- * Pure function over `(latch, reason)` — caller mutates `latch` based on the
- * decision and the actual `onDismiss` return value (cancel resets the latch).
+ *
+ * Round model (v0.1.3 · replaces the fragile `performance.now()` 1ms window):
+ *   - **First dispatch of a round** (`latched === false`) → proceed and
+ *     signal `opensRound` so the caller schedules a microtask reset. This is
+ *     load-independent: multiple native listeners firing in the SAME
+ *     synchronous event round all observe `latched === true` regardless of
+ *     how much wall-clock time the CPU-contended thread burns between them.
+ *   - **Same round, strictly higher priority** (lower number) → proceed and
+ *     re-latch (mirrors the previous `priority < latch.priority` semantics).
+ *   - **Same round, equal-or-lower priority** → drop.
+ *
+ * The round boundary is a microtask (see caller), which is exactly where a
+ * "synchronous event round" ends — a 5ms-gap (post-`await`) dispatch always
+ * lands in a fresh round.
+ *
+ * Pure function over `(latch, reason)` — caller mutates `latch` + schedules
+ * the reset based on the decision and the `onDismiss` return value.
  */
 export interface DedupDecision {
-  /** When `false`, drop the dispatch silently (lower-or-equal priority). */
+  /** When `false`, drop the dispatch silently (equal-or-lower priority). */
   proceed: boolean;
   /** New priority value when `proceed === true`. */
   priority: number;
-  /** New tick timestamp when `proceed === true`. */
-  tick: number;
+  /** `true` when this dispatch opened a fresh round (caller schedules reset). */
+  opensRound: boolean;
 }
 
 export function decideDispatch(
   latch: DismissDedupRef,
   reason: DismissalReason,
 ): DedupDecision {
-  const tick = performance.now();
   const priority = PRIORITY[reason];
 
-  if (tick - latch.tick < SAME_TICK_WINDOW_MS) {
-    if (priority >= latch.priority) {
-      return { proceed: false, priority: latch.priority, tick: latch.tick };
-    }
+  if (!latch.latched) {
+    return { proceed: true, priority, opensRound: true };
   }
-  return { proceed: true, priority, tick };
+  if (priority < latch.priority) {
+    return { proceed: true, priority, opensRound: false };
+  }
+  return { proceed: false, priority: latch.priority, opensRound: false };
 }
 
 /**
- * Reset the latch — called when consumer cancels via `return false` so a
- * subsequent same-tick event can still trigger.
+ * Reset the latch — called at the round boundary (microtask) AND when the
+ * consumer cancels via `return false` so a subsequent event can still fire.
  */
 export function resetDedup(latch: DismissDedupRef): void {
-  latch.tick = 0;
+  latch.latched = false;
   latch.priority = Number.POSITIVE_INFINITY;
 }

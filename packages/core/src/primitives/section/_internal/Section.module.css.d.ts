@@ -1,10 +1,10 @@
 declare const styles: {
-  readonly root: string;
-  readonly header: string;
-  readonly title: string;
-  readonly description: string;
-  readonly content: string;
-  readonly footer: string;
+  readonly "content": string;
+  readonly "description": string;
+  readonly "footer": string;
+  readonly "header": string;
+  readonly "root": string;
+  readonly "title": string;
 };
+export = styles;
 
-export default styles;

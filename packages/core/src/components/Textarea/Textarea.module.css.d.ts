@@ -1,6 +1,6 @@
 declare const styles: {
-  readonly root: string;
-  readonly input: string;
+  readonly "input": string;
+  readonly "root": string;
 };
+export = styles;
 
-export default styles;
